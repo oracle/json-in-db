@@ -1,0 +1,127 @@
+<!-- edited with XML Spy v4.4 U (http://www.xmlspy.com) by Mark D. Drake and Geoff Lee (Oracle XML Dev) -->
+<installerConfiguration>
+	<parameters>
+		<parameter name="%DEMONAME%" value="Oracle REST Services for JSON"/>
+		<parameter name="%LAUNCHPAD%" value="Rest Services for JSON (12.1.0.2.0)"/>
+		<parameter name="%LAUNCHPADFOLDER%" value="%STARTMENU%\JSON Demonstrations"/>
+		<parameter name="%SHORTCUTFOLDER%" value="%DEMODIRECTORY%\%USER%"/>
+
+		<parameter name="%PUBLICFOLDER%" value="/publishedContent"/>
+		<parameter name="%XFILES_SCHEMA%" value="XFILES"/>
+		<parameter name="%XFILES_APPS%" value="%XFILES_SCHEMA%/Applications"/>
+		<parameter name="%XFILES_APPS%" value="/%XFILES_SCHEMA%/Applications"/>
+		<parameter name="%DEMOLOCAL%" value="%XFILES_APPS%/RESTDEMO"/>
+	</parameters>
+
+	<installation>
+	  <action type="UPLOAD">
+  		<!-- Delete existing Source Code -->
+	  	<action type="DELETE" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+ 		  	<mode>FORCE</mode>
+ 			<remote>%DEMOLOCAL%</remote>
+  		</action>
+  		<action type="MKCOL" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DEMOLOCAL%</remote>
+  		</action>
+  		<action type="MKCOL" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DEMOLOCAL%/sql</remote>
+  		</action>
+  		<action type="MKCOL" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DEMOLOCAL%/js</remote>
+  		</action>
+  		<action type="MKCOL" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DEMOLOCAL%/css</remote>
+  		</action>
+
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\JSONREST.html</local>
+  			<remote>%DEMOLOCAL%/JSONREST.html</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\js\JSONREST.js</local>
+  			<remote>%DEMOLOCAL%/js/JSONREST.js</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\js\JSONREST-SQL.json</local>
+  			<remote>%DEMOLOCAL%/js/JSONREST-SQL.json</remote>
+  		</action>
+  		
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\POREST.html</local>
+  			<remote>%DEMOLOCAL%/POREST.html</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\js\POREST.js</local>
+  			<remote>%DEMOLOCAL%/js/POREST.js</remote>
+  		</action>
+
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\PurchaseOrder.html</local>
+  			<remote>%DEMOLOCAL%/PurchaseOrder.html</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\js\PurchaseOrder.js</local>
+  			<remote>%DEMOLOCAL%/js/PurchaseOrder.js</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\js\poTemplate.json</local>
+  			<remote>%DEMOLOCAL%/js/poTemplate.json</remote>
+  		</action>
+
+
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\sql\sqlExample1.sql</local>
+  			<remote>%DEMOLOCAL%/sql/sqlExample1.sql</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\sql\sqlExample2.sql</local>
+  			<remote>%DEMOLOCAL%/sql/sqlExample2.sql</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\sql\sqlExample3.sql</local>
+  			<remote>%DEMOLOCAL%/sql/sqlExample3.sql</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\sql\sqlExample4.sql</local>
+  			<remote>%DEMOLOCAL%/sql/sqlExample4.sql</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\sql\sqlExample5.sql</local>
+  			<remote>%DEMOLOCAL%/sql/sqlExample5.sql</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\sql\sqlExample6.sql</local>
+  			<remote>%DEMOLOCAL%/sql/sqlExample6.sql</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\sql\sqlExample7.sql</local>
+  			<remote>%DEMOLOCAL%/sql/sqlExample7.sql</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\css\demo.css</local>
+  			<remote>%DEMOLOCAL%/css/demo.css</remote>
+  		</action>
+  		
+  	</action>
+ 	</installation>
+</installerConfiguration>

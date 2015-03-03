@@ -1,0 +1,15 @@
+{
+  		"listCollection"       : "select *\n  from COLLECTION_LIST",
+  		"createCollection"     : "create table COLLECTION_TABLE (\n  ID            VARCHAR2(255) NOT NULL,\n  CONTENT_TYPE  VARCHAR2(255) NOT NULL,\n  CREATED_ON    TIMESTAMP(6)  NOT NULL,\n  LAST_MODIFIED TIMESTAMP(6)  NOT NULL,\n  VERSION       VARCHAR2(255) NOT NULL,\n  JSON_DOCUMENT BLOB\n)",
+      "dropCollection"       : "drop table COLLECTION_TABLE",
+      "truncateCollection"   : "truncate table COLLECTION_TABLE",
+      "listKeys"             : "select ID\n  from COLLECTION_TABLE",
+      "listAll"              : "select ID,CONTENT_TYPE,CREATED_ON,LAST_MODIFIED,VERSION,JSON_DOCUMENT\n  from COLLECTION_TABLE",
+      "getDocument"          : "select JSON_DOCUMENT\n'   from COLLECTION_TABLE\n where ID = docID",
+      "postDocument"         : "insert into COLLECTION_TABLE\nvalues (SYS_GUID(),'application/json',systimestamp,systimestamp,1,PAYLOAD)",   	                         
+      "deleteDocument"       : "delete from COLLECTION_TABLE\n where ID = docID",
+    	"putDocument"          : "update COLLECTION_TABLE\n   set LAST_MODIFIED = TIMESTAMP,\n       VERSION       = VERSION + 1,\n       JSON_DOCUMENT = PAYLOAD\n where ID = docID",
+	    "QBE.1.json"            : "select ID, JSON_DOCUMENT, VERSION\n  from \"MyCollection\"\n where JSON_EXISTS(\n         JSON_DOCUMENT format json,\n         '$?( ($.User == $B0) )\n          passing 'TGATES' as \"B0\"\n        )",
+      "QBE.2.json"           : "select ID, JSON_DOCUMENT, VERSION\n  from \"MyCollection\"\n where JSON_EXISTS(\n         JSON_DOCUMENT format json,\n         '$?( ($.LineItems.Part.UPCCode == $B0) )\n          passing '138113804' as \"B0\"\n        )",
+      "QBE.3.json"           : "select ID, JSON_DOCUMENT, VERSION\n  from \"MyCollection\"\n where JSON_EXISTS(\n         JSON_DOCUMENT format json,\n         '$?( ($.LineItems.ItemNumber > $B0) )\n          passing 4 as \"B0\"\n        )"
+   }

@@ -1,0 +1,2 @@
+cd $HOME/Desktop/DatabaseTrack/JSON/setup
+sh setup.sh oracle oracle 

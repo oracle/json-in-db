@@ -1,0 +1,45 @@
+--
+-- Statement 1 : Create a table with a JSON Constraint
+--
+create table J_PURCHASEORDER (
+  ID            RAW(16) NOT NULL,
+  DATE_LOADED   TIMESTAMP(6) WITH TIME ZONE,
+  PO_DOCUMENT CLOB CHECK (PO_DOCUMENT IS JSON)
+)
+/
+--
+-- Statement 2 : Create an external table over a NOSQL Dump File
+--
+CREATE TABLE JSON_DUMPFILE_CONTENTS(
+  JSON_DOCUMENT CLOB
+)
+ORGANIZATION EXTERNAL(
+   TYPE ORACLE_LOADER
+   DEFAULT DIRECTORY ORDER_ENTRY
+   ACCESS PARAMETERS (
+      RECORDS DELIMITED BY 0x'0A'
+      DISABLE_DIRECTORY_LINK_CHECK  
+      BADFILE JSON_LOADER_OUTPUT: 'JSON_DUMPFILE_CONTENTS.bad'
+      LOGFILE JSON_LOADER_OUTPUT: 'JSON_DUMPFILE_CONTENTS.log'
+      FIELDS(
+        JSON_DOCUMENT CHAR(5000)
+      ) 
+   )
+   LOCATION (
+     ORDER_ENTRY:'PurchaseOrders.dmp'
+   )
+)
+PARALLEL
+REJECT LIMIT UNLIMITED
+/
+--
+-- Statement 3 : Load data from the external table
+--
+insert  
+  into J_PURCHASEORDER
+select SYS_GUID(), SYSTIMESTAMP, JSON_DOCUMENT 
+  from JSON_DUMPFILE_CONTENTS
+ where JSON_DOCUMENT IS JSON
+/
+commit
+/

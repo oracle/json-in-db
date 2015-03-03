@@ -1,0 +1,35 @@
+{
+	"PONumber": null,
+	"Reference": null,
+	"Requestor": null,
+	"User": null,
+	"CostCenter": null,
+	"ShippingInstructions": {
+		"name": null,
+		"Address": {
+			"street": null,
+			"city": null,
+			"county": null,
+			"postcode": null,
+			"country": null,
+		},
+		"Phone": [
+			{
+				"type": null,
+				"number": null,
+			}
+		]
+	},
+	"Special Instructions": null,
+	"LineItems": [
+		{
+			"ItemNumber": null,
+			"Part": {
+				"Description": null,
+				"UnitPrice": null,
+				"UPCCode": null,
+			},
+			"Quantity": null
+		}
+	]
+}

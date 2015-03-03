@@ -1,0 +1,67 @@
+{
+	"PONumber": 2286,
+	"Reference": "ABANDA-20140803",
+	"Requestor": "Amit Banda",
+	"User": "ABANDA",
+	"CostCenter": "A80",
+	"ShippingInstructions": {
+		"name": "Amit Banda",
+		"Address": {
+			"street": "Magdalen Centre, The Isis Science Park",
+			"city": "Oxford",
+			"county": "Oxon.",
+			"postcode": "OX9 9ZB",
+			"country": "United Kingdom"
+		},
+		"Phone": [
+			{
+				"type": "Office",
+				"number": "861-555-4886"
+			}
+		]
+	},
+	"Special Instructions": "Hand Carry",
+	"LineItems": [
+		{
+			"ItemNumber": 1,
+			"Part": {
+				"Description": "Cookie's Fortune",
+				"UnitPrice": 19.95,
+				"UPCCode": 44004499323
+			},
+			"Quantity": 4.0
+		}, {
+			"ItemNumber": 2,
+			"Part": {
+				"Description": "A Bright Shining Lie",
+				"UnitPrice": 19.95,
+				"UPCCode": 26359122026
+			},
+			"Quantity": 4.0
+		}, {
+			"ItemNumber": 3,
+			"Part": {
+				"Description": "Karaoke: 25 Song Country Library Vol.1 201",
+				"UnitPrice": 19.95,
+				"UPCCode": 13023006096
+			},
+			"Quantity": 7.0
+		}, {
+			"ItemNumber": 4,
+			"Part": {
+				"Description": "Red Skelton: Lost Episodes",
+				"UnitPrice": 19.95,
+				"UPCCode": 18713811172
+			},
+			"Quantity": 4.0
+		}, {
+			"ItemNumber": 5,
+			"Part": {
+				"Description": "Stealing Home",
+				"UnitPrice": 19.95,
+				"UPCCode": 85391181828
+			},
+			"Quantity": 9.0
+		}
+	]
+}

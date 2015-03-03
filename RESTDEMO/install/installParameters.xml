@@ -1,0 +1,14 @@
+<!-- edited with XML Spy v4.4 U (http://www.xmlspy.com) by Mark D. Drake and Geoff Lee (Oracle XML Dev) -->
+<installationParameters>
+	<oracleHome/>
+	<dba>MYDBA</dba>
+  <dbaPassword/>
+	<oracleUser>XFILES</oracleUser>
+	<oraclePassword/>
+	<tnsAlias/>
+	<listener/>
+	<sqlPort/>
+	<hostName>localhost</hostName>
+	<httpPort>80</httpPort>
+	<ftpPort>21</ftpPort>
+</installationParameters>

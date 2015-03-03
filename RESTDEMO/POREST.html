@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="/XFILES/Frameworks/bootstrap/css/bootstrap.min.css"/>
+		<link rel="stylesheet" href="/XFILES/Frameworks/bootstrap-dialog/css/bootstrap-dialog.min.css"/>
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="/XFILES/Frameworks/bootstrap/css/bootstrap-theme.min.css"/>
+    <link rel="stylesheet" href="demo.css">
+		<!-- Custom styles for this template -->
+		<link rel="stylesheet" charset="UTF-8" type="text/css" href="/XFILES/lite/css/XFiles.css"/>
+		<style>
+.btn-file {
+  position: relative;
+  overflow: hidden;
+}
+.btn-file input[type=file] {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 100%;
+  min-height: 100%;
+  font-size: 100px;
+  text-align: right;
+  filter: alpha(opacity=0);
+  opacity: 0;
+  background: red;
+  cursor: inherit;
+  display: block;
+}
+input[readonly] {
+  background-color: white !important;
+  cursor: text !important;
+}			
+		</style>
+	</head>
+	<body onload="init()">
+
+  
+    <div class="modal fade" id="listPurchaseOrders" tabindex="-1" role="dialog" aria-labelledby="listPurchaseOrders" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">								
+          <div class="modal-header">
+          	<div class="form-horizontal">
+            	<span class="h3 modal-title" id="documentContentTitle">PurchaseOrders</span>
+  					</div>
+  	      </div>
+          <div class="modal-body">
+  					<select id="poList" size="15" class="form-control" onscroll="loadMoreDocuments(this)" ondblclick="doListPurchaseOrder(this)">
+  					</select>
+          </div>
+          <div class="modal-footer">
+  					<button id="btn.cancelListPurchaseOrders" type="button" class="btn btn-default btn-med" onclick="$('#listPurchaseOrders').modal('hide');return false;">
+  						<span class="glyphicon glyphicon-ban-circle"></span>
+  					</button>
+  					<button id= "btn.showPurchaseOrder" type="button" class="btn btn-default btn-med" onclick="doListPurchaseOrder(document.getElementById('poList'));return false;">
+  						<span class="glyphicon glyphicon-save"></span>
+  					</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="page-header">
+    	<!-- Nav tabs -->
+			<div class="col-md-2">
+    					
+				<ul class="nav nav-pills nav-stacked" role="tablist" id="collectionTab">
+  				<li><a href="#Connect" role="tab" data-toggle="tab">Connect</a></li>
+  				<li><a href="#CreateCollection" role="tab" data-toggle="tab">Create PurchaseOrder Collection</a></li>
+  				<li><a href="#CreatePurchaseOrder" role="tab" data-toggle="tab">Create PurchaseOrder</a></li>
+  				<li><a href="#BulkLoad" role="tab" data-toggle="tab">Bulk Insert</a></li>
+  				<li><a href="#ListCollection" role="tab" data-toggle="tab">List PurchaseOrders</a></li>
+  				<li><a href="#GetDocument" role="tab" data-toggle="tab">Get PurchaseOrder</a></li>
+  				<li><a href="#QBE" role="tab" data-toggle="tab">Search PurchaseOrders</a></li>
+  				<li><a href="#SQL" role="tab" data-toggle="tab">SQL Operations</a></li>
+				</ul>
+					<button id="btn.showLogRecords" type="button" class="btn btn-default btn-med" onclick="restAPI.showRestAPILog('logWindow');return false;">
+	 				<span class="glyphicon glyphicon-transfer"></span>
+				</button>
+			</div>
+	
+			<div>
+				<!-- Tab panes -->
+				<div class="tab-content">
+		  		<div class="tab-pane active" id="Connect">
+		  			<div class="col-md-2">
+		      		<h2 class="form-signin-heading">Please login</h2>
+			    		<input id="sqlUsername" type="text" class="form-control" name="username" placeholder="username" required="" autofocus="" />
+		   	  		<input id="sqlPassword" type="password" class="form-control" name="password" placeholder="Password" required=""/>      
+		     			<button class="btn btn-lg btn-primary btn-block" onclick="validateCredentials(document.getElementById('sqlUsername'),document.getElementById('sqlPassword'));">Login</button>   
+					  </div>
+		  		</div>
+
+	  		  <div class="tab-pane" id="SelectCollection">
+	  		  	<div class="col-md-6">
+ 				    	<h2>Collection List</h2>
+ 				    	<div>
+				  			<ul class="nav nav-tabs" role="tablist" id="sc.options">
+  			  				<li><a href="#sc_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  			  				<li><a href="#sc_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  			  				<li><a href="#sc_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  			  				<!-- <li><a href="#sc_sqlTab" role="tab" data-toggle="tab">SQL</a></li> -->
+				  			</ul>
+				  		</div>
+
+				  		<!-- Tab panes -->
+							<div class="tab-content">
+								<br>
+    				  	  <div class="tab-pane active" id="sc_dataTab">
+  			 	  		  <div class="input-group">
+  					  			  <div>
+  					  			  	<label for="collectionList">Select Collection</label>
+  					  		 		  <select id="collectionList" class="form-control" onchange="setCollection(document.getElementById('collectionList').value)"></select>
+  					  		 		</div>
+  					  			</div>
+  					  	  </div>
+             
+   				  	  <div class="tab-pane" id="sc_responseTab">
+  	 			  	    <div class="form-group col-sm-10">
+  	 			  	    	<div class="form-horizontal" role="form">
+  										<div class="form-group">
+   			 			  	    	<label class="col-sm-2 control-label" for="sc.Method">Method:</label>
+    											<p id="sc.Method" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+	  		 			  	    	<label class="col-sm-2 control-label" for="sc.URL">URL:</label>
+   		 									<p id="sc.URL" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+  	 					  	    	<label class="col-sm-2 control-label" for="sc.Status">Status:</label>
+    											<p class="form-control-static">
+    												<span id="sc.Status"></span>
+    												<span> (</span>
+    												<span id="sc.StatusText"></span>
+    												<span>)</span></p>
+    										</div>
+    									</div>
+	  					  	 	  <br>
+   			  	  		  <div>
+  			 		      	  <label for="sc.Response">Response</label>
+  				  	  			  <span><pre id="sc.Response" class="pre-scrollable"></pre></span>
+  				  	  		  </div>
+  			  	  		  </div>
+  			  	   	  </div>
+  			  	  	                              
+   				  	  <div class="tab-pane" id="sc_javaScriptTab">
+  				  			<div>
+  			 	  	    	<label for="sc.Code">Code</label>
+  				  	 	 		<span><pre id="sc.Code" class="pre-scrollable prettyprint"></pre></span>
+  				  			</div>  
+   				  	  </div>
+             
+   				  	  <div class="tab-pane " id="sc_sqlTab">
+  				  			<div>
+  			 	  	    	<label for="sc.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="sc.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('sc');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="sc.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="sc.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="sc.1.timing"/>
+  				  	 	 		</div>
+  				  			</div>  
+   				  	  </div>
+  			      
+  			  	  	</div>  
+  			  	  
+  			  		</div>
+  			 		</div> 
+  			  	  				
+			  		<div class="tab-pane" id="CreateCollection">
+	  		  	<div class="col-md-6">
+ 				    	<h2>Create Collection</h2>
+ 				    	<div>
+				  			<ul class="nav nav-tabs" role="tablist" id="cc.options">
+  			  				<li><a href="#cc_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  			  				<li><a href="#cc_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  			  				<li><a href="#cc_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  			  				<li><a href="#cc_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+				  			</ul>
+				  		</div>
+				  		<!-- Tab panes -->
+							<div class="tab-content">
+								<br>
+    				  	  <div class="tab-pane active" id="cc_dataTab">
+  			 	  		  <div class="input-group">
+  					  			  <div>
+									  	<div class="row">
+	   	  								<div class="input-group">
+				  								<input id="cc.CollectionName" type="text" class="form-control" placeholder="Collection Name" onchange="setCollectionProperties()"/>
+			        						<span class="input-group-btn">
+				  		   						<button type="button" class="btn btn-default" onclick="doCreateCollection()">
+ 				  										<span class="glyphicon glyphicon-cog"></span> Go
+				  									</button>
+				  								</span>
+				  							</div>
+		      						</div>
+  					  		 		</div>
+  					  			</div>
+  					  	  </div>
+             
+   				  	  <div class="tab-pane" id="cc_responseTab">
+  	 			  	    <div class="form-group col-sm-10">
+  	 			  	    	<div class="form-horizontal" role="form">
+  										<div class="form-group">
+   			 			  	    	<label class="col-sm-2 control-label" for="cc.Method">Method:</label>
+    											<p id="cc.Method" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+	  		 			  	    	<label class="col-sm-2 control-label" for="cc.URL">URL:</label>
+   		 									<p id="cc.URL" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+  	 					  	    	<label class="col-sm-2 control-label" for="cc.Status">Status:</label>
+    											<p class="form-control-static">
+    												<span id="cc.Status"></span>
+    												<span> (</span>
+    												<span id="cc.StatusText"></span>
+    												<span>)</span></p>
+    										</div>
+    									</div>
+	  					  	 	  <br>
+   			  	  		  <div>
+  			 		      	  <label for="cc.Response">Response</label>
+  				  	  			  <span><pre id="cc.Response" class="pre-scrollable"></pre></span>
+  				  	  		  </div>
+  			  	  		  </div>
+  			  	  	  </div>
+             
+   				  	  <div class="tab-pane" id="cc_javaScriptTab">
+  				  			<div>
+  			 	  	    	<label for="cc.Code">Code</label>
+  				  	 	 		<span><pre id="cc.Code" class="pre-scrollable prettyprint"></pre></span>
+  				  			</div>  
+   				  	  </div>
+             
+   				  	  <div class="tab-pane " id="cc_sqlTab">
+  				  			<div>
+  			 	  	    	<label for="cc.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="cc.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('cc');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="cc.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="cc.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="cc.1.timing"/>
+  				  	 	 		</div>
+  				  			</div>  
+   				  	  </div>
+  			      
+  			  	  	</div>  
+  			  	  
+  			  		</div>
+  			 		</div> 
+  			 		           
+	  		  <div class="tab-pane" id="CreatePurchaseOrder">
+	  		  	<div class="col-md-10">
+ 				    	<h2>Create PurchaseOrder</h2>
+ 				    	<div>
+				  			<ul class="nav nav-tabs" role="tablist" id="cc.options">
+  			  				<li><a href="#cpo_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  			  				<li><a href="#cpo_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  			  				<li><a href="#cpo_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  			  				<li><a href="#cpo_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+				  			</ul>
+				  		</div>
+				  		<!-- Tab panes -->
+							<div class="tab-content">
+								<br>
+    				  	  <div class="tab-pane active" id="cpo_dataTab">
+	  				  	  	<div id="PurchaseOrderForm">
+							      <div class="ls-Title" >
+							     			<span class="form-horizantal">
+							          	<h1 class="ls-Title-text">
+							          		<span>Purchase Order </span>
+							          	</h1>
+						          		<span><select id="ReferenceList" onchange="showDocumentById(this.value)" class="form-control" style="display: none;"></select></span>
+							          </span>
+							          <span class="ls-Title-buttons btn-group">
+							          	<input type="hidden" id="btn.listPurchaseOrders"/>
+							          	<input type="hidden" id="sd.Cache"/>
+							          	<input type="hidden" id="sd.CollectionName"/>
+	          							<button id="btn.qbeInitialize" type="button" class="btn btn-default btn-med" onclick="qbeInitialize();return false;">
+	           								<span class="glyphicon glyphicon-search"></span> QBE
+	          							</button>
+	          							<button id="btn.qbeRunQuery" type="button" class="btn btn-default btn-med" style="display:none;" onclick="qbeRunQuery();return false;">
+	           								<span class="glyphicon glyphicon-cog"></span> Search
+	          							</button>
+	          							<button id="btn.newDocument" type="button" class="btn btn-default btn-med" style="display:none;" onclick="newPurchaseOrder(); return false;">
+	           								<span class="glyphicon glyphicon-plus"></span> New
+	          							</button>
+	          							<button id="btn.saveNewDocument" type="button" class="btn btn-default btn-med" style="display:none;" onclick="saveNewPurchaseOrder();return false;">
+	           								<span class="glyphicon glyphicon-save"></span> Save
+	          							</button>
+	          							<button id="btn.editDocument" type="button" class="btn btn-default btn-med" style="display:none;" onclick="editPurchaseOrder(); return false;">
+	           								<span class="glyphicon glyphicon-edit"></span> Edit
+	          							</button>
+	          							<button id="btn.saveDocument" type="button" class="btn btn-default btn-med" style="display:none;" onclick="savePurchaseOrder(document.getElementById('ReferenceList').value);return false;">
+	           								<span class="glyphicon glyphicon-save"></span> Save
+	          							</button>
+	          							<button id="btn.deleteDocument" type="button" class="btn btn-default btn-med" style="display:none;" onclick="deletePurchaseOrder(document.getElementById('ReferenceList').value);return false;">
+	           								<span class="glyphicon glyphicon-trash"></span> Delete
+	          							</button>
+	          							<button id="btn.cancelOperation" type="button" class="btn btn-default btn-med" style="display:none;" onclick="resetPurchaseOrderForm()">
+	           								<span class="glyphicon glyphicon-ban-circle"></span> Cancel
+	          							</button>
+							 					</span>
+							      </div>
+							      
+							      <ul class="ls-Details">
+							          <li>
+							              <span class="ls-Details-label" for="PONumber">Order Number</span>
+							              <span class="ls-Details-value"><span id="PONumber"></span></span>
+							          </li>
+							          <li>
+							              <span class="ls-Details-label" for="Reference">Reference</span>
+							              <span class="ls-Details-value"><span id="Reference"></span></span>
+							          </li>
+							          <li>
+							              <span class="ls-Details-label" for="Requestor">Requestor</span>
+							              <span class="ls-Details-value"><span id="Requestor"></span></span>
+							          </li>
+							          <li>
+							              <span class="ls-Details-label" for="User">User</span>
+							              <span class="ls-Details-value"><span id="User"></span></span>
+							          </li>
+							          <li>
+							              <span class="ls-Details-label" for="CostCenter">Cost Center</span>
+							              <span class="ls-Details-value"><span id="CostCenter"></span></span>
+							          </li>
+							          <li>
+							              <span class="ls-Details-label" for="Address">Shipping Address</span>
+							              <span class="ls-Details-value">
+							                  <strong><span><span id="ShippingInstructions.name"></span></span></strong>
+							                  <div class="ls-Details-sub">
+							                      <span><span id="ShippingInstructions.Address.street"></span></span>
+							                      <br><span><span id="ShippingInstructions.Address.city"></span></span><span><span id="ShippingInstructions.Address.state"></span></span>  <span><span id="ShippingInstructions.Address.zipCode"></span></span>
+							                      <br><span><span id="ShippingInstructions.Address.country"></span></span>
+							                  </div>
+							                  <span class="ls-Details-sub">
+							                  		<table id="ShippingInstructions.Phone">
+							                  			<thead>
+							                  				<tr>
+							                  					<th id="ShippingInstructions.Phone.type"></th>
+							                  					<th id="ShippingInstructions.Phone.number"></th>
+							                  				</tr>
+							                  			</thead>
+							                  	  </table>
+							                  </span>
+							              </span>
+							          </li>
+							      </ul>
+							      <div class="ls-SubTitle">
+							          <h1 class="ls-SubTitle-text">Line Items</h1>
+							      </div>
+							      <ul class="ls-LineItems">
+							          <table class="u-Report u-Report--stretch u-Report--inline" id="LineItems">
+							              <thead>
+							         				<tr>
+							                  <th align="left" id="LineItems.ItemNumber">Item No</th>
+							                  <th align="left" id="LineItems.Part.Description">Description</th>
+							                  <th align="right" id="LineItems.Part.UnitPrice">Unit Price</th>
+							                  <th id="LineItems.Part.UPCCode">UPC Code</th>
+							                  <th align="right" id="LineItems.Quantity">Quantity</th>
+							         				</tr>
+							              </thead>
+							          </table>
+							      </ul>						 
+	 					  		</div>
+	 					  	</div>
+	
+   				  	  <div class="tab-pane" id="cpo_responseTab">
+  	 			  	    <div class="form-group col-sm-10">
+  	 			  	    	<div class="form-horizontal" role="form">
+  										<div class="form-group">
+   			 			  	    	<label class="col-sm-2 control-label" for="cpo.Method">Method:</label>
+    											<p id="cpo.Method" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+	  		 			  	    	<label class="col-sm-2 control-label" for="cpo.URL">URL:</label>
+   		 									<p id="cpo.URL" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+  	 					  	    	<label class="col-sm-2 control-label" for="cpo.Status">Status:</label>
+    											<p class="form-control-static">
+    												<span id="cpo.Status"></span>
+    												<span> (</span>
+    												<span id="cpo.StatusText"></span>
+    												<span>)</span></p>
+    										</div>
+    									</div>
+	  					  	 	  <br>
+   			  	  		  <div>
+  			 		      	  <label for="cpo.Response">Response</label>
+  				  	  			  <span><pre id="cpo.Response" class="pre-scrollable"></pre></span>
+  				  	  		  </div>
+  			  	  		  </div>
+  			  	  	  </div>
+             
+   				  	  <div class="tab-pane" id="cpo_javaScriptTab">
+  				  			<div>
+  			 	  	    	<label for="cpo.Code">Code</label>
+  				  	 	 		<span><pre id="cpo.Code" class="pre-scrollable prettyprint"></pre></span>
+  				  			</div>  
+   				  	  </div>
+             
+   				  	  <div class="tab-pane " id="cpo_sqlTab">
+  				  			<div>
+  			 	  	    	<label for="cpo.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="cpo.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('cpo');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="cpo.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="cpo.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="cpo.1.timing"/>
+  				  	 	 		</div>
+  				  			</div>  
+   				  	  </div>
+  			      
+  			  	  	</div>  
+  			  	  </div>
+  			 		</div> 
+
+	  		  <div class="tab-pane" id="DropCollection">
+	  		  	<div class="col-md-6">
+ 				    	<h2>Drop Collection</h2>
+ 				    	<div>
+				  			<ul class="nav nav-tabs" role="tablist" id="dc.options">
+  			  				<li><a href="#dc_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  			  				<li><a href="#dc_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  			  				<li><a href="#dc_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  			  				<li><a href="#dc_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+				  			</ul>
+				  		</div>
+				  		<!-- Tab panes -->
+							<div class="tab-content">
+								<br>
+    				  	  <div class="tab-pane active" id="dc_dataTab">
+							  	<div class="row">
+				  				  <div class="input-group">
+							  			<input id="dc.CollectionName" type="text" class="form-control" placeholder="Collection Name" disabled/>
+						        	<span class="input-group-btn">
+				  					   	<button type="button" class="btn btn-default" onclick="doDropCollection()">
+					  								<span class="glyphicon glyphicon-cog"></span> Go
+							  				</button>
+							  			</span>
+				  					</div>
+		      				</div>
+  					  	  </div>
+             
+   				  	  <div class="tab-pane" id="dc_responseTab">
+  	 			  	    <div class="form-group col-sm-10">
+  	 			  	    	<div class="form-horizontal" role="form">
+  										<div class="form-group">
+   			 			  	    	<label class="col-sm-2 control-label" for="dc.Method">Method:</label>
+    											<p id="dc.Method" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+	  		 			  	    	<label class="col-sm-2 control-label" for="dc.URL">URL:</label>
+   		 									<p id="dc.URL" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+  	 					  	    	<label class="col-sm-2 control-label" for="dc.Status">Status:</label>
+    											<p class="form-control-static">
+    												<span id="dc.Status"></span>
+    												<span> (</span>
+    												<span id="dc.StatusText"></span>
+    												<span>)</span></p>
+    										</div>
+    									</div>
+	  					  	 	  <br>
+   			  	  		  <div>
+  			 		      	  <label for="dc.Response">Response</label>
+  				  	  			  <span><pre id="dc.Response" class="pre-scrollable"></pre></span>
+  				  	  		  </div>
+  			  	  		  </div>
+  			  	  		</div>
+             
+   				  	  <div class="tab-pane" id="dc_javaScriptTab">
+  				  			<div>
+  			 	  	    	<label for="dc.Code">Code</label>
+  				  	 	 		<span><pre id="dc.Code" class="pre-scrollable prettyprint"></pre></span>
+  				  			</div>  
+   				  	  </div>
+             
+		  	  			<div class="tab-pane " id="dc_sqlTab">
+  				  			<div>
+  			 	  	    	<label for="dc.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="dc.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('dc');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="dc.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="dc.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="dc.1.timing"/>
+  				  	 	 		</div>
+  				  			</div>  
+   				  	  </div>
+  			         			      
+  			  	  	</div>  
+  			  	  
+  			  		</div>
+  			 		</div> 
+
+	  		  <div class="tab-pane" id="ListCollection">
+	  		  	<div class="col-md-6">
+				     	<h2>Choose Document</h2>
+ 				    	<div>
+				  			<ul class="nav nav-tabs" role="tablist" id="ld.options">
+  			  				<li><a href="#ld_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  			  				<li><a href="#ld_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  			  				<li><a href="#ld_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  			  				<li><a href="#ld_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+				  			</ul>
+				  		</div>
+				  		<!-- Tab panes -->
+							<div class="tab-content">
+								<br>
+    				  	  <div class="tab-pane active" id="ld_dataTab">
+							  	<div class="row">
+				  				  <div class="input-group">
+							  			<input id="ld.CollectionName" type="text" class="form-control" disabled/>
+	        						<span class="input-group-btn">
+		  		   						<button type="button" class="btn btn-default" onclick="doListDocuments()">
+	  											<span class="glyphicon glyphicon-cog"></span> Go
+	  										</button>
+	  									</span>
+	  								</div>
+	  							</div>
+						  		<br>
+						  		<div class="input-group">
+			  		      	<label for="ld.documentList">Documents</label>
+										<select id="ld.documentList" size="15" class="form-control" onscroll="loadMoreDocuments(this)" ondblclick="setDocumentId(this.value)"></select>
+						  	 	</div>
+	   					  </div>
+             
+   				  	  <div class="tab-pane" id="ld_responseTab">
+  	 			  	    <div class="form-group col-sm-10">
+  	 			  	    	<div class="form-horizontal" role="form">
+  										<div class="form-group">
+   			 			  	    	<label class="col-sm-2 control-label" for="ld.Method">Method:</label>
+    											<p id="ld.Method" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+	  		 			  	    	<label class="col-sm-2 control-label" for="ld.URL">URL:</label>
+   		 									<p id="ld.URL" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+  	 					  	    	<label class="col-sm-2 control-label" for="ld.Status">Status:</label>
+    											<p class="form-control-static">
+    												<span id="ld.Status"></span>
+    												<span> (</span>
+    												<span id="ld.StatusText"></span>
+    												<span>)</span></p>
+    										</div>
+    									</div>
+	  					  	 	  <br>
+   			  	  		  <div>
+  			 		      	  <label for="ld.Response">Response</label>
+  				  	  			  <span><pre id="ld.Response" class="pre-scrollable"></pre></span>
+  				  	  		  </div>
+    		    		  </div>
+  			  	  	  </div>
+             
+   				  	  <div class="tab-pane" id="ld_javaScriptTab">
+  				  			<div>
+  			 	  	    	<label for="ld.Code">Code</label>
+  				  	 	 		<span><pre id="ld.Code" class="pre-scrollable prettyprint"></pre></span>
+  				  			</div>  
+   				  	  </div>
+             
+		  	  			<div class="tab-pane " id="ld_sqlTab">
+  				  			<div>
+  			 	  	    	<label for="ld.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="ld.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('ld');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="ld.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="ld.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="ld.1.timing"/>
+  				  	 	 		</div>
+  				  			</div>  
+   				  	  </div>
+
+  			      
+  			  	  	</div>  
+  			  	  
+  			  		</div>
+  			 		</div> 
+          
+	  		  <div class="tab-pane" id="PostDocument">
+	  		  	<div class="col-md-6">
+				     	<h2>Insert Document</h2>
+ 				    	<div>
+				  			<ul class="nav nav-tabs" role="tablist" id="id.options">
+  			  				<li><a href="#id_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  			  				<li><a href="#id_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  			  				<li><a href="#id_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  			  				<li><a href="#id_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+				  			</ul>
+				  		</div>
+				  		<!-- Tab panes -->
+							<div class="tab-content">
+								<br>
+    				  	  <div class="tab-pane active" id="id_dataTab">
+						     	<div class="form-group">
+						  		 	<div class="row">
+						  		    <label for="id.CollectionName">Collection</label>
+					      			<div class="input-group">
+						  					<input id="id.CollectionName" type="text" class="form-control" disabled/>
+						  	      	<span class="input-group-btn">
+						  				  	<button type="button" class="btn btn-default" onclick="doInsertDocument()">
+			 			  							<span class="glyphicon glyphicon-cog"></span> Go
+						  						</button>
+						  					</span>
+						  				</div>
+						  		  </div>
+		              </div>
+					  		  <br>
+		    	  	    <label for="id.DocumentContent">Content</label>
+				          <div class="input-group">
+	  	              <span class="input-group-btn">
+	          	        <span><pre id="id.Content" class="pre-scrollable"></pre></span>
+	    	              <span class="btn btn-primary btn-file">
+	      	              Browse&hellip; <input id="id.DocumentContent" type="file" onchange="doLoadFile(this, document.getElementById('id.Cache'),document.getElementById('id.Content'))"/>
+	          	        </span>
+	          	        <input id="id.Cache" type="hidden"/>
+	            	    </span>
+	              	</div>
+	   					  </div>
+             
+   				  	  <div class="tab-pane" id="id_responseTab">
+  	 			  	    <div class="form-group col-sm-10">
+  	 			  	    	<div class="form-horizontal" role="form">
+  										<div class="form-group">
+   			 			  	    	<label class="col-sm-2 control-label" for="id.Method">Method:</label>
+    											<p id="id.Method" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+	  		 			  	    	<label class="col-sm-2 control-label" for="id.URL">URL:</label>
+   		 									<p id="id.URL" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+  	 					  	    	<label class="col-sm-2 control-label" for="id.Status">Status:</label>
+    											<p class="form-control-static">
+    												<span id="id.Status"></span>
+    												<span> (</span>
+    												<span id="id.StatusText"></span>
+    												<span>)</span></p>
+    										</div>
+    									</div>
+  			  	  		  </div>
+  					  	 	  <br>
+  			  	  		  <div>
+  		 		      	  <label for="id.Response">Response</label>
+  			  	  			  <span><pre id="id.Response" class="pre-scrollable"></pre></span>
+  			  	  		  </div>
+  			  	  	  </div>
+             
+   				  	  <div class="tab-pane" id="id_javaScriptTab">
+  				  			<div>
+  			 	  	    	<label for="id.Code">Code</label>
+  				  	 	 		<span><pre id="id.Code" class="pre-scrollable prettyprint"></pre></span>
+  				  			</div>  
+   				  	  </div>
+             
+             
+		  	  			<div class="tab-pane " id="id_sqlTab">
+  				  			<div>
+  			 	  	    	<label for="id.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="id.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('id');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="id.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="id.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="id.1.timing"/>
+  				  	 	 		</div>
+  				  			</div>  
+   				  	  </div>
+  			      
+  			  	  	</div>  
+  			  	  
+  			  		</div>
+  			 		</div> 
+           
+	  		  <div class="tab-pane" id="PutDocument">
+	  		  	<div class="col-md-6">
+				     	<h2>Update Document</h2>
+ 				    	<div>
+				  			<ul class="nav nav-tabs" role="tablist" id="pd.options">
+  			  				<li><a href="#pd_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  			  				<li><a href="#pd_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  			  				<li><a href="#pd_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  			  				<li><a href="#pd_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+				  			</ul>
+				  		</div>
+				  		<!-- Tab panes -->
+							<div class="tab-content">
+								<br>
+    				  	  <div class="tab-pane active" id="pd_dataTab">
+			    	  		<div class="input-group">
+			  		      	<label for="pd.CollectionName">Collection</label>
+						  			<input id="pd.CollectionName" type="text" class="form-control" disabled/>
+						  		</div>
+						  		<br>
+						  		<div class="row">
+			  		      	<label for="pd.DocumentId">Doc ID</label>
+				      			<div class="input-group">
+						  				<input id="pd.DocumentId" type="text" class="form-control"/>
+						        	<span class="input-group-btn">
+						  			   	<button type="button" class="btn btn-default" onclick="doUpdateDocument()">
+		 				  						<span class="glyphicon glyphicon-cog"></span> Go
+						  					</button>
+						  				</span>
+						  			</div>
+						  		</div>
+						  		<br>
+		    	  	    <label for="pd.DocumentContent">Content</label>
+				          <div class="input-group">
+	  	               <span class="input-group-btn">
+	          	         <span><pre id="pd.Content" class="pre-scrollable"></pre></span>
+	   	                 <span class="btn btn-primary btn-file">
+	    	                   Browse&hellip; <input id="pd.DocumentContent" type="file" onchange="doLoadFile(this, document.getElementById('pd.Cache'),document.getElementById('pd.Content'))"/>
+	       	             </span>
+	       	             <input id="pd.Cache" type="hidden"/>
+	            	     </span>
+	              	</div>
+			   				</div>
+             
+   				  	  <div class="tab-pane" id="pd_responseTab">
+  	 			  	    <div class="form-group col-sm-10">
+  	 			  	    	<div class="form-horizontal" role="form">
+  										<div class="form-group">
+   			 			  	    	<label class="col-sm-2 control-label" for="pd.Method">Method:</label>
+    											<p id="pd.Method" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+	  		 			  	    	<label class="col-sm-2 control-label" for="pd.URL">URL:</label>
+   		 									<p id="pd.URL" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+  	 					  	    	<label class="col-sm-2 control-label" for="pd.Status">Status:</label>
+    											<p class="form-control-static">
+    												<span id="pd.Status"></span>
+    												<span> (</span>
+    												<span id="pd.StatusText"></span>
+    												<span>)</span></p>
+    										</div>
+    									</div>
+	  					  	 	  <br>
+   			  	  		  <div>
+  			 		      	  <label for="pd.Response">Response</label>
+  				  	  			  <span><pre id="pd.Response" class="pre-scrollable"></pre></span>
+  				  	  		  </div>
+  			  	  		  </div>
+  			  	  	  </div>
+             
+   				  	  <div class="tab-pane" id="pd_javaScriptTab">
+  				  			<div>
+  			 	  	    	<label for="pd.Code">Code</label>
+  				  	 	 		<span><pre id="pd.Code" class="pre-scrollable prettyprint"></pre></span>
+  				  			</div>  
+   				  	  </div>
+             
+		  	  			<div class="tab-pane " id="pd_sqlTab">
+  				  			<div>
+  			 	  	    	<label for="pd.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="pd.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('pd');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="pd.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="pd.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="pd.1.timing"/>
+  				  	 	 		</div>
+  				  			</div> 
+  				  		</div>
+
+  			  	  	</div>     			  	  
+  			  		</div>
+  			 		</div> 
+
+	  		  <div class="tab-pane" id="GetDocument">
+	  		  	<div class="col-md-6">
+				     	<h2>Get Document</h2>
+ 				    	<div>
+				  			<ul class="nav nav-tabs" role="tablist" id="gd.options">
+  			  				<li><a href="#gd_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  			  				<li><a href="#gd_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  			  				<li><a href="#gd_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  			  				<li><a href="#gd_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+				  			</ul>
+				  		</div>
+				  		<!-- Tab panes -->
+							<div class="tab-content">
+								<br>
+    				  	  <div class="tab-pane active" id="gd_dataTab">
+			    	  		<div class="input-group">
+			  		      	<label for="gd.CollectionName">Collection</label>
+						  			<input id="gd.CollectionName" type="text" class="form-control" disabled/>
+						  		</div>
+						  		<br>
+						  		<div class="row">
+			  		      	<label for="gd.DocumentId">Doc ID</label>
+				      			<div class="input-group">
+						  				<input id="gd.DocumentId" type="text" class="form-control"/>
+						        	<span class="input-group-btn">
+						  			   	<button type="button" class="btn btn-default" onclick="doGetDocument()">
+		 				  						<span class="glyphicon glyphicon-cog"></span> Go
+						  					</button>
+						  				</span>
+						  			</div>
+							  		<br>
+					  	  		<div>
+				  		      	<label for="gd.Content">Content</label>
+					  	  			<span><pre id="gd.Content" class="pre-scrollable"></pre></span>
+					  	  		</div>  		
+						  		</div>
+			   				</div>
+             
+   				  	  <div class="tab-pane" id="gd_responseTab">
+  	 			  	    <div class="form-group col-sm-10">
+  	 			  	    	<div class="form-horizontal" role="form">
+  										<div class="form-group">
+   			 			  	    	<label class="col-sm-2 control-label" for="gd.Method">Method:</label>
+    											<p id="gd.Method" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+	  		 			  	    	<label class="col-sm-2 control-label" for="gd.URL">URL:</label>
+   		 									<p id="gd.URL" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+  	 					  	    	<label class="col-sm-2 control-label" for="gd.Status">Status:</label>
+    											<p class="form-control-static">
+    												<span id="gd.Status"></span>
+    												<span> (</span>
+    												<span id="gd.StatusText"></span>
+    												<span>)</span></p>
+    										</div>
+    									</div>
+	  					  	 	  <br>
+   			  	  		  <div>
+  			 		      	  <label for="gd.Response">Response</label>
+  				  	  			  <span><pre id="gd.Response" class="pre-scrollable"></pre></span>
+  				  	  		  </div>
+  			  	  		  </div>
+  			  	  	  </div>
+                           
+   				  	  <div class="tab-pane" id="gd_javaScriptTab">
+  				  			<div>
+  			 	  	    	<label for="gd.Code">Code</label>
+  				  	 	 		<span><pre id="gd.Code" class="pre-scrollable prettyprint"></pre></span>
+  				  			</div>  
+   				  	  </div>
+             
+		  	  			<div class="tab-pane " id="gd_sqlTab">
+  				  			<div>
+  			 	  	    	<label for="gd.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="gd.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('gd');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="gd.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="gd.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="gd.1.timing"/>
+  				  	 	 		</div>
+  				  			</div> 
+  				  		</div>
+  			      
+  			  	  	</div>			  	  
+  			  		</div>
+  			 		</div> 
+                       					  
+	  		  <div class="tab-pane" id="DeleteDocument">
+	  		  	<div class="col-md-6">
+		  	  		<h2>Delete Document</h2>
+ 				    	<div>
+				  			<ul class="nav nav-tabs" role="tablist" id="dd.options">
+  			  				<li><a href="#dd_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  			  				<li><a href="#dd_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  			  				<li><a href="#dd_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  			  				<li><a href="#dd_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+				  			</ul>
+				  		</div>
+				  		<!-- Tab panes -->
+							<div class="tab-content">
+								<br>
+    				  	  <div class="tab-pane active" id="dd_dataTab">
+			    	  		<div class="input-group">
+			  		      	<label for="dd.CollectionName">Collection</label>
+						  			<input id="dd.CollectionName" type="text" class="form-control" disabled/>
+						  		</div>
+						  		<br>
+						  		<div class="row">
+			  		      	<label for="dd.DocumentId">Doc ID</label>
+				      			<div class="input-group">
+						  				<input id="dd.DocumentId" type="text" class="form-control">
+						        	<span class="input-group-btn">
+						  			   	<button type="button" class="btn btn-default" onclick="doDeleteDocument()">
+			 			  						<span class="glyphicon glyphicon-cog"></span> Go
+						  					</button>
+						  				</span>
+						  			</div>
+						  		</div>
+			   				</div>
+             
+	 	  					<div class="tab-pane" id="dd_responseTab">
+  	 			  	    <div class="form-group col-sm-10">
+  	 			  	    	<div class="form-horizontal" role="form">
+  										<div class="form-group">
+   			 			  	    	<label class="col-sm-2 control-label" for="dd.Method">Method:</label>
+    											<p id="dd.Method" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+	  		 			  	    	<label class="col-sm-2 control-label" for="dd.URL">URL:</label>
+   		 									<p id="dd.URL" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+  	 					  	    	<label class="col-sm-2 control-label" for="dd.Status">Status:</label>
+    											<p class="form-control-static">
+    												<span id="dd.Status"></span>
+    												<span> (</span>
+    												<span id="dd.StatusText"></span>
+    												<span>)</span></p>
+    										</div>
+    									</div>
+	  					  	 	  <br>
+   			  	  		  <div>
+  			 		      	  <label for="dd.Response">Response</label>
+  				  	  			  <span><pre id="dd.Response" class="pre-scrollable"></pre></span>
+  				  	  		  </div>
+  			  	  		  </div>
+  			  	  	  </div>
+             
+   				  	  <div class="tab-pane" id="dd_javaScriptTab">
+  				  			<div>
+  			 	  	    	<label for="dd.Code">Code</label>
+  				  	 	 		<span><pre id="dd.Code" class="pre-scrollable prettyprint"></pre></span>
+  				  			</div>  
+   				  	  </div>
+             
+		  	  			<div class="tab-pane " id="dd_sqlTab">
+  				  			<div>
+  			 	  	    	<label for="dd.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="dd.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('dd');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="dd.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="dd.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="dd.1.timing"/>
+  				  	 	 		</div>
+  				  			</div> 
+  				  		</div>
+  			      
+  			  	  	</div>  	  	  
+  			  		</div>
+  			 		</div> 
+                       					  
+	  		  <div class="tab-pane" id="QBE">
+	  		  	<div class="col-md-6">
+				     	<h2>Search Documents</h2>
+ 				    	<div>
+				  			<ul class="nav nav-tabs" role="tablist" id="sd.options">
+  			  				<li><a href="#sd_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  			  				<li><a href="#sd_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  			  				<li><a href="#sd_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  			  				<li><a href="#sd_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+				  			</ul>
+				  		</div>
+				  		<!-- Tab panes -->
+							<div class="tab-content">
+								<br>
+    				  	  <div class="tab-pane active" id="sd_dataTab">
+					   		</div>
+             
+             
+	 	  					<div class="tab-pane" id="sd_responseTab">
+  	 			  	    <div class="form-group col-sm-10">
+  	 			  	    	<div class="form-horizontal" role="form">
+  										<div class="form-group">
+   			 			  	    	<label class="col-sm-2 control-label" for="sd.Method">Method:</label>
+    											<p id="sd.Method" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+	  		 			  	    	<label class="col-sm-2 control-label" for="sd.URL">URL:</label>
+   		 									<p id="sd.URL" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+  	 					  	    	<label class="col-sm-2 control-label" for="sd.Status">Status:</label>
+    											<p class="form-control-static">
+    												<span id="sd.Status"></span>
+    												<span> (</span>
+    												<span id="sd.StatusText"></span>
+    												<span>)</span></p>
+    										</div>
+    									</div>
+	  					  	 	  <br>
+  				  	  		  <div>
+  			 		      	  <label for="sd.Response">Response</label>
+  				  	  			  <span><pre id="sd.Response" class="pre-scrollable"></pre></span>
+  				  	  		  </div>
+  			  	  		  </div>
+  			  	  	  </div>
+             
+   				  	  <div class="tab-pane" id="sd_javaScriptTab">
+  				  			<div>
+  			 	  	    	<label for="sd.Code">Code</label>
+  				  	 	 		<span><pre id="sd.Code" class="pre-scrollable prettyprint"></pre></span>
+  				  			</div>  
+   				  	  </div>
+             
+		  	  			<div class="tab-pane " id="sd_sqlTab">
+  				  			<div>
+  			 	  	    	<label for="sd.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="sd.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('sd');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="sd.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="sd.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="sd.1.timing"/>
+  				  	 	 		</div>
+  				  			</div> 
+  				  		</div>
+  			      
+  			  	  	</div>
+  			  		</div>
+  			 		</div> 
+                       
+	  		  <div class="tab-pane" id="BulkLoad">
+	  		  	<div class="col-md-6">
+				     	<h2>Bulk Upload (From Array)</h2>
+				    	<div>
+				  			<ul class="nav nav-tabs" role="tablist" id="bl.options">
+  			  				<li><a href="#bl_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  			  				<li><a href="#bl_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  			  				<li><a href="#bl_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  			  				<li><a href="#bl_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+				  			</ul>
+				  		</div>
+				  		<!-- Tab panes -->
+							<div class="tab-content">
+								<br>
+    				  	  <div class="tab-pane active" id="bl_dataTab">
+						     	<div class="form-group">
+						  		 	<div class="row">
+						  		    <label for="bl.CollectionName">Collection</label>
+					      			<div class="input-group">
+						  					<input id="bl.CollectionName" type="text" class="form-control" disabled/>
+						  	      	<span class="input-group-btn">
+						  				  	<button type="button" class="btn btn-default" onclick="doBulkLoad()">
+			 			  							<span class="glyphicon glyphicon-cog"></span> Go
+						  						</button>
+						  					</span>
+						  				</div>
+						  		  </div>
+			    	  	    <label for="bl.DocumentContent">Content</label>
+					          <div class="input-group">
+		  	              <span class="input-group-btn">
+		          	        <span><pre id="bl.Content" class="pre-scrollable"></pre></span>
+		    	              <span class="btn btn-primary btn-file">
+		      	              Browse&hellip; <input id="bl.DocumentContent" type="file" onchange="doLoadArray(this, document.getElementById('bl.Cache'),document.getElementById('bl.Content'))"/>
+		          	        </span>
+		          	        <input id="bl.Cache" type="hidden"/>
+		            	    </span>
+		              	</div>
+		              </div>
+					   		</div>
+             
+	 	  					<div class="tab-pane" id="bl_responseTab">
+  	 			  	    <div class="form-group col-sm-10">
+  	 			  	    	<div class="form-horizontal" role="form">
+  										<div class="form-group">
+   			 			  	    	<label class="col-sm-2 control-label" for="bl.Method">Method:</label>
+    											<p id="bl.Method" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+	  		 			  	    	<label class="col-sm-2 control-label" for="bl.URL">URL:</label>
+   		 									<p id="bl.URL" class="form-control-static"></p>
+    										</div>
+  										<div class="form-group">
+  	 					  	    	<label class="col-sm-2 control-label" for="bl.Status">Status:</label>
+    											<p class="form-control-static">
+    												<span id="bl.Status"></span>
+    												<span> (</span>
+    												<span id="bl.StatusText"></span>
+    												<span>)</span></p>
+    										</div>
+    									</div>
+	  					  	 	  <br>
+   			  	  		  <div>
+  			 		      	  <label for="bl.Response">Response</label>
+  				  	  			  <span><pre id="bl.Response" class="pre-scrollable"></pre></span>
+  				  	  		  </div>
+  			  	  		  </div>
+  			  	  	  </div>
+             
+   				  	  <div class="tab-pane" id="bl_javaScriptTab">
+  				  			<div>
+  			 	  	    	<label for="bl.Code">Code</label>
+  				  	 	 		<span><pre id="bl.Code" class="pre-scrollable prettyprint"></pre></span>
+  				  			</div>  
+   				  	  </div>
+             
+   				  	  <div class="tab-pane " id="bl_sqlTab">
+  				  			<div>
+  			 	  	    	<label for="bl.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="bl.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('bl');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="bl.SQL" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div><pre id="bl.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="bl.1.timing"/>
+  				  	 	 		</div>
+  				  			</div>  
+   				  	  </div>
+  			      
+  			  	  	</div>  
+  			  	  
+  			  		</div>
+  			 		</div> 
+
+	  		  <div class="tab-pane" id="SQL">
+	  		  	<div class="col-md-6">
+				     	<h2>SQL Examples</h2>
+				    	<div>
+				  			<ul class="nav nav-tabs" role="tablist" id="bl.options">
+  			  				<li><a href="#sql_query1" role="tab" data-toggle="tab">Simple Query</a></li>
+  			  				<li><a href="#sql_query2" role="tab" data-toggle="tab">JSON_VALUE</a></li>
+  			  				<li><a href="#sql_query3" role="tab" data-toggle="tab">JSON_QUERY</a></li>
+  			  				<li><a href="#sql_query4" role="tab" data-toggle="tab">JSON_TABLE</a></li>
+  			  				<li><a href="#sql_query5" role="tab" data-toggle="tab">CREATE VIEW</a></li>
+  			  				<li><a href="#sql_query6" role="tab" data-toggle="tab">DESCRIBE VIEW</a></li>
+  			  				<li><a href="#sql_query7" role="tab" data-toggle="tab">QUERY VIEW</a></li>
+				  			</ul>
+				  		</div>
+				  		<!-- Tab panes -->
+							<div class="tab-content">
+		  	  			<div class="tab-pane " id="sql_query1">
+  				  			<div>
+  				  				<br>
+  			 	  	    	<label for="sql1.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="sql1.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('sql1');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="sql1.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="sql1.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="sql1.1.timing"/>
+  				  	 	 		</div>
+  				  		  </div>
+  				  		</div>
+		  	  			<div class="tab-pane " id="sql_query2">
+  				  			<div>
+  				  				<br>
+  			 	  	    	<label for="sql2.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="sql2.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('sql2');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="sql2.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="sql2.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="sql2.1.timing"/>
+  				  	 	 		</div>
+  				  		  </div>
+  				  		</div>
+		  	  			<div class="tab-pane " id="sql_query3">
+  				  			<div>
+  				  				<br>
+  			 	  	    	<label for="sql3.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="sql3.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('sql3');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="sql3.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="sql3.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="sql3.1.timing"/>
+  				  	 	 		</div>
+  				  		  </div>
+  				  		</div>
+		  	  			<div class="tab-pane " id="sql_query4">
+  				  			<div>
+  				  				<br>
+  			 	  	    	<label for="sql4.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="sql4.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('sql4');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="sql4.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="sql4.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="sql4.1.timing"/>
+  				  	 	 		</div>
+  				  		  </div>
+  				  		</div>
+		  	  			<div class="tab-pane " id="sql_query5">
+  				  			<div>
+  				  				<br>
+  			 	  	    	<label for="sql5.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="sql5.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('sql5');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="sql5.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="sql5.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="sql5.1.timing"/>
+  				  	 	 		</div>
+  				  		  </div>
+  				  		</div>
+		  	  			<div class="tab-pane " id="sql_query6">
+  				  			<div>
+  				  				<br>
+  			 	  	    	<label for="sql6.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="sql6.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('sql6');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="sql6.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="sql6.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="sql6.1.timing"/>
+  				  	 	 		</div>
+  				  		  </div>
+  				  		</div>
+		  	  			<div class="tab-pane " id="sql_query7">
+  				  			<div>
+  				  				<br>
+  			 	  	    	<label for="sql7.SQL">SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="sql7.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL('sql7');return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="sql7.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="sql7.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="sql7.1.timing"/>
+  				  	 	 		</div>
+  				  		  </div>
+  				  		</div>
+							</div>
+						</div>
+					</div>
+				
+							
+				</div>
+			</div>
+		</div>
+		
+		
+		<!-- Bootstrap core JavaScript
+	  ================================================== -->
+		<!-- Placed at the end of the document so the pages load faster -->
+		<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+		<script type="text/javascript" language="javascript" src="/XFILES/Frameworks/jquery.js"></script>
+		<!-- Latest compiled and minified JavaScript -->
+		<script type="text/javascript" language="javascript" src="/XFILES/Frameworks/bootstrap/js/bootstrap.min.js"></script>
+		<script type="text/javascript" language="javascript" src="/XFILES/Frameworks/bootstrap-dialog/js/bootstrap-dialog.min.js"></script>		
+		<script type="text/javascript" language="javascript" src="/XFILES/common/js/jsonPrettyPrint.js"></script>
+		<script type="text/javascript" language="javascript" src="/XFILES/common/js/common.js"></script>
+  	<script type="text/javascript" language="javascript" src="/XFILES/common/js/xmlDocumentObject.js"></script>
+		<script type="text/javascript" language="javascript" src="/XFILES/common/js/userManagement.js"></script>
+    <script type="text/javascript" language="javascript" src="/XFILES/common/js/runtime.js"></script>
+    <script type="text/javascript" language="javascript" src="/XFILES/common/js/RestUtilities.js"></script>
+		<script type="text/javascript" language="javascript" src="/XFILES/common/js/RestAPI.js"></script>
+		<script type="text/javascript" language="javascript" src="/XFILES/lite/js/common.js"></script>
+		<script type="text/javascript" language="javascript" src="js/JSONREST.js"></script>
+		<script type="text/javascript" language="javascript" src="js/PurchaseOrder.js"></script>
+		<script type="text/javascript" language="javascript" src="js/POREST.js"></script>
+	</body>
+</html>

@@ -1,0 +1,347 @@
+<!doctype html>
+<html>
+  <head>
+		<meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
+		<title>Restful WebServices / Database as a JSON Store Demonstration</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="/XFILES/Frameworks/bootstrap/css/bootstrap.min.css"/>
+		<link rel="stylesheet" href="/XFILES/Frameworks/bootstrap-dialog/css/bootstrap-dialog.min.css"/>
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="/XFILES/Frameworks/bootstrap/css/bootstrap-theme.min.css"/>
+		<!-- Custom styles for this template -->
+		<link rel="stylesheet" charset="UTF-8" type="text/css" href="/XFILES/lite/css/XFiles.css"/>
+		<style>
+.btn-file {
+  position: relative;
+  overflow: hidden;
+}
+.btn-file input[type=file] {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 100%;
+  min-height: 100%;
+  font-size: 100px;
+  text-align: right;
+  filter: alpha(opacity=0);
+  opacity: 0;
+  background: red;
+  cursor: inherit;
+  display: block;
+}
+input[readonly] {
+  background-color: white !important;
+  cursor: text !important;
+}		
+.form-group label {
+    float: left;
+    text-align: left;
+    font-weight: normal;
+}
+
+.form-group select {
+    display: inline-block;
+    width: auto;
+    vertical-align: middle;
+}	
+		</style>
+	</head>
+  <body id="body" onload="init(document.getElementById('pageContent'));" style="border:0px">
+  <!-- Modal -->
+  <div class="modal fade" id="logWindow" tabindex="-1" role="dialog" aria-labelledby="logWindow" aria-hidden="true">
+  	
+  	<!--
+  	
+    	var method           = document.getElementById("lw.Method");
+    	var url              = document.getElementById("lw.URL");
+    	var logRecordNumber  = document.getElementById("lw.RecordNumber");
+    	var logRecordCount   = document.getElementById("lw.RecordCount");
+    	var requestBody      = document.getElementById("lw.RequestBody");
+    	var responseText     = document.getElementById("lw.ResponseText");
+    	var elapsedTime      = document.getElementById("lw.ElapsedTime");
+    	var httpStatus       = document.getElementById("lw.HttpStatus");
+    	
+  	-->
+  	
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title" id="myModalLabel">REST Call Log</h4>
+        </div>
+        <div class="modal-body">
+    			<div>
+						<ul class="nav nav-tabs" role="tablist" id="sd_options">
+  						<li><a href="#lw_OverviewTab" role="tab" data-toggle="tab">Overview</a></li>
+  						<li><a href="#lw_RequestTab" role="tab" data-toggle="tab">Request</a></li>
+  						<li><a href="#lw_ResponseTab" role="tab" data-toggle="tab">Response</a></li>
+  						<li><a href="#lw_JavascriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+		  			</ul>
+		  		</div> 
+		  		<br>
+		  		<!-- Tab panes -->
+					<div class="tab-content">
+				 	  <div class="tab-pane active" id="lw_OverviewTab">
+				 	  	<div class="form-horizontal">
+  	  	  		  <div>
+  	 			      	<label class="control-label" for="lw.StartTime"> Time </label>
+     		  			  <span id="lw.StartTime" class="uneditable-input"></span>
+  	 			      	<label class="control-label" for="lw.RecordNumber">Log Record</label>
+     		  			  <span id="lw.RecordNumber" class="uneditable-input"></span>
+  	 			      	<label class="control-label" for="lw.RecordCount"> of </label>
+     		  			  <span id="lw.RecordCount" class="uneditable-input"></span>
+     	  			  </div>
+  	  	  		  <div>
+  	 			      	<label class="control-label" for="lw.Method">Method</label>
+     		  			  <span id="lw.Method" class="uneditable-input"></span>
+     	  			  </div>
+  	  	  		  <div>
+  	 			      	<label class="control-label" for="lw.URL">URL</label>
+     		  			  <span id="lw.URL" class="uneditable-input"></span>
+     	  			  </div>
+  	  	  		  <div>
+  	 			      	<label class="control-label" for="lw.HttpStatus">Status</label>
+     		  			  <span id="lw.HttpStatus" class="uneditable-input"></span>
+     	  			  </div>
+	  	  		  	<div>
+	 			      		<label class="control-label" for="lw.ElapsedTime">Timing</label>
+   		  			  	<span id="lw.ElapsedTime" class="uneditable-input"></span>
+   	  			  	</div>
+	  	  		  	<div>
+	   	  			  	<br>
+									<button id="lw.FirstRecord" type="button" class="btn btn-default btn-med" onclick="restAPI.loadLogEntry(1);return false;">
+  									<span class="glyphicon glyphicon glyphicon glyphicon-fast-backward"></span>
+									</button>
+									<button id="lw.PrevRecord" type="button" class="btn btn-default btn-med">
+  									<span class="glyphicon glyphicon glyphicon-step-backward"></span>
+									</button>
+									<button id="lw.NextRecord" type="button" class="btn btn-default btn-med">
+  									<span class="glyphicon glyphicon glyphicon-step-forward"></span>
+									</button>
+									<button id="lw.LastRecord" type="button" class="btn btn-default btn-med" onclick="restAPI.loadLogEntry(restAPI.getLogRecordCount());return false;">
+  									<span class="glyphicon glyphicon glyphicon glyphicon-fast-forward"></span>
+									</button>
+   	  			  	</div>
+   	  			  </div>
+   	  		  </div>
+				 	  <div class="tab-pane" id="lw_RequestTab">
+	  	  		  <div>
+	 			      	<label for="lw.RequestBody">Request</label>
+   		  			  <span><pre id="lw.RequestBody" class="pre-scrollable"></pre></span>
+   	  			  </div>
+   	  		  </div>
+			 	  	<div class="tab-pane" id="lw_ResponseTab">
+	 	  		  	<div>
+	  		      	<label for="lw.ResponseText">Response</label>
+    	  			  <span><pre id="lw.ResponseText" class="pre-scrollable"></pre></span>
+   		  		  </div>
+   		  	  </div>
+			 	  	<div class="tab-pane" id="lw_JavascriptTab">
+	 	  		  	<div>
+	  		      	<label for="lw.ResponseText">Javascript</label>
+    	  			  <span><pre id="lw.JavascriptCode" class="pre-scrollable"></pre></span>
+   		  		  </div>
+   		  	  </div>
+   	  		</div>
+        </div>
+        <div class="modal-footer">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="connectDialog" tabindex="-1" role="dialog" aria-labelledby="connectDialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">								
+        <div class="modal-header">
+        	<div class="form-horizontal">
+          	<span class="h3 modal-title" id="documentContentTitle">Login</span>
+					</div>
+	      </div>
+        <div class="modal-body">
+			    		<input id="sqlUsername" type="text" class="form-control" name="username" placeholder="username" required="" autofocus="" />
+		   	  		<input id="sqlPassword" type="password" class="form-control" name="password" placeholder="Password" required=""/>      
+		     			<button class="btn btn-lg btn-primary btn-block" onclick="doLocalLogin(document.getElementById('sqlUsername'),document.getElementById('sqlPassword'));">Login</button>   
+        </div>
+        <div class="modal-footer">
+					<button id="btn.cancelLogin" type="button" class="btn btn-default btn-med" onclick="closeModalDialog('connectDialog');return false;">
+						<span class="glyphicon glyphicon-ban-circle"></span>
+					</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal fade" id="editDocumentDialog" tabindex="-1" role="dialog" aria-labelledby="editDocumentDialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">								
+        <div class="modal-header">
+        	<div class="form-horizontal">
+          	<span class="h3 modal-title" id="documentContentTitle">Edit Document</span>
+ 						<span class="pull-right">
+							<select id="templateList" onchange="useTemplate()"></select>
+							<button id="btn.saveNewDocument" type="button" class="btn btn-default btn-med" onclick="doAppendField();return false">
+								<img src="/XFILES/lib/icons/json_add_field.png" alt="Append Field" border="0" width="16" height="16"/>
+							</button>
+						</span>
+					</div>
+	      </div>
+        <div class="modal-body" style="overflow: auto;">
+					<span class="row" style="display:block;height:5px;"></span>
+					<span class="row" id="editDocument" style="display=none;width:100%;"></span>
+					<span class="row" style="display:block;height:5px;"></span>
+        </div>
+        <div class="modal-footer">
+					<button id="btn.cancelEditDocument" type="button" class="btn btn-default btn-med" onclick="closeModalDialog('editDocumentDialog');return false;">
+						<span class="glyphicon glyphicon-ban-circle"></span>
+					</button>
+					<button id="btn.saveEditDocument" type="button" class="btn btn-default btn-med">
+						<span class="glyphicon glyphicon-save"></span>
+					</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="newFieldDialog" tabindex="-1" role="dialog" aria-labelledby="newFieldDialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">								
+        <div class="modal-header">
+        	<div class="form-horizontal">
+          	<span class="h3 modal-title" id="documentContentTitle">Add Field</span>
+					</div>
+	      </div>
+        <div class="modal-body">
+		  		<div class="form-inline">
+		  			<label for="newFieldName">Field Name</label>
+						<input id="newFieldName" name="newFieldName" type="text" class="form-control" placeholder="Field Name" >
+					</div>
+        </div>
+        <div class="modal-footer">
+					<button id="btn.cancelNewField" type="button" class="btn btn-default btn-med" onclick="closeModalDialog('newFieldDialog');return false;">
+						<span class="glyphicon glyphicon-ban-circle"></span>
+					</button>
+					<button id= "btn.saveNewField" type="button" class="btn btn-default btn-med">
+						<span class="glyphicon glyphicon-save"></span>
+					</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="newTemplateDialog" tabindex="-1" role="dialog" aria-labelledby="newTemplateDialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">								
+        <div class="modal-header">
+        	<div class="form-horizontal">
+          	<span class="h3 modal-title" id="documentContentTitle">Create Template</span>
+					</div>
+	      </div>
+        <div class="modal-body">
+		  		<div class="form-inline">
+		  			<label for="newTemplateName">Template Name</label>
+						<input id="newTemplateName" name="newTemplateName" type="text" class="form-control" placeholder="Template Name" >
+					</div>
+        </div>
+        <div class="modal-footer">
+					<button id="btn.cancelNewTemplate" type="button" class="btn btn-default btn-med" onclick="closeModalDialog('newTemplateDialog');return false;">
+						<span class="glyphicon glyphicon-ban-circle"></span>
+					</button>
+					<button id= "btn.SaveNewTemplate" type="button" class="btn btn-default btn-med" onclick="doSaveTemplate();return false;">
+						<span class="glyphicon glyphicon-save"></span>
+					</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+	<div class="ls-Header">
+    <a class="ls-Logo" href="#"></a>
+  </div>
+  <div class="ls-Body">
+    <div class="ls-Title ">
+     	<span class="form-horizontal">
+       	<h1 class="ls-Title-text">
+     			<span>Schemaless Development with Oracle Database 12c</span>
+      	</h1>
+       </span>
+			</div>
+		</div>
+		<div class="ls-Details well well-lg">
+			<span class="control-group">
+				<span class="form-inline" role="form">	
+  				<span class="form-group h4">
+  					<span class="control-group">
+		 	  			<label class="control-label" for="collectionList">Collections
+								<select id="collectionList" onchange="checkNewCollection()" class="form-control" ></select>
+							</label>
+						  <span style="display:inline-block;"></span>
+							<span id="newCollection">	
+								<span class="input-group">
+									<input id="newCollectionName" class="form-control" name="newCollection" placeholder="Collection Name" size="32"/>
+ 									<span class="input-group-btn">
+										<button id="btn.saveNewDocument" type="button" class="btn btn-default btn-med" onclick="doCreateCollection();return false;">
+											<img src="/XFILES/lib/icons/json_create_collection.png" alt="New Collection" border="0" align="absmiddle" width="16" height="16"/>
+										</button>
+				  				</span>
+				  			</span>
+				  		</span>
+ 						  <span style="display:inline-block;"></span>
+							<span class="button-grp" id="existingActions" style="display:inline-block;">
+								<button id="btn.saveNewDocument" type="button" class="btn btn-default btn-med" onclick="doCreateDocument();return false;">
+									<img src="/XFILES/lib/icons/json_create_document.png" alt="Add Document" border="0" align="absmiddle" width="16" height="16"/>
+								</button>
+								<button type="button" class="btn btn-default btn-med" onclick="doGetKeys();return false;">
+									<img src="/XFILES/lib/icons/json_get_keys.png" alt="Get Keys" border="0" align="absmiddle" width="16" height="16"/>
+								</button>
+								<button type="button" class="btn btn-default btn-med" onclick="doGetDocuments();return false;">
+									<img src="/XFILES/lib/icons/json_get_documents.png" alt="Get Documents" border="0" align="absmiddle" width="16" height="16"/>
+								</button>
+								<button type="button" class="btn btn-default btn-med" onclick="doDeleteCollection();return false;">
+									<img src="/XFILES/lib/icons/json_delete_collection.png" alt="Delete Collection" border="0" align="absmiddle" width="16" height="16"/>
+								</button>
+								<button type="button" class="btn btn-default btn-med" onclick="doQueryCollection();return false;">
+									<img src="/XFILES/lib/icons/json_query_collection.png" alt="Query Collection" border="0" align="absmiddle" width="16" height="16"/>
+								</button>		
+							</span>
+				  	</span>
+				  </span>
+					<span class="button-grp pull-right h4">
+						<button id="btn.login" type="button" class="btn btn-default btn-med" onclick="openLoginDialog();return false;">
+		 					<span class="glyphicon glyphicon-log-in"></span>
+						</button>
+						<button id="btn.logout" type="button" class="btn btn-default btn-med" onclick="doLocalLogoff();return false;">
+	 						<span class="glyphicon glyphicon-log-out"></span>
+						</button>
+						<button id="btn.showLogRecords" type="button" class="btn btn-default btn-med" onclick="restAPI.showRestAPILog('logWindow');return false;">
+	 						<span class="glyphicon glyphicon-transfer"></span>
+						</button>
+					</span>
+				</span>
+			</span>
+			<br>
+			<br>
+			<div id="keyList" class="well well-md" style="display:none;"></div>
+			<br>
+			<div id="showDocument"  class="well well-md" style="display:none;"></div>
+			<br>
+			<div id="showDocumentList" class="well well-md" style="display:none; overflow:auto;"></div>
+		</div>								
+    <div id="fatalError"></div>
+		<!-- Placed at the end of the document so the pages load faster -->
+		<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+		<script type="text/javascript" language="javascript" src="/XFILES/Frameworks/jquery.js"></script>
+		<!-- Latest compiled and minified JavaScript -->
+		<script type="text/javascript" language="javascript" src="/XFILES/Frameworks/bootstrap/js/bootstrap.min.js"></script>
+		<script type="text/javascript" language="javascript" src="/XFILES/Frameworks/bootstrap-dialog/js/bootstrap-dialog.min.js"></script>
+  	<script type="text/javascript" language="javascript" src="/XFILES/common/js/xmlDocumentObject.js"></script>
+		<script type="text/javascript" language="javascript" src="/XFILES/common/js/jsonPrettyPrint.js"></script>
+		<script type="text/javascript" language="javascript" src="/XFILES/common/js/renderJSON.js"></script>
+		<script type="text/javascript" language="javascript" src="/XFILES/common/js/common.js"></script>
+		<script type="text/javascript" language="javascript" src="/XFILES/common/js/userManagement.js"></script>
+		<script type="text/javascript" language="javascript" src="/XFILES/common/js/RestUtilities.js"></script>
+    <script type="text/javascript" language="javascript" src="/XFILES/common/js/RestAPI.js"></script>
+		<script type="text/javascript" language="javascript" src="schemalessDevelopment.js"></script>
+  </body>
+</html>

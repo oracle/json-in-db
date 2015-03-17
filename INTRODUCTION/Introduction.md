@@ -42,12 +42,12 @@ Download the latest version of the application from GitHub. The application can 
 
 ![](media/image004.png)
 
-Use the Download Zip button to download the contents of the GitHub repository. The Zip file will be called json-in-db.zip.
+Use the Download Zip button to download the contents of the GitHub repository. The Zip file will be called json-in-db-master.zip.
 
 <span id="_Toc310240962" class="anchor"><span id="_Toc413168752" class="anchor"></span></span>Windows Installation
 ==================================================================================================================
 
-Unzip the archive. This will create a folder called json-in-db with a subfolder INTRODUCTION.
+Unzip the archive. This will create a folder called json-in-db-master with a subfolder INTRODUCTION.
 
 ![](media/image005.png)
 
@@ -96,7 +96,7 @@ A simple install script is provided to allow the example to be installed from a 
 
 ![](media/image010.png)
 
-The demonstration is installed using the INTRODUCTION.sh script found in the folder xml-sample-demo/INTRODUCTION/install.
+The demonstration is installed using the INTRODUCTION.sh script found in the folder json-in-db-master/INTRODUCTION/install.
 
 To run the installation script first set the current directory to the install directory. Make sure that the environment variables ORACLE\_HOME and ORACLE\_SID are set correctly.Invoke the INTRODUCTION.sh script passing the following arguments on the command line
 

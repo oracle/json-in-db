@@ -1,15 +1,15 @@
 <!-- edited with XML Spy v4.4 U (http://www.xmlspy.com) by Mark D. Drake and Geoff Lee (Oracle XML Dev) -->
 <installerConfiguration>
 	<parameters>
-		<parameter name="%DEMONAME%" value="Oracle JSON Hands on Lab : Oracle Database 12c (12.1.0.2.0)"/>
-		<parameter name="%LAUNCHPAD%" value="Hands on Lab (12.1.0.2.0)"/>
+		<parameter name="%DEMONAME%" value="Oracle JSON Query and Analytics : Oracle Database 12c (12.1.0.2.0)"/>
+		<parameter name="%LAUNCHPAD%" value="JSON (12.1.0.2.0)"/>
 		<parameter name="%LAUNCHPADFOLDER%" value="%STARTMENU%\JSON Demonstrations"/>
 		<parameter name="%SHORTCUTFOLDER%" value="%DEMODIRECTORY%\%USER%"/>
 
 		<parameter name="%PUBLICFOLDER%" value="/publishedContent"/>
-		<parameter name="%DEMOCOMMON%" value="%PUBLICFOLDER%/Hands-on-Labs/SQL-JSON-2013"/>
+		<parameter name="%DEMOCOMMON%" value="%PUBLICFOLDER%/demonstrations/JSON/introduction"/>
 		<parameter name="%HOMEFOLDER%" value="/home/%USER%"/>
-		<parameter name="%DEMOLOCAL%" value="%HOMEFOLDER%/Hands-on-Labs/SQL-JSON-2013"/>
+		<parameter name="%DEMOLOCAL%" value="%HOMEFOLDER%/demonstrations/JSON/introduction"/>
 		<parameter name="%XFILES_SCHEMA%" value="XFILES"/>
 
 		<parameter name="enableHTTPTrace" value="false"/>

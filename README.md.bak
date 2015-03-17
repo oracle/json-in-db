@@ -1,5 +1,0 @@
-# json-in-db
-
-This repository contains downloadable and installable demonstrations for the JSON capabilities of Oracle Database 12.1.0.2.0 and later. Each demonstraiton  can be installed independantly of any of the other demonstrations. Each demonstration has it's own folder within the xml-sample-demo repository. However in order to install and run any of the demonstrations the XFILES application must be installed first.Each demonstraiton  can be installed independantly of any of the other demonstrations. Each demonstration has it's own folder within the xml-sample-demo repository. However in order to install and run any of the demonstrations the XFILES application must be installed first.
-
-The INTRODUCTION example provides a simple introduction to storing, indexing, updating and querying XML document with Oracle Database. It is based on XML Schema and Object-Relational storage. More information on how to download, install and run the INTRODUCTION example can be found in the installation.md file located in the INTRODUCTION folder.

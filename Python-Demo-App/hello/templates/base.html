@@ -1,0 +1,56 @@
+
+{% from "util.html" import nav_link with context %}
+
+<!DOCTYPE HTML>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>JaSON</title>
+        <!--[if lt IE 9]>
+            <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <link href="{{ static('bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+        <link href="{{ static('favicon.ico') }}" rel="shortcut icon">
+        <link href="{{ static('style2.css') }}" rel="stylesheet">
+<!--         <link href="{{ static('bootstrap/css/bootstrap.css') }}" rel="stylesheet"> -->
+        <script src="{{ static('bootstrap/js/bootstrap.min.js') }}"></script>
+	<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+    </head>
+    <body>
+        <div class="navbar navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    <a class="brand" href="{{ url_for('login') }}">JaSON</a>
+                    <div class="nav-collapse">
+			<ul class="nav">
+			    {{ nav_link('Login', 'login') }}
+			</ul>
+                        <ul class="nav">
+                            {{ nav_link('Edit My Profile', 'index') }}
+                        </ul>
+			<ul class="nav">
+                           {{ nav_link('My Profile', 'viewprof', username=current_user.username) }}
+                        </ul>
+			<ul class="nav">
+                           {{ nav_link('General Search', 'gensearch') }}
+                        </ul>
+			<ul class="nav">
+			    {{ nav_link('Advanced Search', 'search') }}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            {% for message in get_flashed_messages() %}
+                <div class="alert">{{ message }}</div>
+            {% endfor %}
+            {% block content %}
+            {% endblock %}
+        </div>
+    </body>
+</html>

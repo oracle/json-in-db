@@ -15,6 +15,8 @@ var RENDER_LIMIT = 65536
 var UPLOAD_LIMIT = 32768
 var SQL_STATEMENT_CACHE;
 
+var tabPrefixList = ["cc", "dc", "ld", "id", "pd", "gd", "dd", "sd"];
+
 function loadSQLStatements() {
 
     var XHR = new XMLHttpRequest();
@@ -786,8 +788,14 @@ function init() {
     if (isORDS) {
 		  restAPI.setORDS();
 		  restAPI.setSchema("scott");
+		  // Remove Password Field from form
 		  var pwd = document.getElementById("sqlPassword");
 		  pwd.parentNode.removeChild(pwd);
+		  // Remove SQL Tabs from form.
+			for (var i =0; i<tabPrefixList.length; i++) {
+				var tab = document.getElementById(tabPrefixList[i] & "_sqlTabLi");
+				tab.parentNode.removeChild(tab);
+    	}
     }
     else {
     	restAPI.setServletRoot('/DBJSON');

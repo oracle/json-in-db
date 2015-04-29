@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+{% from "util.html" import render_field %}
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+h3 {
+  color:#33CCFF;	
+}
+</style>
+
+<!DOCTYPE html>
+<html lang="en">
+<div class="form-login">
+	<form method="POST"> 
+		<h2>Welcome to JaSON</h2>
+		<h3 style="text-align:center"><i>Connect with coworkers near you with similar interests and backgrounds!</i></h3>
+			{{ form.hidden_tag()}}
+			{{ render_field(form.username, label=False, class="input-xlarge", placeholder="username") }}
+			{{ render_field(form.password, label=False, class="input-xlarge", placeholder="password") }} 
+		<input type="submit" value="Login" class="btn btn-primary">
+	</form>
+</div>
+</html>
+{% endblock %}

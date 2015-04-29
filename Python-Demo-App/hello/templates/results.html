@@ -1,0 +1,37 @@
+{% from "util.html" import render_field %}
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<table class=table id="myTable">
+	<tr>
+		<th>Profile Name</th>
+		<th>Picture</th>		
+	</tr>
+</table>
+
+<script type="text/javascript">
+var comments = {{ comments|tojson }};
+for (i=0; i < comments.length; i++){
+    var table = document.getElementById("myTable");
+    var row = table.insertRow(-1);
+    var pname = row.insertCell(0);
+    var pic = row.insertCell(1);
+    var img = document.createElement('img');
+    img.src = comments[i].picture;
+    img.style.height = "100px"
+    pic.appendChild(img);
+    var a = document.createElement('a');
+    var linkText = document.createTextNode(comments[i].Profname);
+    a.appendChild(linkText);
+    var beg = "http://127.0.0.1:5000/viewprof/"
+    var end = comments[i].username;
+    a.href = beg.concat(end)
+    pname.appendChild(a);
+}
+</script>
+
+{% endblock %}
+
+

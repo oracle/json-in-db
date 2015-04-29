@@ -34,6 +34,8 @@ $(function(){
    });
 })
 
+var tabPrefixList = ["cc", "cpo", "dc", "ld", "id", "pd", "gd", "dd", "sd", "bl"];
+
 function showSQLPageDialog(URL) {
 	BootstrapDialog.show({
             message: function(dialog) {
@@ -469,9 +471,15 @@ function init() {
 	if (isORDS) {
 		restAPI.setORDS();
 		restAPI.setSchema("scott");
+	  // Remove Password field from form.
     var pwd = document.getElementById("sqlPassword");
 	  pwd.parentNode.removeChild(pwd);
-  }
+	  // Remove SQL Tabs from form.
+		for (var i =0; i<tabPrefixList.length; i++) {
+			var tab = document.getElementById(tabPrefixList[i] & "_sqlTabLi");
+			tab.parentNode.removeChild(tab);
+    }
+ 	}
   else {
   	restAPI.setServletRoot("/DBJSON");
   }

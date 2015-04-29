@@ -1,0 +1,69 @@
+{% from "util.html" import render_field %}
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+h3 {
+  color:#33CCFF;	
+}
+
+ul {
+  list-style-type: none;
+  text-align:center;
+  padding-left:0px;
+}
+
+dl {
+	display:inline-block;
+}
+</style>
+
+
+<div id="form">
+<form method="POST"> 
+	<h3><i>Edit your profile so people can learn more about you!</i></h3><br>
+
+	{{ form.hidden_tag()}}
+	
+	<fieldset>
+		<legend>Personal Information</legend>
+		{{ render_field(form.Profname, label=True, class="input-xlarge") }}
+		{{ render_field(form.picture, label=True, class="input-xlarge") }}
+		{{ render_field(form.about, label=True, class="input-xlarge") }}
+		{{ render_field(form.age, label=True, class="input-xlarge") }}
+		{{ render_field(form.email, label=True, class="input-xlarge") }}
+		{{ render_field(form.phone, label=True, class="input-xlarge") }}
+	</fieldset>
+<br>
+<br>
+	<fieldset>
+		<legend>Interests</legend>
+		<div class="row" align="center">
+			<dl>
+			{{form.interests}}
+			</dl>
+		</div>
+	</fieldset>
+<br>
+<br>
+	<fieldset>
+		<legend>Oracle Information</legend>
+			{{ render_field(form.loc, label=True, class="input-xlarge") }}
+			{{ render_field(form.groupd, label=True, class="input-xlarge") }}
+			{{ render_field(form.empid, label=True, class="input-xlarge") }}
+	</fieldset>
+<br>
+<br>
+	<fieldset>
+		<legend>Education Information</legend>
+			{{ render_field(form.school, label=True, class="input-xlarge") }}
+			{{ render_field(form.gradYear, label=True, class="input-xlarge") }}
+			{{ render_field(form.involv, label=True, class="input-xlarge") }}
+	</fieldset>
+<br>
+<input type="submit" name="search" value="Update Profile" class = "btn btn-primary" style="margin-bottom:80px">
+
+{% endblock %}
+

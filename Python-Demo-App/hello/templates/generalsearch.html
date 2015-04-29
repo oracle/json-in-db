@@ -1,0 +1,41 @@
+{% from "util.html" import render_field %}
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+h3 {
+  color:#33CCFF;	
+}
+
+ul {
+  list-style-type: none;
+  text-align:center;
+  padding-left:0px;
+}
+
+dl {
+	display:inline-block;
+}
+</style>
+
+
+<div id="form">
+<form method="POST"> 
+	<h3><i>Search for other Oracle employees with similar background, interests, or position as you!</i></h3><br>
+
+	{{ form.hidden_tag()}}
+	
+	<fieldset>
+		{{ render_field(form.searchInput, label=False, class="input-xlarge") }}
+	</fieldset>
+<br>
+
+<input type="submit" name="search" value="Search" class = "btn btn-primary" style="margin-bottom:80px">
+
+</form>
+</div>
+
+
+{% endblock %}

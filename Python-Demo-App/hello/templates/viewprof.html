@@ -1,0 +1,48 @@
+{% from "util.html" import render_field %}
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+h3  {
+  color:#33CCFF;
+}
+
+
+</style>
+
+<div class="container">
+  <div class="row" align="center">
+    <h3><b><i>{{comments.Profname}}, {{comments.age}}</i></b></h3>
+  </div>
+  <div class="row" align="center">
+    <img src={{comments.picture}} class="img-circle" height="200" width="200">
+  </div>
+
+  <div class="row" align="center">
+    <h4>{{comments.groupd}} Group, located at {{comments.loc}}<br>
+    Email: {{comments.email}}, Phone: {{comments.phone}}</h4>
+  </div>
+  <br>
+  <div class="row" align="center">
+  <div class="table" style="background-color:#E0E0E0; padding:20px; width:80%">
+    <tbody>
+      <tr>
+        <td><h4>About Me:</h4></td>
+        <td><i>"{{comments.about}}"</i></td>
+        <td><h4>Interests:</h4></td>
+          {% for i in comments.inter %}
+            {% if comments.inter[i] == 1 %}
+              <label2>{{ i }}</label2>
+            {%endif%}
+          {% endfor %}
+        <td><h4>Education Information:</h4></td>
+        <td>{{comments.school}} University, Class of {{comments.gradYear}}</td><br>
+        <td>At school I was involved in: {{comments.involv}}</td>    
+      </tr>
+    </tbody>
+  </div>
+  </div>
+</div>
+{% endblock %}

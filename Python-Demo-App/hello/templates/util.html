@@ -1,0 +1,43 @@
+{%- macro nav_link(label, endpoint) -%}
+    <li {% if endpoint == request.endpoint %}class="active"{% endif %}><a href="{{ url_for(endpoint, **kwargs) }}">{{ label }}</a></li>
+{%- endmacro -%}
+
+{% macro render_field(field) %}
+    <div class="control-group {% if field.errors %}error{% endif %}">
+        {% if kwargs.get('label', True) %}
+            {{ field.label(class="control-label") }}
+        {% endif %}
+        <div class="controls">
+            {{ field(**kwargs) }}
+            {% for error in field.errors %}
+                <p class="help-block">{{ error }}</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro render_pagination(pagination, endpoint) %}
+    <ul>
+        {% if pagination.has_prev %}
+            <li><a href="{{ set_args(page=pagination.prev_num, **kwargs) }}">&laquo;</a></li>
+        {% else %}
+            <li class="disabled"><a href="">&laquo;</a></li>
+        {% endif %}
+        {%- for page in pagination.iter_pages() %}
+            {% if page %}
+                {% if page == pagination.page %}
+                    <li class="active"><a href="">{{ page }}</a></li>
+                {% else %}
+                    <li><a href="{{ set_args(page=page, **kwargs) }}">{{ page }}</a></li>
+                {% endif %}
+            {% else %}
+                <li class="disabled"><a href="">...</a></li>
+            {% endif %}
+        {%- endfor %}
+        {% if pagination.has_next %}
+            <li><a href="{{ set_args(page=pagination.next_num, **kwargs) }}">&raquo;</a></li>
+        {% else %}
+            <li class="disabled"><a href="">&raquo;</a></li>
+        {% endif %}
+    </ul>
+{% endmacro %}

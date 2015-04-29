@@ -81,4 +81,4 @@ General Search Page
 ![](https://github.com/knordin/JaSON/blob/master/General%20Search.png)
 
 Advanced Search Page
-![](https://github.com/knordin/JaSON/blob/master/Advanced%20Search.png)  
+![](https://github.com/knordin/JaSON/blob/master/Advanced%20Search.png)   

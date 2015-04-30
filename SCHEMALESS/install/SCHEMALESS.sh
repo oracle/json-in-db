@@ -16,7 +16,7 @@ echo "\$ORACLE_HOME : $ORACLE_HOME" >> $logfilename
 echo "\$ORACLE_SID  : $ORACLE_SID" >> $logfilename
 spexe=$(which sqlplus | head -1)
 echo "sqlplus      : $spexe" >> $logfilename
-sqlplus -L $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/VerifyConnection.sql
+sqlplus -L $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/verifyConnection.sql
 rc=$?
 echo "sqlplus $DBA:$rc" >> $logfilename
 if [ $rc != 2 ] 
@@ -25,7 +25,7 @@ then
   echo "Installation Failed: See $logfilename for details."
   exit 2
 fi
-sqlplus -L $USER/$USERPWD@$ORACLE_SID @$demohome/install/sql/VerifyConnection.sql
+sqlplus -L $USER/$USERPWD@$ORACLE_SID @$demohome/install/sql/verifyConnection.sql
 rc=$?
 echo "sqlplus $USER:$rc" >> $logfilename
 if [ $rc != 2 ] 

@@ -13,7 +13,6 @@
 		<parameter name="%XFILES_SCHEMA%" value="XFILES"/>
 
 		<parameter name="enableHTTPTrace" value="false"/>
-		<parameter name="silentInstall" value="false"/>
 	</parameters>
 
 	<installation>
@@ -139,7 +138,7 @@
 				<username>%USER%</username>
 				<password>%PASSWORD%</password>
 				<tnsAlias>%TNSALIAS%</tnsAlias>
-				<icon>%DEMODIRECTORY%\Install\sqlplus.ico</icon>
+				<icon>%DEMODIRECTORY%\install\sqlplus.ico</icon>
 			</defaults>
 			<shortCut>
 				<name>0.0 Reset Demo</name>

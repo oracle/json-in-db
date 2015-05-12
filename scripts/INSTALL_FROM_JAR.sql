@@ -28,11 +28,11 @@ host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -gra
 --
 get javax.json-1.0.4.log
 .
-host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -v orasoda.jar > orasoda.log &REMAP
+host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -v orajsoda.jar > orajsoda.log &REMAP
 --
 get orasoda.log
 .
-host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -v orajsonrest.jar > orajsonrest.log &REMAP
+host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -v orarestsoda.jar > orarestsoda.log &REMAP
 --
 get orajsonrest.log
 .

@@ -15,26 +15,20 @@ create user &OWNER identified by &OWNER account lock
 /
 grant unlimited tablespace to &OWNER
 /
-set define off
---
-def REMAP = 2>&1
---
-set define on
---
 select '&_CONNECT_IDENTIFIER'
   from DUAL
 /
-host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -v javax.json-1.0.4.jar > javax.json-1.0.4.log &REMAP
+host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -stdout -v -fileout javax.json-1.0.4.log javax.json-1.0.4.jar 
 --
 get javax.json-1.0.4.log
 .
-host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -v orajsoda.jar > orajsoda.log &REMAP
+host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -stdout -v -fileout orajsoda.log orajsoda.jar
 --
-get orasoda.log
+get orajsoda.log
 .
-host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -v orarestsoda.jar > orarestsoda.log &REMAP
+host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -stdout -v -fileout orarestsoda.log orarestsoda.jar 
 --
-get orajsonrest.log
+get orarestsoda.log
 .
 --
 set serveroutput on

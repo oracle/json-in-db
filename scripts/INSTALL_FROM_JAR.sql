@@ -18,15 +18,15 @@ grant unlimited tablespace to &OWNER
 select '&_CONNECT_IDENTIFIER'
   from DUAL
 /
-host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -stdout -v -fileout javax.json-1.0.4.log javax.json-1.0.4.jar 
+host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -v -fileout javax.json-1.0.4.log javax.json-1.0.4.jar 
 --
 get javax.json-1.0.4.log
 .
-host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -stdout -v -fileout orajsoda.log orajsoda.jar
+host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -v -fileout orajsoda.log orajsoda.jar
 --
 get orajsoda.log
 .
-host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -stdout -v -fileout orarestsoda.log orarestsoda.jar 
+host loadjava -user &USERNAME/&PASSWORD@&_CONNECT_IDENTIFIER -schema &OWNER -grant PUBLIC -oci -v -fileout orarestsoda.log orarestsoda.jar 
 --
 get orarestsoda.log
 .

@@ -10,8 +10,7 @@
 ' *
 ' * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ' *
-' * ================================================
- */
+' * ================================================ */
 
 Option Explicit
 Const FILE_SEPERATOR    = "\" 
@@ -437,20 +436,28 @@ Function validDriveLetter(CONFIGUATION)
     Set fso = INSTALLER.getFSO()
     Set dc = fso.Drives
       
+    ' Check if there is already a Drive Letter assignmen for the requested HTTP Server. If there is use the existing mapping
+      
     For Each d in dc
       If d.DriveType = 3 Then
       	If (Ucase(d.ShareName) = windowsShareName) Then
           If d.IsReady Then
-            reuseDrive = MsgBox("Drive'" & d.driveLetter & "'. already mapped to '" & d.ShareName & "'. Use existing drive ?",vbYesNo + vbInformation + vbDefaultButton1)
-            If (reuseDrive = vbYes) Then
-              set target = Document.getElementById("driveLetter")
-              targetDrive = d.driveLetter & ":"
-              target.value = Ucase(targetDrive) 
-              INSTALLER.addMacro "%DRIVELETTER%", targetDrive
-          	    validDriveLetter = true
+          	If (MINSTALLER Is Nothing) Then
+              reuseDrive = MsgBox("Server '" & d.ShareNamed & "'. already mapped to '" & d.driveLetter & "'. Use existing mapping ?",vbYesNo + vbInformation + vbDefaultButton1)
+              If (reuseDrive = vbYes) Then
+                set target = Document.getElementById("driveLetter")
+                targetDrive = d.driveLetter & ":"
+                target.value = Ucase(targetDrive) 
+                INSTALLER.addMacro "%DRIVELETTER%", targetDrive
+            	  validDriveLetter = true
+              Else
+            	  validDriveLetter = false
+              End If 	
             Else
-          	    validDriveLetter = false
-            End If 	
+            	WScript.echo "Server '" & d.ShareNamed & "'. already mapped to '" & d.driveLetter & "'. Using existing Mapping."
+              INSTALLER.addMacro "%DRIVELETTER%", targetDrive
+           	  validDriveLetter = true
+            End If
             Exit Function
           End if
         End if
@@ -3488,7 +3495,7 @@ Class installationManager
     If isInteractiveInstall() or isScriptGenerator() Then 
       getLogFilePath = getInstallFolderPath() & FILE_SEPERATOR & getDemoFolderName() & ".log"   
     Else
-      getLogFilePath = getFso().GetParentFolderName(wscript.ScriptFullName) & FILE_SEPERATOR & getDemoFolderName() & ".log"	
+      getLogFilePath = getWShell().CurrentDirectory & FILE_SEPERATOR & getDemoFolderName() & ".log"	
     End If
 
   End Function

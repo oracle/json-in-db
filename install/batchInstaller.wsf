@@ -1,0 +1,4 @@
+<job id="Installer">
+   <script language="VBScript" src="install.vbs"/>
+   <script language="VBScript" src="batchInstaller.vbs"/>
+</job>

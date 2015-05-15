@@ -174,7 +174,7 @@ CLASS BATCHINSTALLER
   End Sub
 
   Public sub setScriptFolder() 
-    WSHELL.CurrentDirectory = FSO.getParentFolderName(FSO.GetParentFolderName(WSHELL.CurrentDirectory)) & "\scripts"
+    WSHELL.CurrentDirectory = FSO.getParentFolderName(FSO.GetParentFolderName(WSHELL.CurrentDirectory)) & "\install"
     wscript.echo "Working Directory set to '" & WSHELL.CurrentDirectory &"'"
   End Sub
 

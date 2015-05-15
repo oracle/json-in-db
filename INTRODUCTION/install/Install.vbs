@@ -443,7 +443,7 @@ Function validDriveLetter(CONFIGUATION)
       	If (Ucase(d.ShareName) = windowsShareName) Then
           If d.IsReady Then
           	If (MINSTALLER Is Nothing) Then
-              reuseDrive = MsgBox("Server '" & d.ShareNamed & "'. already mapped to '" & d.driveLetter & "'. Use existing mapping ?",vbYesNo + vbInformation + vbDefaultButton1)
+              reuseDrive = MsgBox("Server '" & d.ShareName & "'. already mapped to '" & d.driveLetter & "'. Use existing mapping ?",vbYesNo + vbInformation + vbDefaultButton1)
               If (reuseDrive = vbYes) Then
                 set target = Document.getElementById("driveLetter")
                 targetDrive = d.driveLetter & ":"
@@ -453,8 +453,9 @@ Function validDriveLetter(CONFIGUATION)
               Else
             	  validDriveLetter = false
               End If 	
-            Else
-            	WScript.echo "Server '" & d.ShareNamed & "'. already mapped to '" & d.driveLetter & "'. Using existing Mapping."
+            Else            	
+            	WScript.echo "Server '" & d.ShareName & "'. already mapped to '" & d.driveLetter & "'. Using existing Mapping."
+            	targetDrive = d.driveLetter & ":"
               INSTALLER.addMacro "%DRIVELETTER%", targetDrive
            	  validDriveLetter = true
             End If

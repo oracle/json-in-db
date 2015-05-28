@@ -9,14 +9,15 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * ================================================
- */
+ * ================================================ */
 
 set echo on
 --
 spool publishAppFolder.log
 --
 def FOLDER = &1
+--
+def ACL = &2
 --
 -- Create index.html in the user's folder pointing to WebDemo application
 --
@@ -30,13 +31,13 @@ declare
    where under_path(res,V_SOURCE_PATH) = 1;
 
 begin
+  dbms_xdb.setAcl(V_SOURCE_PATH,&ACL);
+  for res in publishResources loop
+    dbms_xdb.setACL(res.path,&ACL);
+  end loop;
   if dbms_xdb.existsResource(V_TARGET_PATH) then
     dbms_xdb.deleteResource(V_TARGET_PATH);
   end if;
-  dbms_xdb.setAcl(V_SOURCE_PATH,'/sys/acls/bootstrap_acl.xml');
-  for res in publishResources loop
-    dbms_xdb.setACL(res.path,XDB_CONSTANTS.ACL_BOOTSTRAP);
-  end loop;
   dbms_xdb.link(V_SOURCE_PATH,XFILES_CONSTANTS.FOLDER_APPLICATIONS_PUBLIC,'&FOLDER',DBMS_XDB.LINK_TYPE_WEAK);
 end;
 /

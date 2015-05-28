@@ -77,7 +77,7 @@ call DBMS_XDB.DELETESERVLETMAPPING(
 /
 call DBMS_XDB_CONFIG.DELETESERVLETSECROLE(
        SERVNAME  => 'OracleJSONRestServlet', 
-       ROLENAME  => 'anonymousServletRole'
+       ROLENAME  => 'authenticatedUser'
      ) 
 /    
 call DBMS_XDB_CONFIG.ADDSERVLETMAPPING(

@@ -70,8 +70,8 @@ then
   fi
   exit 4
 fi
-HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X GET --write-out "%{http_code}\n" -s --output /dev/null $SERVER/xdbconfig.xml | head -1)
-echo "GET:$SERVER/xdbconfig.xml:$HttpStatus" >> $logfilename
+HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X GET --write-out "%{http_code}\n" -s --output /dev/null $SERVER/public | head -1)
+echo "GET:$SERVER/public:$HttpStatus" >> $logfilename
 if [ $HttpStatus != "200" ] 
 then
   if [ $HttpStatus == "401" ] 

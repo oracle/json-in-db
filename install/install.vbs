@@ -3501,14 +3501,6 @@ Class installationManager
 
   End Function
  
-  Public Function getScriptFilePath()
-  
-  	' Only used in ScriptGenerationMode. The script file should be written to the Installation Folder
-
-    getScriptFilePath = SCRIPT_GENERATOR.getScriptFolder() & FILE_SEPERATOR & getDemoFolderName() & ".sh"	
-
-  End Function  
-  
   Public Function getScriptsFolderPath
     getScriptsFolderPath = getLocalFolderPath() & FILE_SEPERATOR & "Scripts"
   End Function

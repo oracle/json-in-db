@@ -24,7 +24,7 @@ def ACL = &2
 --
 declare
   V_SOURCE_PATH varchar2(700) := '&SOURCE_FOLDER';
-  V_FOLDER_NAME varchar2(700) := substring('&SOURCE_FOLDER',instr('&SOURCE_FOLDER','/',-1);
+  V_FOLDER_NAME varchar2(700) := substr('&SOURCE_FOLDER',instr('&SOURCE_FOLDER','/',-1)+1);
   V_TARGET_PATH varchar2(700) := XFILES_CONSTANTS.FOLDER_APPLICATIONS_PUBLIC || '/' || V_FOLDER_NAME;
 
   cursor publishResources is

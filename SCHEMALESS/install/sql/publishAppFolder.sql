@@ -15,15 +15,17 @@ set echo on
 --
 spool publishAppFolder.log
 --
-def FOLDER = &1
+def SOURCE_FOLDER = &1
 --
 def ACL = &2
 --
--- Create index.html in the user's folder pointing to WebDemo application
+-- Publish the application by creating a Link between the Installation Folder and /XFiles/Applications
+-- Should always be invoked by DBA.
 --
 declare
-  V_SOURCE_PATH varchar2(700) := XFILES_CONSTANTS.FOLDER_APPLICATIONS_PRIVATE || '/&FOLDER';
-  V_TARGET_PATH varchar2(700) := XFILES_CONSTANTS.FOLDER_APPLICATIONS_PUBLIC || '/&FOLDER';
+  V_SOURCE_PATH varchar2(700) := '&SOURCE_FOLDER';
+  V_FOLDER_NAME varchar2(700) := substring('&SOURCE_FOLDER',instr('&SOURCE_FOLDER','/',-1);
+  V_TARGET_PATH varchar2(700) := XFILES_CONSTANTS.FOLDER_APPLICATIONS_PUBLIC || '/' || V_FOLDER_NAME;
 
   cursor publishResources is
   select path 
@@ -38,7 +40,7 @@ begin
   if dbms_xdb.existsResource(V_TARGET_PATH) then
     dbms_xdb.deleteResource(V_TARGET_PATH);
   end if;
-  dbms_xdb.link(V_SOURCE_PATH,XFILES_CONSTANTS.FOLDER_APPLICATIONS_PUBLIC,'&FOLDER',DBMS_XDB.LINK_TYPE_WEAK);
+  dbms_xdb.link(V_SOURCE_PATH,XFILES_CONSTANTS.FOLDER_APPLICATIONS_PUBLIC,V_FOLDER_NAME,DBMS_XDB.LINK_TYPE_WEAK);
 end;
 /
 commit

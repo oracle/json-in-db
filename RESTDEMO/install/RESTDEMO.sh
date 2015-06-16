@@ -11,18 +11,18 @@
 # * ================================================ 
 # */
 doInstall() {
-  echo "Installation Parameters for Oracle REST Services for JSON".
-  echo "\$DBA         : $DBA
-  echo "\$USER        : $USER
-  echo "\$SERVER      : $SERVER
-  echo "\$DEMOHOME    : $demohome
-  echo "\$ORACLE_HOME : $ORACLE_HOME
-  echo "\$ORACLE_SID  : $ORACLE_SID
+  echo "Installation Parameters for Oracle REST Services for JSON."
+  echo "\$DBA         : $DBA"
+  echo "\$USER        : $USER"
+  echo "\$SERVER      : $SERVER"
+  echo "\$DEMOHOME    : $demohome"
+  echo "\$ORACLE_HOME : $ORACLE_HOME"
+  echo "\$ORACLE_SID  : $ORACLE_SID"
   spexe=$(which sqlplus | head -1)
-  echo "sqlplus      : $spexe
+  echo "sqlplus      : $spexe"
   sqlplus -L $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/verifyConnection.sql
   rc=$?
-  echo "sqlplus $DBA:$rc
+  echo "sqlplus $DBA:$rc"
   if [ $rc != 2 ] 
   then 
     echo "Operation Failed : Unable to connect via SQLPLUS as $DBA - Installation Aborted. See $logfilename for details."
@@ -30,14 +30,14 @@ doInstall() {
   fi
   sqlplus -L $USER/$USERPWD@$ORACLE_SID @$demohome/install/sql/verifyConnection.sql
   rc=$?
-  echo "sqlplus $USER:$rc
+  echo "sqlplus $USER:$rc"
   if [ $rc != 2 ] 
   then 
     echo "Operation Failed : Unable to connect via SQLPLUS as $USER - Installation Aborted. See $logfilename for details."
     exit 3
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X GET --write-out "%{http_code}\n" -s --output /dev/null $SERVER/xdbconfig.xml | head -1)
-  echo "GET:$SERVER/xdbconfig.xml:$HttpStatus
+  echo "GET:$SERVER/xdbconfig.xml:$HttpStatus"
   if [ $HttpStatus != "200" ] 
   then
     if [ $HttpStatus == "401" ] 
@@ -50,7 +50,7 @@ doInstall() {
     exit 4
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X GET --write-out "%{http_code}\n" -s --output /dev/null $SERVER/public | head -1)
-  echo "GET:$SERVER/public:$HttpStatus
+  echo "GET:$SERVER/public:$HttpStatus"
   if [ $HttpStatus != "200" ] 
   then
     if [ $HttpStatus == "401" ] 
@@ -63,7 +63,7 @@ doInstall() {
     exit 4
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO" | head -1)
-  echo "DELETE "$SERVER/XFILES/Applications/RESTDEMO":$HttpStatus
+  echo "DELETE \"$SERVER/XFILES/Applications/RESTDEMO\":$HttpStatus"
   if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ] && [ $HttpStatus != "404" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -73,166 +73,166 @@ doInstall() {
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES" | head -1)
-    echo "MKCOL "$SERVER/XFILES":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications" | head -1)
-    echo "MKCOL "$SERVER/XFILES/Applications":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES/Applications\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO" | head -1)
-    echo "MKCOL "$SERVER/XFILES/Applications/RESTDEMO":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES/Applications/RESTDEMO\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES" | head -1)
-    echo "MKCOL "$SERVER/XFILES":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications" | head -1)
-    echo "MKCOL "$SERVER/XFILES/Applications":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES/Applications\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO" | head -1)
-    echo "MKCOL "$SERVER/XFILES/Applications/RESTDEMO":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES/Applications/RESTDEMO\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql" | head -1)
-    echo "MKCOL "$SERVER/XFILES/Applications/RESTDEMO/sql":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES/Applications/RESTDEMO/sql\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES" | head -1)
-    echo "MKCOL "$SERVER/XFILES":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications" | head -1)
-    echo "MKCOL "$SERVER/XFILES/Applications":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES/Applications\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO" | head -1)
-    echo "MKCOL "$SERVER/XFILES/Applications/RESTDEMO":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES/Applications/RESTDEMO\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js" | head -1)
-    echo "MKCOL "$SERVER/XFILES/Applications/RESTDEMO/js":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES/Applications/RESTDEMO/js\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES" | head -1)
-    echo "MKCOL "$SERVER/XFILES":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications" | head -1)
-    echo "MKCOL "$SERVER/XFILES/Applications":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES/Applications\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO" | head -1)
-    echo "MKCOL "$SERVER/XFILES/Applications/RESTDEMO":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES/Applications/RESTDEMO\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/css" | head -1)
   if [ $HttpStatus == "404" ] 
   then
     HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/css" | head -1)
-    echo "MKCOL "$SERVER/XFILES/Applications/RESTDEMO/css":$HttpStatus
+    echo "MKCOL \"$SERVER/XFILES/Applications/RESTDEMO/css\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
-  	 fi
+    fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/JSONREST.html" | head -1)
   if [ $HttpStatus != "404" ] 
@@ -242,18 +242,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/JSONREST.html" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/JSONREST.html":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/JSONREST.html\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/JSONREST.html":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/JSONREST.html\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/JSONREST.html" "$SERVER/XFILES/Applications/RESTDEMO/JSONREST.html" | head -1)
-  echo "PUT:"$demohome/JSONREST.html" --> "$SERVER/XFILES/Applications/RESTDEMO/JSONREST.html":$HttpStatus
+  echo "PUT:"$demohome/JSONREST.html" --> \"$SERVER/XFILES/Applications/RESTDEMO/JSONREST.html\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -267,18 +267,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST.js" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST.js":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST.js\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST.js":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST.js\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/js/JSONREST.js" "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST.js" | head -1)
-  echo "PUT:"$demohome/js/JSONREST.js" --> "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST.js":$HttpStatus
+  echo "PUT:"$demohome/js/JSONREST.js" --> \"$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST.js\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -292,18 +292,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST-SQL.json" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST-SQL.json":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST-SQL.json\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST-SQL.json":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST-SQL.json\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/js/JSONREST-SQL.json" "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST-SQL.json" | head -1)
-  echo "PUT:"$demohome/js/JSONREST-SQL.json" --> "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST-SQL.json":$HttpStatus
+  echo "PUT:"$demohome/js/JSONREST-SQL.json" --> \"$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST-SQL.json\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -317,18 +317,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/POREST.html" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/POREST.html":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/POREST.html\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/POREST.html":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/POREST.html\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/POREST.html" "$SERVER/XFILES/Applications/RESTDEMO/POREST.html" | head -1)
-  echo "PUT:"$demohome/POREST.html" --> "$SERVER/XFILES/Applications/RESTDEMO/POREST.html":$HttpStatus
+  echo "PUT:"$demohome/POREST.html" --> \"$SERVER/XFILES/Applications/RESTDEMO/POREST.html\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -342,18 +342,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/POREST.js" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/js/POREST.js":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/js/POREST.js\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/js/POREST.js":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/js/POREST.js\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/js/POREST.js" "$SERVER/XFILES/Applications/RESTDEMO/js/POREST.js" | head -1)
-  echo "PUT:"$demohome/js/POREST.js" --> "$SERVER/XFILES/Applications/RESTDEMO/js/POREST.js":$HttpStatus
+  echo "PUT:"$demohome/js/POREST.js" --> \"$SERVER/XFILES/Applications/RESTDEMO/js/POREST.js\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -367,18 +367,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/PurchaseOrder.html" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/PurchaseOrder.html":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/PurchaseOrder.html\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/PurchaseOrder.html":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/PurchaseOrder.html\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/PurchaseOrder.html" "$SERVER/XFILES/Applications/RESTDEMO/PurchaseOrder.html" | head -1)
-  echo "PUT:"$demohome/PurchaseOrder.html" --> "$SERVER/XFILES/Applications/RESTDEMO/PurchaseOrder.html":$HttpStatus
+  echo "PUT:"$demohome/PurchaseOrder.html" --> \"$SERVER/XFILES/Applications/RESTDEMO/PurchaseOrder.html\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -392,18 +392,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/PurchaseOrder.js" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/js/PurchaseOrder.js":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/js/PurchaseOrder.js\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/js/PurchaseOrder.js":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/js/PurchaseOrder.js\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/js/PurchaseOrder.js" "$SERVER/XFILES/Applications/RESTDEMO/js/PurchaseOrder.js" | head -1)
-  echo "PUT:"$demohome/js/PurchaseOrder.js" --> "$SERVER/XFILES/Applications/RESTDEMO/js/PurchaseOrder.js":$HttpStatus
+  echo "PUT:"$demohome/js/PurchaseOrder.js" --> \"$SERVER/XFILES/Applications/RESTDEMO/js/PurchaseOrder.js\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -417,18 +417,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/poTemplate.json" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/js/poTemplate.json":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/js/poTemplate.json\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/js/poTemplate.json":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/js/poTemplate.json\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/js/poTemplate.json" "$SERVER/XFILES/Applications/RESTDEMO/js/poTemplate.json" | head -1)
-  echo "PUT:"$demohome/js/poTemplate.json" --> "$SERVER/XFILES/Applications/RESTDEMO/js/poTemplate.json":$HttpStatus
+  echo "PUT:"$demohome/js/poTemplate.json" --> \"$SERVER/XFILES/Applications/RESTDEMO/js/poTemplate.json\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -442,18 +442,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample1.sql" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample1.sql":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample1.sql\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample1.sql":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample1.sql\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/sql/sqlExample1.sql" "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample1.sql" | head -1)
-  echo "PUT:"$demohome/sql/sqlExample1.sql" --> "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample1.sql":$HttpStatus
+  echo "PUT:"$demohome/sql/sqlExample1.sql" --> \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample1.sql\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -467,18 +467,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample2.sql" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample2.sql":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample2.sql\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample2.sql":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample2.sql\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/sql/sqlExample2.sql" "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample2.sql" | head -1)
-  echo "PUT:"$demohome/sql/sqlExample2.sql" --> "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample2.sql":$HttpStatus
+  echo "PUT:"$demohome/sql/sqlExample2.sql" --> \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample2.sql\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -492,18 +492,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample3.sql" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample3.sql":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample3.sql\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample3.sql":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample3.sql\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/sql/sqlExample3.sql" "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample3.sql" | head -1)
-  echo "PUT:"$demohome/sql/sqlExample3.sql" --> "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample3.sql":$HttpStatus
+  echo "PUT:"$demohome/sql/sqlExample3.sql" --> \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample3.sql\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -517,18 +517,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample4.sql" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample4.sql":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample4.sql\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample4.sql":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample4.sql\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/sql/sqlExample4.sql" "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample4.sql" | head -1)
-  echo "PUT:"$demohome/sql/sqlExample4.sql" --> "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample4.sql":$HttpStatus
+  echo "PUT:"$demohome/sql/sqlExample4.sql" --> \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample4.sql\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -542,18 +542,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample5.sql" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample5.sql":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample5.sql\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample5.sql":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample5.sql\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/sql/sqlExample5.sql" "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample5.sql" | head -1)
-  echo "PUT:"$demohome/sql/sqlExample5.sql" --> "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample5.sql":$HttpStatus
+  echo "PUT:"$demohome/sql/sqlExample5.sql" --> \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample5.sql\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -567,18 +567,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample6.sql" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample6.sql":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample6.sql\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample6.sql":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample6.sql\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/sql/sqlExample6.sql" "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample6.sql" | head -1)
-  echo "PUT:"$demohome/sql/sqlExample6.sql" --> "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample6.sql":$HttpStatus
+  echo "PUT:"$demohome/sql/sqlExample6.sql" --> \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample6.sql\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -592,18 +592,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample7.sql" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample7.sql":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample7.sql\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample7.sql":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample7.sql\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/sql/sqlExample7.sql" "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample7.sql" | head -1)
-  echo "PUT:"$demohome/sql/sqlExample7.sql" --> "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample7.sql":$HttpStatus
+  echo "PUT:"$demohome/sql/sqlExample7.sql" --> \"$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample7.sql\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -617,18 +617,18 @@ doInstall() {
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/css/demo.css" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ]
       then
-        echo "DELETE(PUT) "$SERVER/XFILES/Applications/RESTDEMO/css/demo.css":$HttpStatus - Operation Failed
+        echo "DELETE(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/css/demo.css\":$HttpStatus - Operation Failed"
         echo "Installation Failed: See $logfilename for details."
         exit 5
       fi
     else
-      echo "HEAD(PUT) "$SERVER/XFILES/Applications/RESTDEMO/css/demo.css":$HttpStatus - Operation Failed
+      echo "HEAD(PUT) \"$SERVER/XFILES/Applications/RESTDEMO/css/demo.css\":$HttpStatus - Operation Failed"
       echo "Installation Failed: See $logfilename for details."
       exit 5
     fi
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/css/demo.css" "$SERVER/XFILES/Applications/RESTDEMO/css/demo.css" | head -1)
-  echo "PUT:"$demohome/css/demo.css" --> "$SERVER/XFILES/Applications/RESTDEMO/css/demo.css":$HttpStatus
+  echo "PUT:"$demohome/css/demo.css" --> \"$SERVER/XFILES/Applications/RESTDEMO/css/demo.css\":$HttpStatus"
   if [ $HttpStatus != "201" ] 
   then
     echo "Operation Failed: Installation Aborted. See $logfilename for details."
@@ -646,4 +646,4 @@ logfilename=$demohome/install/RESTDEMO.log
 echo "Log File : $logfilename"
 rm $logfilename
 doInstall 2>&1 | tee -a $logfilename
-export $logfilename
+export logfilename

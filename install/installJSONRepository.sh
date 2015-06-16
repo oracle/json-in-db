@@ -20,11 +20,8 @@ SERVERURL=$7
 cd oracle-json-in-db*
 cd INTRODUCTION/install
 sh INTRODUCTION.sh $DBA $DBAPWD $DEMOUSER $DEMOPWD $SERVERURL
-cat $logfilename >> install.log
 cd ../../RESTDEMO/install
 sh RESTDEMO.sh $DBA $DBAPWD $XFILES $XFILESPWD $SERVERURL
-cat $logfilename >> install.log
 cd ../../SCHEMALESS/install
 sh SCHEMALESS.sh $DBA $DBAPWD $XFILES $XFILESPWD $SERVERURL
-cat $logfilename >> install.log
 cd ../../..

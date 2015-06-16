@@ -164,4 +164,3 @@ logfilename=$demohome/install/SCHEMALESS.log
 echo "Log File : $logfilename"
 rm $logfilename
 doInstall 2>&1 | tee -a $logfilename
-export logfilename

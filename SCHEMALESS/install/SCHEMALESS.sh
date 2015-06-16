@@ -104,6 +104,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/SCHEMALESS/schemalessDevelopment.html" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/SCHEMALESS/schemalessDevelopment.html" | head -1)
@@ -125,6 +126,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/SCHEMALESS/schemalessDevelopment.js" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/SCHEMALESS/schemalessDevelopment.js" | head -1)

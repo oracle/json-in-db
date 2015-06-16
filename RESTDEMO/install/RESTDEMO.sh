@@ -236,6 +236,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/JSONREST.html" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/JSONREST.html" | head -1)
@@ -257,6 +258,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST.js" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST.js" | head -1)
@@ -278,6 +280,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST-SQL.json" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/JSONREST-SQL.json" | head -1)
@@ -299,6 +302,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/POREST.html" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/POREST.html" | head -1)
@@ -320,6 +324,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/POREST.js" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/POREST.js" | head -1)
@@ -341,6 +346,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/PurchaseOrder.html" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/PurchaseOrder.html" | head -1)
@@ -362,6 +368,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/PurchaseOrder.js" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/PurchaseOrder.js" | head -1)
@@ -383,6 +390,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/poTemplate.json" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/js/poTemplate.json" | head -1)
@@ -404,6 +412,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample1.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample1.sql" | head -1)
@@ -425,6 +434,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample2.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample2.sql" | head -1)
@@ -446,6 +456,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample3.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample3.sql" | head -1)
@@ -467,6 +478,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample4.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample4.sql" | head -1)
@@ -488,6 +500,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample5.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample5.sql" | head -1)
@@ -509,6 +522,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample6.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample6.sql" | head -1)
@@ -530,6 +544,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample7.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/sql/sqlExample7.sql" | head -1)
@@ -551,6 +566,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/css/demo.css" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/XFILES/Applications/RESTDEMO/css/demo.css" | head -1)

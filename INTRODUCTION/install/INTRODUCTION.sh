@@ -255,6 +255,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/reset.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/reset.sql" | head -1)
@@ -276,6 +277,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/1.0%20CREATE_TABLE.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/1.0%20CREATE_TABLE.sql" | head -1)
@@ -297,6 +299,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/1.1%20SIMPLE_QUERIES.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/1.1%20SIMPLE_QUERIES.sql" | head -1)
@@ -318,6 +321,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/2.0%20JSON_VALUE.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/2.0%20JSON_VALUE.sql" | head -1)
@@ -339,6 +343,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/3.0%20JSON_QUERY.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/3.0%20JSON_QUERY.sql" | head -1)
@@ -360,6 +365,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/4.0%20JSON_TABLE.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/4.0%20JSON_TABLE.sql" | head -1)
@@ -381,6 +387,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/5.0%20RELATIONAL_VIEWS.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/5.0%20RELATIONAL_VIEWS.sql" | head -1)
@@ -402,6 +409,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/6.0%20JSON_EXISTS.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/6.0%20JSON_EXISTS.sql" | head -1)
@@ -423,6 +431,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/7.0%20JSON_INDEXES.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/7.0%20JSON_INDEXES.sql" | head -1)
@@ -444,6 +453,7 @@ doInstall() {
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/8.0%20JSON_DOCUMENT_INDEX.sql" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
       HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/8.0%20JSON_DOCUMENT_INDEX.sql" | head -1)
@@ -532,6 +542,7 @@ doInstall() {
 sed -e "s|%DESKTOP%|C:\Users\Mark D Drake\Desktop|g" -e "s|%STARTMENU%|C:\Users\Mark D Drake\AppData\Roaming\Microsoft\Windows\Start Menu|g" -e "s|%WINWORD%|C:\PROGRA~2\MICROS~2\Office12\WINWORD.EXE|g" -e "s|%EXCEL%|C:\PROGRA~2\MICROS~2\Office12\EXCEL.EXE|g" -e "s|%DEMODIRECTORY%|$demohome|g" -e "s|%DEMOFOLDERNAME%|INTRODUCTION|g" -e "s|%DEMONAME%|Oracle JSON Query and Analytics : Oracle Database 12c (12.1.0.2.0)|g" -e "s|%LAUNCHPAD%|JSON (12.1.0.2.0)|g" -e "s|%LAUNCHPADFOLDER%|C:\Users\Mark D Drake\AppData\Roaming\Microsoft\Windows\Start Menu\JSON Demonstrations|g" -e "s|%SHORTCUTFOLDER%|$demohome\/$USER|g" -e "s|%PUBLICFOLDER%|\/publishedContent|g" -e "s|%DEMOCOMMON%|\/publishedContent\/demonstrations\/JSON\/introduction|g" -e "s|%HOMEFOLDER%|\/home\/%USER%|g" -e "s|%DEMOLOCAL%|\/home\/%USER%\/demonstrations\/JSON\/introduction|g" -e "s|%XFILES_SCHEMA%|XFILES|g" -e "s|enableHTTPTrace|false|g" -e "s|%ORACLEHOME%|$ORACLE_HOME|g" -e "s|%DBA%|$DBA|g" -e "s|%DBAPASSWORD%|$DBAPWD|g" -e "s|%USER%|$USER|g" -e "s|%PASSWORD%|$USERPWD|g" -e "s|%TNSALIAS%|$ORACLE_SID|g" -e "s|%HOSTNAME%|$HOSTNAME|g" -e "s|%HTTPPORT%|$HTTP|g" -e "s|%FTPPORT%|$FTP|g" -e "s|%DRIVELETTER%||g" -e "s|%SERVERURL%|$SERVER|g" -e "s|%DBCONNECTION%|$USER\/$USERPWD@$ORACLE_SID|g" -e "s|%SQLPLUS%|sqlplus|g" -e "s|\$USER|$USER|g" -e "s|\$SERVER|$SERVER|g" -i $demohome/install/configuration.xml
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/configuration.xml" | head -1)
   if [ $HttpStatus != "404" ] 
+  then
     if [ $HttpStatus == "200" ] 
     then
     else

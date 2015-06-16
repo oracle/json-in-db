@@ -545,6 +545,12 @@ sed -e "s|%DESKTOP%|C:\Users\Mark D Drake\Desktop|g" -e "s|%STARTMENU%|C:\Users\
   then
     if [ $HttpStatus == "200" ] 
     then
+      HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/configuration.xml" | head -1)
+      if [ $HttpStatus != "200" ] && [ $HttpStatus != "202" ] && [ $HttpStatus != "204" ]
+      then
+        echo "PUT[DELETE] \"$SERVER/home/$USER/demonstrations/JSON/introduction/configuration.xml\":$HttpStatus - Delete Operation Failed. See $logfilename for details."
+        exit 5
+      fi
     else
       echo "PUT[HEAD] \"$SERVER/home/$USER/demonstrations/JSON/introduction/configuration.xml\":$HttpStatus - Operation Failed. See $logfilename for details."
       exit 5

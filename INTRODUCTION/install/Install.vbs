@@ -922,7 +922,7 @@ Sub makeHttpShortCuts(INSTALLER, FILEMANAGER)
 	    FILEMANAGER.makeHttpShortCut shortcutLocation, shortcutName, url, iconPath, arguments
     End If
 
-    DEMONSTRATION.addHTTPStep shortcutName, url, "HTTP.png", username, screenshot, windowName
+    DEMONSTRATION.addHTTPStep shortcutName, url, arguments, "HTTP.png", username, screenshot, windowName
   Next 
   
 End Sub
@@ -1173,7 +1173,7 @@ Sub makeFavorites(INSTALLER,FILEMANAGER)
       windowName         = XHELPER.getOptionalTextNode(nodeList.item(i),"target")
 
       FILEMANAGER.makeHttpShortCut shortcutLocation, shortCutName,  target, icon, arguments
-      DEMONSTRATION.addHTTPStep shortcutName, target, icon, INSTALLER.getUsername(),screenshot, windowName
+      DEMONSTRATION.addHTTPStep shortcutName, target, Nothing, icon, INSTALLER.getUsername(),screenshot, windowName
     Next 
   End If
   
@@ -2823,9 +2823,9 @@ CLASS demonstrationConfiguration
 
   End Sub  
 
-  Public sub addHTTPStep(name,link,icon,username,screenshot,windowName) 
+  Public sub addHTTPStep(name,link,arguments,icon,username,screenshot,windowName) 
   
-    dim stepElement, linkElement, element, text
+    dim stepElement, linkElement, element, text, URL
     
     Set stepElement = createStep(name,"HTTP",username)
 
@@ -2835,8 +2835,13 @@ CLASS demonstrationConfiguration
       Set text = DOCUMENT.createTextnode(screenshot)
       element.appendChild(text)
     End If
+    
+    url = link
+    If not IsNull(arguments) Then
+    	URL = link + "?" + arguments
+    End If
 
-    Set linkElement = addLinkElement(stepElement, link, icon, "text/html", windowName)
+    Set linkElement = addLinkElement(stepElement, URL, icon, "text/html", windowName)
  
   End Sub
 
@@ -2891,7 +2896,7 @@ CLASS demonstrationConfiguration
     End If
     
     If not IsNull(windowName)  Then
-    	linkElement.setAttribute "targetWindow",windowName
+    	linkElement.setAttribute "windowName",windowName
     End If
 
     Set element = DOCUMENT.createElement("icon")

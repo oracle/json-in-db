@@ -3193,23 +3193,19 @@ Class installationManager
   Public Sub addMacro(key,value)
        macroList.item(key) =  value
   End Sub
-  
-  Public function generateSedCommand
-
-       Dim sedCommand, keys, i, key
-
-       sedCommand = "sed"
-       keys = macroList.keys
-       For i = 0 to (UBound(keys))
-        key = keys(i) 
-        sedCommand = sedCommand + " -e ""s|" & key & "|" & replace(macroList.Item(key),"/","\/") & "|g"""
-      Next
-      sedCommand = sedCommand & " -e ""s|\$USER|$USER|g"" -e ""s|\$SERVER|$SERVER|g"""
-      
-      generateSedCommand = sedCommand
  
-  End Function
-  
+  Public Function cloneMacroList()
+    Dim newDict, key
+    Set newDict = CreateObject("Scripting.Dictionary")
+
+    For Each key in macroList.Keys
+       newDict.Add key, macroList(key)
+  	Next
+  	newDict.CompareMode = macroList.CompareMode
+
+  	Set cloneMacroList = newDict
+	End Function
+    
   Public Function replaceMacros(value,skipPasswords)
 
        Dim keys, i, key

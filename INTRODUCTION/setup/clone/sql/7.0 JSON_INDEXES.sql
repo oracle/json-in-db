@@ -2,25 +2,25 @@
 -- Statement 1
 --
 create unique index PO_NUMBER_IDX
-    on J_PURCHASEORDER (JSON_VALUE(PO_DOCUMENT,'$.PONumber' returning NUMBER(10) ERROR ON ERROR))
+    on %TABLE_NAME% (JSON_VALUE(PO_DOCUMENT,'$.PONumber' returning NUMBER(10) ERROR ON ERROR))
 /
 --
 -- Statement 2
 --
 create bitmap index COSTCENTER_IDX 
-    on J_PURCHASEORDER (JSON_VALUE(PO_DOCUMENT,'$.CostCenter'))
+    on %TABLE_NAME% (JSON_VALUE(PO_DOCUMENT,'$.CostCenter'))
 /
 --
 -- Statement 3
 --
 create index ZIPCODE_IDX 
-    on J_PURCHASEORDER (JSON_VALUE(PO_DOCUMENT,'$.ShippingInstructions.Address.zipCode' returning NUMBER(5)))
+    on %TABLE_NAME% (JSON_VALUE(PO_DOCUMENT,'$.ShippingInstructions.Address.zipCode' returning NUMBER(5)))
 /
 --
 -- Statement 4
 --
 select sum(QUANTITY * UNITPRICE) TOTAL_COST
-  from J_PURCHASEORDER,
+  from %TABLE_NAME%,
        JSON_TABLE(
          PO_DOCUMENT,
          '$.LineItems[*]'
@@ -34,14 +34,14 @@ select sum(QUANTITY * UNITPRICE) TOTAL_COST
 -- Statement 5
 --
 select distinct JSON_VALUE(PO_DOCUMENT,'$.Requestor') REQUESTOR
-  from J_PURCHASEORDER
+  from %TABLE_NAME%
  where JSON_VALUE(PO_DOCUMENT,'$.CostCenter') = 'A110'
 /
 --
 -- Statement 6
 --
 select JSON_VALUE(PO_DOCUMENT,'$.CostCenter' returning VARCHAR2(10)) COST_CENTER, count(*)
-  from J_PURCHASEORDER p
+  from %TABLE_NAME% p
  where JSON_VALUE(PO_DOCUMENT,'$.ShippingInstructions.Address.zipCode' returning NUMBER(5)) between 98001 and 98999
  group by JSON_VALUE(PO_DOCUMENT,'$.CostCenter' returning VARCHAR2(10))
 /

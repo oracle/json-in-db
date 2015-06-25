@@ -5,7 +5,7 @@ set pagesize 50 linesize 250 trimspool on
 -- Statement 1 : Create the Index
 --
 create index PO_DOCUMENT_INDEX 
-    on J_PURCHASEORDER(PO_DOCUMENT) 
+    on %TABLE_NAME%(PO_DOCUMENT) 
        indextype is ctxsys.context 
        parameters('section group CTXSYS.JSON_SECTION_GROUP sync (on commit)')
 /
@@ -13,7 +13,7 @@ create index PO_DOCUMENT_INDEX
 -- Query 1 : Use existing functional index on REFERENCE
 --
 select count(*), sum(QUANTITY * UNITPRICE) TOTAL_COST
-  from J_PURCHASEORDER,
+  from %TABLE_NAME%,
        JSON_TABLE(
          PO_DOCUMENT,
          '$.LineItems[*]'
@@ -27,7 +27,7 @@ select count(*), sum(QUANTITY * UNITPRICE) TOTAL_COST
 -- Query 2 : Use docoument index since city is not explicitly indexed.
 --
 select count(*), sum(QUANTITY * UNITPRICE) TOTAL_COST
-  from J_PURCHASEORDER,
+  from %TABLE_NAME%,
        JSON_TABLE(
          PO_DOCUMENT,
          '$.LineItems[*]'
@@ -41,7 +41,7 @@ select count(*), sum(QUANTITY * UNITPRICE) TOTAL_COST
 -- Query 3 : Use document index combined with functional BITMAP index on CostCenter
 --
 select count(*), sum(QUANTITY * UNITPRICE) TOTAL_COST
-  from J_PURCHASEORDER,
+  from %TABLE_NAME%,
        JSON_TABLE(
          PO_DOCUMENT,
          '$.LineItems[*]'

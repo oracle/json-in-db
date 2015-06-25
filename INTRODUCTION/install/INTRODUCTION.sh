@@ -71,9 +71,13 @@ doInstall() {
     exit 4
   fi
   mkdir -p $demohome/$USER
+  echo "Cloning \"$demohome/setup/clone/sql\" into \"$demohome/$USER/sql\""
+  cp -r "$demohome/setup/clone/sql"/* "$demohome/$USER/sql"
+  find "$demohome/$USER/sql" -type f -print0 | xargs -0   sed -e "s|%DEMODIRECTORY%|$demohome|g" -e "s|%DEMOFOLDERNAME%|INTRODUCTION|g" -e "s|%DEMONAME%|Oracle JSON Query and Analytics : Oracle Database 12c (12.1.0.2.0)|g" -e "s|%LAUNCHPAD%|JSON (12.1.0.2.0)|g" -e "s|%SHORTCUTFOLDER%|$demohome\/$USER|g" -e "s|%PUBLICFOLDER%|\/publishedContent|g" -e "s|%DEMOCOMMON%|\/publishedContent\/demonstrations\/JSON\/introduction|g" -e "s|%DOCLIBRARY%|\/publishedContent\/Hands-On-Labs\/JSON|g" -e "s|%HOLFOLDER%|%HOMEFOLDER%\/Hands-On-Labs\/JSON|g" -e "s|%HOMEFOLDER%|\/home\/%USER%|g" -e "s|%DEMOLOCAL%|\/home\/%USER%\/demonstrations\/JSON\/introduction|g" -e "s|%XFILES_SCHEMA%|XFILES|g" -e "s|%TABLE_NAME%|J_PURCHASEORDER|g" -e "s|%EXTERNAL_TABLE_NAME%|JSON_DUMP_CONTENTS|g" -e "s|enableHTTPTrace|false|g" -e "s|%ORACLEHOME%|$ORACLE_HOME|g" -e "s|%DBA%|$DBA|g" -e "s|%DBAPASSWORD%|$DBAPWD|g" -e "s|%USER%|$USER|g" -e "s|%PASSWORD%|$USERPWD|g" -e "s|%TNSALIAS%|$ORACLE_SID|g" -e "s|%HOSTNAME%|$HOSTNAME|g" -e "s|%HTTPPORT%|$HTTP|g" -e "s|%FTPPORT%|$FTP|g" -e "s|%DRIVELETTER%||g" -e "s|%SERVERURL%|$SERVER|g" -e "s|%DBCONNECTION%|$USER\/$USERPWD@$ORACLE_SID|g" -e "s|%SQLPLUS%|sqlplus|g" -e "s|\$USER|$USER|g" -e "s|\$SERVER|$SERVER|g" -i
+  echo "Cloning Completed"
   sqlplus $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/grantPermissions.sql $USER
   sqlplus $USER/$USERPWD@$ORACLE_SID @$demohome/install/sql/createHomeFolder.sql
-  sqlplus $DBA/$DBAPWD@$ORACLE_SID as sysdba @$demohome/setup/runSetup.sql $USER $USERPWD $ORACLE_SID $demohome/setup
+  sqlplus $DBA/$DBAPWD@$ORACLE_SID as sysdba @$demohome/setup/install/setupDemo.sql $USER $USERPWD $ORACLE_SID
   HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/publishedContent/demonstrations/JSON/introduction" | head -1)
   echo "DELETE \"$SERVER/publishedContent/demonstrations/JSON/introduction\":$HttpStatus"
   if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ] && [ $HttpStatus != "404" ] 
@@ -407,26 +411,26 @@ doInstall() {
       exit 6
     fi
   fi
-  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/reset.sql" | head -1)
+  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/0.0%20resetDemo.sql" | head -1)
   if [ $HttpStatus != "404" ] 
   then
     if [ $HttpStatus == "200" ] 
     then
-      HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/reset.sql" | head -1)
+      HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/0.0%20resetDemo.sql" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "202" ] && [ $HttpStatus != "204" ]
       then
-        echo "PUT[DELETE] \"$SERVER/home/$USER/demonstrations/JSON/introduction/sql/reset.sql\":$HttpStatus - Delete Operation Failed. See $logfilename for details."
+        echo "PUT[DELETE] \"$SERVER/home/$USER/demonstrations/JSON/introduction/sql/0.0 resetDemo.sql\":$HttpStatus - Delete Operation Failed. See $logfilename for details."
         exit 5
       fi
     else
-      echo "PUT[HEAD] \"$SERVER/home/$USER/demonstrations/JSON/introduction/sql/reset.sql\":$HttpStatus - Operation Failed. See $logfilename for details."
+      echo "PUT[HEAD] \"$SERVER/home/$USER/demonstrations/JSON/introduction/sql/0.0 resetDemo.sql\":$HttpStatus - Operation Failed. See $logfilename for details."
       exit 5
     fi
   fi
-  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/setup/reset.sql" "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/reset.sql" | head -1)
+  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/setup/reset.sql" "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/0.0%20resetDemo.sql" | head -1)
   if [ $HttpStatus != "201" ] 
   then
-    echo "PUT \"$SERVER/home/$USER/demonstrations/JSON/introduction/sql/reset.sql\":$HttpStatus - Operation Failed: Installation Aborted. See $logfilename for details."
+    echo "PUT \"$SERVER/home/$USER/demonstrations/JSON/introduction/sql/0.0 resetDemo.sql\":$HttpStatus - Operation Failed: Installation Aborted. See $logfilename for details."
     exit 5
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/sql/1.0%20CREATE_TABLE.sql" | head -1)
@@ -627,10 +631,72 @@ doInstall() {
     echo "PUT \"$SERVER/home/$USER/demonstrations/JSON/introduction/sql/8.0 JSON_DOCUMENT_INDEX.sql\":$HttpStatus - Operation Failed: Installation Aborted. See $logfilename for details."
     exit 5
   fi
-  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home" | head -1)
+  HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/publishedContent" | head -1)
   if [ $HttpStatus == "404" ] 
   then
-    HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home" | head -1)
+    HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/publishedContent" | head -1)
+    echo "MKCOL \"$SERVER/publishedContent\":$HttpStatus"
+    if [ $HttpStatus != "201" ]
+    then
+      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
+      exit 6
+    fi
+  fi
+  HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/publishedContent/demonstrations" | head -1)
+  if [ $HttpStatus == "404" ] 
+  then
+    HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/publishedContent/demonstrations" | head -1)
+    echo "MKCOL \"$SERVER/publishedContent/demonstrations\":$HttpStatus"
+    if [ $HttpStatus != "201" ]
+    then
+      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
+      exit 6
+    fi
+  fi
+  HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/publishedContent/demonstrations/JSON" | head -1)
+  if [ $HttpStatus == "404" ] 
+  then
+    HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/publishedContent/demonstrations/JSON" | head -1)
+    echo "MKCOL \"$SERVER/publishedContent/demonstrations/JSON\":$HttpStatus"
+    if [ $HttpStatus != "201" ]
+    then
+      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
+      exit 6
+    fi
+  fi
+  HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/publishedContent/demonstrations/JSON/introduction" | head -1)
+  if [ $HttpStatus == "404" ] 
+  then
+    HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/publishedContent/demonstrations/JSON/introduction" | head -1)
+    echo "MKCOL \"$SERVER/publishedContent/demonstrations/JSON/introduction\":$HttpStatus"
+    if [ $HttpStatus != "201" ]
+    then
+      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
+      exit 6
+    fi
+  fi
+  HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/publishedContent/demonstrations/JSON/introduction/manual" | head -1)
+  if [ $HttpStatus == "404" ] 
+  then
+    HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/publishedContent/demonstrations/JSON/introduction/manual" | head -1)
+    echo "MKCOL \"$SERVER/publishedContent/demonstrations/JSON/introduction/manual\":$HttpStatus"
+    if [ $HttpStatus != "201" ]
+    then
+      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
+      exit 6
+    fi
+  fi
+  HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON" | head -1)
+  echo "DELETE \"$SERVER/home/$USER/Hands-On-Labs/JSON\":$HttpStatus"
+  if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ] && [ $HttpStatus != "404" ] 
+  then
+    echo "Operation Failed: Installation Aborted. See $logfilename for details."
+    exit 6
+  fi
+  HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home" | head -1)
+  if [ $HttpStatus == "404" ] 
+  then
+    HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home" | head -1)
     echo "MKCOL \"$SERVER/home\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
@@ -638,10 +704,10 @@ doInstall() {
       exit 6
     fi
   fi
-  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER" | head -1)
+  HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER" | head -1)
   if [ $HttpStatus == "404" ] 
   then
-    HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER" | head -1)
+    HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER" | head -1)
     echo "MKCOL \"$SERVER/home/$USER\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
@@ -649,44 +715,22 @@ doInstall() {
       exit 6
     fi
   fi
-  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations" | head -1)
+  HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs" | head -1)
   if [ $HttpStatus == "404" ] 
   then
-    HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations" | head -1)
-    echo "MKCOL \"$SERVER/home/$USER/demonstrations\":$HttpStatus"
+    HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs" | head -1)
+    echo "MKCOL \"$SERVER/home/$USER/Hands-On-Labs\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
       exit 6
     fi
   fi
-  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON" | head -1)
+  HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON" | head -1)
   if [ $HttpStatus == "404" ] 
   then
-    HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON" | head -1)
-    echo "MKCOL \"$SERVER/home/$USER/demonstrations/JSON\":$HttpStatus"
-    if [ $HttpStatus != "201" ]
-    then
-      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
-      exit 6
-    fi
-  fi
-  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction" | head -1)
-  if [ $HttpStatus == "404" ] 
-  then
-    HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction" | head -1)
-    echo "MKCOL \"$SERVER/home/$USER/demonstrations/JSON/introduction\":$HttpStatus"
-    if [ $HttpStatus != "201" ]
-    then
-      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
-      exit 6
-    fi
-  fi
-  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/manual" | head -1)
-  if [ $HttpStatus == "404" ] 
-  then
-    HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/manual" | head -1)
-    echo "MKCOL \"$SERVER/home/$USER/demonstrations/JSON/introduction/manual\":$HttpStatus"
+    HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON" | head -1)
+    echo "MKCOL \"$SERVER/home/$USER/Hands-On-Labs/JSON\":$HttpStatus"
     if [ $HttpStatus != "201" ]
     then
       echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
@@ -694,7 +738,7 @@ doInstall() {
     fi
   fi
   sqlplus $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/unzipArchive.sql /publishedContent/Hands-On-Labs/JSON/manual/manual.zip /publishedContent/Hands-On-Labs/JSON/manual /publishedContent/Hands-On-Labs/JSON/manual/manual.log
-  sed -e "s|%DEMODIRECTORY%|$demohome|g" -e "s|%DEMOFOLDERNAME%|INTRODUCTION|g" -e "s|%DEMONAME%|Oracle JSON Query and Analytics : Oracle Database 12c (12.1.0.2.0)|g" -e "s|%LAUNCHPAD%|JSON (12.1.0.2.0)|g" -e "s|%SHORTCUTFOLDER%|$demohome\/$USER|g" -e "s|%PUBLICFOLDER%|\/publishedContent|g" -e "s|%DEMOCOMMON%|\/publishedContent\/demonstrations\/JSON\/introduction|g" -e "s|%DOCLIBRARY%|\/publishedContent\/Hands-On-Labs\/JSON|g" -e "s|%HOMEFOLDER%|\/home\/%USER%|g" -e "s|%DEMOLOCAL%|\/home\/%USER%\/demonstrations\/JSON\/introduction|g" -e "s|%XFILES_SCHEMA%|XFILES|g" -e "s|enableHTTPTrace|false|g" -e "s|%ORACLEHOME%|$ORACLE_HOME|g" -e "s|%DBA%|$DBA|g" -e "s|%DBAPASSWORD%|$DBAPWD|g" -e "s|%USER%|$USER|g" -e "s|%PASSWORD%|$USERPWD|g" -e "s|%TNSALIAS%|$ORACLE_SID|g" -e "s|%HOSTNAME%|$HOSTNAME|g" -e "s|%HTTPPORT%|$HTTP|g" -e "s|%FTPPORT%|$FTP|g" -e "s|%DRIVELETTER%||g" -e "s|%SERVERURL%|$SERVER|g" -e "s|%DBCONNECTION%|$USER\/$USERPWD@$ORACLE_SID|g" -e "s|%SQLPLUS%|sqlplus|g" -e "s|\$USER|$USER|g" -e "s|\$SERVER|$SERVER|g" -i $demohome/install/configuration.xml
+  sed -e "s|%DEMODIRECTORY%|$demohome|g" -e "s|%DEMOFOLDERNAME%|INTRODUCTION|g" -e "s|%DEMONAME%|Oracle JSON Query and Analytics : Oracle Database 12c (12.1.0.2.0)|g" -e "s|%LAUNCHPAD%|JSON (12.1.0.2.0)|g" -e "s|%SHORTCUTFOLDER%|$demohome\/$USER|g" -e "s|%PUBLICFOLDER%|\/publishedContent|g" -e "s|%DEMOCOMMON%|\/publishedContent\/demonstrations\/JSON\/introduction|g" -e "s|%DOCLIBRARY%|\/publishedContent\/Hands-On-Labs\/JSON|g" -e "s|%HOLFOLDER%|%HOMEFOLDER%\/Hands-On-Labs\/JSON|g" -e "s|%HOMEFOLDER%|\/home\/%USER%|g" -e "s|%DEMOLOCAL%|\/home\/%USER%\/demonstrations\/JSON\/introduction|g" -e "s|%XFILES_SCHEMA%|XFILES|g" -e "s|%TABLE_NAME%|J_PURCHASEORDER|g" -e "s|%EXTERNAL_TABLE_NAME%|JSON_DUMP_CONTENTS|g" -e "s|enableHTTPTrace|false|g" -e "s|%ORACLEHOME%|$ORACLE_HOME|g" -e "s|%DBA%|$DBA|g" -e "s|%DBAPASSWORD%|$DBAPWD|g" -e "s|%USER%|$USER|g" -e "s|%PASSWORD%|$USERPWD|g" -e "s|%TNSALIAS%|$ORACLE_SID|g" -e "s|%HOSTNAME%|$HOSTNAME|g" -e "s|%HTTPPORT%|$HTTP|g" -e "s|%FTPPORT%|$FTP|g" -e "s|%DRIVELETTER%||g" -e "s|%SERVERURL%|$SERVER|g" -e "s|%DBCONNECTION%|$USER\/$USERPWD@$ORACLE_SID|g" -e "s|%SQLPLUS%|sqlplus|g" -e "s|\$USER|$USER|g" -e "s|\$SERVER|$SERVER|g" -i $demohome/install/configuration.xml
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/demonstrations/JSON/introduction/configuration.xml" | head -1)
   if [ $HttpStatus != "404" ] 
   then
@@ -717,7 +761,9 @@ doInstall() {
     echo "PUT \"$SERVER/home/$USER/demonstrations/JSON/introduction/configuration.xml\":$HttpStatus - Operation Failed: Installation Aborted. See $logfilename for details."
     exit 5
   fi
-  sqlplus $USER/$USERPWD@$ORACLE_SID @$demohome/install/sql/createLink.sql /publishedContent/Hands-On-Labs/JSON/manual /home/$USER/demonstrations/JSON/introduction manual
+  sqlplus $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/createLink.sql  /publishedContent/Hands-On-Labs/JSON/manual /home/$USER/Hands-On-Labs/JSON manual
+  sqlplus $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/createLink.sql  /publishedContent/demonstrations/JSON/introduction/index.htm /home/$USER/Hands-On-Labs/JSON index.htm
+  sqlplus $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/createLink.xml  /publishedContent/demonstrations/JSON/introduction/configuration.xml /home/$USER/Hands-On-Labs/JSON configuration.xml
   sqlplus $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/publishDemo.sql /home/$USER/demonstrations/JSON/introduction XFILES
   shellscriptName="$demohome/JSON_(12.1.0.2.0).sh"
   echo "Shell Script : $shellscriptName"

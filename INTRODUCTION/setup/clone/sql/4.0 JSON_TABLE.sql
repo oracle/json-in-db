@@ -2,7 +2,7 @@
 -- Query 1.
 --
 select M.* 
-  from J_PURCHASEORDER p,
+  from %TABLE_NAME% p,
        JSON_TABLE(
          p.PO_DOCUMENT,
          '$' 
@@ -19,7 +19,7 @@ select M.*
 -- Query 2.
 --
 select D.*
-  from J_PURCHASEORDER p,
+  from %TABLE_NAME% p,
        JSON_TABLE(
          p.PO_DOCUMENT,
          '$' 
@@ -46,7 +46,7 @@ select D.*
 ** 12.1.0.2.0 Legacy JSON_TABLE chaining syntax. Uses JSON_TABLE chaining syntax. 
 **
 select PO_NUMBER, REFERENCE, REQUESTOR, USERID, COSTCENTER, D.*
-  from J_PURCHASEORDER p,
+  from %TABLE_NAME% p,
        JSON_TABLE(
          p.PO_DOCUMENT,
          '$' 

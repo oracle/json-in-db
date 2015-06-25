@@ -1,10 +1,10 @@
 --
 -- Statement 1
 --
-create or replace view J_PURCHASEORDER_MASTER_VIEW
+create or replace view %TABLE_NAME%_MASTER_VIEW
 as
 select m.* 
- from J_PURCHASEORDER p,
+ from %TABLE_NAME% p,
       JSON_TABLE(
         p.PO_DOCUMENT,
         '$'
@@ -30,10 +30,10 @@ select m.*
 --
 -- Statement 2
 --
-create or replace view J_PURCHASEORDER_DETAIL_VIEW
+create or replace view %TABLE_NAME%_DETAIL_VIEW
 as
 select D.*
-  from J_PURCHASEORDER p,
+  from %TABLE_NAME% p,
        JSON_TABLE(
          p.PO_DOCUMENT,
          '$'
@@ -70,15 +70,15 @@ select D.*
 -- Simple Predicates
 --                                                                                                                                                                                     
 select SHIP_TO_STREET, SHIP_TO_CITY, SHIP_TO_STATE, SHIP_TO_ZIP                                                                                                                                                                            
-  from J_PURCHASEORDER_MASTER_VIEW
+  from %TABLE_NAME%_MASTER_VIEW
  where PO_NUMBER = 1600                                                                                                                                                           
 /                                                                                                                                                                                            
 select PO_NUMBER, REFERENCE, SHIP_TO_PHONE, DESCRIPTION, QUANTITY, UNITPRICE                                                                                                                                                                                     
-  from J_PURCHASEORDER_DETAIL_VIEW                                                                                                                                                             
+  from %TABLE_NAME%_DETAIL_VIEW                                                                                                                                                             
  where UPCCODE = '97361551647'                                                                                                                                                                
 /                                                                                                                                                                                            
 select PO_NUMBER, REFERENCE, SHIP_TO_PHONE, QUANTITY, DESCRIPTION, UNITPRICE                                                                                                                                                                                     
-  from J_PURCHASEORDER_DETAIL_VIEW                                                                                                                             
+  from %TABLE_NAME%_DETAIL_VIEW                                                                                                                             
  where UPCCODE in ('717951010490', '43396713994', '12236123248')  
  order by PO_NUMBER                                                                                                                       
 /                                                                                                                                                                                            
@@ -86,19 +86,19 @@ select PO_NUMBER, REFERENCE, SHIP_TO_PHONE, QUANTITY, DESCRIPTION, UNITPRICE
 -- Relational Group by Queries
 --                                                                                                                                                                                           
 select COSTCENTER, count(*)                                                                                                                                                                  
-  From J_PURCHASEORDER_MASTER_VIEW                                                                                                                                                             
+  From %TABLE_NAME%_MASTER_VIEW                                                                                                                                                             
   group by COSTCENTER                                                                                                                                                                        
   order by COSTCENTER
 /                                                                                                                                                                                            
 select COSTCENTER, sum (QUANTITY * UNITPRICE) TOTAL_VALUE                                                                                                                                                           
-  from J_PURCHASEORDER_DETAIL_VIEW                                                                                                                              
+  from %TABLE_NAME%_DETAIL_VIEW                                                                                                                              
  group by COSTCENTER                                                                                                                                                                         
 /       
 --
 -- Multiple Predicates
 --                                                                                                                                                                                     
 select PO_NUMBER, REFERENCE, INSTRUCTIONS, ITEMNO, UPCCODE, DESCRIPTION, QUANTITY, UNITPRICE                                                                                                           
-  from J_PURCHASEORDER_DETAIL_VIEW d                                                                                                                              
+  from %TABLE_NAME%_DETAIL_VIEW d                                                                                                                              
  where REQUESTOR = 'Steven King'                                                                                                                                                           
    and QUANTITY  > 7                                                                                                                                                                       
    and UNITPRICE > 25.00                                                                                                                                                                   
@@ -107,12 +107,12 @@ select PO_NUMBER, REFERENCE, INSTRUCTIONS, ITEMNO, UPCCODE, DESCRIPTION, QUANTIT
 -- SQL Analytics                                                                                                                                      
 --                                                                                                                                                                                           
 select UPCCODE, count(*) "Orders", Quantity "Copies"                                                                                                                                          
-  from J_PURCHASEORDER_DETAIL_VIEW                                                                                                                                                             
+  from %TABLE_NAME%_DETAIL_VIEW                                                                                                                                                             
  where UPCCODE in ('717951010490', '43396713994', '12236123248')                                                                                                                              
  group by rollup(UPCCODE, QUANTITY)                                                                                                                                                           
 /                                                                                                                                                                                            
 select UPCCODE, PO_NUMBER, REFERENCE, QUANTITY, QUANTITY - LAG(QUANTITY,1,QUANTITY) over (ORDER BY PO_NUMBER) as DIFFERENCE                                             
-  from J_PURCHASEORDER_DETAIL_VIEW                                                                                                                                                             
+  from %TABLE_NAME%_DETAIL_VIEW                                                                                                                                                             
  where UPCCODE = '43396713994'                                                                                                                                                                
  order by PO_NUMBER DESC                                                                                                                                   
 /                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                

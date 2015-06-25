@@ -1,28 +1,32 @@
 <!-- edited with XML Spy v4.4 U (http://www.xmlspy.com) by Mark D. Drake and Geoff Lee (Oracle XML Dev) -->
 <installerConfiguration>
 	<parameters>
-		<parameter name="%DEMONAME%"        value="Oracle JSON Query and Analytics : Oracle Database 12c (12.1.0.2.0)"/>
-		<parameter name="%LAUNCHPAD%"       value="JSON (12.1.0.2.0)"/>
-		<parameter name="%LAUNCHPADFOLDER%" value="%STARTMENU%\JSON Demonstrations"/>
-		<parameter name="%SHORTCUTFOLDER%"  value="%DEMODIRECTORY%\%USER%"/>
+		<parameter name="%DEMONAME%"              value="Oracle JSON Query and Analytics : Oracle Database 12c (12.1.0.2.0)"/>
+		<parameter name="%LAUNCHPAD%"             value="JSON (12.1.0.2.0)"/>
+		<parameter name="%LAUNCHPADFOLDER%"       value="%STARTMENU%\JSON Demonstrations"/>
+		<parameter name="%SHORTCUTFOLDER%"        value="%DEMODIRECTORY%\%USER%"/>
 
-		<parameter name="%PUBLICFOLDER%"    value="/publishedContent"/>
-		<parameter name="%DEMOCOMMON%"      value="%PUBLICFOLDER%/demonstrations/JSON/introduction"/>
-		<parameter name="%DOCLIBRARY%"      value="%PUBLICFOLDER%/Hands-On-Labs/JSON"/>
-		<parameter name="%HOMEFOLDER%"      value="/home/%USER%"/>
-		<parameter name="%DEMOLOCAL%"       value="%HOMEFOLDER%/demonstrations/JSON/introduction"/>
-		<parameter name="%XFILES_SCHEMA%"   value="XFILES"/>
+		<parameter name="%PUBLICFOLDER%"          value="/publishedContent"/>
+		<parameter name="%DEMOCOMMON%"            value="%PUBLICFOLDER%/demonstrations/JSON/introduction"/>
+		<parameter name="%DOCLIBRARY%"            value="%PUBLICFOLDER%/Hands-On-Labs/JSON"/>
+		<parameter name="%HOLFOLDER%"             value="%HOMEFOLDER%/Hands-On-Labs/JSON"/>
+		<parameter name="%HOMEFOLDER%"            value="/home/%USER%"/>
+		<parameter name="%DEMOLOCAL%"             value="%HOMEFOLDER%/demonstrations/JSON/introduction"/>
+		<parameter name="%XFILES_SCHEMA%"         value="XFILES"/>
+		<parameter name="%TABLE_NAME%"            value="J_PURCHASEORDER"/>
+		<parameter name="%EXTERNAL_TABLE_NAME%"   value="JSON_DUMP_CONTENTS"/>
 
-		<parameter name="enableHTTPTrace"   value="false"/>
+		<parameter name="enableHTTPTrace"         value="false"/>
 	</parameters>
 
 	<installation>
 		<action type="MAKEFOLDERS"/>
+		<action type="CLONEFOLDERS"/>
 
 		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\grantPermissions.sql %USER%</action>
 		<action type="RUNSQL" user="%USER%" password="%PASSWORD%">%DEMODIRECTORY%\install\sql\createHomeFolder.sql</action>
 
-		<action type="SYSDBA" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\setup\runSetup.sql %USER% %PASSWORD% %TNSALIAS% %DEMODIRECTORY%\setup</action>
+		<action type="SYSDBA" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\setup\install\setupDemo.sql %USER% %PASSWORD% %TNSALIAS%</action>
  		
 	  <action type="UPLOAD">
   		<!-- Delete existing Source Code -->
@@ -83,7 +87,7 @@
   		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
   			<mode>FORCE</mode>
   			<local>%DEMODIRECTORY%\setup\reset.sql</local>
-  			<remote>%DEMOLOCAL%/sql/reset.sql</remote>
+  			<remote>%DEMOLOCAL%/sql/0.0 resetDemo.sql</remote>
   		</action>
   		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
   			<mode>FORCE</mode>
@@ -130,12 +134,21 @@
   			<local>%DEMODIRECTORY%\sql\8.0 JSON_DOCUMENT_INDEX.sql</local>
   			<remote>%DEMOLOCAL%/sql/8.0 JSON_DOCUMENT_INDEX.sql</remote>
   		</action>
-
- 			<action type="MKCOL" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
-  			<mode>FORCE</mode>
-  			<remote>%DEMOLOCAL%/manual</remote>
-  		</action>
 		
+ 			<action type="MKCOL" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DEMOCOMMON%/manual</remote>
+  		</action>
+
+	  	<action type="DELETE" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+ 		  	<mode>FORCE</mode>
+ 			  <remote>%HOLFOLDER%</remote>
+ 		  </action>
+	  	<action type="MKCOL" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+ 		  	<mode>FORCE</mode>
+ 			  <remote>%HOLFOLDER%</remote>
+ 		  </action>
+
   	</action>
 
 		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\unzipArchive.sql %DOCLIBRARY%/manual/manual.zip %DOCLIBRARY%/manual %DOCLIBRARY%/manual/manual.log</action>
@@ -145,10 +158,22 @@
 		<action type="DEMOCONFIG" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
 			<remote>%DEMOLOCAL%</remote>
 		</action>
-		<action type="RUNSQL" user="%USER%" password="%PASSWORD%">%DEMODIRECTORY%\install\sql\createLink.sql %DOCLIBRARY%/manual %DEMOLOCAL% manual</action>
+		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\createLink.sql  %DOCLIBRARY%/manual %HOLFOLDER% manual</action>
+		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\createLink.sql  %DEMOCOMMON%/index.htm %HOLFOLDER% index.htm</action>
+		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\createLink.xml  %DEMOCOMMON%/configuration.xml %HOLFOLDER% configuration.xml</action>
 		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\publishDemo.sql %DEMOLOCAL% %XFILES_SCHEMA%</action>
 		<action type="LAUNCH"/>
 	</installation>
+
+	<clone>
+		<files/>
+		<folders>
+			<folder>
+				<source>%DEMODIRECTORY%\setup\clone\sql</source>
+				<target>%DEMODIRECTORY%\%USER%\sql</target>
+			</folder>
+		</folders>
+	</clone>
 
 	<make>
 		<folders>
@@ -168,7 +193,7 @@
 			</defaults>
 			<shortCut>
 				<name>0.0 Reset Demo</name>
-				<script>/sql/reset.sql</script>
+				<script>/sql/0.0 resetDemo.sql</script>
 			</shortCut>
 			<shortCut>
 				<name>1.0 Create Table</name>

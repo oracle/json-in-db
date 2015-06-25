@@ -2,7 +2,7 @@
 -- Query 1
 --
 select count(*)
-  from J_PURCHASEORDER
+  from %TABLE_NAME%
  where JSON_EXISTS(PO_DOCUMENT,'$.ShippingInstructions.Address.state')
 /
 --
@@ -10,7 +10,7 @@ select count(*)
 --
 select JSON_VALUE(PO_DOCUMENT,'$.ShippingInstructions.Address.county' returning VARCHAR2(10)) COUNTY,
        count(*)
-  from J_PURCHASEORDER
+  from %TABLE_NAME%
  group by JSON_VALUE(PO_DOCUMENT,'$.ShippingInstructions.Address.county' returning VARCHAR2(10))
 /
 --
@@ -18,7 +18,7 @@ select JSON_VALUE(PO_DOCUMENT,'$.ShippingInstructions.Address.county' returning 
 --
 select JSON_VALUE(PO_DOCUMENT,'$.ShippingInstructions.Address.county' returning VARCHAR2(10)) COUNTY,
        count(*)
-  from J_PURCHASEORDER
+  from %TABLE_NAME%
  where JSON_VALUE(PO_DOCUMENT,'$.ShippingInstructions.Address.county' returning VARCHAR2(10)) is not null
  group by JSON_VALUE(PO_DOCUMENT,'$.ShippingInstructions.Address.county' returning VARCHAR2(10) )
 /
@@ -27,7 +27,7 @@ select JSON_VALUE(PO_DOCUMENT,'$.ShippingInstructions.Address.county' returning 
 --
 select JSON_VALUE(PO_DOCUMENT,'$.ShippingInstructions.Address.county' returning VARCHAR2(10)) COUNTY,
        count(*)
-  from J_PURCHASEORDER
+  from %TABLE_NAME%
  where JSON_EXISTS(PO_DOCUMENT,'$.ShippingInstructions.Address.county')
  group by JSON_VALUE(PO_DOCUMENT,'$.ShippingInstructions.Address.county' returning VARCHAR2(10))
 /

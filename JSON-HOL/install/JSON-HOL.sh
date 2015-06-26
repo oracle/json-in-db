@@ -612,7 +612,7 @@ doInstall() {
     echo "PUT \"$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/configuration.xml\":$HttpStatus - Operation Failed: Installation Aborted. See $logfilename for details."
     exit 5
   fi
-  sqlplus $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/createLink.sql  /publishedContent/Hands-On-Labs/JSON/manual %HOLFOLDER% manual
+  sqlplus $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/createLink.sql  /publishedContent/Hands-On-Labs/JSON/manual /home/$USER/Hands-On-Labs/JSON/introduction manual
   sqlplus $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/publishDemo.sql /home/$USER/Hands-On-Labs/JSON/introduction XFILES
   shellscriptName="$demohome/JSON_(12.1.0.2.0).sh"
   echo "Shell Script : $shellscriptName"

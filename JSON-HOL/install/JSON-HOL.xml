@@ -132,7 +132,7 @@
 		<action type="DEMOCONFIG" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
 			<remote>%DEMOLOCAL%</remote>
 		</action>
-		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\createLink.sql  %DOCLIBRARY%/manual %HOLFOLDER% manual</action>
+		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\createLink.sql  %DOCLIBRARY%/manual %DEMOLOCAL% manual</action>
 		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\publishDemo.sql %DEMOLOCAL% %XFILES_SCHEMA%</action>
 		<action type="LAUNCH"/>
 	</installation>

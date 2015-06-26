@@ -1,5 +1,6 @@
 <InstallList tnsalias="PDB12102" host="localhost" http="80" ftp="21" driveLetter="O:" dba="MYDBA" dbaPassword="oracle" demoFolder="c:\xdb\demo">
 	<Demo name="INTRODUCTION"   user="SCOTT" password="tiger"/>
+	<Demo name="JSON-HOL"       user="SCOTT" password="tiger"/>
 	<Demo name="RESTDEMO"       user="XFILES" password="XFILES"/> 
 	<Demo name="SCHEMALESS"     user="SCOTT" password="tiger"/>
 </InstallList>		

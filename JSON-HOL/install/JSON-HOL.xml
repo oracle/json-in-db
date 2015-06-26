@@ -25,7 +25,7 @@
 		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\grantPermissions.sql %USER%</action>
 		<action type="RUNSQL" user="%USER%" password="%PASSWORD%">%DEMODIRECTORY%\install\sql\createHomeFolder.sql</action>
 
-		<action type="SYSDBA" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\setup\install\setupDemo.sql %USER% %PASSWORD% %TNSALIAS%</action>
+		<action type="SYSDBA" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\setup\install\setupLab.sql %USER% %PASSWORD% %TNSALIAS%</action>
  		
 	  <action type="UPLOAD">
   		<!-- Delete existing Source Code -->

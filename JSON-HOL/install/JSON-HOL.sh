@@ -78,7 +78,7 @@ doInstall() {
   echo "Cloning Completed"
   sqlplus $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/grantPermissions.sql $USER
   sqlplus $USER/$USERPWD@$ORACLE_SID @$demohome/install/sql/createHomeFolder.sql
-  sqlplus $DBA/$DBAPWD@$ORACLE_SID as sysdba @$demohome/setup/install/setupDemo.sql $USER $USERPWD $ORACLE_SID
+  sqlplus $DBA/$DBAPWD@$ORACLE_SID as sysdba @$demohome/setup/install/setupLab.sql $USER $USERPWD $ORACLE_SID
   HttpStatus=$(curl --noproxy '*' --digest -u $DBA:$DBAPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/publishedContent/Hands-On-Labs/JSON" | head -1)
   echo "DELETE \"$SERVER/publishedContent/Hands-On-Labs/JSON\":$HttpStatus"
   if [ $HttpStatus != "200" ] && [ $HttpStatus != "204" ] && [ $HttpStatus != "404" ] 

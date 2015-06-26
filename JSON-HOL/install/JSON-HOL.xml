@@ -7,9 +7,10 @@
 		<parameter name="%SHORTCUTFOLDER%"        value="%DEMODIRECTORY%\%USER%"/>
 
 		<parameter name="%PUBLICFOLDER%"          value="/publishedContent"/>
-		<parameter name="%DEMOCOMMON%"            value="%PUBLICFOLDER%/demonstrations/JSON/introduction"/>
+		<parameter name="%DEMOCOMMON%"            value="%PUBLICFOLDER%/Hands-On-Labs/JSON"/>
+		<parameter name="%DOCLIBRARY%"            value="%PUBLICFOLDER%/Hands-On-Labs/JSON"/>
 		<parameter name="%HOMEFOLDER%"            value="/home/%USER%"/>
-		<parameter name="%DEMOLOCAL%"             value="%HOMEFOLDER%/demonstrations/JSON/introduction"/>
+		<parameter name="%DEMOLOCAL%"             value="%HOMEFOLDER%/Hands-On-Labs/JSON/introduction"/>
 		<parameter name="%XFILES_SCHEMA%"         value="XFILES"/>
 		<parameter name="%TABLE_NAME%"            value="J_PURCHASEORDER"/>
 		<parameter name="%EXTERNAL_TABLE_NAME%"   value="JSON_DUMP_CONTENTS"/>
@@ -42,7 +43,26 @@
   			<mode>FORCE</mode>
   			<remote>%DEMOCOMMON%</remote>
   		</action>
- 		  		
+
+ 			<action type="MKCOL" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DOCLIBRARY%</remote>
+  		</action>
+ 			<action type="MKCOL" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DOCLIBRARY%/manual</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\manual\manual.zip</local>
+  			<remote>%DOCLIBRARY%/manual/manual.zip</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\manual\manual.pdf</local>
+  			<remote>%DOCLIBRARY%/manual/manual.pdf</remote>
+  		</action>
+
   		<action type="MKCOL" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
   			<mode>FORCE</mode>
   			<remote>%DEMOLOCAL%</remote>
@@ -51,7 +71,7 @@
   		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
   			<mode>FORCE</mode>
   			<local>%DEMODIRECTORY%\%USER%\setup\0.0 RESET_DEMO.sql</local>
-  			<remote>%DEMOLOCAL%/sql/0.0 RESET_DEMO.sql</remote>
+  			<remote>%DEMOLOCAL%/sql/0.0 0.0 RESET_DEMO.sql</remote>
   		</action>
   		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
   			<mode>FORCE</mode>
@@ -98,14 +118,17 @@
   			<local>%DEMODIRECTORY%\%USER%\sql\8.0 JSON_DOCUMENT_INDEX.sql</local>
   			<remote>%DEMOLOCAL%/sql/8.0 JSON_DOCUMENT_INDEX.sql</remote>
   		</action>
-	
+  		
   	</action>
+
+		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\unzipArchive.sql %DOCLIBRARY%/manual/manual.zip %DOCLIBRARY%/manual %DOCLIBRARY%/manual/manual.log</action>
 		
 		<action type="SQL"/>
 
 		<action type="DEMOCONFIG" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
 			<remote>%DEMOLOCAL%</remote>
 		</action>
+		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\createLink.sql  %DOCLIBRARY%/manual %HOLFOLDER% manual</action>
 		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\publishDemo.sql %DEMOLOCAL% %XFILES_SCHEMA%</action>
 		<action type="LAUNCH"/>
 	</installation>

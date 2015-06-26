@@ -302,26 +302,92 @@ doInstall() {
       exit 6
     fi
   fi
-  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/0.0%200.0%20RESET_DEMO.sql" | head -1)
+  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home" | head -1)
+  if [ $HttpStatus == "404" ] 
+  then
+    HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home" | head -1)
+    echo "MKCOL \"$SERVER/home\":$HttpStatus"
+    if [ $HttpStatus != "201" ]
+    then
+      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
+      exit 6
+    fi
+  fi
+  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER" | head -1)
+  if [ $HttpStatus == "404" ] 
+  then
+    HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER" | head -1)
+    echo "MKCOL \"$SERVER/home/$USER\":$HttpStatus"
+    if [ $HttpStatus != "201" ]
+    then
+      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
+      exit 6
+    fi
+  fi
+  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs" | head -1)
+  if [ $HttpStatus == "404" ] 
+  then
+    HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs" | head -1)
+    echo "MKCOL \"$SERVER/home/$USER/Hands-On-Labs\":$HttpStatus"
+    if [ $HttpStatus != "201" ]
+    then
+      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
+      exit 6
+    fi
+  fi
+  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON" | head -1)
+  if [ $HttpStatus == "404" ] 
+  then
+    HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON" | head -1)
+    echo "MKCOL \"$SERVER/home/$USER/Hands-On-Labs/JSON\":$HttpStatus"
+    if [ $HttpStatus != "201" ]
+    then
+      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
+      exit 6
+    fi
+  fi
+  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON/introduction" | head -1)
+  if [ $HttpStatus == "404" ] 
+  then
+    HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON/introduction" | head -1)
+    echo "MKCOL \"$SERVER/home/$USER/Hands-On-Labs/JSON/introduction\":$HttpStatus"
+    if [ $HttpStatus != "201" ]
+    then
+      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
+      exit 6
+    fi
+  fi
+  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql" | head -1)
+  if [ $HttpStatus == "404" ] 
+  then
+    HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X MKCOL --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql" | head -1)
+    echo "MKCOL \"$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql\":$HttpStatus"
+    if [ $HttpStatus != "201" ]
+    then
+      echo "Operation Failed [$HttpStatus] - Installation Aborted. See $logfilename for details."
+      exit 6
+    fi
+  fi
+  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/0.0%20RESET_DEMO.sql" | head -1)
   if [ $HttpStatus != "404" ] 
   then
     if [ $HttpStatus == "200" ] 
     then
-      HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/0.0%200.0%20RESET_DEMO.sql" | head -1)
+      HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X DELETE --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/0.0%20RESET_DEMO.sql" | head -1)
       if [ $HttpStatus != "200" ] && [ $HttpStatus != "202" ] && [ $HttpStatus != "204" ]
       then
-        echo "PUT[DELETE] \"$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/0.0 0.0 RESET_DEMO.sql\":$HttpStatus - Delete Operation Failed. See $logfilename for details."
+        echo "PUT[DELETE] \"$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/0.0 RESET_DEMO.sql\":$HttpStatus - Delete Operation Failed. See $logfilename for details."
         exit 5
       fi
     else
-      echo "PUT[HEAD] \"$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/0.0 0.0 RESET_DEMO.sql\":$HttpStatus - Operation Failed. See $logfilename for details."
+      echo "PUT[HEAD] \"$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/0.0 RESET_DEMO.sql\":$HttpStatus - Operation Failed. See $logfilename for details."
       exit 5
     fi
   fi
-  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/$USER/setup/0.0 RESET_DEMO.sql" "$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/0.0%200.0%20RESET_DEMO.sql" | head -1)
+  HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD -X PUT --write-out "%{http_code}\n"  -s --output /dev/null --upload-file "$demohome/$USER/sql/0.0 RESET_DEMO.sql" "$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/0.0%20RESET_DEMO.sql" | head -1)
   if [ $HttpStatus != "201" ] 
   then
-    echo "PUT \"$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/0.0 0.0 RESET_DEMO.sql\":$HttpStatus - Operation Failed: Installation Aborted. See $logfilename for details."
+    echo "PUT \"$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/0.0 RESET_DEMO.sql\":$HttpStatus - Operation Failed: Installation Aborted. See $logfilename for details."
     exit 5
   fi
   HttpStatus=$(curl --noproxy '*' --digest -u $USER:$USERPWD --head --write-out "%{http_code}\n" -s --output /dev/null "$SERVER/home/$USER/Hands-On-Labs/JSON/introduction/sql/1.0%20CREATE_TABLE.sql" | head -1)

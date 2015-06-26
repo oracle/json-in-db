@@ -47,10 +47,14 @@
   			<mode>FORCE</mode>
   			<remote>%DEMOLOCAL%</remote>
   		</action>
+  		<action type="MKCOL" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DEMOLOCAL%/sql</remote>
+  		</action>
 
   		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
   			<mode>FORCE</mode>
-  			<local>%DEMODIRECTORY%\%USER%\setup\0.0 RESET_DEMO.sql</local>
+  			<local>%DEMODIRECTORY%\%USER%\sql\0.0 RESET_DEMO.sql</local>
   			<remote>%DEMOLOCAL%/sql/0.0 RESET_DEMO.sql</remote>
   		</action>
   		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">

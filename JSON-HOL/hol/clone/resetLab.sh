@@ -4,8 +4,8 @@ doSetup() {
 }
 DBAPWD=${1:-oracle}
 USERPWD=${2:-oracle}
-if [ -f "reset_XMLDB.log" ] 
+if [ -f "reset_JSON.log" ] 
 then
-  rm reset_XMLDB.log
+  rm reset_JSON.log
 fi
-doSetup 2>&1 | tee -a reset_XMLDB.log
+doSetup 2>&1 | tee -a reset_JSON.log

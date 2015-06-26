@@ -1,5 +1,5 @@
 set echo on
-spool %TABLE_NAME%.log
+spool setupDemo.log
 --
 def USERNAME = &1
 --

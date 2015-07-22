@@ -94,7 +94,7 @@ DBAPWD=${2}
 USER=${3}
 USERPWD=${4}
 SERVER=${5}
-JSON_HOL_BASE=~/Desktop/DatabaseTrack/JSON
+JSON_HOL_BASE=~/Desktop/Database_Track/JSON
 demohome="$(dirname "$(pwd)")"
 logfilename=$demohome/hol/handsOnLab.log
 echo "Log File : $logfilename"

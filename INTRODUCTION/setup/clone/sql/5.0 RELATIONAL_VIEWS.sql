@@ -3,7 +3,7 @@
 --
 create or replace view %TABLE_NAME%_MASTER_VIEW
 as
-select m.* 
+select m.*
  from %TABLE_NAME% p,
       JSON_TABLE(
         p.PO_DOCUMENT,
@@ -56,63 +56,63 @@ select D.*
            INSTRUCTIONS     VARCHAR2(2048 CHAR)         path '$.SpecialInstructions',
            NESTED PATH '$.LineItems[*]'
            columns (
-             ITEMNO         NUMBER(38)                   path '$.ItemNumber', 
-             DESCRIPTION    VARCHAR2(256 CHAR)           path '$.Part.Description', 
-             UPCCODE        VARCHAR2(14 CHAR)            path '$.Part.UPCCode', 
-             QUANTITY       NUMBER(12,4)                 path '$.Quantity', 
+             ITEMNO         NUMBER(38)                   path '$.ItemNumber',
+             DESCRIPTION    VARCHAR2(256 CHAR)           path '$.Part.Description',
+             UPCCODE        VARCHAR2(14 CHAR)            path '$.Part.UPCCode',
+             QUANTITY       NUMBER(12,4)                 path '$.Quantity',
              UNITPRICE      NUMBER(14,2)                 path '$.Part.UnitPrice'
            )
          )
-       )  d        
-/                                                                                                                                                     
---                                                                                                                                                                                           
+       )  d
+/
+--
 --
 -- Simple Predicates
---                                                                                                                                                                                     
-select SHIP_TO_STREET, SHIP_TO_CITY, SHIP_TO_STATE, SHIP_TO_ZIP                                                                                                                                                                            
+--
+select SHIP_TO_STREET, SHIP_TO_CITY, SHIP_TO_STATE, SHIP_TO_ZIP
   from %TABLE_NAME%_MASTER_VIEW
- where PO_NUMBER = 1600                                                                                                                                                           
-/                                                                                                                                                                                            
-select PO_NUMBER, REFERENCE, SHIP_TO_PHONE, DESCRIPTION, QUANTITY, UNITPRICE                                                                                                                                                                                     
-  from %TABLE_NAME%_DETAIL_VIEW                                                                                                                                                             
- where UPCCODE = '97361551647'                                                                                                                                                                
-/                                                                                                                                                                                            
-select PO_NUMBER, REFERENCE, SHIP_TO_PHONE, QUANTITY, DESCRIPTION, UNITPRICE                                                                                                                                                                                     
-  from %TABLE_NAME%_DETAIL_VIEW                                                                                                                             
- where UPCCODE in ('717951010490', '43396713994', '12236123248')  
- order by PO_NUMBER                                                                                                                       
-/                                                                                                                                                                                            
--- 
+ where PO_NUMBER = 1600
+/
+select PO_NUMBER, REFERENCE, SHIP_TO_PHONE, DESCRIPTION, QUANTITY, UNITPRICE
+  from %TABLE_NAME%_DETAIL_VIEW
+ where UPCCODE = '97361551647'
+/
+select PO_NUMBER, REFERENCE, SHIP_TO_PHONE, QUANTITY, DESCRIPTION, UNITPRICE
+  from %TABLE_NAME%_DETAIL_VIEW
+ where UPCCODE in ('717951010490', '43396713994', '12236123248')
+ order by PO_NUMBER
+/
+--
 -- Relational Group by Queries
---                                                                                                                                                                                           
-select COSTCENTER, count(*)                                                                                                                                                                  
-  From %TABLE_NAME%_MASTER_VIEW                                                                                                                                                             
-  group by COSTCENTER                                                                                                                                                                        
+--
+select COSTCENTER, count(*)
+  From %TABLE_NAME%_MASTER_VIEW
+  group by COSTCENTER
   order by COSTCENTER
-/                                                                                                                                                                                            
-select COSTCENTER, sum (QUANTITY * UNITPRICE) TOTAL_VALUE                                                                                                                                                           
-  from %TABLE_NAME%_DETAIL_VIEW                                                                                                                              
- group by COSTCENTER                                                                                                                                                                         
-/       
+/
+select COSTCENTER, sum (QUANTITY * UNITPRICE) TOTAL_VALUE
+  from %TABLE_NAME%_DETAIL_VIEW
+ group by COSTCENTER
+/
 --
 -- Multiple Predicates
---                                                                                                                                                                                     
-select PO_NUMBER, REFERENCE, INSTRUCTIONS, ITEMNO, UPCCODE, DESCRIPTION, QUANTITY, UNITPRICE                                                                                                           
-  from %TABLE_NAME%_DETAIL_VIEW d                                                                                                                              
- where REQUESTOR = 'Steven King'                                                                                                                                                           
-   and QUANTITY  > 7                                                                                                                                                                       
-   and UNITPRICE > 25.00                                                                                                                                                                   
-/                                                                                                                                                                                            
---                                                                                                                                                                                           
--- SQL Analytics                                                                                                                                      
---                                                                                                                                                                                           
-select UPCCODE, count(*) "Orders", Quantity "Copies"                                                                                                                                          
-  from %TABLE_NAME%_DETAIL_VIEW                                                                                                                                                             
- where UPCCODE in ('717951010490', '43396713994', '12236123248')                                                                                                                              
- group by rollup(UPCCODE, QUANTITY)                                                                                                                                                           
-/                                                                                                                                                                                            
-select UPCCODE, PO_NUMBER, REFERENCE, QUANTITY, QUANTITY - LAG(QUANTITY,1,QUANTITY) over (ORDER BY PO_NUMBER) as DIFFERENCE                                             
-  from %TABLE_NAME%_DETAIL_VIEW                                                                                                                                                             
- where UPCCODE = '43396713994'                                                                                                                                                                
- order by PO_NUMBER DESC                                                                                                                                   
-/                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+--
+select PO_NUMBER, REFERENCE, INSTRUCTIONS, ITEMNO, UPCCODE, DESCRIPTION, QUANTITY, UNITPRICE
+  from %TABLE_NAME%_DETAIL_VIEW d
+ where REQUESTOR = 'Steven King'
+   and QUANTITY  > 7
+   and UNITPRICE > 25.00
+/
+--
+-- SQL Analytics
+--
+select UPCCODE, count(*) "Orders", Quantity "Copies"
+  from %TABLE_NAME%_DETAIL_VIEW
+ where UPCCODE in ('717951010490', '43396713994', '12236123248')
+ group by rollup(UPCCODE, QUANTITY)
+/
+select UPCCODE, PO_NUMBER, REFERENCE, QUANTITY, QUANTITY - LAG(QUANTITY,1,QUANTITY) over (ORDER BY PO_NUMBER) as DIFFERENCE
+  from %TABLE_NAME%_DETAIL_VIEW
+ where UPCCODE = '43396713994'
+ order by PO_NUMBER DESC
+/

@@ -19,6 +19,8 @@ create index ZIPCODE_IDX
 --
 -- Statement 4
 --
+set autotrace on explain
+--
 select sum(QUANTITY * UNITPRICE) TOTAL_COST
   from %TABLE_NAME%,
        JSON_TABLE(

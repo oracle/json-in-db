@@ -64,6 +64,7 @@ doInstall() {
     fi
     exit 4
   fi
+  rm -f $JSON_HOL_BASE
   mkdir -p $JSON_HOL_BASE
   mkdir -p $JSON_HOL_BASE/sql
   mkdir -p $JSON_HOL_BASE/install

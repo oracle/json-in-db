@@ -83,7 +83,7 @@ doInstall() {
   mv "$JSON_HOL_BASE/sql/0.0 RESET_DEMO.sql" "$JSON_HOL_BASE/install/resetLab.sql"
   sqlplus $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/grantPermissions.sql $USER
   sqlplus $USER/$USERPWD@$ORACLE_SID @$demohome/install/sql/createHomeFolder.sql
-  sqlplus $DBA/$DBAPWD@$ORACLE_SID as sysdba @"$JSON_HOL_BASE/install/setupLab.sql" $USER $USERPWD
+  sqlplus $DBA/$DBAPWD@$ORACLE_SID as sysdba @"$JSON_HOL_BASE/install/setupLab.sql" $USER $USERPWD $ORACLE_SID
   sqlplus $USER/$USERPWD@$ORACLE_SID @"$JSON_HOL_BASE/install/resetLab.sql"
   unzip -o -qq "$demohome/manual/manual.zip" -d "$JSON_HOL_BASE/manual"
   ln -s "$JSON_HOL_BASE/manual/manual.htm" "$JSON_HOL_BASE/manual/index.html"

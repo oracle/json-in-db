@@ -21,6 +21,9 @@ doInstall() {
   echo "\$JSON_HOL_BASE  : $JSON_HOL_BASE"
   spexe=$(which sqlplus | head -1)
   echo "sqlplus      : $spexe"
+  unset http_proxy
+  unset https_proxy
+  unset no_proxy
   sqlplus -L $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/verifyConnection.sql
   rc=$?
   echo "sqlplus $DBA:$rc"

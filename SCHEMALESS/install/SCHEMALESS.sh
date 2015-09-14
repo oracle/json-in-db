@@ -11,15 +11,18 @@
 # * ================================================ 
 # */
 doInstall() {
-  echo "Installation Parameters for Oracle REST Services for JSON."
-  echo "\$DBA         : $DBA"
-  echo "\$USER        : $USER"
-  echo "\$SERVER      : $SERVER"
-  echo "\$DEMOHOME    : $demohome"
-  echo "\$ORACLE_HOME : $ORACLE_HOME"
-  echo "\$ORACLE_SID  : $ORACLE_SID"
+  echo "Installation Parameters: Oracle REST Services for JSON."
+  echo "\$DBA            : $DBA"
+  echo "\$USER           : $USER"
+  echo "\$SERVER         : $SERVER"
+  echo "\$DEMOHOME       : $demohome"
+  echo "\$ORACLE_HOME    : $ORACLE_HOME"
+  echo "\$ORACLE_SID     : $ORACLE_SID"
   spexe=$(which sqlplus | head -1)
   echo "sqlplus      : $spexe"
+  unset http_proxy
+  unset https_proxy
+  unset no_proxy
   sqlplus -L $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/verifyConnection.sql
   rc=$?
   echo "sqlplus $DBA:$rc"

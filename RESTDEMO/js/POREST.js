@@ -436,36 +436,8 @@ function qbeExecuteQuery(object,callback) {
 
 }
 
-function RestSQLPlayer() {
-	
-  this.getResultsPanel = function(statementId) {
-  	var outputTargetName = statementId + ".result"
-    return outputTarget = document.getElementById(outputTargetName);
-  }
-  
-  this.resetResultsPanel	= function() {
-  }
-
-  this.displayTiming	= function() {
-  }
-
-  this.toggleTiming	= function() {
-  }
-  
-  this.loadNextCommand = function () {
-  }
-  
-  this.setExecutableState = function() {
-  }
-  
-  this.enableExecuteButton = function() {
-	}
-
-}
-
 function init() {
 	restAPI.addLogWindow();
-	initCommon();
 	initXFilesCommon();
 	getDocument("js/poTemplate.json",saveTemplate)
 	demoPlayer = new RestSQLPlayer()

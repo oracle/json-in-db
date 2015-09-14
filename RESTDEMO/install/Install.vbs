@@ -1,4 +1,3 @@
-
 ' /* ================================================  
 ' * Oracle XML/JSON Demonstration Installer.  
 ' *    
@@ -15,6 +14,10 @@
 Option Explicit
 Const FILE_SEPERATOR    = "\" 
 Const CONFIG_LOAD_FAILED = 1
+Const LINUX_INSTALL = 1
+Const HOL_INSTALL = 2
+Const DOS_INSTALL = 3
+Const WINDOWS_INSTALL = 4
 
 ' Shortcut Logic.
 
@@ -24,36 +27,29 @@ Const CONFIG_LOAD_FAILED = 1
 '   launchPadFolderPath : Path to folder where LaunchPad for the demo will be placed. 
 '                         Typically %STARTMENT%\Oracle XML DB Demonstrations
 
-dim SCRIPT_GENERATOR
-dim MINSTALLER
-
-dim INSTALLER
-dim FILEMANAGER 
+Dim ENVIRONMENT
+Dim CONFIGURATION
+Dim APPLICATION
+Dim IOMANAGER
                     
-dim XHELPER
-dim SQLPLUS
-dim SQLLDR
-dim FTP
-dim REPOS
+Dim XHELPER
+Dim SQLPLUS
+Dim SQLLDR
+Dim FTP
+Dim REPOS
 
-dim LOGBUFFER
-dim DEMONSTRATION
-dim CURRENTTIMER
+Dim LOGBUFFER
+Dim DEMONSTRATION
+Dim CURRENTTIMER
 
-dim ACTION_LIST
-dim ACTION_INDEX
+Dim ACTION_LIST
+Dim ACTION_INDEX
 
-dim newFolderList 
-
-Sub ShowError(msg)
-    MsgBox msg & " : " & Err.Number & " Srce: " & Err.Source & " Desc: " &  Err.Description    
-    Err.Clear
-    Stop
-End Sub
+Dim newFolderList 
 
 Function doTransformation(INSTALLATION,xslFilename)
 
-  dim inputStylesheet, result, xslProcessor, errorMessage
+  Dim inputStylesheet, result, xslProcessor, errorMessage
   
   Set inputStylesheet = CreateObject("Msxml2.FreeThreadedDOMDocument.6.0")
   inputStylesheet.async = false
@@ -65,7 +61,7 @@ Function doTransformation(INSTALLATION,xslFilename)
     exitFatalError(errorMessage)    
   End If
   
-  dim xslt
+  Dim xslt
   set xslt = CreateObject("Msxml2.XSLTemplate.6.0")
   set xslt.stylesheet = inputStylesheet 
   set xslProcessor = xslt.createProcessor()
@@ -74,77 +70,14 @@ Function doTransformation(INSTALLATION,xslFilename)
   doTransformation = xslProcessor.output
 
 End Function
-
-Function writeLogFile(logFileContent)
-
-  Dim logFilePath, logFile
-
-  logFilePath = INSTALLER.getLogFilePath()
-  Set logFile = INSTALLER.getFSO().createTextFile(logFilePath,true)
-  logFile.write(logFileContent)
-  logFile.close()
-  
-  writeLogFile = logFilePath 
-
-End Function
-
-Sub ExitHTA
  
-   strComputer = "."
-   Set objWMIService = GetObject("winmgmts:" & "{impersonationLevel=impersonate}!\\" & strComputer & "\root\cimv2")
-   Set colProcessList = objWMIService.ExecQuery ("Select * from Win32_Process Where Name = 'mshta.exe'")
-   For Each objProcess in colProcessList
-     MsgBox "Killing Process"
-     objProcess.Terminate()
-   Next
- 
- End Sub
- 
- Function exitFatalError(errorMessage) 
+Function exitFatalError(errorMessage) 
 
   Dim logFilePath
   
-  writeLogMessage errorMessage
-  If (Err.number <> 0) Then
-    LOGBUFFER = LOGBUFFER & "Encountered error 0x" & hex(Err.number)  & " : " & Err.Description 
-  End If
-  LOGBUFFER = LOGBUFFER & ". Please check installParameters.xml and "& INSTALLER.getDemoFolderName() & " and then restart the installation" & vbCRLF   
-  
-  logFilePath = writeLogFile(LOGBUFFER)
-
-  If not INSTALLER.isInteractiveInstall() Then 
-  	Wscript.echo "exitFatalError(): " & errorMessage & ". See " &  vbCRLF & "'"  & logFilePath  & "'" & vbCRLF & " for further details."
-  	WScript.Quit
-  Else  
-    MsgBox "Fatal Error : " & errorMessage & ". See " &  vbCRLF & "'"  & logFilePath  & "'" & vbCRLF & " for further details.", vbOKOnly + vbCritical  
-    window.close()
-    ExitHTA
-  End If
-  
+	CONFIGURATION.exitFatalError()
+	  
 End Function  
-
-Sub writeLogMessage(logMessage)
- 
-  DIM currentAction
-
-  LOGBUFFER = LOGBUFFER + logMessage + vbCRLF 
-  
-  If not INSTALLER.isInteractiveInstall() Then 
-  	wscript.echo logMessage
-  Else
-    Set currentAction = document.getElementById("currentTask")
-    
-    If not (currentAction is NOTHING) Then
-      currentAction.value = logMessage
-    Else
-      MsgBox "Fatal Error : " & logMessage & ". Installer will terminate.", vbOKOnly + vbCritical  
-      window.close()
-      ExitHTA
-    End If
-
-  End If
-
-End sub
 
 Sub remapDrive()
 
@@ -154,18 +87,18 @@ Sub remapDrive()
   window.resizeTo 650,140
   
   Set XHELPER         = new xmlHelper
-  Set INSTALLER       = new installationManager  
-  Set FILEMANAGER     = new fileSystemControl
+  Set CONFIGURATION   = new configurationManager  
+  Set IOMANAGER       = new fileSystemControl
   
-  showDriveMappingForm(INSTALLER.getInstallationParameters())
+  showDriveMappingForm(CONFIGURATION.getInstallationParameters())
    
 End Sub
        
 Sub showDriveMappingForm(INSTALLATION)
 
-  dim xslFilename, target
+  Dim xslFilename, target
   
-  If (INSTALLER.getWindowsVersion < 6.1) Then
+  If (CONFIGURATION.getWindowsVersion < 6.1) Then
   	MsgBox "Mapping XML DB repository to Drive Letter only supported on Windows 7 and higher",vbCritical
   	self.close()
   End If
@@ -185,16 +118,16 @@ End Sub
 
 Sub verifyDrive
 
-  dim result, driveLetter, windowsShareName
+  Dim result, driveLetter, windowsShareName
   
-  If INSTALLER.getPassword() = "" Then
+  If CONFIGURATION.getPassword() = "" Then
   	MsgBox "Please Enter Password",vbCritical
     Exit Sub
   End If
   
-  If (validDriveLetter(INSTALLER)) Then
-    windowsShareName = UCase("\\" & INSTALLER.getHostName() & "@" & INSTALLER.getHttpPort() & "\DavWWWRoot")
-    driveLetter = UCase(Left(INSTALLER.getDriveLetter(),1))
+  If (validDriveLetter(CONFIGURATION)) Then
+    windowsShareName = UCase("\\" & CONFIGURATION.getHostName() & "@" & CONFIGURATION.getHttpPort() & "\DavWWWRoot")
+    driveLetter = UCase(Left(CONFIGURATION.getDriveLetter(),1))
     MsgBox "Drive '" & driveLetter & "'. Mapped to '" & windowsShareName & "'. and is available.",vbInformation
   End If
   
@@ -202,20 +135,20 @@ End Sub
 
 Sub mapDrive
   
-  dim result, driveLetter, windowsShareNamecurrent,Operation
+  Dim result, driveLetter, windowsShareNamecurrent,Operation
 
-  windowsShareName = UCase("\\" & INSTALLER.getHostName() & "@" & INSTALLER.getHttpPort() & "\DavWWWRoot")
-  driveLetter = UCase(Left(INSTALLER.getDriveLetter(),1))
+  windowsShareName = UCase("\\" & CONFIGURATION.getHostName() & "@" & CONFIGURATION.getHttpPort() & "\DavWWWRoot")
+  driveLetter = UCase(Left(CONFIGURATION.getDriveLetter(),1))
 
   currentOperation = "  MAP DRIVE '" & driveLetter & "'. Target => '" & windowsShareName & "'."
-  writeLogMessage currentOperation
+  APPLICATION.writeLogMessage currentOperation
 
-  If INSTALLER.getPassword() = "" Then
+  If CONFIGURATION.getPassword() = "" Then
   	MsgBox "Please Enter Password",vbCritical
     Exit Sub
   End If
 
-  result = mapNetworkDrive(INSTALLER,FILEMANAGER)
+  result = mapNetworkDrive(CONFIGURATION,IOMANAGER)
 
   If (result) Then
     MsgBox "Drive '" & driveLetter & "'. Mapped to '" & windowsShareName & "'. and is available.",vbInformation
@@ -233,18 +166,20 @@ Sub installDemo()
   LOGBUFFER = ""
   window.resizeTo 580,375
   
-  Set XHELPER          = new xmlHelper
-  Set INSTALLER        = new installationManager  
-  Set DEMONSTRATION    = new demonstrationConfiguration
-  Set FILEMANAGER      = new fileSystemControl
-  Set SQLPLUS          = new sqlPlusControl
-  Set SQLLDR		       = new sqlldrControl
-  Set FTP              = new ftpControl
-  Set REPOS            = new repositoryControl
-  Set MINSTALLER       = Nothing 
-  Set SCRIPT_GENERATOR = Nothing
-    
-  showInputForm(INSTALLER.getInstallationParameters())
+  Set ENVIRONMENT      = new EnvironmentHelper
+  Set APPLICATION      = new WindowsInstaller
+
+  Set CONFIGURATION    = new ConfigurationManager
+  Set DEMONSTRATION    = new DemonstrationConfiguration
+  Set IOMANAGER        = new FileSystemControl
+  Set SQLPLUS          = new SQLPlusControl
+  Set SQLLDR		       = new SQLLdrControl
+  Set FTP              = new FTPControl
+  Set REPOS            = new RepositoryControl
+  Set XHELPER          = new XMLHelper
+
+  
+  showInputForm(CONFIGURATION.getInstallationParameters())
    
 End Sub
 
@@ -252,13 +187,13 @@ Sub getPorts()
 
   Dim httpPortNumber, ftpPortNumber
 
-  INSTALLER.readInstallationDialog
+  CONFIGURATION.readInstallationDialog
   
-  If (validOracleHome(INSTALLER)) Then
-    If (validDBA(INSTALLER,SQLPLUS)) Then
-    	httpPortNumber = SQLPLUS.getHttpPort(INSTALLER.getDBAUsername, INSTALLER.getDBAPassword)
+  If (validOracleHome(CONFIGURATION)) Then
+    If (validDBA(CONFIGURATION,SQLPLUS)) Then
+    	httpPortNumber = SQLPLUS.getHttpPort(CONFIGURATION.getDBAUsername, CONFIGURATION.getDBAPassword)
   	  document.getElementById("httpPort").value = httpPortNumber
-  	  ftpPortNumber  = SQLPLUS.getFtpPort(INSTALLER.getDBAUsername, INSTALLER.getDBAPassword)
+  	  ftpPortNumber  = SQLPLUS.getFtpPort(CONFIGURATION.getDBAUsername, CONFIGURATION.getDBAPassword)
   	  document.getElementById("ftpPort").value = ftpPortNumber
   	End If
   End If
@@ -269,7 +204,7 @@ Sub cancelInstall()
 
   Dim logFilePath
 
-  writeLogMessage "Installation Cancelled"
+  APPLICATION.writeLogMessage "Installation Cancelled"
   logFilePath = writeLogFile(LOGBUFFER)
   self.close()
 
@@ -277,10 +212,10 @@ End Sub
 
 Sub setOracleHome
   
-  dim nodeList, elem, oh, os
-  dim installParams, selector 
+  Dim nodeList, elem, oh, os
+  Dim installParams, selector 
   
-  set installParams = INSTALLER.getInstallationParameters()
+  set installParams = CONFIGURATION.getInstallationParameters()
   set selector = document.getElementById("oracleHomeSelector") 
 
   Set nodeList = installParams.documentElement.selectNodes("/installationParameters/OracleHomeList/OracleHome[name="""  & selector.value & """]")
@@ -289,7 +224,7 @@ Sub setOracleHome
 	Set os = document.getElementById("tnsAlias")
   
   If (nodeList.length > 0) Then
-  	  oh.value    = XHELPER.getTextNode(nodeList.item(0),"path")
+  	 oh.value    = XHELPER.getTextNode(nodeList.item(0),"path")
      os.value    = XHELPER.getTextNode(nodeList.item(0),"sid")
      oh.readOnly = true
      os.readOnly = false
@@ -303,12 +238,11 @@ Sub setOracleHome
 
 End Sub
 
-
 Sub showInputForm(INSTALLATION)
 
   ' Use XSL to generate the Installation Parameters dialog from the Installation Parameters document.
   
-  dim xslFilename, target, innerHTML, xml
+  Dim xslFilename, target, innerHTML, xml
    
   xslfilename = "install.xsl"
   Set target = Document.getElementById("inputForm")
@@ -319,7 +253,7 @@ Sub showInputForm(INSTALLATION)
   ' TODO : Check Vista
   ' TODO : Check Drive Letter in Windows XP
   
-  If (INSTALLER.getWindowsVersion < 6.1) Then
+  If (CONFIGURATION.getWindowsVersion < 6.1) Then
   	Set target = document.getElementById("driveLetter")
   	If (Not target Is Nothing) Then
   		target.style.display = "none"
@@ -332,86 +266,79 @@ Sub showInputForm(INSTALLATION)
   setOracleHome
 
 	Set target = document.getElementById("demonstrationName")
-  target.value = INSTALLER.getDemonstrationName()
+  target.value = CONFIGURATION.getDemonstrationName()
   
 End Sub
 
-Function validOracleHome(INSTALLER)
+Function validOracleHome()
 
-  Dim result
-  result = INSTALLER.isOracleHomeValid
-  
-  If result Then
-    validOracleHome = true
-    Exit Function
+  If (ENVIRONMENT.validOracleHome(CONFIGURATION.getOracleHome(),CONFIGURATION.getTNSAlias())) Then
+	  validOracleHome = true
+  Else
+    Application.reportError "Unable to locate SQLPLUS executable. Please correct the setting of Oracle Home and try again."
+    validOracleHome = false
   End If
-        
-  MsgBox "Unable to locate SQLPLUS executable. Please correct the setting of Oracle Home and try again.",vbOKOnly + vbCritical
-
-  validOracleHome = false
-  
+          
 End Function
 
-Function validSYSDBA(INSTALLER,SQLPLUS)
+Function validSYSDBA(CONFIGURATION,SQLPLUS)
 
-  dim returnCode, connectionString
+  Dim returnCode, connectionString
 
-  connectionString = INSTALLER.getDBAUsername & "/********@" & INSTALLER.getTNSAlias() & " as sysdba"   
-  
-  returnCode = SQLPLUS.testConnection(INSTALLER.getDBAUsername, INSTALLER.getDBAPassword, " as sysdba")
-
+  connectionString = CONFIGURATION.getDBAUsername & "/********@" & CONFIGURATION.getTNSAlias() & " as sysdba"   
+  returnCode = SQLPLUS.testConnection(CONFIGURATION.getDBAUsername, CONFIGURATION.getDBAPassword, " as sysdba")
   If returnCode = false Then
-     MsgBox "Invalid SYSDBA Credentials for connection: " & connectionString & ". Check TNS Alias, DBA User and Password.",vbOKOnly + vbCritical
+     Application.reportError "Invalid SYSDBA Credentials for connection: " & connectionString & ". Check TNS Alias, DBA User and Password."
   End If
   
   validSYSDBA = returnCode
   
 End Function
 
-Function validDBA(INSTALLER,SQLPLUS)
+Function validDBA(CONFIGURATION,SQLPLUS)
 
-  dim returnCode, connectionString
+  Dim returnCode, connectionString
 
-  connectionString = INSTALLER.getDBAUsername & "/********@" & INSTALLER.getTNSAlias()   
+  connectionString = CONFIGURATION.getDBAUsername & "/********@" & CONFIGURATION.getTNSAlias()   
   
-  returnCode = SQLPLUS.testConnection(INSTALLER.getDBAUsername, INSTALLER.getDBAPassword, "")
+  returnCode = SQLPLUS.testConnection(CONFIGURATION.getDBAUsername, CONFIGURATION.getDBAPassword, "")
 
   If returnCode = false Then
-     MsgBox "Invalid DBA Credentials for connection: " & connectionString & ". Check TNS Alias, DBA User and Password.",vbOKOnly + vbCritical
+     Application.reportError "Invalid DBA Credentials for connection: " & connectionString & ". Check TNS Alias, DBA User and Password."
   End If
 
   validDBA = returnCode
   
 End Function
 
-Function validUsername(INSTALLER,SQLPLUS)
+Function validUsername(CONFIGURATION,SQLPLUS)
 
-  dim returnCode, connectionString
+  Dim returnCode, connectionString
 
-  connectionString = INSTALLER.getUsername & "/********@" & INSTALLER.getTNSAlias()   
+  connectionString = CONFIGURATION.getUsername & "/********@" & CONFIGURATION.getTNSAlias()   
   
-	returnCode = SQLPLUS.testConnection(INSTALLER.getUsername, INSTALLER.getPassword, "")
+	returnCode = SQLPLUS.testConnection(CONFIGURATION.getUsername, CONFIGURATION.getPassword, "")
 
   If returnCode = false Then
-    MsgBox "Failed to connect as " & connectionString & ". Check TNS Alias, DBA User and Password.",vbOKOnly + vbCritical
+    Application.reportError "Failed to connect as " & connectionString & ". Check TNS Alias, DBA User and Password."
   End If
 
   validUsername = returnCode
   
 End Function
   
-Function validHTTPConnection(INSTALLER,REPOS)
+Function validHTTPConnection(CONFIGURATION,REPOS)
 
   Dim returnCode
 
-  returnCode = REPOS.doGET("/xdbconfig.xml", INSTALLER.getDBAUsername(), INSTALLER.getDBAPassword())
+  returnCode = REPOS.doGET("/xdbconfig.xml", CONFIGURATION.getDBAUsername(), CONFIGURATION.getDBAPassword())
 
   If returnCode = 200 Then
     validHTTPConnection = true
     Exit Function
   End If
 
-  MsgBox "Unable to access " & INSTALLER.getServerURL() & "/xdbconfig.xml as user " & INSTALLER.getDBAUserName() & " (HTTP Status = '" & returnCode & "', Error Code = '" &  Err.number &"'). Please Check hostname and HTTP port number",vbOKOnly + vbCritical
+  Application.reportError "Unable to access " & CONFIGURATION.getServerURL() & "/xdbconfig.xml as user " & CONFIGURATION.getDBAUserName() & " (HTTP Status = '" & returnCode & "', Error Code = '" &  Err.number &"'). Please Check hostname and HTTP port number"
   validHTTPConnection = false
   
 End Function
@@ -427,13 +354,13 @@ Function validDriveLetter(CONFIGUATION)
   ' Finally we need to check that connection to the server is made as the target user.
 
 
-  dim driveLetter, dc, d, fso, networkMgr, i, networkPath, windowsShareName, reuseDrive, target, targetDrive
+  Dim driveLetter, dc, d, fso, networkMgr, i, networkPath, windowsShareName, reuseDrive, target, targetDrive
   
-  windowsShareName = UCase("\\" & INSTALLER.getHostName() & "@" & INSTALLER.getHttpPort() & "\DavWWWRoot")
+  windowsShareName = UCase("\\" & CONFIGURATION.getHostName() & "@" & CONFIGURATION.getHttpPort() & "\DavWWWRoot")
 
-  driveLetter = UCase(Left(INSTALLER.getDriveLetter(),1))
+  driveLetter = UCase(Left(CONFIGURATION.getDriveLetter(),1))
   If (Not isNull(driveLetter)) Then
-    Set fso = INSTALLER.getFSO()
+    Set fso = ENVIRONMENT.getFSO()
     Set dc = fso.Drives
       
     ' Check if there is already a Drive Letter assignmen for the requested HTTP Server. If there is use the existing mapping
@@ -442,13 +369,13 @@ Function validDriveLetter(CONFIGUATION)
       If d.DriveType = 3 Then
       	If (Ucase(d.ShareName) = windowsShareName) Then
           If d.IsReady Then
-          	If (MINSTALLER Is Nothing) Then
+          	If (ENVIRONMENT.isInteractiveInstall()) Then
               reuseDrive = MsgBox("Server '" & d.ShareName & "'. already mapped to '" & d.driveLetter & "'. Use existing mapping ?",vbYesNo + vbInformation + vbDefaultButton1)
               If (reuseDrive = vbYes) Then
                 set target = Document.getElementById("driveLetter")
                 targetDrive = d.driveLetter & ":"
                 target.value = Ucase(targetDrive) 
-                INSTALLER.addMacro "%DRIVELETTER%", targetDrive
+                CONFIGURATION.addMacro "%DRIVELETTER%", targetDrive
             	  validDriveLetter = true
               Else
             	  validDriveLetter = false
@@ -456,7 +383,7 @@ Function validDriveLetter(CONFIGUATION)
             Else            	
             	WScript.echo "Server '" & d.ShareName & "'. already mapped to '" & d.driveLetter & "'. Using existing Mapping."
             	targetDrive = d.driveLetter & ":"
-              INSTALLER.addMacro "%DRIVELETTER%", targetDrive
+              CONFIGURATION.addMacro "%DRIVELETTER%", targetDrive
            	  validDriveLetter = true
             End If
             Exit Function
@@ -470,13 +397,13 @@ Function validDriveLetter(CONFIGUATION)
  	     validDriveLetter = false
         If d.DriveType = 3 Then
           If d.IsReady Then
-            MsgBox "Cannot use drive '" & d.driveLetter & "'. Drive is mapped to '" & d.ShareName & "'.",vbOKOnly + vbCritical
+            Application.reportError "Cannot use drive '" & d.driveLetter & "'. Drive is mapped to '" & d.ShareName & "'."
           Else
-            MsgBox "Cannot use drive '" & d.driveLetter & "'. Drive is Not ready.",vbOKOnly + vbCritical
+            Application.reportError "Cannot use drive '" & d.driveLetter & "'. Drive is Not ready."
           End if
         Else
         	' Drive is mapped to something other than a network drive 
-          MsgBox "Cannot use drive '" & d.driveLetter & "'. Drive is used by disc volume '" & d.VolumeName & "'.",vbOKOnly + vbCritical
+          Application.reportError "Cannot use drive '" & d.driveLetter & "'. Drive is used by disc volume '" & d.VolumeName & "'."
         End if
         Exit Function
       End if
@@ -487,7 +414,7 @@ Function validDriveLetter(CONFIGUATION)
     For i = 0 to dc.Count - 1 Step 2
       If UCase(dc.Item(i)) =  UCase(driveLetter) Then
         networkPath  = dc.Item(i+1)
-        MsgBox "Cannot use drive '" & driveLetter & "'. Drive mapped to '" & networkPath & "'.",vbOKOnly + vbCritical
+        Application.reportError "Cannot use drive '" & driveLetter & "'. Drive mapped to '" & networkPath & "'."
         validDriveLetter = false
        Exit Function
       End If 	
@@ -498,22 +425,22 @@ Function validDriveLetter(CONFIGUATION)
 	   	
 End Function
 
-Function mapNetworkDrive(INSTALLER,FILEMGR)
+Function mapNetworkDrive(CONFIGURATION,FILEMGR)
 
-   FILEMGR.MapNetworkDrive INSTALLER.getDriveLetter(), INSTALLER.getHostName(), INSTALLER.getHttpPort(), INSTALLER.getUserName(), INSTALLER.getPassword()
+   FILEMGR.MapNetworkDrive CONFIGURATION.getDriveLetter(), CONFIGURATION.getHostName(), CONFIGURATION.getHttpPort(), CONFIGURATION.getUserName(), CONFIGURATION.getPassword()
    mapNetworkDrive = true
    
 End Function
 
-Sub installationSuccessful(INSTALLER)
+Sub installationSuccessful(CONFIGURATION)
 
   Dim messageText, currentAction, logFilePath
 
-  messageText = INSTALLER.getDemonstrationName() & " Successfully Installed." 
+  messageText = CONFIGURATION.getDemonstrationName() & " Successfully Installed." 
   messageText = messageText & vbCRLF & "To Launch the demonstration please select the item"  & vbCRLF 
-  messageText = messageText & vbCRLF & Chr(9) & Chr(34) & INSTALLER.getLaunchPadFolderName()  & Chr(34) & Chr(9) 
+  messageText = messageText & vbCRLF & Chr(9) & Chr(34) & CONFIGURATION.getLaunchPadFolderName()  & Chr(34) & Chr(9) 
   messageText = messageText & vbCRLF & "from the Start Menu and then click on the icon" & vbCRLF  
-  messageText = messageText & vbCRLF & Chr(9) & Chr(34) & INSTALLER.getLaunchPad() & Chr(34) & vbCRLF  
+  messageText = messageText & vbCRLF & Chr(9) & Chr(34) & CONFIGURATION.getLaunchPad() & Chr(34) & vbCRLF  
 
   MsgBox messageText,vbOKOnly + vbInformation
 
@@ -543,9 +470,9 @@ Private Sub processFolder(controlFile, folder, owner, id, step, sourceFolderPath
         
 End Sub
 
-Sub generateControlFile(INSTALLER, FSO, folderPath, targetFolderPath, owner, demoName, demoStep, controlFilePath)
+Sub generateControlFile(CONFIGURATION, FSO, folderPath, targetFolderPath, owner, demoName, demoStep, controlFilePath)
 
-  dim controlFile, folder, paddedOwner, paddedName, paddedStep
+  Dim controlFile, folder, paddedOwner, paddedName, paddedStep
      
   If FSO.fileExists(controlFilePath) Then
     Set controlFile = FSO.getFile(controlFilePath)
@@ -559,7 +486,7 @@ Sub generateControlFile(INSTALLER, FSO, folderPath, targetFolderPath, owner, dem
   Set controlFile = FSO.createTextFile(controlFilePath)
   controlFile.writeline "load data"
   controlFile.writeline "infile *"
-  controlFile.writeline INSTALLER.replaceMacros("append into table %XFILES_SCHEMA%.XFILES_DOCUMENT_STAGING",false)
+  controlFile.writeline CONFIGURATION.replaceMacros("append into table %XFILES_SCHEMA%.XFILES_DOCUMENT_STAGING",false)
   controlFile.writeline "("
   controlFile.writeline "  DEMONSTRATION_OWNER        CHAR(32),"
   controlFile.writeline "  DEMONSTRATION_NAME         CHAR(64)," 
@@ -581,21 +508,21 @@ End Sub
 Sub stageRepositoryContent(CONFIGURAITON, stepID, localFolderPath, remoteFolderPath)
 
      Dim controlFilePath
-     controlFilePath = INSTALLER.getInstallFolderPath() + "\sqlldr.ctl"
+     controlFilePath = CONFIGURATION.getInstallFolderPath() + "\sqlldr.ctl"
       
-     writeLogMessage "SQLLDR : Type = 'StageContent'. Step = '" + stepId + "'. Local Folder = '" + localFolderPath + ". Remote Folder = '" + remoteFolderPath + "'."  
+     APPLICATION.writeLogMessage "SQLLDR : Type = 'StageContent'. Step = '" + stepId + "'. Local Folder = '" + localFolderPath + ". Remote Folder = '" + remoteFolderPath + "'."  
 
-	   SQLPLUS.execute INSTALLER.getUsername(), INSTALLER.getPassword(), "sql/deleteContent " & INSTALLER.getDemoFolderName() & " " & stepId & " " & INSTALLER.replaceMacros("%XFILES_SCHEMA%",false)
-		 generateControlFile INSTALLER, INSTALLER.getFSO(), localFolderPath, remoteFolderPath, INSTALLER.getUsername(), INSTALLER.get3(), stepId, controlFilePath
-		 SQLLDR.execute INSTALLER.getUsername(), INSTALLER.getPassword(), controlFilePath
+	   SQLPLUS.execute CONFIGURATION.getUsername(), CONFIGURATION.getPassword(), "sql/deleteContent " & CONFIGURATION.getDemoFolderName() & " " & stepId & " " & CONFIGURATION.replaceMacros("%XFILES_SCHEMA%",false)
+		 generateControlFile CONFIGURATION, ENVIRONMENT.getFSO(), localFolderPath, remoteFolderPath, CONFIGURATION.getUsername(), CONFIGURATION.get3(), stepId, controlFilePath
+		 SQLLDR.execute CONFIGURATION.getUsername(), CONFIGURATION.getPassword(), controlFilePath
 
 End Sub
 
-Sub sqlldrJobs(INSTALLER)
+Sub sqlldrJobs(CONFIGURATION)
 
   Dim nodeList, i, job, jobType, stepId, localFolderPath, remoteFolderPath, controlFilePath
     
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/sqlldr/jobs/job")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/sqlldr/jobs/job")
 
   For i = 0 to nodeList.length - 1
      Set job = nodeList.item(i)
@@ -605,156 +532,124 @@ Sub sqlldrJobs(INSTALLER)
        stepId = job.getAttribute("stepId")
        localFolderPath = XHELPER.getTextNode(job,"localFolder")
        remoteFolderPath = XHELPER.getTextNode(job,"remoteFolder")
-     	 stageRepositoryContent INSTALLER, stepId, localFolderPath, remoteFolderPath
+     	 stageRepositoryContent CONFIGURATION, stepId, localFolderPath, remoteFolderPath
      End If
      	 
      If jobType = "dataLoad"  Then	 
        controlFilePath = XHELPER.getOptionalTextNode(job,"controlFile")
-       writeLogMessage "SQLLDR : Type = 'dataLoad'. Control File = '" + controlFilePath + "'."  
-       SQLLDR.execute INSTALLER.getUsername(), INSTALLER.getPassword(), controlFilePath
+       APPLICATION.writeLogMessage "SQLLDR : Type = 'dataLoad'. Control File = '" + controlFilePath + "'."  
+       SQLLDR.execute CONFIGURATION.getUsername(), CONFIGURATION.getPassword(), controlFilePath
      End If
       
   Next 
  
 End Sub 
 
-Sub cloneArchives(INSTALLER,FILEMANAGER)
+Sub cloneArchives(CONFIGURATION,IOMANAGER)
  
   Dim nodeList, i, source, target, folder
     
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/cloneList/archives/archive")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/cloneList/archives/archive")
 
   For i = 0 to nodeList.length - 1
      source  = XHELPER.getTextNode(nodeList.item(i),"source")
      folder  = XHELPER.getTextNode(nodeList.item(i),"folder")
      target  = XHELPER.getTextNode(nodeList.item(i),"target")
-     If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then
-       writeLogMessage "Clone Archives : Archive = '" + source + "'. Target = '" + target + "'."
-       FILEMANAGER.unzipArchive source, folder
-  	   FILEMANAGER.cloneFolder INSTALLER, folder, folder
-       FILEMANAGER.createZipArchive target
-       FILEMANAGER.zipArchive target, folder
-     else
-       SCRIPT_GENERATOR.unzipArchive source, folder
-  	   SCRIPT_GENERATOR.cloneFolder INSTALLER, folder, folder
-       SCRIPT_GENERATOR.createZipArchive target
-       SCRIPT_GENERATOR.zipArchive target, folder
-     End If
+     APPLICATION.writeLogMessage "Clone Archives : Archive = '" + source + "'. Target = '" + target + "'."
+     IOMANAGER.unzipArchive source, folder
+  	 IOMANAGER.cloneFolder CONFIGURATION, folder, folder
+     IOMANAGER.createZipArchive target
+     IOMANAGER.zipArchive target, folder
   Next 
   
 End Sub
 
-Sub createFolders(INSTALLER,FILEMANAGER)
+Sub createFolders(CONFIGURATION,IOMANAGER)
 
   Dim nodeList, i, folder, folderPath 
   
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/make/folders/folder")
-    
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/make/folders/folder")
+  
   For i = 0 to nodeList.length - 1
      Set folder = nodeList.item(i)
-     folderPath = INSTALLER.replaceMacros(folder.text,false)
-     If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then
-       writeLogMessage "CreateFolder : '" + folderPath + "'"
-       FILEMANAGER.createEmptyFolder(folderPath)
-     Else
-     	 SCRIPT_GENERATOR.newFolderScript(folderPath)
-     End If
+     folderPath = CONFIGURATION.replaceMacros(folder.text,false)
+     APPLICATION.writeLogMessage "CreateFolder : '" + folderPath + "'"
+   	 IOMANAGER.createEmptyFolder(folderPath)
   Next 
   
 End Sub
 
-Sub copyFiles(INSTALLER,FILEMANAGER)
+Sub copyFiles(CONFIGURATION,IOMANAGER)
  
   Dim nodeList, i, sourceFile, targetFile
     
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/copy/files/file")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/copy/files/file")
 
   For i = 0 to nodeList.length - 1
      sourceFile = XHELPER.getTextNode(nodeList.item(i),"source")
      targetFile = XHELPER.getTextNode(nodeList.item(i),"target")
-     If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then
-       writeLogMessage "Copy File : Source = '" + sourceFile + "'. Target = '" + targetFile + "'" 
-       FILEMANAGER.copyFile INSTALLER, sourceFile, targetFile
-     Else
-     	 SCRIPT_GENERATOR.CopyFile INSTALLER, sourceFile, targetFile
-     End If
+     APPLICATION.writeLogMessage "Copy File : Source = '" + sourceFile + "'. Target = '" + targetFile + "'" 
+     IOMANAGER.copyFile CONFIGURATION, sourceFile, targetFile
   Next 
   
 End Sub
 
-Sub copyFolders(INSTALLER,FILEMANAGER)
+Sub copyFolders(CONFIGURATION,IOMANAGER)
 
   Dim nodeList, i, sourceFolder, targetFolder
   
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/copy/folders/folder")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/copy/folders/folder")
 
   For i = 0 to nodeList.length - 1
      sourceFolder      = XHELPER.getTextNode(nodeList.item(i),"source")
      targetFolder      = XHELPER.getTextNode(nodeList.item(i),"target")
-     If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then
-       writeLogMessage "Copy Folder : Source = '" + sourceFolder + "'. Target = '" + targetFolder + "'"
-       FILEMANAGER.copyFolder INSTALLER, sourceFolder, targetFolder
-     Else
-     	 SCRIPT_GENERATOR.CopyFolder INSTALLER, sourceFolder, targetFolder
-     End If
-     
+     APPLICATION.writeLogMessage "Copy Folder : Source = '" + sourceFolder + "'. Target = '" + targetFolder + "'"
+   	 IOMANAGER.CopyFolder CONFIGURATION, sourceFolder, targetFolder     
   Next 
   
 End Sub
 
-Sub cloneFiles(INSTALLER,FILEMANAGER)
+Sub cloneFiles(CONFIGURATION,IOMANAGER)
 
   Dim nodeList, i, sourceFile, targetFile 
   
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/clone/files/file")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/clone/files/file")
 
   For i = 0 to nodeList.length - 1
      sourceFile = XHELPER.getTextNode(nodeList.item(i),"source")
      targetFile = XHELPER.getTextNode(nodeList.item(i),"target")
-     If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then	
-       writeLogMessage "Clone File : Source = '" + sourceFile + "'. Target = '" + targetFile + "'"
-       FILEMANAGER.cloneFile INSTALLER, sourceFile, targetFile
-     Else
-     	 SCRIPT_GENERATOR.cloneFile INSTALLER, sourceFile, targetFile
-     End if
+     APPLICATION.writeLogMessage "Clone File : Source = '" + sourceFile + "'. Target = '" + targetFile + "'"
+   	 IOMANAGER.cloneFile CONFIGURATION, sourceFile, targetFile
   Next 
   
 End Sub
 
-Sub cloneFolders(INSTALLER,FILEMANAGER)
+Sub cloneFolders(CONFIGURATION,IOMANAGER)
 
   Dim nodeList, i, sourceFolder, targetFolder
   
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/clone/folders/folder")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/clone/folders/folder")
 
   For i = 0 to nodeList.length - 1
      sourceFolder = XHELPER.getTextNode(nodeList.item(i),"source")
      targetFolder = XHELPER.getTextNode(nodeList.item(i),"target")
-     If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then	
-       writeLogMessage "Clone Folder : Source = '" + sourceFolder + "'. Target = '" + targetFolder + "'"
-       FILEMANAGER.cloneFolder INSTALLER, sourceFolder, targetFolder
-     Else
-     	 SCRIPT_GENERATOR.cloneFolder INSTALLER, sourceFolder, targetFolder
-     End if
+     APPLICATION.writeLogMessage "Clone Folder : Source = '" + sourceFolder + "'. Target = '" + targetFolder + "'"
+   	 IOMANAGER.cloneFolder CONFIGURATION, sourceFolder, targetFolder
   Next 
   
 End Sub
 
-Sub unzipArchives(INSTALLER,FILEMANAGER)
+Sub unzipArchives(CONFIGURATION,IOMANAGER)
  
   Dim nodeList, i, archive, target, clone
     
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/unzip/archives/archive")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/unzip/archives/archive")
 
   For i = 0 to nodeList.length - 1
      archive = XHELPER.getTextNode(nodeList.item(i),"source")
      target  = XHELPER.getTextNode(nodeList.item(i),"target")
-     If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then	
-       writeLogMessage "Unzip Archives : Archive = '" + archive + "'. Target = '" + target + "'."
-       FILEMANAGER.unzipArchive archive, target
-     Else
-     	 SCRIPT_GENERATOR.unzipArchive archive, target
-     End if
+     APPLICATION.writeLogMessage "Unzip Archives : Archive = '" + archive + "'. Target = '" + target + "'."
+   	 IOMANAGER.unzipArchive archive, target
   Next 
   
 End Sub
@@ -765,50 +660,50 @@ Sub makeWebFolders(REPOS)
 
   Dim nodeList, i, URL, shortCutName, shortcutLocation, expandedURL 
   
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/WEBDAV/shortCut")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/WEBDAV/shortCut")
 
   For i = 0 to nodeList.length - 1
      URL = XHELPER.getTextNode(nodeList.item(i),"URL")
      shortCutName = XHELPER.getTextNode(nodeList.item(i),"name")
      shortcutLocation = XHELPER.getTextNode(nodeList.item(i),"location")
-     If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then	
+     If (CONFIGURATION.onlineInstall()) Then	
        REPOS.makeWebFolder shortCutName, URL, shortcutLocation
      Else
-  	   SCRIPT_GENERATOR.makeWebFolder shortCutName, URL, shortcutLocation
+  	   IOMANAGER.makeWebFolder shortCutName, URL, shortcutLocation
      End If
 
   Next 
 
 End Sub
 
-Function validateRemotePath(INSTALLER, target)
+Function validateRemotePath(CONFIGURATION, target)
 
    Dim folder, currentOperation, offset, errorMessage
    
    On Error Resume Next
-   folder = INSTALLER.getFSO().GetFolder(target)
+   folder = ENVIRONMENT.getFSO().GetFolder(target)
    If (Err.number <> 0) then
      If (Err.number = 76) then
-   	   writeLogMessage "validateRemotePath: Unable to validate path : " & target
+   	   APPLICATION.writeLogMessage "validateRemotePath: Unable to validate path : " & target
      Else
        errorMessage = "validateRemotePath: Error " & Err.number & " accessing : " & target
-       exitFatalError(errorMessage)
+       APPLICATION.exitFatalError(errorMessage)
      End if 
    End If
    
    currentOperation = "validateRemotePath: Successfully validated path '" & target & "'."
-   writeLogMessage currentOperation
+   APPLICATION.writeLogMessage currentOperation
    validateRemotePath = folder
  
 End Function
 
-Sub makeNetworkFolderShortcuts(INSTALLER, FILEMGR)
+Sub makeNetworkFolderShortcuts(CONFIGURATION, FILEMGR)
 
   ' WIndows 7 ( Vista ? ). Folder Shortcuts based on Drive letter mapped via MSFT WebClient Service.
 
   Dim nodeList, i, URL, shortCutName, shortcutLocation, target, directory, icon, arguments, folder, errorMessage
   
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/WEBDAV/shortCut")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/WEBDAV/shortCut")
   
   If (nodelist.length > 0) Then
   	  
@@ -816,21 +711,20 @@ Sub makeNetworkFolderShortcuts(INSTALLER, FILEMGR)
       URL                = XHELPER.getTextNode(nodeList.item(i),"URL")
       shortCutName       = XHELPER.getTextNode(nodeList.item(i),"name")
       shortcutLocation   = XHELPER.getTextNode(nodeList.item(i),"location")
-      target             = replace(INSTALLER.getDriveLetter() & URL,"/","\")
+      target             = replace(CONFIGURATION.getDriveLetter() & URL,"/","\")
       
-      If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then	
-        folder = validateRemotePath(INSTALLER, target)
-        FILEMANAGER.createJunctionPoint shortcutLocation, shortCutName, target
-      Else
-   	    SCRIPT_GENERATOR.createJunctionPoint shortcutLocation, shortCutName, target
+      If (CONFIGURATION.onlineInstall()) Then	
+        folder = validateRemotePath(CONFIGURATION, target)
       End If
+      
+      IOMANAGER.createJunctionPoint shortcutLocation, shortCutName, target
 
     Next 
   End If
    
 End Sub
 
-Sub makeSqlShortCuts(INSTALLER,FILEMANAGER)
+Sub makeSqlShortCuts(CONFIGURATION,IOMANAGER)
 
   Dim nodeList, sqlElement, shortcutType, i, shortcutName, script, url, remotePath
   
@@ -838,15 +732,15 @@ Sub makeSqlShortCuts(INSTALLER,FILEMANAGER)
   Dim defaultShortcutLocation, defaultScriptPrefix, defaultUsername, defaultPassword, defaultTNSAlias, defaultArguments, defaultIconPath
   Dim shortcutLocation, scriptPrefix, username, password, tnsAlias, arguments, iconPath, rerunnable
     
-  Set nodelist = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/SQL")  
+  Set nodelist = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/SQL")  
   executionMode = nodeList.item(0).getAttribute("executionMode")
     
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/SQL/defaults")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/SQL/defaults")
   For i = 0 to nodeList.length - 1
-    defaultShortcutLocation   = XHELPER.getDefaultTextNode(nodeList.item(i),"location",INSTALLER.getShortcutFolderPath())
-    defaultUsername           = XHELPER.getDefaultTextNode(nodeList.item(i),"username",INSTALLER.getUsername())
-    defaultPassword           = XHELPER.getDefaultTextNode(nodeList.item(i),"password",INSTALLER.getPassword())
-    defaultTNSAlias           = XHELPER.getDefaultTextNode(nodeList.item(i),"tnsAlias",INSTALLER.getTNSAlias())
+    defaultShortcutLocation   = XHELPER.getDefaultTextNode(nodeList.item(i),"location",CONFIGURATION.getShortcutFolderPath())
+    defaultUsername           = XHELPER.getDefaultTextNode(nodeList.item(i),"username",CONFIGURATION.getUsername())
+    defaultPassword           = XHELPER.getDefaultTextNode(nodeList.item(i),"password",CONFIGURATION.getPassword())
+    defaultTNSAlias           = XHELPER.getDefaultTextNode(nodeList.item(i),"tnsAlias",CONFIGURATION.getTNSAlias())
     defaultIconPath           = XHELPER.getDefaultTextNode(nodeList.item(i),"icon","%DEMODIRECTORY%\Install\SQLPLUS.ICO")
 
     defaultLandingPad         = XHELPER.getOptionalTextNode(nodeList.item(i),"serverLandingPad")
@@ -854,7 +748,7 @@ Sub makeSqlShortCuts(INSTALLER,FILEMANAGER)
     defaultArguments          = XHELPER.getOptionalTextNode(nodeList.item(i),"arguments")                                     
   Next 
 
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/SQL/shortCut")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/SQL/shortCut")
 
   For i = 0 to nodeList.length - 1
     landingPad         = XHELPER.getDefaultTextNode(nodeList.item(i),"landingPad",defaultLandingPad)
@@ -871,14 +765,14 @@ Sub makeSqlShortCuts(INSTALLER,FILEMANAGER)
     script             = XHELPER.getTextNode(nodeList.item(i),"script")
 
 
-		If (not INSTALLER.isScriptGenerator()) Then
+		If (CONFIGURATION.onlineInstall()) Then
       If (executionMode = "local") Then
-        arguments       = INSTALLER.replaceMacros( username & "/" & password & "@" & tnsAlias & " " + chr(34) + "@%DEMODIRECTORY%\Install\sql\executeAndPause.sql" & chr(34) & " " & chr(34) + "%DEMODIRECTORY%\%USER%" & script + chr(34),false)
-        FILEMANAGER.makeShortCut INSTALLER, shortcutLocation, shortcutName, INSTALLER.getSQLPLusPath(), iconPath, null, arguments
+        arguments       = CONFIGURATION.replaceMacros( username & "/" & password & "@" & tnsAlias & " " + chr(34) + "@%DEMODIRECTORY%\Install\sql\executeAndPause.sql" & chr(34) & " " & chr(34) + "%DEMODIRECTORY%\%USER%" & script + chr(34),false)
+        IOMANAGER.makeShortCut CONFIGURATION, shortcutLocation, shortcutName, SQLPLUS.getSQLPLusPath(), iconPath, null, arguments
       Else
     	  ' Assume remote (HTTP) based SQL Execution
-        url = INSTALLER.replaceMacros(INSTALLER.getServerURL() & landingPad & "&target=" & scriptPrefix & script & "&description=" & shortCutName & "&sqlUsername=" & username,false)
-        FILEMANAGER.makeHttpShortCut shortcutLocation, shortcutName, url, iconPath, ""
+        url = CONFIGURATION.replaceMacros(CONFIGURATION.getServerURL() & landingPad & "&target=" & scriptPrefix & script & "&description=" & shortCutName & "&sqlUsername=" & username,false)
+        IOMANAGER.makeHttpShortCut shortcutLocation, shortcutName, url, iconPath, ""
       End If
 		End If
 		
@@ -888,23 +782,23 @@ Sub makeSqlShortCuts(INSTALLER,FILEMANAGER)
   
 End Sub
 
-Sub makeHttpShortCuts(INSTALLER, FILEMANAGER)
+Sub makeHttpShortCuts(CONFIGURATION, IOMANAGER)
 
   Dim nodeList, i, shortcutName, url, windowName, screenshot
 
   Dim defaultShortcutLocation, defaultUsername, defaultIconPath, defaultArguments
   Dim shortcutLocation, username, iconPath, arguments
 
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/HTTP/defaults")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/HTTP/defaults")
   For i = 0 to nodeList.length - 1
-    defaultShortcutLocation   = XHELPER.getDefaultTextNode(nodeList.item(i),"location",INSTALLER.getShortcutFolderPath())
-    defaultUsername           = XHELPER.getDefaultTextNode(nodeList.item(i),"username",INSTALLER.getUsername())
+    defaultShortcutLocation   = XHELPER.getDefaultTextNode(nodeList.item(i),"location",CONFIGURATION.getShortcutFolderPath())
+    defaultUsername           = XHELPER.getDefaultTextNode(nodeList.item(i),"username",CONFIGURATION.getUsername())
     defaultIconPath           = XHELPER.getOptionalTextNode(nodeList.item(i),"icon")
 
     defaultArguments          = XHELPER.getOptionalTextNode(nodeList.item(i),"arguments")
   Next 
 
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/HTTP/shortCut")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/HTTP/shortCut")
 
   For i = 0 to nodeList.length - 1
     shortcutLocation   = XHELPER.getDefaultTextNode(nodeList.item(i),"location",defaultShortcutLocation)
@@ -918,8 +812,8 @@ Sub makeHttpShortCuts(INSTALLER, FILEMANAGER)
     screenshot         = XHELPER.getOptionalTextNode(nodeList.item(i),"screenshot")
     windowName         = XHELPER.getOptionalTextNode(nodeList.item(i),"target")
 
-    If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then	
-	    FILEMANAGER.makeHttpShortCut shortcutLocation, shortcutName, url, iconPath, arguments
+    If (CONFIGURATION.onlineInstall()) Then	
+	    IOMANAGER.makeHttpShortCut shortcutLocation, shortcutName, url, iconPath, arguments
     End If
 
     DEMONSTRATION.addHTTPStep shortcutName, url, arguments, "HTTP.png", username, screenshot, windowName
@@ -927,7 +821,7 @@ Sub makeHttpShortCuts(INSTALLER, FILEMANAGER)
   
 End Sub
 
-Sub makeViewerShortCuts(INSTALLER, FILEMANAGER)
+Sub makeViewerShortCuts(CONFIGURATION, IOMANAGER)
 
   ' LocalViewer is the viewer used when running inside the XFILES Application
   ' RemoteViewer is te viewer used when running from Operating System.
@@ -938,10 +832,10 @@ Sub makeViewerShortCuts(INSTALLER, FILEMANAGER)
   Dim shortcutLocation, pathPrefix, username, iconPath, arguments, remoteViewer, localViewer, contentType
   Dim URL, localURL, remoteURL
 
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/VIEW/defaults")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/VIEW/defaults")
   For i = 0 to nodeList.length - 1
-    defaultShortcutLocation   = XHELPER.getDefaultTextNode(nodeList.item(i),"location",INSTALLER.getShortcutFolderPath())
-    defaultUsername           = XHELPER.getDefaultTextNode(nodeList.item(i),"username",INSTALLER.getUsername())
+    defaultShortcutLocation   = XHELPER.getDefaultTextNode(nodeList.item(i),"location",CONFIGURATION.getShortcutFolderPath())
+    defaultUsername           = XHELPER.getDefaultTextNode(nodeList.item(i),"username",CONFIGURATION.getUsername())
     defaultIconPath           = XHELPER.getOptionalTextNode(nodeList.item(i),"icon")
 
     defaultRemoteViewer       = XHELPER.getOptionalTextNode(nodeList.item(i),"remoteViewer")
@@ -951,7 +845,7 @@ Sub makeViewerShortCuts(INSTALLER, FILEMANAGER)
     defaultArguments          = XHELPER.getOptionalTextNode(nodeList.item(i),"arguments")                                 
   Next 
 
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/VIEW/shortCut")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/VIEW/shortCut")
 
   For i = 0 to nodeList.length - 1
     shortcutLocation   = XHELPER.getDefaultTextNode(nodeList.item(i),"location",defaultShortcutLocation)
@@ -976,18 +870,18 @@ Sub makeViewerShortCuts(INSTALLER, FILEMANAGER)
     if (localViewer <> "") then
     	localURL = localViewer & "&target=" & URL
     else
-      localURL = INSTALLER.getServerURL() & URL    	
+      localURL = CONFIGURATION.getServerURL() & URL    	
     end if
 
     remoteURL = URL
     If (remoteViewer <> "")  Then
-      remoteURL = INSTALLER.getServerURL() & remoteViewer & "?target="  & URL
+      remoteURL = CONFIGURATION.getServerURL() & remoteViewer & "?target="  & URL
     else
-      remoteURL = INSTALLER.getServerURL() & URL   	
+      remoteURL = CONFIGURATION.getServerURL() & URL   	
     End if    
     
-    If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then
-      FILEMANAGER.makeHttpShortCut shortcutLocation, shortcutName, remoteURL , iconPath, NULL
+    If (CONFIGURATION.onlineInstall()) Then
+      IOMANAGER.makeHttpShortCut shortcutLocation, shortcutName, remoteURL , iconPath, NULL
     End if
     
     DEMONSTRATION.addViewerStep shortcutName, localURL, "HTTP.png", username, contentType
@@ -996,23 +890,23 @@ Sub makeViewerShortCuts(INSTALLER, FILEMANAGER)
 End Sub
 
 
-Sub makeFtpScripts(INSTALLER,FILEMANAGER)
+Sub makeFtpScripts(CONFIGURATION,IOMANAGER)
   
   Dim scriptFilename, scriptFile, targetDirectory, ftpCommand, ftpFile
   
   Dim nodeList, i, commandNodeList, c
 
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/FTP/scripts/script")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/FTP/scripts/script")
 
   For i = 0 to nodeList.length - 1
 
      scriptFileName  = XHELPER.getTextNode(nodeList.item(i),"name")
-     scriptFile      = INSTALLER.getScriptsFolderPath() & FILE_SEPERATOR &scriptFileName + ".ftp"
+     scriptFile      = CONFIGURATION.getScriptsFolderPath() & FILE_SEPERATOR &scriptFileName + ".ftp"
      targetDirectory = XHELPER.getTextNode(nodeList.item(i),"URL")
 
-     Set ftpFile = FILEMANAGER.CreateTextFile(scriptFile)
-     createFtpScript ftpFile, INSTALLER.getHostName(), INSTALLER.getFtpPort(), _
-                     INSTALLER.getUsername(), INSTALLER.getPassword(), targetDirectory
+     Set ftpFile = IOMANAGER.CreateTextFile(scriptFile)
+     createFtpScript ftpFile, CONFIGURATION.getHostName(), CONFIGURATION.getFtpPort(), _
+                     CONFIGURATION.getUsername(), CONFIGURATION.getPassword(), targetDirectory
 
      Set commandNodeList = nodeList(i).getElementsByTagName("command")
                         
@@ -1105,15 +999,15 @@ Function processSimulation(simulation, shortcutName, defaultLinkFolder, defaultS
 End Function
 
 
-Sub makeGeneralShortCuts(INSTALLER,FILEMANAGER)
+Sub makeGeneralShortCuts(CONFIGURATION,IOMANAGER)
 
 
   Dim nodeList, i
   Dim defaultShortcutFolder, defaultLinkFolder, defaultScreenshotFolder  
 
-  defaultShortcutFolder   = INSTALLER.getShortcutFolderPath()
+  defaultShortcutFolder   = CONFIGURATION.getShortcutFolderPath()
 
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/General/defaults")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/General/defaults")
   For i = 0 to nodeList.length - 1
     defaultLinkFolder         = XHELPER.getDefaultTextNode(nodeList.item(i),"remoteLinkLocation","%DEMOLOCAL%/Links")
     defaultScreenshotFolder   = XHELPER.getDefaultTextNode(nodeList.item(i),"screenshotLocation","%DEMOCOMMON%/assets")
@@ -1122,7 +1016,7 @@ Sub makeGeneralShortCuts(INSTALLER,FILEMANAGER)
   Dim shortCutName, shortcutFolder, target, directory, icon, arguments, remoteIcon 
   Dim nlSimulation, simulation
   
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/General/shortCut")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/General/shortCut")
 
   For i = 0 to nodeList.length - 1
     shortCutName       = XHELPER.getTextNode(nodeList.item(i),"name")
@@ -1132,8 +1026,8 @@ Sub makeGeneralShortCuts(INSTALLER,FILEMANAGER)
     icon               = XHELPER.getOptionalTextNode(nodeList.item(i),"icon")
     arguments          = XHELPER.getOptionalTextNode(nodeList.item(i),"arguments")
     
-    If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then
-      FILEMANAGER.makeShortCut INSTALLER, shortcutFolder, shortCutName, target, icon, directory, arguments
+    If (CONFIGURATION.onlineInstall()) Then
+      IOMANAGER.makeShortCut CONFIGURATION, shortcutFolder, shortCutName, target, icon, directory, arguments
     End if
         
     Set nlSimulation   = nodeList.item(i).getElementsByTagName("simulation")
@@ -1143,28 +1037,28 @@ Sub makeGeneralShortCuts(INSTALLER,FILEMANAGER)
     	Set simulation   = NULL
     End If
 
-    DEMONSTRATION.addShellCmdStep shortcutName, INSTALLER.getUsername(), getRemoteIcon(target), simulation
+    DEMONSTRATION.addShellCmdStep shortcutName, CONFIGURATION.getUsername(), getRemoteIcon(target), simulation
 
   Next 
   
 End Sub
  
-Sub makeFavorites(INSTALLER,FILEMANAGER)
+Sub makeFavorites(CONFIGURATION,IOMANAGER)
 
   Dim nodeList, i, linkFolderName, linkFolderPath, shortCutName, shortcutLocation, target, arguments, icon, screenshot, windowName
 
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/Favorites/shortCut")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/Favorites/shortCut")
 
   If (nodeList.length > 0) Then
-    linkFolderName = INSTALLER.getDemonstrationParameter("/installerConfiguration/Favorites/folder").item(0).text
+    linkFolderName = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/Favorites/folder").item(0).text
     If linkFolderName = "" Then
       linkFolderName = "Oracle XML DB Demonstration"
     End If
-    linkFolderPath = FILEMANAGER.makeFavoritesFolder(linkFolderName)
+    linkFolderPath = IOMANAGER.makeFavoritesFolder(linkFolderName)
     
     For i = 0 to nodeList.length - 1
       shortCutName       = XHELPER.getTextNode(nodeList.item(i),"name")
-      target             = INSTALLER.getServerURL() & XHELPER.getTextNode(nodeList.item(i),"localPath")
+      target             = CONFIGURATION.getServerURL() & XHELPER.getTextNode(nodeList.item(i),"localPath")
       shortcutLocation   = XHELPER.getOptionalTextNode(nodeList.item(i),"location")
       arguments          = XHELPER.getOptionalTextNode(nodeList.item(i),"arguments")
       icon               = XHELPER.getOptionalTextNode(nodeList.item(i),"icon")
@@ -1172,17 +1066,17 @@ Sub makeFavorites(INSTALLER,FILEMANAGER)
       screenshot         = XHELPER.getOptionalTextNode(nodeList.item(i),"screenshot")
       windowName         = XHELPER.getOptionalTextNode(nodeList.item(i),"target")
 
-      FILEMANAGER.makeHttpShortCut shortcutLocation, shortCutName,  target, icon, arguments
-      DEMONSTRATION.addHTTPStep shortcutName, target, Nothing, icon, INSTALLER.getUsername(),screenshot, windowName
+      IOMANAGER.makeHttpShortCut shortcutLocation, shortCutName,  target, icon, arguments
+      DEMONSTRATION.addHTTPStep shortcutName, target, Nothing, icon, CONFIGURATION.getUsername(),screenshot, windowName
     Next 
   End If
   
 End Sub
 
-Sub makeFolderShortcuts(INSTALLER, FILEMANAGER, REPOS)
+Sub makeFolderShortcuts(CONFIGURATION, IOMANAGER, REPOS)
 
-  If INSTALLER.getWindowsVersion >= 6.1 Then
-    makeNetworkFolderShortcuts INSTALLER, FILEMANAGER
+  If ENVIRONMENT.getWindowsVersion >= 6.1 Then
+    makeNetworkFolderShortcuts CONFIGURATION, IOMANAGER
   Else
     makeWebFolders REPOS    
   End If
@@ -1191,53 +1085,53 @@ End sub
 
 Sub SaveConfiguration (REPOS, remoteDirectory, user, password)
 
-		If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then	
+		If (CONFIGURATION.onlineInstall()) Then	
       REPOS.uploadContent DEMONSTRATION.DOCUMENT, remoteDirectory & "/configuration.xml", True, user, password
     else
-    	SCRIPT_GENERATOR.uploadConfiguation DEMONSTRATION.DOCUMENT, remoteDirectory & "/configuration.xml", True, user, password
+    	IOMANAGER.uploadConfiguation DEMONSTRATION.DOCUMENT, remoteDirectory & "/configuration.xml", True, user, password
     End If
 
 End Sub
 
-Sub makeLaunchPadEntry(INSTALLER, FILEMANAGER, shortCutType, shortCutName, shortcutLocation, target, icon, directory, arguments)
+Sub makeLaunchPadEntry(CONFIGURATION, IOMANAGER, shortCutType, shortCutName, shortcutLocation, target, icon, directory, arguments)
 
     ' Ensure the Launch Pad Folder exists
 
-    If (INSTALLER.isInteractiveInstall()or NOT (MINSTALLER Is Nothing)) Then
+    If (NOT ENVIRONMENT.isScriptGenerator()) Then
 
-      FILEMANAGER.makeFolder shortcutLocation
+      IOMANAGER.makeFolder shortcutLocation
 
       If (shortCutType = "url") Then
-        FILEMANAGER.makeHttpShortcut shortcutLocation, shortcutName, target, icon, arguments  
+        IOMANAGER.makeHttpShortcut shortcutLocation, shortcutName, target, icon, arguments  
       End If
     
       If (shortCutType = "lnk") Then
-	      FILEMANAGER.makeShortCut INSTALLER, shortcutLocation, shortCutName, target, icon, directory, arguments
+	      IOMANAGER.makeShortCut CONFIGURATION, shortcutLocation, shortCutName, target, icon, directory, arguments
       End If
 
     Else
-    	SCRIPT_GENERATOR.launchShellScript shortcutName,target,shortCutType
+    	IOMANAGER.launchShellScript shortcutName,target,shortCutType
     End If  
     
 End Sub
 
-Sub makeLaunchPadEntries(INSTALLER,FILEMANAGER)
+Sub makeLaunchPadEntries(CONFIGURATION,IOMANAGER)
 
   Dim  i, nodeList, shortCut, shortCutType, shortCutName, shortcutLocation, target, directory, icon, arguments, remoteLinkLocation, remoteIcon, screenshot, simulation
 
-  Set nodeList = INSTALLER.getDemonstrationParameter("/installerConfiguration/shortCuts/LAUNCH/shortCut")
+  Set nodeList = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/shortCuts/LAUNCH/shortCut")
 
   For i = 0 to nodeList.length - 1
     Set shortCut       = nodeList.item(i)
     shortCutType       = shortCut.getAttribute("type")
     shortCutName       = XHELPER.getTextNode(shortCut,"name")
-    shortcutLocation   = XHELPER.getDefaultTextNode(shortCut,"location",Installer.getLaunchPadFolderPath())
+    shortcutLocation   = XHELPER.getDefaultTextNode(shortCut,"location",CONFIGURATION.getLaunchPadFolderPath())
     target             = XHELPER.getOptionalTextNode(shortCut,"target")
     icon               = XHELPER.getOptionalTextNode(shortCut,"icon")
     directory          = XHELPER.getOptionalTextNode(shortCut,"directory")
     arguments          = XHELPER.getOptionalTextNode(shortCut,"arguments")
 
-    makeLaunchPadEntry INSTALLER, FILEMANAGER, shortCutType, shortCutName, shortcutLocation, target, icon, directory, arguments
+    makeLaunchPadEntry CONFIGURATION, IOMANAGER, shortCutType, shortCutName, shortcutLocation, target, icon, directory, arguments
 
   Next 
   
@@ -1248,16 +1142,16 @@ Sub ProcessFileUploadList(fileList)
   Dim  i, nodeList, action, actionType, user, password, mode, local, remote, stepDescription, scriptFile
   Set nodeList = fileList.getElementsByTagName("action")
 
-  If INSTALLER.useFtpProtocol() Then
-    writeLogMessage "FTP File Upload enabled"
+  If CONFIGURATION.useFtpProtocol() Then
+    APPLICATION.writeLogMessage "FTP File Upload enabled"
     Set newFolderList = CreateObject("Scripting.Dictionary")
   End if
 
   For i = 0 to nodeList.length - 1
     Set action = nodeList.item(i)
     actionType = action.getAttribute("type")
-    user       = INSTALLER.replaceMacros(action.getAttribute("user"),false)
-    password   = INSTALLER.replaceMacros(action.getAttribute("password"),false)
+    user       = CONFIGURATION.replaceMacros(action.getAttribute("user"),false)
+    password   = CONFIGURATION.replaceMacros(action.getAttribute("password"),false)
     
     Select Case actionType
       Case "PUT" 
@@ -1265,34 +1159,34 @@ Sub ProcessFileUploadList(fileList)
         local  = XHELPER.getTextNode(action,"local")
         remote = XHELPER.getTextNode(action,"remote")
         stepDescription = "  PUT : '" & local & "' --> '" & remote & "'."
-        writeLogMessage stepDescription
+        APPLICATION.writeLogMessage stepDescription
         REPOS.uploadFile local, remote, mode, user, password
         stepDescription = stepDescription & " Status = " & REPOS.getXHR().status & " [" + REPOS.getXHR().statusText + "]."
-        writeLogMessage stepDescription
+        APPLICATION.writeLogMessage stepDescription
       Case "MKCOL" 
         mode   = XHELPER.getTextNode(action,"mode") = "FORCE"
         remote = XHELPER.getTextNode(action,"remote")
         stepDescription = "  MKDIR : '" & remote & "'."
-        writeLogMessage stepDescription
+        APPLICATION.writeLogMessage stepDescription
         REPOS.makeDir remote, mode, user, password
         stepDescription = stepDescription & " Status = " & REPOS.getXHR().status & " [" + REPOS.getXHR().statusText + "]."
-        writeLogMessage stepDescription
+        APPLICATION.writeLogMessage stepDescription
       Case "DELETE" 
         mode   = XHELPER.getTextNode(action,"mode") = "FORCE"
         remote = XHELPER.getTextNode(action,"remote")
         stepDescription = "  DELETE : '" & remote & "'."
-        writeLogMessage stepDescription
+        APPLICATION.writeLogMessage stepDescription
         REPOS.doDelete remote, user, password
         stepDescription = stepDescription & " Status = " & REPOS.getXHR().status & " [" + REPOS.getXHR().statusText + "]."
-        writeLogMessage stepDescription
+        APPLICATION.writeLogMessage stepDescription
     End Select
     
   next
 
-  If INSTALLER.useFtpProtocol() Then
-    writeLogMessage "  Commencing FTP Upload"
+  If CONFIGURATION.useFtpProtocol() Then
+    APPLICATION.writeLogMessage "  Commencing FTP Upload"
   	scriptFile = REPOS.runFtpScript
-    writeLogMessage "  FTP Upload Completed for '" & scriptFile & "'."
+    APPLICATION.writeLogMessage "  FTP Upload Completed for '" & scriptFile & "'."
   End if
     
 End Sub
@@ -1302,95 +1196,95 @@ Sub doAction(action,step)
   Dim actionType, user, password, sqlScript, mode, local, remote, stepDescription
  
   actionType = action.getAttribute("type")
-  user       = INSTALLER.replaceMacros(action.getAttribute("user"),false)
-  password   = INSTALLER.replaceMacros(action.getAttribute("password"),false)
+  user       = CONFIGURATION.replaceMacros(action.getAttribute("user"),false)
+  password   = CONFIGURATION.replaceMacros(action.getAttribute("password"),false)
   
   ' MsgBox "Action Type """  & actionType & """.",vbOK
 
   Select Case actionType
     Case "SYSDBA"
-      sqlScript = INSTALLER.replaceMacros(action.text,false)
-      stepDescription = "Step " & step & " SQLDBA : '" & INSTALLER.replaceMacros(action.text,true) & "'."
-      writeLogMessage stepDescription
+      sqlScript = CONFIGURATION.replaceMacros(action.text,false)
+      stepDescription = "Step " & step & " SQLDBA : '" & CONFIGURATION.replaceMacros(action.text,true) & "'."
+      APPLICATION.writeLogMessage stepDescription
 	    SQLPLUS.sysdba user, password, sqlScript
     Case "RUNSQL"
-      sqlScript = INSTALLER.replaceMacros(action.text,false)
-      stepDescription = "Step " & step & " RUNSQL : '" & INSTALLER.replaceMacros(action.text,true) & "'."
-      writeLogMessage stepDescription
+      sqlScript = CONFIGURATION.replaceMacros(action.text,false)
+      stepDescription = "Step " & step & " RUNSQL : '" & CONFIGURATION.replaceMacros(action.text,true) & "'."
+      APPLICATION.writeLogMessage stepDescription
 	    SQLPLUS.execute user, password, sqlScript
 	  Case "UPLOAD"
       stepDescription = "Step " & step & " Upload Files."
-      writeLogMessage stepDescription
+      APPLICATION.writeLogMessage stepDescription
 	    processFileUploadList action
     Case "MAKEFOLDERS" 
       stepDescription = "Step " & step & " Create Folders."
-      writeLogMessage stepDescription
-      createFolders INSTALLER,FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      createFolders CONFIGURATION,IOMANAGER
     Case  "COPYFOLDERS" 
       stepDescription = "Step " & step & " Copy Folders."
-      writeLogMessage stepDescription
-      copyFolders INSTALLER,FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      copyFolders CONFIGURATION,IOMANAGER
     Case "COPYFILES" 
       stepDescription = "Step " & step & " Copy Files."
-      writeLogMessage stepDescription
-      copyFiles INSTALLER,FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      copyFiles CONFIGURATION,IOMANAGER
     Case "UNZIP" 
       stepDescription = "Step " & step & " Unzip Archives."
-      writeLogMessage stepDescription
-      unzipArchives INSTALLER,FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      unzipArchives CONFIGURATION,IOMANAGER
     Case "CLONEFOLDERS" 
       stepDescription = "Step " & step & " Clone Folders."
-      writeLogMessage stepDescription
-      cloneFolders INSTALLER,FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      cloneFolders CONFIGURATION,IOMANAGER
     Case "CLONEFILES" 
       stepDescription = "Step " & step & " Clone Files."
-      writeLogMessage stepDescription
-      cloneFiles INSTALLER,FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      cloneFiles CONFIGURATION,IOMANAGER
     Case "CLONEZIPS" 
       stepDescription = "Step " & step & " Clone Archives."
-      writeLogMessage stepDescription
-      cloneArchives INSTALLER,FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      cloneArchives CONFIGURATION,IOMANAGER
     Case "SQLLDR" 
       stepDescription = "Step " & step & " SQLLDR Jobs."
-      writeLogMessage stepDescription
-      sqlldrJobs INSTALLER
+      APPLICATION.writeLogMessage stepDescription
+      sqlldrJobs CONFIGURATION
     Case "DAV"
       stepDescription = "Step " & step & " Remote Folder Shortcuts."
-      writeLogMessage stepDescription
-      makeFolderShortcuts INSTALLER, FILEMANAGER, REPOS
+      APPLICATION.writeLogMessage stepDescription
+      makeFolderShortcuts CONFIGURATION, IOMANAGER, REPOS
     Case "FTP" 
       stepDescription = "Step " & step & " FTP scripts."
-      writeLogMessage stepDescription
-      makeFtpScripts INSTALLER,FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      makeFtpScripts CONFIGURATION,IOMANAGER
     Case "SQL" 
       stepDescription = "Step " & step & " SQL scripts."
-      writeLogMessage stepDescription
-      makeSQLShortCuts INSTALLER,FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      makeSQLShortCuts CONFIGURATION,IOMANAGER
     Case "HTTP" 
       stepDescription = "Step " & step & " HTTP URLs."
-      writeLogMessage stepDescription
-      makeHttpShortCuts INSTALLER, FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      makeHttpShortCuts CONFIGURATION, IOMANAGER
     Case "SHELL"
       stepDescription = "Step " & step & " Shell Commands."
-      writeLogMessage stepDescription
-      makeGeneralShortCuts INSTALLER, FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      makeGeneralShortCuts CONFIGURATION, IOMANAGER
     Case "VIEW" 
       stepDescription = "Step " & step & " Show Documents."
-      writeLogMessage stepDescription
-      makeViewerShortcuts INSTALLER,FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      makeViewerShortcuts CONFIGURATION,IOMANAGER
     Case "FAVORITES" 
       stepDescription = "Step " & step & " Create Favorites entries."
-      writeLogMessage stepDescription
-      makeFavorites INSTALLER,FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      makeFavorites CONFIGURATION,IOMANAGER
     Case "DEMOCONFIG" 
       remote = XHELPER.getTextNode(action,"remote")
       stepDescription = "Step " & step & " Save demonstration Configuration."
-      writeLogMessage stepDescription
+      APPLICATION.writeLogMessage stepDescription
       saveConfiguration REPOS, remote, user, password
     Case "LAUNCH"
       stepDescription = "Step " & step & " Launch Shortcuts."
-      writeLogMessage stepDescription
-      makeLaunchPadEntries INSTALLER,FILEMANAGER
+      APPLICATION.writeLogMessage stepDescription
+      makeLaunchPadEntries CONFIGURATION,IOMANAGER
   End Select
   
 End Sub
@@ -1436,7 +1330,7 @@ Sub doInstallActions()
 
   Dim nodeList
   DEMONSTRATION.addDemonstrationRoot
-  Set ACTION_LIST = INSTALLER.getDemonstrationParameter("/installerConfiguration/installation/action")
+  Set ACTION_LIST = CONFIGURATION.getDemonstrationParameter("/installerConfiguration/installation/action")
   ACTION_INDEX = 0
   takeNextAction 
 
@@ -1444,37 +1338,37 @@ End Sub
 
 Sub ConfigureDatabase()
        
-      DIM stepDescription
+  DIM stepDescription
 
-      stepDescription = "configureDatabase(): " + INSTALLER.getUsername + " " + INSTALLER.getPassword + " " + INSTALLER.getHTTPPort + " " + INSTALLER.getFTPPort
-      writeLogMessage stepDescription
-	    SQLPLUS.sysdba INSTALLER.getDBAUsername, INSTALLER.getDBAPassword, "sql/configureDatabase" + " " + INSTALLER.getUsername + " " + INSTALLER.getPassword + " " + INSTALLER.getHTTPPort + " " + INSTALLER.getFTPPort
+  stepDescription = "configureDatabase(): " + CONFIGURATION.getUsername + " " + CONFIGURATION.getPassword + " " + CONFIGURATION.getHTTPPort + " " + CONFIGURATION.getFTPPort
+  APPLICATION.writeLogMessage stepDescription
+  SQLPLUS.sysdba CONFIGURATION.getDBAUsername, CONFIGURATION.getDBAPassword, "sql/configureDatabase" + " " + CONFIGURATION.getUsername + " " + CONFIGURATION.getPassword + " " + CONFIGURATION.getHTTPPort + " " + CONFIGURATION.getFTPPort
 
 End Sub
 
 Sub doInstall()
 
-  dim result
-  dim installButton
+  Dim result
+  Dim installButton
   
   set installButton = document.getElementById("doInstall")
   installButton.disabled = true
 
   ' Load the values from the Installation Parameters Dialog
   
-  INSTALLER.readInstallationDialog
+  CONFIGURATION.readInstallationDialog
 
   ' MsgBox "DEBUG : Validating Install Parameters",vbOK
 
-  If (Not validOracleHome(INSTALLER)) Then
+  If (Not validOracleHome()) Then
     installButton.disabled = false
     exit Sub
   End If
 
   ' MsgBox "DEBUG : Oracle Home - Passed",vbOK
 
-  If (INSTALLER.requiresSYSDBA()) then
-    If (Not validSYSDBA(INSTALLER,SQLPLUS)) Then
+  If (CONFIGURATION.requiresSYSDBA()) then
+    If (Not validSYSDBA(CONFIGURATION,SQLPLUS)) Then
       installButton.disabled = false
       exit Sub
     End If
@@ -1482,34 +1376,34 @@ Sub doInstall()
 
   ' MsgBox "DEBUG : SYSDBA - Passed",vbOK
 
-  If (Not validDBA(INSTALLER,SQLPLUS)) Then
+  If (Not validDBA(CONFIGURATION,SQLPLUS)) Then
     installButton.disabled = false
     exit Sub
   End If
 
   ' MsgBox "DEBUG : DBA - Passed",vbOK
 
-  If (Not validUsername(INSTALLER,SQLPLUS)) Then
+  If (Not validUsername(CONFIGURATION,SQLPLUS)) Then
     installButton.disabled = false
     exit Sub
   End If
 
   ' MsgBox "DEBUG : USER - Passed",vbOK
 
-  If (Not validHTTPConnection(INSTALLER,REPOS)) Then
+  If (Not validHTTPConnection(CONFIGURATION,REPOS)) Then
     installButton.disabled = false
     exit Sub
   End If
   
   ' MsgBox "DEBUG : HTTP - Passed",vbOK
 
-  If (Not validDriveLetter(INSTALLER)) Then
+  If (Not validDriveLetter(CONFIGURATION)) Then
     installButton.disabled = false
     exit Sub
   End If
   
-  If Not(IsNull(INSTALLER.getDriveLetter())) Then 
-    result = mapNetworkDrive(INSTALLER,FILEMANAGER)
+  If Not(IsNull(CONFIGURATION.getDriveLetter())) Then 
+    result = mapNetworkDrive(CONFIGURATION,IOMANAGER)
     If (Not result) Then
       installButton.disabled = false
       Exit Sub
@@ -1527,15 +1421,21 @@ End sub
 Sub doPostInstallActions()
 
   window.clearTimeOut(CURRENTTIMER)
-  installationSuccessful INSTALLER  
-  writeLogMessage "Installation Successful"
+  installationSuccessful CONFIGURATION  
+  APPLICATION.writeLogMessage "Installation Successful"
   writeLogFile LOGBUFFER
   self.close()
    
 End Sub
 
 Class fileSystemControl
-
+  
+  Function getDemonstrationParametersPath(CONFIGURATION)
+   
+    getDemonstrationParametersPath = CONFIGURATION.getInstallFolderPath() & FILE_SEPERATOR & CONFIGURATION.getDemoFolderName() + ".xml"
+   
+  End Function
+   
   Public Function mapNetworkDrive(driveLetter, hostName, portNumber, user, password)
     
     Dim i, drive, oDrives, networkMgr, URL, windowsShareName, networkPath, errorMessage, currentOperation
@@ -1546,10 +1446,10 @@ Class fileSystemControl
     windowsShareName = "\\" & hostname & "@" & portNumber & "\DavWWWRoot"
 
     currentOperation = "  MAP NETWORK DRIVE '" & driveLetter & "'. Target => '" & windowsShareName & "'."
-    writeLogMessage currentOperation
+    APPLICATION.writeLogMessage currentOperation
       
     On Error Resume Next
-    Set drive = INSTALLER.getFSO().GetDrive(driveLetter)
+    Set drive = ENVIRONMENT.getFSO().GetDrive(driveLetter)
     If Err.number = 0 Then
     	' Drive Letter in use
       If drive.DriveType = 3 Then
@@ -1559,21 +1459,21 @@ Class fileSystemControl
              networkPath  = oDrives.Item(i+1)
              If UCase(networkPath) <> UCase(windowsShareName) Then
                errorMessage = "Unable to map Drive Letter '" & driveLetter & "' to '" & windowsShareName & "'. Drive already mapped to '" & networkPath & "'."
-               exitFatalError(errorMessage)
+               APPLICATION.exitFatalError(errorMessage)
              End If
           	 currentOperation = "  Using existing mapping for '" & driveLetter & "'. Target => '" & windowsShareName & "'. User = '" & user & "'."
-             writeLogMessage currentOperation
+             APPLICATION.writeLogMessage currentOperation
              Break
            End If 	
          Next
       Else
       	errorMessage = "Unable to map Drive Letter '" & driveLetter & "' to '" & windowsShareName & "'. Drive Letter in Use."
-        exitFatalError(errorMessage)
+        APPLICATION.exitFatalError(errorMessage)
       End If 	
     Else
     	' Drive Letter already available
     	currentOperation = "  networkManager.mapNetworkDrive '" & driveLetter & "'. Target => '" & windowsShareName & "'. User = '" & user & "'."
-      writeLogMessage currentOperation
+      APPLICATION.writeLogMessage currentOperation
       networkMgr.MapNetworkDrive driveLetter, windowsShareName, true, user, password
       If Err.number  <> 0 Then
       	If Err.number = 68 Then
@@ -1581,7 +1481,7 @@ Class fileSystemControl
       	  Exit Function
       	End if
         errorMessage = "Unable to Map Drive Letter '" & driveLetter & "' to '" & windowsShareName & "'. Error (" & Err.number & ") : " & Err.description
-        exitFatalError(errorMessage)
+        APPLICATION.exitFatalError(errorMessage)
       End If
     End If
        
@@ -1591,8 +1491,8 @@ Class fileSystemControl
      
     Dim folder
  
-     If INSTALLER.getFSO().folderExists(folderPath) Then
-        Set folder = INSTALLER.getFSO().getFolder(folderPath)
+     If ENVIRONMENT.getFSO().folderExists(folderPath) Then
+        Set folder = ENVIRONMENT.getFSO().getFolder(folderPath)
         deleteFolder(folder)
      End If
 
@@ -1609,7 +1509,7 @@ Class fileSystemControl
       subFolder.delete(TRUE)
       If Err.number  <> 0 Then
         errorMessage = "deleteFolderContents(): Fatal Error deleting Folder '" & subFolder.path & "'."
-        exitFatalError(errorMessage)    	
+        APPLICATION.exitFatalError(errorMessage)    	
       End If
       On Error GoTo 0  
     Next
@@ -1620,7 +1520,7 @@ Class fileSystemControl
       file.delete(TRUE)
       If Err.number  <> 0 Then
         errorMessage = "deleteFolderContents(): Fatal Error deleting File '" & file.path & "'."
-        exitFatalError(errorMessage)    	
+        APPLICATION.exitFatalError(errorMessage)    	
       End If
       On Error GoTo 0  
     Next
@@ -1635,7 +1535,7 @@ Class fileSystemControl
     folder.delete(TRUE)
     If Err.number  <> 0 Then
       errorMessage = "deleteFolder(): Fatal Error deleting Folder '" & folder.path & "'."
-      exitFatalError(errorMessage)    	
+      APPLICATION.exitFatalError(errorMessage)    	
     End If
     On Error GoTo 0  
         
@@ -1646,16 +1546,16 @@ Class fileSystemControl
     Dim errorMessage
 
     On Error Resume Next
-    Set CreateFolder = INSTALLER.getFSO().createFolder(sourceFolderName)
+    Set CreateFolder = ENVIRONMENT.getFSO().createFolder(sourceFolderName)
     
     If Err.number = 70 Then
     	MsgBox "Unable to create folder """  & sourceFolderName & """. Please close any applications or windows using this folder, then click 'OK' to retry.",vbCritical
-      Set CreateFolder = INSTALLER.getFSO().createFolder(sourceFolderName)
+      Set CreateFolder = ENVIRONMENT.getFSO().createFolder(sourceFolderName)
     End If
 
     If Err.number  <> 0 Then
       errorMessage = "CreateFolder(): Fatal Error creating Folder '" & sourceFolderName & "'."
-      exitFatalError(errorMessage)
+      APPLICATION.exitFatalError(errorMessage)
     End If
 
   End Function
@@ -1666,8 +1566,8 @@ Class fileSystemControl
 
     ' Workaround for Error 70 Permission Denied Error when recreating recently deleted Folder in Windows 7
 
-  	If INSTALLER.getFSO().FolderExists(folderPath) Then
-   		Set emptyFolder = INSTALLER.getFSO.getFolder(folderPath)
+  	If ENVIRONMENT.getFSO().FolderExists(folderPath) Then
+   		Set emptyFolder = ENVIRONMENT.getFSO.getFolder(folderPath)
   		deleteFolderContents(emptyFolder)
     Else
       Set emptyFolder = createFolder(folderPath)
@@ -1679,9 +1579,9 @@ Class fileSystemControl
 
     ' Create the specified folder tree if it does not already exist.
    
-    If Not INSTALLER.getFSO().FolderExists(folderPath) Then
-      makeFolder(INSTALLER.getFSO().GetParentFolderName(folderPath))
-      INSTALLER.getFSO().createFolder(folderPath)
+    If Not ENVIRONMENT.getFSO().FolderExists(folderPath) Then
+      makeFolder(ENVIRONMENT.getFSO().GetParentFolderName(folderPath))
+      ENVIRONMENT.getFSO().createFolder(folderPath)
     End If
 
   End Sub   
@@ -1690,28 +1590,27 @@ Class fileSystemControl
    
     Dim sourceFolder, targetFolder, errorMessage
   
-		If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then	
+		If (CONFIGURATION.onlineInstall()) Then	
       On Error Resume Next
-      Set sourceFolder = INSTALLER.getFSO().getFolder(sourceFolderName)
+      Set sourceFolder = ENVIRONMENT.getFSO().getFolder(sourceFolderName)
       If Err.number  <> 0 Then
     	  errorMessage = "cloneFolder(): Fatal Error encountered creatng folder '" & sourceFolderName & "'."
-        exitFatalError(errorMessage)
+        APPLICATION.exitFatalError(errorMessage)
       End If
-      Set targetFolder = INSTALLER.getFSO().getFolder(targetFolderName)
+      Set targetFolder = ENVIRONMENT.getFSO().getFolder(targetFolderName)
       cloneSubFolder installParameters, sourceFolder, targetFolder
     Else
-    	SCRIPT_GENERATOR.cloneFolder installParameters, sourceFolderName,targetFolderName
+    	IOMANAGER.cloneFolder installParameters, sourceFolderName,targetFolderName
     End If
 
   End Sub
    
-
   Public Sub CopyFile(installParameters, sourceFile,targetFile)
-    INSTALLER.getFSO().copyFile sourceFile,targetFile
+    ENVIRONMENT.getFSO().copyFile sourceFile,targetFile
   End Sub 
 
   Public Sub copyFolder(installParameters, sourceFolderName,targetFolderName)
-    INSTALLER.getFSO().copyFolder sourceFolderName, targetFolderName
+    ENVIRONMENT.getFSO().copyFolder sourceFolderName, targetFolderName
   End Sub
 
   Private Sub cloneSubFolder(installParameters, sourceFolder, targetFolder)
@@ -1721,10 +1620,10 @@ Class fileSystemControl
     Set childFolderList = sourceFolder.SubFolders
     For each childFolder in childFolderList
       targetFolderPath = targetFolder.path & FILE_SEPERATOR & childFolder.name
-      If (INSTALLER.getFSO().folderExists(targetFolderPath)) Then
-      	Set cloneTarget = INSTALLER.getFSO().getFolder(targetFolderPath)
+      If (ENVIRONMENT.getFSO().folderExists(targetFolderPath)) Then
+      	Set cloneTarget = ENVIRONMENT.getFSO().getFolder(targetFolderPath)
       Else
-        Set cloneTarget = INSTALLER.getFSO().createFolder(targetFolderPath)
+        Set cloneTarget = ENVIRONMENT.getFSO().createFolder(targetFolderPath)
       End If
       cloneSubFolder installParameters, childFolder, cloneTarget
     Next
@@ -1741,13 +1640,13 @@ Class fileSystemControl
 
     Dim inFile, content, outFile
 
-    Set InFile = INSTALLER.getFSO().openTextFile(sourceFilePath)
+    Set InFile = ENVIRONMENT.getFSO().openTextFile(sourceFilePath)
     content = inFile.readall
     inFile.close
 
     content = installParameters.replaceMacros(content,false)
   
-    Set outFile = INSTALLER.getFSO().createTextFile(targetFilePath,TRUE)
+    Set outFile = ENVIRONMENT.getFSO().createTextFile(targetFilePath,TRUE)
     outfile.writeline content
     outFile.close
   
@@ -1767,7 +1666,7 @@ Class fileSystemControl
     
     ' header required to convince Windows shell that this is really a zip file
     zipHeader = Chr(80) & Chr(75) & Chr(5) & Chr(6) & String(18, 0) 
-    set zipFile = INSTALLER.getFSO().CreateTextFile(archivePath)
+    set zipFile = ENVIRONMENT.getFSO().CreateTextFile(archivePath)
     zipFile.Write zipHeader
     zipFile.Close
     
@@ -1788,23 +1687,23 @@ Class fileSystemControl
 
 
   Public Function createTextFile(filename)
-     Set createTextFile = INSTALLER.getFSO().createTextFile(filename, True)
+     Set createTextFile = ENVIRONMENT.getFSO().createTextFile(filename, True)
   End Function
 
   Public Function openTextFile(filename)
-     Set openTextFile = INSTALLER.getFSO().openTextFile(filename, 8)
+     Set openTextFile = ENVIRONMENT.getFSO().openTextFile(filename, 8)
   End Function
   
-  Sub makeShortcut(INSTALLER, shortcutLocation, shortcutName, targetPath, iconPath, targetDirectory, arguments)
+  Sub makeShortcut(CONFIGURATION, shortcutLocation, shortcutName, targetPath, iconPath, targetDirectory, arguments)
 
     Dim oShellLink, details
     
     If IsNull(shortcutLocation) Then
-      shortcutLocation = INSTALLER.getShortcutFolderPath()
+      shortcutLocation = CONFIGURATION.getShortcutFolderPath()
     End If
 
     If IsNull(targetDirectory) Then
-      targetDirectory = INSTALLER.getDemoDirectory()
+      targetDirectory = CONFIGURATION.getDemoDirectory()
     End If
 
     '                                          details = "Create Short Cut : " + vbCRLF 
@@ -1817,7 +1716,7 @@ Class fileSystemControl
 
     ' MSGBOX details,vbCritical
 
-    Set oShellLink = INSTALLER.getWShell().CreateShortcut(shortcutLocation & FILE_SEPERATOR & shortcutName & ".lnk")
+    Set oShellLink = ENVIRONMENT.getWShell().CreateShortcut(shortcutLocation & FILE_SEPERATOR & shortcutName & ".lnk")
 
     oShellLink.WorkingDirectory = targetDirectory
     oShellLink.Description = ""
@@ -1844,23 +1743,23 @@ Class fileSystemControl
     DIM targetFolderPath, folder, desktop, link, currentOperation
        
     currentOperation = "  CREATE JUNCTION : Location => '" & location & "', Name => '" & name & "', Target => '" & target & "'."
-    writeLogMessage currentOperation
+    APPLICATION.writeLogMessage currentOperation
  
     targetFolderPath = location & FILE_SEPERATOR & name
     
-    Set folder = INSTALLER.getFSO().createFolder(targetFolderPath)
+    Set folder = ENVIRONMENT.getFSO().createFolder(targetFolderPath)
 
-    Set desktop = INSTALLER.getFSO().createTextFile(targetFolderPath & "\desktop.ini", true)
+    Set desktop = ENVIRONMENT.getFSO().createTextFile(targetFolderPath & "\desktop.ini", true)
     desktop.writeLine("[.ShellClassInfo]")
     desktop.writeLine("CLSID2={0AFACED1-E828-11D1-9187-B532F1E9575D}")
     desktop.close
  
-    Set desktop = INSTALLER.getFSO().getFile(targetFolderPath & "\desktop.ini")
+    Set desktop = ENVIRONMENT.getFSO().getFile(targetFolderPath & "\desktop.ini")
     desktop.attributes = 7
     folder.attributes = 4
     
      
-    Set link = INSTALLER.getWShell().CreateShortcut(targetFolderPath & "\target.lnk")
+    Set link = ENVIRONMENT.getWShell().CreateShortcut(targetFolderPath & "\target.lnk")
     link.TargetPath = target
     link.WorkingDirectory = targetFolderPath
     link.IconLocation = "%SystemRoot%\system32\imageres.dll ,3"
@@ -1873,11 +1772,11 @@ Class fileSystemControl
      Dim urlLink
   
      If IsNull(shortcutLocation) Then
-       shortCutFolderPath = INSTALLER.getDesktopFolderPath()
+       shortCutFolderPath = CONFIGURATION.getDesktopFolderPath()
      End If
 
 
-     Set urlLink = INSTALLER.getWShell().CreateShortcut( shortcutLocation & FILE_SEPERATOR & shortCutName & ".url")
+     Set urlLink = ENVIRONMENT.getWShell().CreateShortcut( shortcutLocation & FILE_SEPERATOR & shortCutName & ".url")
 
   
      If Not IsNull(arguments) Then
@@ -1897,7 +1796,7 @@ Class fileSystemControl
 
     Dim favorites, linkFolderPath, linkFolder
 
-    favorites = INSTALLER.getWShell().SpecialFolders("Favorites")
+    favorites = ENVIRONMENT.getWShell().SpecialFolders("Favorites")
     linkFolderPath = favorites & FILE_SEPERATOR & folderName
     
     createEmptyFolder(linkFolderPath)
@@ -1927,8 +1826,8 @@ Class repositoryControl
     Set XHR = CreateObject(XMLHTTPRequestID)
     Set folderStatusList = Nothing
 
-    httpTrace = INSTALLER.doHTTPTrace()
-    useFtpProtocol = INSTALLER.useFtpProtocol()
+    httpTrace = CONFIGURATION.doHTTPTrace()
+    useFtpProtocol = CONFIGURATION.useFtpProtocol()
 
   End Sub   
   
@@ -1942,15 +1841,15 @@ Class repositoryControl
       
     Dim returnCode, rc, errorMessage
 
-    If (INSTALLER.getFSO().FileExists(local)) Then
+    If (ENVIRONMENT.getFSO().FileExists(local)) Then
 
       returnCode = doHead(remote, user, password)
     
       If (returnCode = 200) Then
 
         If mode = "ERROR" Then
-          errorMessage = "UploadFile() [FORCE]: Target '" & INSTALLER.getServerURL() & remote & "' already exists"
-          exitFatalError(errorMessage)
+          errorMessage = "UploadFile() [FORCE]: Target '" & CONFIGURATION.getServerURL() & remote & "' already exists"
+          APPLICATION.exitFatalError(errorMessage)
         End If
       
         If mode = "SKIP" Then
@@ -1961,8 +1860,8 @@ Class repositoryControl
         If mode = "FORCE" Then
           rc = doDelete(remote, user, password)
           If ((rc <> 200) and (rc <> 202) and (rc <> 204)) Then
-          	errorMessage = "UploadFile() [FORCE] : Delete of existing Resource Failed. HTTP Status " & rc & ". Unable to upload '" & local & "' into '" & INSTALLER.getServerURL() & remote & "'."
-            exitFatalError(errorMessage)
+          	errorMessage = "UploadFile() [FORCE] : Delete of existing Resource Failed. HTTP Status " & rc & ". Unable to upload '" & local & "' into '" & CONFIGURATION.getServerURL() & remote & "'."
+            APPLICATION.exitFatalError(errorMessage)
           End If
         End If
    
@@ -1972,13 +1871,13 @@ Class repositoryControl
       uploadFile = returnCode
      
       If (returnCode <> 201) Then
-        errorMessage = "UploadFile(): Upload operation failed (HTTP Status (" & returnCode & "). Unable to upload '" & local & "' into '" & INSTALLER.getServerURL() & remote & "'."
-        exitFatalError(errorMessage)
+        errorMessage = "UploadFile(): Upload operation failed (HTTP Status (" & returnCode & "). Unable to upload '" & local & "' into '" & CONFIGURATION.getServerURL() & remote & "'."
+        APPLICATION.exitFatalError(errorMessage)
       End If
 
    Else
    	 MsgBox "UploadFile(): Skipping missing source file '" & local & "'.",vbCritical
-   	 writeLogMessage "UploadFile(): Skipping missing source file '" & local & "'."
+   	 APPLICATION.writeLogMessage "UploadFile(): Skipping missing source file '" & local & "'."
      uploadFile = -1
    End If
         
@@ -1993,8 +1892,8 @@ Class repositoryControl
     If (returnCode = 200) Then
 
       If mode = "ERROR" Then
-        errorMessage = "uploadContent() [ERROR]: Target '" & INSTALLER.getServerURL() & remote & "' already exists"
-        exitFatalError(errorMessage)
+        errorMessage = "uploadContent() [ERROR]: Target '" & CONFIGURATION.getServerURL() & remote & "' already exists"
+        APPLICATION.exitFatalError(errorMessage)
       End If
       
       If mode = "SKIP" Then
@@ -2005,8 +1904,8 @@ Class repositoryControl
       If mode = "FORCE" Then
         rc = doDelete(remote, user, password)
         If ((rc <> 200) and (rc <> 202) and (rc <> 204)) Then
-        	errorMessage = "uploadContent() [FORCE]: Delete of existing Resource Failed. HTTP Status " & rc & ". Unable to upload '" & local & "' into '" & INSTALLER.getServerURL() & remote & "'."
-          exitFatalError(errorMessage)
+        	errorMessage = "uploadContent() [FORCE]: Delete of existing Resource Failed. HTTP Status " & rc & ". Unable to upload '" & local & "' into '" & CONFIGURATION.getServerURL() & remote & "'."
+          APPLICATION.exitFatalError(errorMessage)
         End If
       End If
 
@@ -2016,14 +1915,14 @@ Class repositoryControl
     uploadContent = returnCode
 
     If (returnCode <> 201) Then
-      errorMessage = "uploadContent(): Upload operation failed (HTTP Status (" & returnCode & "). Unable to upload '" & local & "' into '" & INSTALLER.getServerURL() & remote & "'."
-      exitFatalError(errorMessage)
+      errorMessage = "uploadContent(): Upload operation failed (HTTP Status (" & returnCode & "). Unable to upload '" & local & "' into '" & CONFIGURATION.getServerURL() & remote & "'."
+      APPLICATION.exitFatalError(errorMessage)
     End If
             
   End Function
   
   Public Sub makeWebFolder(shortCutName, targetURL, shortcutLocation)
-    doMakeWebFolder shortCutName, targetURL, shortcutLocation, INSTALLER.getUsername(), INSTALLER.getPassword()
+    doMakeWebFolder shortCutName, targetURL, shortcutLocation, CONFIGURATION.getUsername(), CONFIGURATION.getPassword()
   End Sub
 
   Public Sub doMakeWebFolder(shortCutName, targetURL, shortcutLocation, user, password)
@@ -2039,11 +1938,11 @@ Class repositoryControl
       ' WebFolderLink.exe /TARGET "http://localhost:8080/" /LINK "C:\TEMP\test"
       
       targetURL = makeWebFolderLinkURL(user,password) + targetURL
-      commandLine = """" + INSTALLER.getInstallFolderPath() + FILE_SEPERATOR + "WebFolderLink.exe"" /TARGET """ + targetURL + """ /LINK """ + shortcutLocation + FILE_SEPERATOR + ShortCutName + """"    
-      returnCode = INSTALLER.getWShell().run (commandLine,7,true)
+      commandLine = """" + CONFIGURATION.getInstallFolderPath() + FILE_SEPERATOR + "WebFolderLink.exe"" /TARGET """ + targetURL + """ /LINK """ + shortcutLocation + FILE_SEPERATOR + ShortCutName + """"    
+      returnCode = ENVIRONMENT.getWShell().run (commandLine,7,true)
     Else
       errorMessage =  "MakeWebFolder(): Installation Failed. Unable to access Web Folder '" & targetURL & "'."
-      exitFatalError(errorMessage)
+      APPLICATION.exitFatalError(errorMessage)
     End If
     
     Set folderStatusList = Nothing
@@ -2051,8 +1950,8 @@ Class repositoryControl
   End Sub
 
   Private Function makeWebFolderLinkURL(user,password)
-    makeWebFolderLinkURL = "http://" & user & ":" & password & "@" & INSTALLER.getHostName() & ":" & INSTALLER.getHttpPort()
-    ' makeWebFolderLinkURL = "http://" & user & ":" & password & "@" & INSTALLER.getHostName() & ":" & INSTALLER.getHttpPort()
+    makeWebFolderLinkURL = "http://" & user & ":" & password & "@" & CONFIGURATION.getHostName() & ":" & CONFIGURATION.getHttpPort()
+    ' makeWebFolderLinkURL = "http://" & user & ":" & password & "@" & CONFIGURATION.getHostName() & ":" & CONFIGURATION.getHttpPort()
   End Function
 
   
@@ -2303,7 +2202,7 @@ Class repositoryControl
     Dim errorMessage
     
     If (httpTrace) Then
-      writeLogMessage method & "(): HTTP Status " & XHR.status & " [" & XHR.statusText & "]."
+      APPLICATION.writeLogMessage method & "(): HTTP Status " & XHR.status & " [" & XHR.statusText & "]."
     End If
     
     checkXHRStatus = XHR.status
@@ -2311,29 +2210,29 @@ Class repositoryControl
     ' If (XHR.status <> 200) Then
     
       If (XHR.status = 401) Then
-      	errorMessage = method & "(): " & XHR.statusText & ". User '" & user & "' on resource '" & INSTALLER.getServerURL() & remote & "'."
-        exitFatalError(errorMessage)
+      	errorMessage = method & "(): " & XHR.statusText & ". User '" & user & "' on resource '" & CONFIGURATION.getServerURL() & remote & "'."
+        APPLICATION.exitFatalError(errorMessage)
       End If
     
       If (XHR.status = 500) Then
- 	      errorMessage = method & "(): " & XHR.statusText & ". User '" & user & "' on resource '" & INSTALLER.getServerURL() & remote & "'."
-        exitFatalError(errorMessage)
+ 	      errorMessage = method & "(): " & XHR.statusText & ". User '" & user & "' on resource '" & CONFIGURATION.getServerURL() & remote & "'."
+        APPLICATION.exitFatalError(errorMessage)
       End If
     
   	  If ((XHR.status > 599) and (attempts < 4 )) Then
 	    	if ((Not httpTrace) and (attempts = 1)) Then
-          writeLogMessage method & "(): Target = '" & INSTALLER.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & "********" & "'."
+          APPLICATION.writeLogMessage method & "(): Target = '" & CONFIGURATION.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & "********" & "'."
         End If
-        writeLogMessage method & "(): Attempt [" & attempts & "]. Unexpected HTTP Status Code: '" & XHR.status & "' (" & XHR.statusText & ")."
+        APPLICATION.writeLogMessage method & "(): Attempt [" & attempts & "]. Unexpected HTTP Status Code: '" & XHR.status & "' (" & XHR.statusText & ")."
         If (Err.Number <> 0) Then
-          writeLogMessage method & "(): Error: '" & hex(Err.Number) & "' (" & Err.Description & ")."
+          APPLICATION.writeLogMessage method & "(): Error: '" & hex(Err.Number) & "' (" & Err.Description & ")."
         End If
         Set XHR = CreateObject(XMLHTTPRequestID)
 	  	  Err.Clear
       End If
     
       If (Err.number <> 0) Then
-        errorMessage = method &"(): Unrecoverable Error: [" & hex(Err.Number) & "] (" & Err.description & "). Target = '" & INSTALLER.getServerURL() & remote & "'. HTTP Status Code '" & XHR.status  &  "'"
+        errorMessage = method &"(): Unrecoverable Error: [" & hex(Err.Number) & "] (" & Err.description & "). Target = '" & CONFIGURATION.getServerURL() & remote & "'. HTTP Status Code '" & XHR.status  &  "'"
         If (XHR.statusText <> "") Then
         	errorMessage = errorMessage & " (" & XHR.statusText & ")."
         Else 
@@ -2344,7 +2243,7 @@ Class repositoryControl
         	  errorMessage = errorMessage & " (" & "ERROR_INTERNET_CONNECTION_RESET: The connection with the server has been reset." & ")."
           End If
         End If
-        exitFatalError(errorMessage)
+        APPLICATION.exitFatalError(errorMessage)
       End If
 
     ' End If
@@ -2356,14 +2255,14 @@ Class repositoryControl
     Dim errorMessage, attempts, xhrStatus
     
     If (httpTrace) Then
-      writeLogMessage "doHEAD(): Target = '" & INSTALLER.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & password & "'."
+      APPLICATION.writeLogMessage "doHEAD(): Target = '" & CONFIGURATION.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & password & "'."
     End If
     
     attempts = 0
     On Error Resume Next
     Do
     	attempts = attempts + 1
-      XHR.Open "HEAD", INSTALLER.getServerURL() & remote, false, user, password
+      XHR.Open "HEAD", CONFIGURATION.getServerURL() & remote, false, user, password
       XHR.send ("")
       xhrStatus = checkXHRStatus("doHEAD", user, remote, attempts)
     Loop Until (xhrStatus < 600)
@@ -2378,14 +2277,14 @@ Class repositoryControl
     Dim errorMessage, attempts, xhrStatus
     
     If (httpTrace) Then
-      writeLogMessage "doGET(): Target = '" & INSTALLER.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & password & "'."
+      APPLICATION.writeLogMessage "doGET(): Target = '" & CONFIGURATION.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & password & "'."
     End If
     
     attempts = 0
     On Error Resume Next
     Do
     	attempts = attempts + 1
-      XHR.Open "GET", INSTALLER.getServerURL() & remote, false, user, password
+      XHR.Open "GET", CONFIGURATION.getServerURL() & remote, false, user, password
       XHR.send ("")
       xhrStatus = checkXHRStatus("doGET", user, remote, attempts)
     Loop Until (xhrStatus < 600)
@@ -2423,7 +2322,7 @@ Class repositoryControl
     DIM ado_stream, errorMessage, attempts, xhrStatus
      
     If (httpTrace) Then
-      writeLogMessage "httpPUT(): Target = '" & INSTALLER.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & password & "'. Local = '" & local & "'."
+      APPLICATION.writeLogMessage "httpPUT(): Target = '" & CONFIGURATION.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & password & "'. Local = '" & local & "'."
     End If
         
     Set ado_stream = CreateObject("ADODB.Stream")
@@ -2433,14 +2332,14 @@ Class repositoryControl
       
     If Err.number  <> 0 Then
      	errorMessage = "httpPUT() - Fatal Error encountered reading local File '" & local & "'." 
-      exitFatalError(errorMessage)
+      APPLICATION.exitFatalError(errorMessage)
     End If
   
     attempts = 0
     On Error Resume Next
     Do
     	attempts = attempts + 1
-      XHR.Open "PUT", INSTALLER.getServerURL() & remote, false, user, password     
+      XHR.Open "PUT", CONFIGURATION.getServerURL() & remote, false, user, password     
       If Not IsNull(contentType) Then
         XHR.setRequestHeader "Content-type", contentType
       End If
@@ -2451,7 +2350,7 @@ Class repositoryControl
     ado_stream.Close()
 
     If XHR.status <> 201 Then
-      writeLogMessage = "httpPUT (" & INSTALLER.getServerURL() & remote & ") : HTTP Status = " & XHR.status & " (" & XHR.statusText & ")."
+      APPLICATION.writeLogMessage = "httpPUT (" & CONFIGURATION.getServerURL() & remote & ") : HTTP Status = " & XHR.status & " (" & XHR.statusText & ")."
     End If
    
     On Error GoTo 0  
@@ -2485,14 +2384,14 @@ Class repositoryControl
     DIM errorMessage, attempts, xhrStatus
      
     If (httpTrace) Then
-      writeLogMessage "httpPUTContent(): Target = '" & INSTALLER.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & password & "'."
+      APPLICATION.writeLogMessage "httpPUTContent(): Target = '" & CONFIGURATION.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & password & "'."
     End If
          
     attempts = 0
     On Error Resume Next
     Do
       attempts = attempts + 1
-      XHR.Open "PUT", INSTALLER.getServerURL() & remote, false, user, password
+      XHR.Open "PUT", CONFIGURATION.getServerURL() & remote, false, user, password
       If Not IsNull(contentType) Then
         XHR.setRequestHeader "Content-type", contentType
       End If
@@ -2501,7 +2400,7 @@ Class repositoryControl
     Loop Until (xhrStatus < 600)
 
     If XHR.status <> 201 Then
-      writeLogMessage = "httpPUTContent (" & INSTALLER.getServerURL() & remote & ") : HTTP Status = " & XHR.status & " (" & XHR.statusText & ")."
+      APPLICATION.writeLogMessage = "httpPUTContent (" & CONFIGURATION.getServerURL() & remote & ") : HTTP Status = " & XHR.status & " (" & XHR.statusText & ")."
     End If
 
     On Error GoTo 0  
@@ -2537,20 +2436,20 @@ Class repositoryControl
     Dim errorMessage, attempts, xhrStatus
 
     If (httpTrace) Then
-      writeLogMessage "httpMKCOL(): target = '" &  INSTALLER.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & password & "'"
+      APPLICATION.writeLogMessage "httpMKCOL(): target = '" &  CONFIGURATION.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & password & "'"
     End If
   
     attempts = 0     
     On Error Resume Next
     Do
     	attempts = attempts + 1
-	    XHR.Open "MKCOL", INSTALLER.getServerURL() & remote, false, user, password
+	    XHR.Open "MKCOL", CONFIGURATION.getServerURL() & remote, false, user, password
       XHR.send("")            
       xhrStatus = checkXHRStatus("httpMKCOL", user, remote, attemtps)
     Loop Until (xhrStatus < 600)
   
     If XHR.status <> 201 Then
-      writeLogMessage "httpMKCOL (" & INSTALLER.getServerURL() & remote & ") : HTTP Status=" & XHR.status & "."
+      APPLICATION.writeLogMessage "httpMKCOL (" & CONFIGURATION.getServerURL() & remote & ") : HTTP Status=" & XHR.status & "."
     End If
   
     On Error GoTo 0  
@@ -2585,20 +2484,20 @@ Class repositoryControl
     Dim errorMessage, attempts, xhrStatus
     
     If (httpTrace) Then
-      writeLogMessage "httpDELETE(): target = '" &  INSTALLER.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & password & "'"
+      APPLICATION.writeLogMessage "httpDELETE(): target = '" &  CONFIGURATION.getServerURL() & remote & "'. User = '" & user & "'. Password = '" & password & "'"
     End If
     
     attempts = 0
     On Error Resume Next
     Do
     	attempts = attempts + 1
-      XHR.Open "DELETE", INSTALLER.getServerURL() & remote, false, user, password
+      XHR.Open "DELETE", CONFIGURATION.getServerURL() & remote, false, user, password
       XHR.send("")
       xhrStatus = checkXHRStatus("httpDELETE", user, remote, attempts)
     Loop Until (xhrStatus < 600)
 
     If ((XHR.status <> 201)  and (XHR.status <> 204) and (XHR.status <> 207) and (XHR.status <> 404)) Then
-      writeLogMessage "httpDELETE(): '" & INSTALLER.getServerURL() & remote & "'. Status=" & XHR.status  &  " (" & XHR.statusText + ")."
+      APPLICATION.writeLogMessage "httpDELETE(): '" & CONFIGURATION.getServerURL() & remote & "'. Status=" & XHR.status  &  " (" & XHR.statusText + ")."
     End If
     
     On Error GoTo 0  
@@ -2607,7 +2506,7 @@ Class repositoryControl
   End Function
   
   Public Function runFtpScript
-     ftpUploadScript = "open " & INSTALLER.getHostname() & " " & INSTALLER.getFtpPort() & vbCRLF & ftpUploadScript
+     ftpUploadScript = "open " & CONFIGURATION.getHostname() & " " & CONFIGURATION.getFtpPort() & vbCRLF & ftpUploadScript
      ftpUploadScript = ftpUploadScript & "quit" & vbCRLF 
      runFtpScript = FTP.executeScript(ftpUploadScript)
   End Function
@@ -2615,29 +2514,63 @@ Class repositoryControl
 End Class
 
 Class sqlPlusControl
+
+  Private  sqlPlusPath
     
-  ' Test connection to the database
+  Private Sub Class_Initialize()
+	
+		Dim errorMessage
+
+    sqlPlusPath = ENVIRONMENT.getOracleHome() & "\bin\sqlplus.exe"
+    If (ENVIRONMENT.getFSO().fileExists(sqlPlusPath)) Then
+      Exit Sub
+    End If
+    
+    sqlPlusPath = ENVIRONMENT.getOracleHome() & "\sqlplus.exe"
+    If (ENVIRONMENT.getFSO().fileExists(sqlPlusPath)) Then
+      Exit Sub
+    End If
+  
+    errorMessage = "Cannot instantiate SQLPLUS using Oracle Home : " & ENVIRONMENT.getOracleHome()
+    APPLICATION.exitFatalError(errorMessage)    
+
+  End Sub
+  
+  Public Function getSqlPlusPath 
+  
+    getSqlPlusPath = sqlPlusPath
+    
+  End Function
   
   Public Function getHttpPort(user, password)
+
     Dim returnCode
+
     returnCode = executeSQLPLUS(user, password, "", "sql/getHttpPort.sql")
     getHttpPort = returnCode
+
   End Function
 
   Public Function getFtpPort(user, password)
+ 
     Dim returnCode
+
     returnCode = executeSQLPLUS(user, password, "", "sql/getFtpPort.sql")
     getFtpPort = returnCode
+
   End Function
 
   Public Function testConnection(user, password, role)
+
     Dim returnCode
-    returnCode = executeSQLPLUS(user, password, role, "sql/verifyConnection.sql")
+
+    returnCode = executeSQLPLUS(user, password, role, "e:/GITHUB/xml-sample-demo/XFILES/install/sql/verifyConnection.sql")
     If returnCode = 2 Then
     	testConnection = true
     Else
     	testConnection = false
     End If
+
   End Function
   
   ' Execute SQL Script as specIfied user
@@ -2653,7 +2586,8 @@ Class sqlPlusControl
   Private Function executeSQLPLUS(user, password, role, sqlScript)
     
      Dim commandLine
-     commandLine = INSTALLER.getSQLPlusPath() & " -L " & user & "/" & password & "@" & INSTALLER.getTNSAlias() & role & " @" & sqlScript
+     
+     commandLine = sqlplusPath & " -L " & user & "/" & password & "@" & CONFIGURATION.getTNSAlias() & role & " @" & sqlScript
      executeSQLPLUS = runCommand(commandLine)
      
   End Function
@@ -2663,26 +2597,78 @@ Class sqlPlusControl
     Dim returnCode
 
     On Error Resume Next
-    returnCode = INSTALLER.getWShell().Run (commandLine, 7, true)
-    If Err.number  <> 0 Then
+    returnCode = ENVIRONMENT.getWShell().Run (commandLine, 7, true)
+    If Err.number <> 0 Then
     	errorMessage = "runCommand(): Fatal Error encountered loading program '" & commandLine & "'."
-      exitFatalError(errorMessage)
+      APPLICATION.exitFatalError(errorMessage)
     End If
-
     runCommand = returnCode
 
-    ' Set oExec = INSTALLER.getWShell().Exec(CommandString)
+    ' Set oExec = ENVIRONMENT.getWShell().Exec(CommandString)
     ' Do While oExec.Status = 0
-          ' writeLogMessage "Waiting 10 Seconds while SQLPLUS execution completes"
+          ' APPLICATION.writeLogMessage "Waiting 10 Seconds while SQLPLUS execution completes"
     '    WScript.Sleep 1000
     ' Loop
-    ' writeLogMessage "SQLPLUS execution completed"
+    ' APPLICATION.riteLogMessage "SQLPLUS execution completed"
 
     ' sqlPlusOutput = oExec.StdOut.ReadAll
-    ' writeLogMessage sqlplusOutput
+    APPLICATION.writeLogMessage sqlplusOutput
    
   End Function
 
+End Class
+
+Class sqlldrControl
+    
+  Private  sqlLdrPath
+    
+  Private Sub Class_Initialize()
+	
+		Dim errorMessage
+
+    sqlLdrPath = ENVIRONMENT.getOracleHome() & "\bin\sqlldr.exe"
+    If (ENVIRONMENT.getFSO().fileExists(sqlLdrPath)) Then
+      Exit Sub
+    End If
+    
+    sqlLdrPath = ENVIRONMENT.getOracleHome() & "\sqlldr.exe"
+    If (ENVIRONMENT.getFSO().fileExists(sqlLdrPath)) Then
+      Exit Sub
+    End If
+  
+    errorMessage = "Cannot instantiate SQLLDR using Oracle Home : " & ENVIRONMENT.getOracleHome()
+    APPLICATION.exitFatalError(errorMessage)    
+
+  End Sub
+  
+  Public Function execute(user, password, controlFile)
+    
+     Dim commandLine
+     If (CONFIGURATION.onlineInstall()) Then
+       commandLine = sqlLdrPath & " -Userid=" & user & "/" & password & "@" & CONFIGURATION.getTNSAlias() & " control=" & controlFile
+       APPLICATION.writeLogMessage commandLine
+       execute = runCommand(commandLine)
+     Else
+     	 execute = IOMANAGER.sqlldr(user,password,replace(controlFile,"\","/"))
+     End If
+     
+  End Function
+
+  Private Function runCommand(commandLine)
+ 
+    Dim returnCode
+
+    On Error Resume Next
+    returnCode = ENVIRONMENT.getWShell().Run (commandLine, 7, true)
+    If Err.number  <> 0 Then
+    	errorMessage = "runCommand(): Fatal Error encountered loading program '" & commandLine & "'."
+      APPLICATION.exitFatalError(errorMessage)
+    End If
+
+    runCommand = returnCode
+   
+  End Function
+  
 End Class
 
 Class ftpControl
@@ -2692,10 +2678,10 @@ Class ftpControl
      Dim ftpScript, scriptFileName, scriptFilePath, logFilePath
 
      scriptFileName = "FileUpload" & TIMER 
-     scriptFilePath = INSTALLER.getInstallFolderPath() & FILE_SEPERATOR & scriptFileName & ".ftp"
-     logFilePath    = INSTALLER.getInstallFolderPath() & FILE_SEPERATOR & scriptFileName & ".log"
+     scriptFilePath = CONFIGURATION.getInstallFolderPath() & FILE_SEPERATOR & scriptFileName & ".ftp"
+     logFilePath    = CONFIGURATION.getInstallFolderPath() & FILE_SEPERATOR & scriptFileName & ".log"
      
-     Set ftpScript = INSTALLER.getFSO().createTextFile(scriptFilePath,true)
+     Set ftpScript = ENVIRONMENT.getFSO().createTextFile(scriptFilePath,true)
      ftpScript.write(script)
      ftpScript.close()
      
@@ -2708,9 +2694,9 @@ Class ftpControl
    
      Dim commandLine
      commandLine = "CMD /C FTP -i -n -s:" & scriptFile & " >" & logFile
-     writeLogMessage "  " & commandLine
+     APPLICATION.writeLogMessage "  " & commandLine
      execute = runCommand(commandLine)
-     writeLogMessage "  Status = " & execute
+     APPLICATION.writeLogMessage "  Status = " & execute
      
   End Function
 
@@ -2719,45 +2705,10 @@ Class ftpControl
     Dim returnCode
 
     On Error Resume Next
-    returnCode = INSTALLER.getWShell().Run (commandLine, 7, true)
+    returnCode = ENVIRONMENT.getWShell().Run (commandLine, 7, true)
     If Err.number  <> 0 Then
     	errorMessage = "runCommand(): Fatal Error encountered loading program '" & commandLine & "'."
-      exitFatalError(errorMessage)
-    End If
-
-    runCommand = returnCode
-   
-  End Function
-  
-End Class
-
-
-Class sqlldrControl
-    
-  ' Execute SQLLDR as specIfied user
-      
-  Public Function execute(user, password, controlFile)
-    
-     Dim commandLine
-     If (INSTALLER.isInteractiveInstall() or NOT (MINSTALLER Is Nothing)) Then
-       commandLine = INSTALLER.getSQLLDRPath() & " -Userid=" & user & "/" & password & "@" & INSTALLER.getTNSAlias() & " control=" & controlFile
-       writeLogMessage commandLine
-       execute = runCommand(commandLine)
-     Else
-     	 execute = SCRIPT_GENERATOR.sqlldr(user,password,replace(controlFile,"\","/"))
-     End If
-     
-  End Function
-
-  Private Function runCommand(commandLine)
- 
-    Dim returnCode
-
-    On Error Resume Next
-    returnCode = INSTALLER.getWShell().Run (commandLine, 7, true)
-    If Err.number  <> 0 Then
-    	errorMessage = "runCommand(): Fatal Error encountered loading program '" & commandLine & "'."
-      exitFatalError(errorMessage)
+      APPLICATION.exitFatalError(errorMessage)
     End If
 
     runCommand = returnCode
@@ -2781,7 +2732,7 @@ Class XMLHELPER
       If IsNull(default) Then
       	getDefaultTextNode = default
       Else
-        getDefaultTextNode = INSTALLER.replaceMacros(default,false)
+        getDefaultTextNode = CONFIGURATION.replaceMacros(default,false)
       End If
     Else
       getDefaultTextNode = getTextNode(parentNode,childName)
@@ -2789,15 +2740,15 @@ Class XMLHELPER
   End Function
 
   Public Function getTextNode(ParentNode,Childname) 
-    getTextNode = INSTALLER.replaceMacros(ParentNode.getElementsByTagName(Childname).item(0).text,false)
+    getTextNode = CONFIGURATION.replaceMacros(ParentNode.getElementsByTagName(Childname).item(0).text,false)
   End Function
 
 End Class
 
 CLASS demonstrationConfiguration
 
-  dim DOCUMENT
-  dim Configuration
+  Dim DOCUMENT
+  Dim Configuration
 
   Private Sub Class_Initialize()
    
@@ -2809,23 +2760,23 @@ CLASS demonstrationConfiguration
   
   Public Sub addDemonstrationRoot
   
-    dim element,text
+    Dim element,text
     
     Set element = DOCUMENT.createElement("rootFolder")
     Configuration.appendChild(element)
-    Set text = DOCUMENT.createTextnode(INSTALLER.replaceMacros("%DEMOLOCAL%",false))
+    Set text = DOCUMENT.createTextnode(CONFIGURATION.replaceMacros("%DEMOLOCAL%",false))
     element.appendChild(text)
 
     Set element = DOCUMENT.createElement("commonFolder")
     Configuration.appendChild(element)
-    Set text = DOCUMENT.createTextnode(INSTALLER.replaceMacros("%DEMOCOMMON%",false))
+    Set text = DOCUMENT.createTextnode(CONFIGURATION.replaceMacros("%DEMOCOMMON%",false))
     element.appendChild(text)
 
   End Sub  
 
   Public sub addHTTPStep(name,link,arguments,icon,username,screenshot,windowName) 
   
-    dim stepElement, linkElement, element, text, URL
+    Dim stepElement, linkElement, element, text, URL
     
     Set stepElement = createStep(name,"HTTP",username)
 
@@ -2847,7 +2798,7 @@ CLASS demonstrationConfiguration
 
   Public sub addSQLStep(name,link,icon,username,rerunnable) 
   
-    dim stepElement, linkElement
+    Dim stepElement, linkElement
     Set stepElement = createStep(name,"SQL",username)
 
     Set linkElement = addLinkElement(stepElement, link, icon, null, null)
@@ -2859,7 +2810,7 @@ CLASS demonstrationConfiguration
   
   Public sub addShellCmdStep(name, username, icon, simulation) 
   
-    dim stepElement, element, text
+    Dim stepElement, element, text
     Set stepElement = createStep(name,"SHELL",username)
 
     Set element = DOCUMENT.createElement("icon")
@@ -2875,9 +2826,8 @@ CLASS demonstrationConfiguration
 
   Public sub addViewerStep(name,link,icon,username,contentType) 
   
-    dim stepElement, linkElement
+    Dim stepElement, linkElement
     Set stepElement = createStep(name,"VIEW",username)
-    
     Set linkElement = addLinkElement(stepElement, link, icon, contentType, null)
 
   End Sub
@@ -2910,7 +2860,7 @@ CLASS demonstrationConfiguration
 
   Public function createStep(name,stepType,username)
 
-    dim stepElement, element, text
+    Dim stepElement, element, text
      
     Set stepElement = DOCUMENT.createElement("Step")
     Configuration.appendChild(stepElement)
@@ -2936,28 +2886,123 @@ CLASS demonstrationConfiguration
  
 End Class
 
-Class installationManager
- 
+Class environmentHelper
+
   Private WSHELL
   Private FSO
-  Private interactiveInstall
-  Private scriptGenerationMode
-  
-  Private installationParameters
-  Private demonstrationParameters
-  Private windowsVersion
   Private sixtyFourBitWindows
-  
-  Private macroList
-  
+  Private windowsVersion
+
   Private oracleHome 
-  Private oracleHomeName 
-  Private oracleHomeKey 
   Private oracleSID 
   
-  Private sqlplusPath
-  Private sqlldrPath
-     
+  Private installerPath
+  
+  Private oracleHomeName 
+  Private oracleHomeKey 
+  
+	Private interactiveInstall
+	Private scriptFile
+
+  function getInstallerPath()
+
+    If interactiveInstall Then
+      ' Interactive : Internet Explorer HTML Application (HTA)
+      getInstallerPath = Mid(document.location.href ,9)    
+    Else
+      getInstallerPath = FSO.GetParentFolderName(WSHELL.CurrentDirectory) & "\install\install.vbs"
+    End If
+    
+  End Function       
+  
+  Function isInteractiveInstall() 
+  
+   isInteractiveInstall = interactiveInstall
+  
+  End Function
+
+  Function isBatchInstall() 
+  
+   isBatchInstall = ((NOT interactiveInstall) and (right(Wscript.ScriptName,4) = ".wsf"))
+  
+  End Function
+
+	Function isScriptGenerator()
+	
+	  isScriptGenerator = ((NOT interactiveInstall) and (Wscript.ScriptName = "linuxInstaller.wsf"))
+	  
+	End Function
+
+  Private Sub Class_Initialize()
+  
+  	Dim wow6432Node
+  
+    Set WSHELL          = CreateObject("WScript.Shell")
+    Set FSO             = CreateObject("Scripting.FileSystemObject")
+
+    On Error Resume Next
+    If IsObject(window) Then
+	    interactiveInstall = (Err.Number = 0)
+	  End If
+    On Error Goto 0  
+
+    wow6432Node  = wShell.RegRead("HKCR\Wow6432Node\")
+    If Err.Number = 0 Then
+      sixtyFourBitWindows = TRUE
+    Else
+      sixtyFourBitWindows = FALSE
+    End If  
+
+    windowsVersion      = wShell.RegRead("HKLM\Software\Microsoft\Windows NT\CurrentVersion\CurrentVersion")
+
+    ' Wscript.echo "Path =  " & installerPath
+    installerPath = getInstallerPath()
+    Set scriptFile = FSO.getFile(installerPath) 
+
+  End Sub	
+  
+  Public Function getWShell()
+    Set getWShell = WSHELL
+  End Function
+  
+  Public Function getFSO()
+    Set getFSO = FSO
+  End Function  
+
+  Public Function getWindowsVersion
+     getWindowsVersion = windowsVersion
+  End Function
+    
+  Private Function isWindows64 
+    isWindows64 = sixtyFourBitWindows
+  End Function
+  
+  Function getOracleHome()
+    
+    getOracleHome = oracleHome
+    
+  End Function
+  
+  Function getOracleSID()
+  
+    getOracleSid = oracleSid
+   
+  End Function
+  
+  Public Function getDemoFolderPath() 
+
+    Set scriptFile = FSO.getFile(getInstallerPath()) 
+    getDemoFolderPath = scriptFile.parentFolder.parentFolder.path
+  	  
+  End Function
+    
+  Public Function getDemoFolderName() 
+  
+    Set scriptFile = FSO.getFile(getInstallerPath()) 
+    getDemoFolderName = scriptFile.parentFolder.parentFolder.name
+  
+  End Function
+
   Private Function EnumSubKeys (RootKey, Key, RegType) 
 
     Dim oCtx, oLocator, oReg, oInParams, oOutParams
@@ -3000,7 +3045,7 @@ Class installationManager
   
   Private Sub processOracleHome (OracleHomeList, oracleHome, oracleHomeName, oracleHomeKey, oracleSID)
 
-    dim path1, path2, ohElement, text, keyElement, nameElement, pathElement, sidElement 
+    Dim path1, path2, ohElement, text, keyElement, nameElement, pathElement, sidElement 
     
     path1 = oracleHome & "\bin\sqlplus.exe"
     path2 = oracleHome & "\sqlplus.exe"
@@ -3045,7 +3090,7 @@ Class installationManager
   
   End Sub
   
-  Private Sub loadOracleHomeList(oracleHomeList)
+  Public Sub loadOracleHomeList(oracleHomeList)
 
     Const oraclePath = "SOFTWARE\ORACLE"   
     Const HKLM = &h80000002
@@ -3085,6 +3130,64 @@ Class installationManager
     End If
   
   End Sub
+  
+  Function validOracleHome(oh,os)
+ 
+    Dim path1, path2 
+ 
+    path1 = oh & "\bin\sqlplus.exe"
+    path2 = oh & "\sqlplus.exe"
+    
+    If (FSO.fileExists(path1) or FSO.fileExists(path2)) Then
+			oracleHome = oh
+      oracleSID  = os      
+      validOracleHome = True
+    Else
+      validOracleHome = False
+    End If
+
+  End Function
+  
+  Sub findOracleHome()
+  
+  	' Find the First OracleHome and SID.
+
+    Const oraclePath = "SOFTWARE\ORACLE"   
+    Const HKLM = &h80000002
+
+    DIM keyValue, sName, sValue, cSubKeys 
+    DIM oracleHome, oracleHomeName, oracleHomeKey, oracleSID
+                
+    cSubKeys = EnumSubKeys(HKLM,oraclePath,64)
+    If not isNull(cSubKeys) Then 
+   	  For Each sName In cSubKeys
+        sValue = ReadRegStr (HKLM, oraclePath & FILE_SEPERATOR & sName, "ORACLE_HOME", 64)
+        If (not IsNull( sValue )) Then
+          oracleHome = sValue
+          oracleSID = ReadRegStr (HKLM, oraclePath & FILE_SEPERATOR & sName, "ORACLE_SID", 64) 
+          If (validOracleHome(oracleHome, oracleSID)) Then
+          	Exit Sub
+          End if
+        End If
+  	  Next 
+    End If    
+
+    cSubKeys = EnumSubKeys(HKLM,oraclePath,32)
+    If not isNull(cSubKeys) Then 
+     	For Each sName In cSubKeys
+        sValue = ReadRegStr (HKLM, oraclePath & FILE_SEPERATOR & sName, "ORACLE_HOME", 32) 
+        If (not IsNull( sValue )) Then
+          oracleHome = sValue
+          oracleSID = ReadRegStr (HKLM, oraclePath & FILE_SEPERATOR & sName, "ORACLE_SID", 64) 
+          If (validOracleHome(oracleHome, oracleSID)) Then
+          	Exit Sub
+          End If
+        End If
+  	  Next 
+    End If
+    
+  End Sub
+  
 
   Public Function findDesktopPath()
    
@@ -3102,7 +3205,7 @@ Class installationManager
     
   End Function
 
-  Private Function findWordPath()
+  Public Function findWordPath()
 
     Dim appObject, appPath, CLSID, REGKEY
     
@@ -3142,7 +3245,7 @@ Class installationManager
 
   End Function
 
-  Private Function findExcelPath()
+  Public Function findExcelPath()
 
     Dim appObject, appPath, CLSID, REGKEY
     
@@ -3181,15 +3284,22 @@ Class installationManager
     findExcelPath = rtrim(appPath)
         
   End Function
-  
-  Public Function setScriptGenerationMode
-    scriptGenerationMode = True
-  End Function
-  
-  Public Function isScriptGenerator()
-    isScriptGenerator = (scriptGenerationMode = True)
-  End Function
 
+End Class
+  
+Class ConfigurationManager
+   
+  Private installationParameters
+  Private demonstrationParameters
+  
+  Private macroList
+    
+  Function onlineInstall()
+  
+    onlineInstall = (APPLICATION.getInstallType() = DOS_INSTALL) or (APPLICATION.getInstallType() = WINDOWS_INSTALL)
+  
+  End Function
+  
   Public Sub addMacro(key,value)
        macroList.item(key) =  value
   End Sub
@@ -3228,11 +3338,11 @@ Class installationManager
 
   Public Sub appendOracleHomeList(installationParameters)
      
-     dim ohlElement
+     Dim ohlElement
      
      set ohlElement = installationParameters.createElement("OracleHomeList")
      installationParameters.documentElement.appendChild(ohlElement)
-     loadOracleHomeList(ohlElement)
+     ENVIRONMENT.loadOracleHomeList(ohlElement)
      
   End Sub
 
@@ -3240,15 +3350,16 @@ Class installationManager
 
     Dim filename, result, errorMessage
     Dim nodeList, i, parameter, parameterName, parameterValue
-
-    filename = getInstallFolderPath() & FILE_SEPERATOR & getDemoFolderName() + ".xml"
+    
+    ' filename = getInstallFolderPath() & FILE_SEPERATOR & getDemoFolderName() + ".xml"
+    filename = IOMANAGER.getDemonstrationParametersPath(me)
     Set demonstrationParameters = CreateObject("Msxml2.FreeThreadedDOMDocument.6.0")
     demonstrationParameters.async = false
     result = demonstrationParameters.load(filename)
   
     If (result = False) Then 
       errorMessage = "Error while loading or parsing file : " & filename
-      exitFatalError(errorMessage)
+      APPLICATION.exitFatalError(errorMessage)
     End If
  
     Set nodeList = demonstrationParameters.documentElement.selectNodes("/installerConfiguration/parameters/parameter")
@@ -3263,63 +3374,18 @@ Class installationManager
 
   Private Sub Class_Initialize()
   
-    dim installerPath, scriptFile, filename, result, errorMessage, wow6432Node
+    Dim installerPath, scriptFile, filename, result, errorMessage, wow6432Node
 
-    'scriptPath         = WScript.ScriptFullName
-    'Set WSHELL         = WScript.CreateObject("WScript.Shell")
-    'Set FSO            = WScript.CreateObject("Scripting.FileSystemObject")
-
-    On Error Resume Next
-    If IsObject(window) Then
-	    interactiveInstall = (Err.Number = 0)
-	  End If
-    On Error Goto 0
-
-    scriptGenerationMode = False
-    If IsObject(SCRIPT_GENERATOR) Then
-    	scriptGenerationMode = True
-    End If
-
-    Set WSHELL          = CreateObject("WScript.Shell")
-    Set FSO             = CreateObject("Scripting.FileSystemObject")
     Set macroList       = CreateObject("Scripting.Dictionary")
              
-    windowsVersion      = wShell.RegRead("HKLM\Software\Microsoft\Windows NT\CurrentVersion\CurrentVersion")
-  
-    wow6432Node  = wShell.RegRead("HKCR\Wow6432Node\")
-    If Err.Number = 0 Then
-      sixtyFourBitWindows = TRUE
-    Else
-      sixtyFourBitWindows = FALSE
-    End If
+    addMacro "%DESKTOP%",        ENVIRONMENT.findDesktopPath()
+    addMacro "%STARTMENU%",      ENVIRONMENT.findStartMenuPath()
+    addMacro "%WINWORD%",        ENVIRONMENT.findWordPath()
+    addMacro "%EXCEL%",          ENVIRONMENT.findExcelPath()
+
+    addMacro "%DEMODIRECTORY%",  ENVIRONMENT.getDemoFolderPath()
+    addMacro "%DEMOFOLDERNAME%", ENVIRONMENT.getDemoFolderName() 
     
-    addMacro "%DESKTOP%",        findDesktopPath()
-    addMacro "%STARTMENU%",      findStartMenuPath()
-    addMacro "%WINWORD%",        findWordPath()
-    addMacro "%EXCEL%",          findExcelPath()
-
-    If isInteractiveInstall() Then
-      'Interactive : Internet Explorer HTML Application (HTA)
-    	' wscript.Echo "Interactive"
-      installerPath = Mid(document.location.href ,9)    
-    Else
-    	If isScriptGenerator() Then
-        ' Script : Install Script Generator
-	    	' wscript.Echo "Script Generation Mode"
-        installerPath = SCRIPT_GENERATOR.getInstallerPath()
-      Else
-    	  ' Batch : Bulk Install via Command Line
-	    	' wscript.Echo "Batch"
-       	installerPath = MINSTALLER.getInstallerPath()
-      End If
-    End If
-
-    ' Wscript.echo "Path =  " & installerPath
-    Set scriptFile = getFSO().getFile(installerPath) 
-        
-    addMacro "%DEMODIRECTORY%",  scriptFile.parentFolder.parentFolder.path
-    addMacro "%DEMOFOLDERNAME%", scriptFile.parentFolder.parentFolder.name
- 
     filename = getInstallFolderPath() & FILE_SEPERATOR & "installParameters.xml"
     Set installationParameters = CreateObject("Msxml2.FreeThreadedDOMDocument.6.0")
     installationParameters.async = false
@@ -3327,43 +3393,23 @@ Class installationManager
     
     If (result = False) Then 
     	errorMessage = "Error while loading or parsing file : " & filename
-      exitFatalError(errorMessage)
+      APPLICATION.exitFatalError(errorMessage)
     End If
-    
-    appendOracleHomeList(installationParameters)
+
+    appendOracleHomeList installationParameters
 
     loadDemonstrationParameters()
     
   End Sub   
 
-  Public Function isInteractiveInstall()
-    isInteractiveInstall = interactiveInstall
-  End Function
-  
   Public Function getOracleHomeFromRegistry()
-    getOracleHomeFromRegistry = oracleHome
+    getOracleHomeFromRegistry = ENVIRONMENT.getOracleHome
   End Function
 
   Public Function getTNSAliasFromRegistry()
-    getTNSAliasFromRegistry = oracleSID
-  End Function
-
-  Public Function getWindowsVersion
-     getWindowsVersion = windowsVersion
-  End Function
-    
-  Private Function isWindows64 
-    isWindows64 = sixtyFourBitWindows
+    getTNSAliasFromRegistry = ENVIRONMENT.getOracleSID
   End Function
   
-  Public Function getWShell()
-    Set getWShell = WSHELL
-  End Function
-  
-  Public Function getFSO()
-    Set getFSO = FSO
-  End Function  
-
   Public Function getInstallationParameters()
     Set getInstallationParameters = installationParameters
   End Function
@@ -3471,14 +3517,6 @@ Class installationManager
   Public Function getConnectString
      getConnectString = macroList.Item("%DBCONNECTION%")
   End Function
-
-  Public Function getSqlPlusPath
-     getSqlPlusPath = macroList.Item("%SQLPLUS%")
-  End Function
-
-  Public Function getSqlldrPath
-    getSqlldrPath = macroList.Item("%SQLLDR%")
-  End Function
  
   Public Function getLocalFolderPath
     getLocalFolderPath = getDemoDirectory()  & FILE_SEPERATOR & getUsername()
@@ -3486,20 +3524,6 @@ Class installationManager
 
   Public Function getInstallFolderPath
     getInstallFolderPath = getDemoDirectory()  & FILE_SEPERATOR & "install"
-  End Function
- 
-  Public Function getLogFilePath()
-
-		' In Interactive Mode the Log File should be written to the Install Folder (which is where the install should be run from)
-    ' In Script Generation Mode the Log file should be written to the Install Folder
-    ' In Batch Mode the Log file should be written to the Folder that contains the MasterInstallation file
-
-    If isInteractiveInstall() or isScriptGenerator() Then 
-      getLogFilePath = getInstallFolderPath() & FILE_SEPERATOR & getDemoFolderName() & ".log"   
-    Else
-      getLogFilePath = getWShell().CurrentDirectory & FILE_SEPERATOR & getDemoFolderName() & ".log"	
-    End If
-
   End Function
  
   Public Function getScriptsFolderPath
@@ -3594,27 +3618,21 @@ Class installationManager
   Public Sub setInstallationParameters(oracleHome, tnsAlias, hostname, httpPort, ftpPort, driveLetter, dba, dbaPassword, username, password)
 
     addMacro "%ORACLEHOME%",     oracleHome
-  
+    addMacro "%TNSALIAS%",       tnsAlias
+    addMacro "%HOSTNAME%",       hostName
+    addMacro "%HTTPPORT%",       httpPort
+    addMacro "%FTPPORT%",        ftpPort
+
+    addMacro "%DRIVELETTER%",    driveLetter
+   
     addMacro "%DBA%",            dba
     addMacro "%DBAPASSWORD%",    dbaPassword
     addMacro "%USER%",           username
     addMacro "%PASSWORD%",       password
 
-    addMacro "%TNSALIAS%",       tnsAlias
-    addMacro "%HOSTNAME%",       hostName
-    addMacro "%HTTPPORT%",       httpPort
-    addMacro "%FTPPORT%",        ftpPort
-    
-    addMacro "%DRIVELETTER%",    driveLetter
-    
     addMacro "%SERVERURL%",      "http://" & getHostName() & ":" & getHttpPort()
     addMacro "%DBCONNECTION%",   getUsername() & "/" & getPassword() & "@" & getTNSAlias()
-
-		If (not isScriptGenerator()) Then
-		  validOracleHome(INSTALLER) 
-		End If
-    
-
+        
   End Sub
 
   Public Function readInstallationDialog()
@@ -3684,34 +3702,198 @@ Class installationManager
     
   End Function
      
-  Private function verifySqlPlusPath
+
+End Class
+
+Class GenericAppHelper
+
+  DIM LOGBUFFER
+	
+  Public Sub writeLogMessage(logMessage)
+
+    LOGBUFFER = LOGBUFFER + logMessage + vbCRLF 
+
+  End Sub
   
-  End function
+  Public Sub writeFile(path, content)
 
-  Function isOracleHomeValid
+    Dim file
+
+    Set file = ENVIRONMENT.getFSO().createTextFile(path,true)
+    file.write(content)
+    file.close()
+  
+  End Sub
+
+  Public Sub writeLog(path)
+
+    writeFile path, LOGBUFFER
+
+  End Sub
+
+  Public Sub logFatalError(logFilePath,errorMessage)
+  
+    writeLogMessage errorMessage
+
+    If (Err.number <> 0) Then
+      LOGBUFFER = LOGBUFFER & "Encountered error 0x" & hex(Err.number)  & " : " & Err.Description 
+    End If
+    LOGBUFFER = LOGBUFFER & ". Please check installParameters.xml and "& ENVIRONMENT.getDemoFolderName() & " and then restart the installation" & vbCRLF   
+
+  	writeLog(logFilePath)
+
+  End Sub
+
+
+End Class
+
+Class HtmlAppHelper
+
+	DIM appHelper
+  
+	Public Sub class_initialize
+
+		Set appHelper = new GenericAppHelper
+		
+	End Sub
+	
+  Public Sub writeFile(path, content)
+  
+    appHelper.writeFile path, content
     
-    dim path
+  End Sub
 
-    path = getOracleHome() & "\bin\sqlplus.exe"
-    If (FSO.fileExists(path)) Then
-      addMacro "%SQLPLUS%", path
-	    path = getOracleHome() & "\bin\sqlldr.exe"
-      addMacro "%SQLLDR%", path
-    	isOracleHomeValid = true
-      Exit Function
+  Public Sub writeLog(path)
+  
+    appHelper.writeLog path
+    
+  End Sub
+
+  Public Sub exitFatalError(logFilePath, errorMessage)
+  
+  	appHelper.logFatalError logFilePath, errorMessage
+
+    MsgBox "Fatal Error : " & errorMessage & ". See " &  vbCRLF & "'"  & logFilePath  & "'" & vbCRLF & " for further details.", vbOKOnly + vbCritical  
+    window.close()
+
+    strComputer = "."
+    Set objWMIService = GetObject("winmgmts:" & "{impersonationLevel=impersonate}!\\" & strComputer & "\root\cimv2")
+    Set colProcessList = objWMIService.ExecQuery ("Select * from Win32_Process Where Name = 'mshta.exe'")
+    For Each objProcess in colProcessList
+      MsgBox "Killing Process"
+      objProcess.Terminate()
+    Next
+ 
+  End Sub  
+
+  Public Sub writeLogMessage(logMessage)
+ 
+    appHelper.writeLogMessage logMessage
+ 
+    DIM currentAction
+    Set currentAction = document.getElementById("currentTask")
+
+    If not (currentAction is NOTHING) Then
+      currentAction.value = logMessage
+    Else
+  	  exitFatalError("Fatal Error : " & logMessage & ". Installer will terminate.")
     End If
 
-    path = getOracleHome() & "\sqlplus.exe"
-    If (FSO.fileExists(path)) Then
-      addMacro "%SQLPLUS%", path
-	    path = getOracleHome() & "\sqlldr.exe"
-      addMacro "%SQLLDR%", path
-    	isOracleHomeValid = true
-      Exit Function
-    End If
+  End sub
+ 
+  Public Sub reportError(errorMessage) 
+  
+    MsgBox errorMEssage,vbOKOnly + vbCritical
+
+  End Sub
+
+End Class
+
+Class WScriptAppHelper
+
+	Dim appHelper
+  
+	Public Sub class_initialize
+
+		Set appHelper = new GenericAppHelper
+		
+	End Sub
+	
+  Public Sub writeFile(path, content)
+  
+    appHelper.writeFile path, content
     
-  	isOracleHomeValid = false
+  End Sub
+
+  Public Sub writeLog(path)
+  
+    appHelper.writeLog path
+    
+  End Sub
+
+  Public Sub exitFatalError(logFilePath, errorMessage)
+
+  	appHelper.logFatalError logFilePath, errorMessage
+  	Wscript.echo "exitFatalError(): " & errorMessage & ". See " &  vbCRLF & "'"  & logFilePath  & "'" & vbCRLF & " for further details."
+  	WScript.Quit
+
+  End Sub
+    
+  Public Sub writeLogMessage(logMessage)
+ 
+    appHelper.writeLogMessage logMessage
+ 
+  End sub
+  
+  Public Sub reportError(logFilePath, errorMessage) 
+  
+    exitFatalError logFilePath, errorMessage
+
+  End Sub
+
+End Class
+
+Class WindowsInstaller
+
+	DIM appHelper
+  DIM logFilePath
+  
+	Public Sub class_initialize
+	
+	  Set appHelper = new HTMLAppHelper
+	  logFilePath = ENVIRONMENT.getInstallFolderPath() & FILE_SEPERATOR & ENVIRONMENT.getDemoFolderName() & ".log"   
+	  
+	End Sub
+
+  Public Function GetInstallType
+  
+     getInstallType = WINDOWS_INSTALL
+     
+  End Function
+
+  Public Function writeLog()
+  
+  	appHelper.writeLog logFilePath
+  	writeLog = logFilePath
   
   End Function
 
+  Public Sub ExitFatalError(errorMessage)
+      
+    appHelper.exitFatalError logFilePath, errorMessage
+    
+  End Sub
+
+  Public Sub writeLogMessage(logMessage)
+ 
+    appHelper.writeLogMessage logMessage
+  
+  End sub
+
+  Public Sub reportError(errorMessage) 
+  
+    appHelper.reportError errorMessage
+
+  End Sub
+  
 End Class

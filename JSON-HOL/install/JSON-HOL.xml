@@ -135,6 +135,7 @@
 		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\createLink.sql  %DOCLIBRARY%/manual %DEMOLOCAL% manual</action>
 		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\publishDemo.sql %DEMOLOCAL% %XFILES_SCHEMA%</action>
 		<action type="LAUNCH"/>
+		<action type="HOL"/>
 	</installation>
 
 	<make>

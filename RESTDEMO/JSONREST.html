@@ -36,108 +36,6 @@ input[readonly] {
 		</style>
 	</head>
 	<body onload="init()">
-     <!-- Modal -->
-  <div class="modal fade" id="logWindow" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  	
-  	<!--
-  	
-    	var method           = document.getElementById("lw.Method");
-    	var url              = document.getElementById("lw.URL");
-    	var logRecordNumber  = document.getElementById("lw.RecordNumber");
-    	var logRecordCount   = document.getElementById("lw.RecordCount");
-    	var requestBody      = document.getElementById("lw.RequestBody");
-    	var responseText     = document.getElementById("lw.ResponseText");
-    	var elapsedTime      = document.getElementById("lw.ElapsedTime");
-    	var httpStatus       = document.getElementById("lw.HttpStatus");
-    	
-  	-->
-  	
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-          <h4 class="modal-title" id="myModalLabel">REST Call Log</h4>
-        </div>
-        <div class="modal-body">
-    			<div>
-						<ul class="nav nav-tabs" role="tablist" id="sd.options">
-  						<li><a href="#lw_OverviewTab" role="tab" data-toggle="tab">Overview</a></li>
-  						<li><a href="#lw_RequestTab" role="tab" data-toggle="tab">Request</a></li>
-  						<li><a href="#lw_ResponseTab" role="tab" data-toggle="tab">Response</a></li>
-  						<li><a href="#lw_JavascriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
-		  			</ul>
-		  		</div> 
-		  		<br>
-		  		<!-- Tab panes -->
-					<div class="tab-content">
-				 	  <div class="tab-pane active" id="lw_OverviewTab">
-				 	  	<div class="form-horizontal">
-  	  	  		  <div>
-  	 			      	<label class="control-label" for="lw.StartTime"> Time </label>
-     		  			  <span id="lw.StartTime" class="uneditable-input"></span>
-  	 			      	<label class="control-label" for="lw.RecordNumber">Log Record</label>
-     		  			  <span id="lw.RecordNumber" class="uneditable-input"></span>
-  	 			      	<label class="control-label" for="lw.RecordCount"> of </label>
-     		  			  <span id="lw.RecordCount" class="uneditable-input"></span>
-     	  			  </div>
-  	  	  		  <div>
-  	 			      	<label class="control-label" for="lw.Method">Method</label>
-     		  			  <span id="lw.Method" class="uneditable-input"></span>
-     	  			  </div>
-  	  	  		  <div>
-  	 			      	<label class="control-label" for="lw.URL">URL</label>
-     		  			  <span id="lw.URL" class="uneditable-input"></span>
-     	  			  </div>
-  	  	  		  <div>
-  	 			      	<label class="control-label" for="lw.HttpStatus">Status</label>
-     		  			  <span id="lw.HttpStatus" class="uneditable-input"></span>
-     	  			  </div>
-	  	  		  	<div>
-	 			      		<label class="control-label" for="lw.ElapsedTime">Timing</label>
-   		  			  	<span id="lw.ElapsedTime" class="uneditable-input"></span>
-   	  			  	</div>
-	  	  		  	<div>
-	   	  			  	<br>
-									<button id="lw.FirstRecord" type="button" class="btn btn-default btn-med" onclick="restAPI.loadLogEntry(1);return false;">
-  									<span class="glyphicon glyphicon glyphicon glyphicon-fast-backward"></span>
-									</button>
-									<button id="lw.PrevRecord" type="button" class="btn btn-default btn-med">
-  									<span class="glyphicon glyphicon glyphicon-step-backward"></span>
-									</button>
-									<button id="lw.NextRecord" type="button" class="btn btn-default btn-med">
-  									<span class="glyphicon glyphicon glyphicon-step-forward"></span>
-									</button>
-									<button id="lw.LastRecord" type="button" class="btn btn-default btn-med" onclick="restAPI.loadLogEntry(restAPI.getLogRecordCount());return false;">
-  									<span class="glyphicon glyphicon glyphicon glyphicon-fast-forward"></span>
-									</button>
-   	  			  	</div>
-   	  			  </div>
-   	  		  </div>
-				 	  <div class="tab-pane" id="lw_RequestTab">
-	  	  		  <div>
-	 			      	<label for="lw.RequestBody">Request</label>
-   		  			  <span><pre id="lw.RequestBody" class="pre-scrollable"></pre></span>
-   	  			  </div>
-   	  		  </div>
-			 	  	<div class="tab-pane" id="lw_ResponseTab">
-	 	  		  	<div>
-	  		      	<label for="lw.ResponseText">Response</label>
-    	  			  <span><pre id="lw.ResponseText" class="pre-scrollable"></pre></span>
-   		  		  </div>
-   		  	  </div>
-			 	  	<div class="tab-pane" id="lw_JavascriptTab">
-	 	  		  	<div>
-	  		      	<label for="lw.ResponseText">Javascript</label>
-    	  			  <span><pre id="lw.JavascriptCode" class="pre-scrollable"></pre></span>
-   		  		  </div>
-   		  	  </div>
-   	  		</div>
-        </div>
-        <div class="modal-footer">
-        </div>
-      </div>
-    </div>
-  </div>
 
   <div id="pageContent"></div>
     <div id="fatalError"></div>
@@ -146,16 +44,16 @@ input[readonly] {
 			<div class="col-md-2">
 				<ul class="nav nav-pills nav-stacked" role="tablist" id="collectionTab">
   				<li><a href="#Connect" role="tab" data-toggle="tab">Connect</a></li>
-  				<li><a href="#SelectCollection" role="tab" data-toggle="tab">Select Collection</a></li>
+  				<li><a href="#ListCollections" role="tab" data-toggle="tab">List Collections</a></li>
   				<li><a href="#CreateCollection" role="tab" data-toggle="tab">Create Collection</a></li>
   				<li><a href="#DropCollection" role="tab" data-toggle="tab">Drop Collection</a></li>
-  				<li><a href="#ListCollection" role="tab" data-toggle="tab">List Collection</a></li>
-  				<li><a href="#PostDocument" role="tab" data-toggle="tab">Insert Document</a></li>
-  				<li><a href="#PutDocument" role="tab" data-toggle="tab">Put Document</a></li>
+  				<li><a href="#ListKeys" role="tab" data-toggle="tab">List Keys</a></li>
+  				<li><a href="#InsertDocument" role="tab" data-toggle="tab">Insert Document</a></li>
   				<li><a href="#GetDocument" role="tab" data-toggle="tab">Get Document</a></li>
+  				<li><a href="#UpdateDocument" role="tab" data-toggle="tab">Update Document</a></li>
   				<li><a href="#DeleteDocument" role="tab" data-toggle="tab">Delete Document</a></li>
   				<li><a href="#QBE" role="tab" data-toggle="tab">Search</a></li>
-  				<li><a href="#BulkLoad" role="tab" data-toggle="tab">Bulk Insert</a></li>
+  				<li><a href="#BulkInsert" role="tab" data-toggle="tab">Bulk Insert</a></li>
 				</ul>
 				<button id="btn.showLogRecords" type="button" class="btn btn-default btn-med" onclick="restAPI.showRestAPILog('logWindow');return false;">
 	 				<span class="glyphicon glyphicon-transfer"></span>
@@ -173,22 +71,22 @@ input[readonly] {
 					  </div>
 		  		</div>
 
-		  		  <div class="tab-pane" id="SelectCollection">
+		  		  <div class="tab-pane" id="ListCollections">
 		  		  	<div class="col-md-6">
  					    	<h2>Collection List</h2>
  					    	<div>
-					  			<ul class="nav nav-tabs" role="tablist" id="sc.options">
-  				  				<li><a href="#sc_dataTab" role="tab" data-toggle="tab">Data</a></li>
-  				  				<li><a href="#sc_responseTab" role="tab" data-toggle="tab">Details</a></li>
-  				  				<li><a href="#sc_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
-  				  				<!-- <li><a href="#sc_sqlTab" role="tab" data-toggle="tab">SQL</a></li> -->
+					  			<ul class="nav nav-tabs" role="tablist" id="lc.options">
+  				  				<li><a href="#lc_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  				  				<li><a href="#lc_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  				  				<li><a href="#lc_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  				  				<li id="lc_sqlTabLi"><a href="#lc_sqlTab" role="tab" data-toggle="tab">Live SQL</a></li>
 					  			</ul>
 					  		</div>
 
 					  		<!-- Tab panes -->
 								<div class="tab-content">
 									<br>
-     				  	  <div class="tab-pane active" id="sc_dataTab">
+     				  	  <div class="tab-pane active" id="lc_dataTab">
   				 	  		  <div class="input-group">
    					  			  <div>
    					  			  	<label for="collectionList">Select Collection</label>
@@ -197,46 +95,61 @@ input[readonly] {
    					  			</div>
    					  	  </div>
               
-    				  	  <div class="tab-pane" id="sc_responseTab">
+    				  	  <div class="tab-pane" id="lc_responseTab">
   		 			  	    <div class="form-group col-sm-10">
   		 			  	    	<div class="form-horizontal" role="form">
   											<div class="form-group">
-    			 			  	    	<label class="col-sm-2 control-label" for="sc.Method">Method:</label>
-     											<p id="sc.Method" class="form-control-static"></p>
+    			 			  	    	<label class="col-sm-2 control-label" for="lc.Method">Method:</label>
+     											<p id="lc.Method" class="form-control-static"></p>
      										</div>
   											<div class="form-group">
-		  		 			  	    	<label class="col-sm-2 control-label" for="sc.URL">URL:</label>
-    		 									<p id="sc.URL" class="form-control-static"></p>
+		  		 			  	    	<label class="col-sm-2 control-label" for="lc.URL">URL:</label>
+    		 									<p id="lc.URL" class="form-control-static"></p>
      										</div>
   											<div class="form-group">
-  		 					  	    	<label class="col-sm-2 control-label" for="sc.Status">Status:</label>
+		  		 			  	    	<label class="col-sm-2 control-label" for="lc.Headers">Headers:</label>
+    		 									<span><pre id="lc.Headers" class="pre-scrollable"></pre></span>
+     										</div>
+  											<div class="form-group">
+  		 					  	    	<label class="col-sm-2 control-label" for="lc.Status">Status:</label>
      											<p class="form-control-static">
-     												<span id="sc.Status"></span>
+     												<span id="lc.Status"></span>
      												<span> (</span>
-     												<span id="sc.StatusText"></span>
+     												<span id="lc.StatusText"></span>
      												<span>)</span></p>
      										</div>
      									</div>
 	   			  	  		  <br>
   	 			  	  		  <div>
-  				 		      	  <label for="sc.Response">Response</label>
-   				  	  			  <span><pre id="sc.Response" class="pre-scrollable"></pre></span>
+  				 		      	  <label for="lc.Response">Response</label>
+   				  	  			  <span><pre id="lc.Response" class="pre-scrollable"></pre></span>
    				  	  		  </div>
    			  	  		  </div>
 									</div>
    			  	  	               
-    				  	  <div class="tab-pane" id="sc_javaScriptTab">
+    				  	  <div class="tab-pane" id="lc_javaScriptTab">
   					  			<div>
-  				 	  	    	<label for="sc.Code">Code</label>
-  					  	 	 		<span><pre id="sc.Code" class="pre-scrollable prettyprint"></pre></span>
+  				 	  	    	<label for="lc.Code">Code</label>
+  					  	 	 		<span><pre id="lc.Code" class="pre-scrollable prettyprint"></pre></span>
   					  			</div>  
     				  	  </div>
               
-    				  	  <div class="tab-pane " id="sc_sqlTab">
-  					  			<div>
-  				 	  	    	<label for="sc.SQL">SQL</label>
-  					  	 	 		<span><pre id="sc.SQL" class="pre-scrollable prettyprint"></pre></span>
-  					  			</div>  
+    				  	  <div class="tab-pane " id="lc_sqlTab">
+  			 	  	    	<label for="lc.SQL">Live SQL</label>
+ 				 	  	    	<span class="pull-right">
+ 				 	  	    		<button id="lc.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL(sqlGenerator.LIST_COLLECTIONS);return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+ 										</span>
+										<br>
+										<br>
+										<br>
+  			  	 	 			<div><pre id="lc.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+	 				  	 	 		<div><pre id="lc.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="lc.1.timing"/>
+  				  	 	 		</div>
     				  	  </div>
    			      
    			  	  	</div>			  	  
@@ -251,7 +164,7 @@ input[readonly] {
   				  				<li><a href="#cc_dataTab" role="tab" data-toggle="tab">Data</a></li>
   				  				<li><a href="#cc_responseTab" role="tab" data-toggle="tab">Details</a></li>
   				  				<li><a href="#cc_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
-  				  				<li id="cc_sqlTabLi"><a href="#cc_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+  				  				<li id="cc_sqlTabLi"><a href="#cc_sqlTab" role="tab" data-toggle="tab">Live SQL</a></li>
 					  			</ul>
 					  		</div>
 					  		<!-- Tab panes -->
@@ -262,9 +175,9 @@ input[readonly] {
    					  			  <div>
 										  	<div class="row">
 	    	  								<div class="input-group">
-					  								<input id="cc.CollectionName" type="text" class="form-control" placeholder="Collection Name" onchange="setCollectionProperties()"/>
+					  								<input id="cc.collectionName" type="text" class="form-control" placeholder="Collection Name"/>
 				        						<span class="input-group-btn">
-					  		   						<button type="button" class="btn btn-default" onclick="doCreateCollection()">
+					  		   						<button id="cc.doAction" type="button" class="btn btn-default" onclick="doCreateCollection(sqlGenerator.CREATE_COLLECTION)">
  					  										<span class="glyphicon glyphicon-cog"></span> Go
 					  									</button>
 					  								</span>
@@ -275,14 +188,14 @@ input[readonly] {
    					  			<br>
 						      	<div class="checkbox">
 								      <label>
-      		  						<input type="checkbox"  id="collectionProperties" onchange="toggleVisibility('collectionPropertiesDiaglog',this)"> Custom Properties
+      		  						<input type="checkbox"  id="cc.showCollectionPropertiesDialog" onclick="return rqdCollectionName(sqlGenerator.CREATE_COLLECTION)" onchange="showCustomPropertiesDialog(sqlGenerator.CREATE_COLLECTION,this)"> Custom Properties
     			  					</label>
     			  				</div>
     			  				<br>
-						      	<div id="collectionPropertiesDiaglog" class="hidden">
+						      	<div id="cc.collectionPropertiesDialog" class="hidden">
 						      		<div class="form-inline">
 					  				    <label>Content Data Type 
-				      						<select class="form-control" id="contentDataType" onchange="setCollectionProperties()">
+				      						<select class="form-control" id="cc.contentDataType" onchange="updateCollectionProperties(sqlGenerator.CREATE_COLLECTION)">
 				     								<option id="serverKeyAssignment" value="BLOB" selected>BLOB</option>
 				     								<option id="serverKeyAssignment" value="CLOB">CLOB</option>
 			  	   								<option id="clientKeyAssignment" value="VARCHAR2">VARCHAR2</option>
@@ -292,18 +205,23 @@ input[readonly] {
 				   		  			<br>
 				   		  			<div class="form-inline">
 								  			<label>Key Assignment 
-						  		    		<select class="form-control" id="keyAssignment" onchange="setCollectionProperties()">
+						  		    		<select class="form-control" id="cc.keyAssignment" onchange="updateKeyAssignmentMethod(sqlGenerator.CREATE_COLLECTION)">
 						      					<option id="keyAssignmentClient" value="CLIENT" selected>CLIENT</option>
 						      					<option id="keyAssignmentUUID" value="UUID">UUID</option>
 								      			<option id="keyAssignmentGUID" value="GUID" selected>GUID</option>
-					      						<option id="keyAssignmentSEQ" value="SEQUENCE" selected>SEQUENCE</option>
+					      						<option id="keyAssignmentSEQ" value="SEQUENCE">SEQUENCE</option>
 					      					</select>
 		    	  		 				</label>
 				        			</div>
+				   		  			<br>
+						      		<div id="cc.divSequenceName" class="form-inline hidden">
+					  				    <label for="cc.sequenceName">Sequence Name </label>
+				      				  <input type="form-control" id="cc.sequenceName" onchange="updateSequenceName(sqlGenerator.CREATE_COLLECTION)"/>
+				   		  			</div>
 				        			<br>
 				        			<div>
-				        				<label for="cc.Content">Collection Properties</label>
-			   	         		 <span><pre id="cc.Content" class="pre-scrollable"></pre></span>
+				        				<label for="cc.collectionPropertiesViewer">Collection Properties</label>
+			   	         		 <span><pre id="cc.collectionPropertiesViewer" class="pre-scrollable"></pre></span>
 				        			</div>
 						        </div>
    					  	  </div>
@@ -318,6 +236,10 @@ input[readonly] {
   											<div class="form-group">
 		  		 			  	    	<label class="col-sm-2 control-label" for="cc.URL">URL:</label>
     		 									<p id="cc.URL" class="form-control-static"></p>
+     										</div>
+  											<div class="form-group">
+		  		 			  	    	<label class="col-sm-2 control-label" for="cc.Headers">Headers:</label>
+    		 									<span><pre id="cc.Headers" class="pre-scrollable"></pre></span>
      										</div>
   											<div class="form-group">
   		 					  	    	<label class="col-sm-2 control-label" for="cc.Status">Status:</label>
@@ -344,12 +266,22 @@ input[readonly] {
     				  	  </div>
               
     				  	  <div class="tab-pane " id="cc_sqlTab">
-  					  			<div>
-  				 	  	    	<label for="cc.SQL">SQL</label>
-  					  	 	 		<span><pre id="cc.SQL" class="pre-scrollable prettyprint"></pre></span>
-  					  			</div>  
-    				  	  </div>
-   			      
+  			 	  	    	<label for="cc.SQL">Live SQL</label>
+ 				 	  	    	<span class="pull-right">
+ 				 	  	    		<button id="cc.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL(sqlGenerator.CREATE_COLLECTION);return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+ 										</span>
+										<br>
+										<br>
+										<br>
+  			  	 	 			<div><pre id="cc.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+	 				  	 	 		<div><pre id="cc.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="cc.1.timing"/>
+  				  	 	 		</div>
+  				  			</div>     			      
    			  	  	</div>	  	  
    			  		</div>
    			 		</div> 
@@ -362,7 +294,7 @@ input[readonly] {
   				  				<li><a href="#dc_dataTab" role="tab" data-toggle="tab">Data</a></li>
   				  				<li><a href="#dc_responseTab" role="tab" data-toggle="tab">Details</a></li>
   				  				<li><a href="#dc_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
-  				  				<li id="dc_sqlTabLi"><a href="#dc_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+  				  				<li id="dc_sqlTabLi"><a href="#dc_sqlTab" role="tab" data-toggle="tab">Live SQL</a></li>
 					  			</ul>
 					  		</div>
 					  		<!-- Tab panes -->
@@ -371,7 +303,7 @@ input[readonly] {
      				  	  <div class="tab-pane active" id="dc_dataTab">
 								  	<div class="row">
 					  				  <div class="input-group">
-								  			<input id="dc.CollectionName" type="text" class="form-control" placeholder="Collection Name" disabled/>
+								  			<input id="dc.collectionName" type="text" class="form-control" placeholder="Collection Name" disabled/>
 							        	<span class="input-group-btn">
 					  					   	<button type="button" class="btn btn-default" onclick="doDropCollection()">
 	 				  								<span class="glyphicon glyphicon-cog"></span> Go
@@ -391,6 +323,10 @@ input[readonly] {
   											<div class="form-group">
 		  		 			  	    	<label class="col-sm-2 control-label" for="dc.URL">URL:</label>
     		 									<p id="dc.URL" class="form-control-static"></p>
+     										</div>
+  											<div class="form-group">
+		  		 			  	    	<label class="col-sm-2 control-label" for="dc.Headers">Headers:</label>
+    		 									<span><pre id="dc.Headers" class="pre-scrollable"></pre></span>
      										</div>
   											<div class="form-group">
   		 					  	    	<label class="col-sm-2 control-label" for="dc.Status">Status:</label>
@@ -417,36 +353,47 @@ input[readonly] {
     				  	  </div>
               
     				  	  <div class="tab-pane " id="dc_sqlTab">
-  					  			<div>
-  				 	  	    	<label for="dc.SQL">SQL</label>
-  					  	 	 		<span><pre id="dc.SQL" class="pre-scrollable prettyprint"></pre></span>
-  					  			</div>  
-    				  	  </div>
+										<label for="dc.SQL">Live SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="dc.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL(sqlGenerator.DROP_COLLECTION);return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="dc.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="dc.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="dc.1.timing"/>
+  				  	 	 		</div>
+  				  	 	 	</div>
    			      
    			  	  	</div>  			  	  
    			  		</div>
    			 		</div> 
 
-		  		  <div class="tab-pane" id="ListCollection">
+		  		  <div class="tab-pane" id="ListKeys">
 		  		  	<div class="col-md-6">
 					     	<h2>Choose Document</h2>
  					    	<div>
-					  			<ul class="nav nav-tabs" role="tablist" id="ld.options">
-  				  				<li><a href="#ld_dataTab" role="tab" data-toggle="tab">Data</a></li>
-  				  				<li><a href="#ld_responseTab" role="tab" data-toggle="tab">Details</a></li>
-  				  				<li><a href="#ld_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
-  				  				<li id="ld_sqlTabLi"><a href="#ld_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+					  			<ul class="nav nav-tabs" role="tablist" id="lk.options">
+  				  				<li><a href="#lk_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  				  				<li><a href="#lk_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  				  				<li><a href="#lk_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  				  				<li id="lk_sqlTabli"><a href="#lk_sqlTab" role="tab" data-toggle="tab">Live SQL</a></li>
 					  			</ul>
 					  		</div>
 					  		<!-- Tab panes -->
 								<div class="tab-content">
 									<br>
-     				  	  <div class="tab-pane active" id="ld_dataTab">
+     				  	  <div class="tab-pane active" id="lk_dataTab">
 								  	<div class="row">
 					  				  <div class="input-group">
-								  			<input id="ld.CollectionName" type="text" class="form-control" disabled/>
+								  			<input id="lk.collectionName" type="text" class="form-control" disabled/>
 		        						<span class="input-group-btn">
-			  		   						<button type="button" class="btn btn-default" onclick="doListDocuments()">
+			  		   						<button type="button" class="btn btn-default" onclick="doListKeys()">
 		  											<span class="glyphicon glyphicon-cog"></span> Go
 		  										</button>
 		  									</span>
@@ -454,10 +401,12 @@ input[readonly] {
 		  							</div>
 							  		<br>
   				 	  		  <div class="form-inline">
-  		    						<label for="ld.DocumentLimit">Document Limit</label>
-											<input id="ld.DocumentLimit" type="text" class="form-control" placeholder="25" >
-			  	  					<label for="ld.fieldList">Fetch </label>
-				    					<select class="form-control" id="ld.fieldList">
+			  							<label for="lk.offset">Offset </label>
+											<input id="lk.offset" type="number" class="form-control" value="0">
+  		    						<label for="lk.limit">Limit </label>
+											<input id="lk.limit" type="number" class="form-control" value="25">
+			  	  					<label for="lk.fieldList">Fetch </label>
+				    					<select class="form-control" id="lk.fieldList">
 	  		    						<option value="id" selected>id</option>
   			    						<option value="value">value</option>
   		  	  						<option value="all">all</option>
@@ -465,77 +414,92 @@ input[readonly] {
   				 					</div>
 							  		<br>
 							  		<div class="input-group">
-				  		      	<label for="ld.documentList">Documents</label>
-							  	 		<select id="ld.documentList" class="form-control" onchange="setDocumentId(this.value)"></select>
+				  		      	<label for="lk.documentList">Documents</label>
+							  	 		<select id="lk.documentList" class="form-control" onchange="setDocumentId(this.value)"></select>
 							  	 	</div>
 		   					  </div>
               
-    				  	  <div class="tab-pane" id="ld_responseTab">
+    				  	  <div class="tab-pane" id="lk_responseTab">
   		 			  	    <div class="form-group col-sm-10">
   		 			  	    	<div class="form-horizontal" role="form">
   											<div class="form-group">
-    			 			  	    	<label class="col-sm-2 control-label" for="ld.Method">Method:</label>
-     											<p id="ld.Method" class="form-control-static"></p>
+    			 			  	    	<label class="col-sm-2 control-label" for="lk.Method">Method:</label>
+     											<p id="lk.Method" class="form-control-static"></p>
      										</div>
   											<div class="form-group">
-		  		 			  	    	<label class="col-sm-2 control-label" for="ld.URL">URL:</label>
-    		 									<p id="ld.URL" class="form-control-static"></p>
+		  		 			  	    	<label class="col-sm-2 control-label" for="lk.URL">URL:</label>
+    		 									<p id="lk.URL" class="form-control-static"></p>
      										</div>
   											<div class="form-group">
-  		 					  	    	<label class="col-sm-2 control-label" for="ld.Status">Status:</label>
+		  		 			  	    	<label class="col-sm-2 control-label" for="lk.Headers">Headers:</label>
+    		 									<span><pre id="lk.Headers" class="pre-scrollable"></pre></span>
+     										</div>
+  											<div class="form-group">
+  		 					  	    	<label class="col-sm-2 control-label" for="lk.Status">Status:</label>
      											<p class="form-control-static">
-     												<span id="ld.Status"></span>
+     												<span id="lk.Status"></span>
      												<span> (</span>
-     												<span id="ld.StatusText"></span>
+     												<span id="lk.StatusText"></span>
      												<span>)</span></p>
      										</div>
      									</div>
 	   			  	  		  <br>
   	 			  	  		  <div>
-  				 		      	  <label for="ld.Response">Response</label>
-   				  	  			  <span><pre id="ld.Response" class="pre-scrollable"></pre></span>
+  				 		      	  <label for="lk.Response">Response</label>
+   				  	  			  <span><pre id="lk.Response" class="pre-scrollable"></pre></span>
    				  	  		  </div>
    			  	  		  </div>
    			  	  	  </div>
    			  	  	                
-    				  	  <div class="tab-pane" id="ld_javaScriptTab">
+    				  	  <div class="tab-pane" id="lk_javaScriptTab">
   					  			<div>
-  				 	  	    	<label for="ld.Code">Code</label>
-  					  	 	 		<span><pre id="ld.Code" class="pre-scrollable prettyprint"></pre></span>
+  				 	  	    	<label for="lk.Code">Code</label>
+  					  	 	 		<span><pre id="lk.Code" class="pre-scrollable prettyprint"></pre></span>
   					  			</div>  
     				  	  </div>
               
-    				  	  <div class="tab-pane " id="ld_sqlTab">
-  					  			<div>
-  				 	  	    	<label for="ld.SQL">SQL</label>
-  					  	 	 		<span><pre id="ld.SQL" class="pre-scrollable prettyprint"></pre></span>
-  					  			</div>  
-    				  	  </div>
+    				  	  <div class="tab-pane " id="lk_sqlTab">
+										<label for="lk.SQL">Live SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="lk.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL(sqlGenerator.LIST_KEYS);return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="lk.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="lk.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="lk.1.timing"/>
+  				  	 	 		</div>
+  				  	 	 	</div>
    			      
    			  	  	</div>  		  	  
    			  		</div>
    			 		</div> 
            
-		  		  <div class="tab-pane" id="PostDocument">
+		  		  <div class="tab-pane" id="InsertDocument">
 		  		  	<div class="col-md-6">
 					     	<h2>Insert Document</h2>
  					    	<div>
-					  			<ul class="nav nav-tabs" role="tablist" id="id.options">
-  				  				<li><a href="#id_dataTab" role="tab" data-toggle="tab">Data</a></li>
-  				  				<li><a href="#id_responseTab" role="tab" data-toggle="tab">Details</a></li>
-  				  				<li><a href="#id_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
-  				  				<li id="id_sqlTabLi"><a href="#id_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+					  			<ul class="nav nav-tabs" role="tablist" id="pd.options">
+  				  				<li><a href="#pd_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  				  				<li><a href="#pd_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  				  				<li><a href="#pd_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  				  				<li id="pd_sqlTabli"><a href="#pd_sqlTab" role="tab" data-toggle="tab">Live SQL</a></li>
 					  			</ul>
 					  		</div>
 					  		<!-- Tab panes -->
 								<div class="tab-content">
 									<br>
-     				  	  <div class="tab-pane active" id="id_dataTab">
+     				  	  <div class="tab-pane active" id="pd_dataTab">
 							     	<div class="form-group">
 							  		 	<div class="row">
-							  		    <label for="id.CollectionName">Collection</label>
+							  		    <label for="pd.collectionName">Collection</label>
 						      			<div class="input-group">
-							  					<input id="id.CollectionName" type="text" class="form-control" disabled/>
+							  					<input id="pd.collectionName" type="text" class="form-control" disabled/>
 							  	      	<span class="input-group-btn">
 							  				  	<button type="button" class="btn btn-default" onclick="doInsertDocument()">
 				 			  							<span class="glyphicon glyphicon-cog"></span> Go
@@ -545,107 +509,17 @@ input[readonly] {
 							  		  </div>
 			              </div>
 						  		  <br>
-			    	  	    <label for="id.DocumentContent">Content</label>
+			    	  	    <label for="pd.DocumentContent">Content</label>
 					          <div class="input-group">
 		  	              <span class="input-group-btn">
-		          	        <span><pre id="id.Content" class="pre-scrollable"></pre></span>
+		          	        <span><pre id="pd.Content" class="pre-scrollable"></pre></span>
 		    	              <span class="btn btn-primary btn-file">
-		      	              Browse&hellip; <input id="id.DocumentContent" type="file" onchange="doLoadFile(this, document.getElementById('id.Cache'),document.getElementById('id.Content'))"/>
+		      	              Browse&hellip; <input id="pd.DocumentContent" type="file" onchange="doLoadFile(this, document.getElementById(sqlGenerator.POST_DOCUMENT + '.Cache'),document.getElementById(sqlGenerator.POST_DOCUMENT + '.Content'))"/>
 		          	        </span>
-		          	        <input id="id.Cache" type="hidden"/>
+		          	        <input id="pd.Cache" type="hidden"/>
 		            	    </span>
 		              	</div>
 		   					  </div>
-              
-    				  	  <div class="tab-pane" id="id_responseTab">
-  		 			  	    <div class="form-group col-sm-10">
-  		 			  	    	<div class="form-horizontal" role="form">
-  											<div class="form-group">
-    			 			  	    	<label class="col-sm-2 control-label" for="id.Method">Method:</label>
-     											<p id="id.Method" class="form-control-static"></p>
-     										</div>
-  											<div class="form-group">
-		  		 			  	    	<label class="col-sm-2 control-label" for="id.URL">URL:</label>
-    		 									<p id="id.URL" class="form-control-static"></p>
-     										</div>
-  											<div class="form-group">
-  		 					  	    	<label class="col-sm-2 control-label" for="id.Status">Status:</label>
-     											<p class="form-control-static">
-     												<span id="id.Status"></span>
-     												<span> (</span>
-     												<span id="id.StatusText"></span>
-     												<span>)</span></p>
-     										</div>
-     									</div>
-	   			  	  		  <br>
-  	 			  	  		  <div>
-  				 		      	  <label for="id.Response">Response</label>
-   				  	  			  <span><pre id="id.Response" class="pre-scrollable"></pre></span>
-   				  	  		  </div>
-   			  	  		  </div>
-   			  	  	  </div>
-   			  	  	  
-   			  	  	  <div class="tab-pane" id="id_javaScriptTab">
-  					  			<div>
-  				 	  	    	<label for="id.Code">Code</label>
-  					  	 	 		<span><pre id="id.Code" class="pre-scrollable prettyprint"></pre></span>
-  					  			</div>  
-    				  	  </div>
-              
-    				  	  <div class="tab-pane " id="id_sqlTab">
-  					  			<div>
-  				 	  	    	<label for="id.SQL">SQL</label>
-  					  	 	 		<span><pre id="id.SQL" class="pre-scrollable prettyprint"></pre></span>
-  					  			</div>  
-    				  	  </div>
-   			      
-   			  	  	</div>  
-   			  		</div>
-   			 		</div> 
-            
-		  		  <div class="tab-pane" id="PutDocument">
-		  		  	<div class="col-md-6">
-					     	<h2>Update Document</h2>
- 					    	<div>
-					  			<ul class="nav nav-tabs" role="tablist" id="pd.options">
-  				  				<li><a href="#pd_dataTab" role="tab" data-toggle="tab">Data</a></li>
-  				  				<li><a href="#pd_responseTab" role="tab" data-toggle="tab">Details</a></li>
-  				  				<li><a href="#pd_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
-  				  				<li id="pd_sqlTabLi"><a href="#pd_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
-					  			</ul>
-					  		</div>
-					  		<!-- Tab panes -->
-								<div class="tab-content">
-									<br>
-     				  	  <div class="tab-pane active" id="pd_dataTab">
-				    	  		<div class="input-group">
-				  		      	<label for="pd.CollectionName">Collection</label>
-							  			<input id="pd.CollectionName" type="text" class="form-control" disabled/>
-							  		</div>
-							  		<br>
-							  		<div class="row">
-				  		      	<label for="pd.DocumentId">Doc ID</label>
-					      			<div class="input-group">
-							  				<input id="pd.DocumentId" type="text" class="form-control"/>
-							        	<span class="input-group-btn">
-							  			   	<button type="button" class="btn btn-default" onclick="doUpdateDocument()">
-			 				  						<span class="glyphicon glyphicon-cog"></span> Go
-							  					</button>
-							  				</span>
-							  			</div>
-							  		</div>
-							  		<br>
-			    	  	    <label for="pd.DocumentContent">Content</label>
-					          <div class="input-group">
-		  	               <span class="input-group-btn">
-		          	         <span><pre id="pd.Content" class="pre-scrollable"></pre></span>
-	    	                 <span class="btn btn-primary btn-file">
-	     	                   Browse&hellip; <input id="pd.DocumentContent" type="file" onchange="doLoadFile(this, document.getElementById('pd.Cache'),document.getElementById('pd.Content'))"/>
-	        	             </span>
-	        	             <input id="pd.Cache" type="hidden"/>
-		            	     </span>
-		              	</div>
-				   				</div>
               
     				  	  <div class="tab-pane" id="pd_responseTab">
   		 			  	    <div class="form-group col-sm-10">
@@ -657,6 +531,10 @@ input[readonly] {
   											<div class="form-group">
 		  		 			  	    	<label class="col-sm-2 control-label" for="pd.URL">URL:</label>
     		 									<p id="pd.URL" class="form-control-static"></p>
+     										</div>
+  											<div class="form-group">
+		  		 			  	    	<label class="col-sm-2 control-label" for="pd.Headers">Headers:</label>
+    		 									<span><pre id="pd.Headers" class="pre-scrollable"></pre></span>
      										</div>
   											<div class="form-group">
   		 					  	    	<label class="col-sm-2 control-label" for="pd.Status">Status:</label>
@@ -674,8 +552,8 @@ input[readonly] {
    				  	  		  </div>
    			  	  		  </div>
    			  	  	  </div>
-   			  	  	                
-    				  	  <div class="tab-pane" id="pd_javaScriptTab">
+   			  	  	  
+   			  	  	  <div class="tab-pane" id="pd_javaScriptTab">
   					  			<div>
   				 	  	    	<label for="pd.Code">Code</label>
   					  	 	 		<span><pre id="pd.Code" class="pre-scrollable prettyprint"></pre></span>
@@ -683,10 +561,126 @@ input[readonly] {
     				  	  </div>
               
     				  	  <div class="tab-pane " id="pd_sqlTab">
+  					  			<label for="pd.SQL">Live SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="pd.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL(sqlGenerator.POST_DOCUMENT);return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="pd.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="pd.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="pd.1.timing"/>
+  				  	 	 		</div>
+    				  	  </div>
+   			  	  	</div>  
+   			  	  	
+   			  		</div>
+   			 		</div> 
+            
+		  		  <div class="tab-pane" id="UpdateDocument">
+		  		  	<div class="col-md-6">
+					     	<h2>Update Document</h2>
+ 					    	<div>
+					  			<ul class="nav nav-tabs" role="tablist" id="ud.options">
+  				  				<li><a href="#ud_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  				  				<li><a href="#ud_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  				  				<li><a href="#ud_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  				  				<li id="ud_sqlTabli"><a href="#ud_sqlTab" role="tab" data-toggle="tab">Live SQL</a></li>
+					  			</ul>
+					  		</div>
+					  		<!-- Tab panes -->
+								<div class="tab-content">
+									<br>
+     				  	  <div class="tab-pane active" id="ud_dataTab">
+				    	  		<div class="input-group">
+				  		      	<label for="ud.collectionName">Collection</label>
+							  			<input id="ud.collectionName" type="text" class="form-control" disabled/>
+							  		</div>
+							  		<br>
+							  		<div class="row">
+				  		      	<label for="ud.DocumentId">Doc ID</label>
+					      			<div class="input-group">
+							  				<input id="ud.DocumentId" type="text" class="form-control"/>
+							        	<span class="input-group-btn">
+							  			   	<button type="button" class="btn btn-default" onclick="doUpdateDocument()">
+			 				  						<span class="glyphicon glyphicon-cog"></span> Go
+							  					</button>
+							  				</span>
+							  			</div>
+							  		</div>
+							  		<br>
+			    	  	    <label for="ud.DocumentContent">Content</label>
+					          <div class="input-group">
+		  	               <span class="input-group-btn">
+		          	         <span><pre id="ud.Content" class="pre-scrollable"></pre></span>
+	    	                 <span class="btn btn-primary btn-file">
+	     	                   Browse&hellip; <input id="ud.DocumentContent" type="file" onchange="doLoadFile(this, document.getElementById(sqlGenerator.UPDATE_DOCUMENT + '.Cache'),document.getElementById(sqlGenerator.UPDATE_DOCUMENT + '.Content'))"/>
+	        	             </span>
+	        	             <input id="ud.Cache" type="hidden"/>
+		            	     </span>
+		              	</div>
+				   				</div>
+              
+    				  	  <div class="tab-pane" id="ud_responseTab">
+  		 			  	    <div class="form-group col-sm-10">
+  		 			  	    	<div class="form-horizontal" role="form">
+  											<div class="form-group">
+    			 			  	    	<label class="col-sm-2 control-label" for="ud.Method">Method:</label>
+     											<p id="ud.Method" class="form-control-static"></p>
+     										</div>
+  											<div class="form-group">
+		  		 			  	    	<label class="col-sm-2 control-label" for="ud.URL">URL:</label>
+    		 									<p id="ud.URL" class="form-control-static"></p>
+     										</div>
+  											<div class="form-group">
+		  		 			  	    	<label class="col-sm-2 control-label" for="ud.Headers">Headers:</label>
+    		 									<span><pre id="ud.Headers" class="pre-scrollable"></pre></span>
+     										</div>
+  											<div class="form-group">
+  		 					  	    	<label class="col-sm-2 control-label" for="ud.Status">Status:</label>
+     											<p class="form-control-static">
+     												<span id="ud.Status"></span>
+     												<span> (</span>
+     												<span id="ud.StatusText"></span>
+     												<span>)</span></p>
+     										</div>
+     									</div>
+	   			  	  		  <br>
+  	 			  	  		  <div>
+  				 		      	  <label for="ud.Response">Response</label>
+   				  	  			  <span><pre id="ud.Response" class="pre-scrollable"></pre></span>
+   				  	  		  </div>
+   			  	  		  </div>
+   			  	  	  </div>
+   			  	  	                
+    				  	  <div class="tab-pane" id="ud_javaScriptTab">
   					  			<div>
-  				 	  	    	<label for="pd.SQL">SQL</label>
-  					  	 	 		<span><pre id="pd.SQL" class="pre-scrollable prettyprint"></pre></span>
+  				 	  	    	<label for="ud.Code">Code</label>
+  					  	 	 		<span><pre id="ud.Code" class="pre-scrollable prettyprint"></pre></span>
   					  			</div>  
+    				  	  </div>
+              
+    				  	  <div class="tab-pane " id="ud_sqlTab">
+  					  			<label for="ud.SQL">Live SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="ud.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL(sqlGenerator.UPDATE_DOCUMENT);return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="ud.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="ud.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="ud.1.timing"/>
+  				  	 	 		</div>
     				  	  </div>
    			      
    			  	  	</div>  
@@ -701,7 +695,7 @@ input[readonly] {
   				  				<li><a href="#gd_dataTab" role="tab" data-toggle="tab">Data</a></li>
   				  				<li><a href="#gd_responseTab" role="tab" data-toggle="tab">Details</a></li>
   				  				<li><a href="#gd_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
-  				  				<li id="gd_sqlTabLi"><a href="#gd_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+  				  				<li id="gd_sqlTabli"><a href="#gd_sqlTab" role="tab" data-toggle="tab">Live SQL</a></li>
 					  			</ul>
 					  		</div>
 					  		<!-- Tab panes -->
@@ -709,8 +703,8 @@ input[readonly] {
 									<br>
      				  	  <div class="tab-pane active" id="gd_dataTab">
 				    	  		<div class="input-group">
-				  		      	<label for="gd.CollectionName">Collection</label>
-							  			<input id="gd.CollectionName" type="text" class="form-control" disabled/>
+				  		      	<label for="gd.collectionName">Collection</label>
+							  			<input id="gd.collectionName" type="text" class="form-control" disabled/>
 							  		</div>
 							  		<br>
 							  		<div class="row">
@@ -743,6 +737,10 @@ input[readonly] {
     		 									<p id="gd.URL" class="form-control-static"></p>
      										</div>
   											<div class="form-group">
+		  		 			  	    	<label class="col-sm-2 control-label" for="gd.Headers">Headers:</label>
+    		 									<span><pre id="gd.Headers" class="pre-scrollable"></pre></span>
+     										</div>
+  											<div class="form-group">
   		 					  	    	<label class="col-sm-2 control-label" for="gd.Status">Status:</label>
      											<p class="form-control-static">
      												<span id="gd.Status"></span>
@@ -767,10 +765,21 @@ input[readonly] {
     				  	  </div>
               
     				  	  <div class="tab-pane " id="gd_sqlTab">
-  					  			<div>
-  				 	  	    	<label for="gd.SQL">SQL</label>
-  					  	 	 		<span><pre id="gd.SQL" class="pre-scrollable prettyprint"></pre></span>
-  					  			</div>  
+  					  			<label for="gd.SQL">Live SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="gd.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL(sqlGenerator.GET_DOCUMENT);return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="gd.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="gd.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="gd.1.timing"/>
+  				  	 	 		</div>
     				  	  </div>
    			      
    			  	  	</div>     			  	  
@@ -785,7 +794,7 @@ input[readonly] {
   				  				<li><a href="#dd_dataTab" role="tab" data-toggle="tab">Data</a></li>
   				  				<li><a href="#dd_responseTab" role="tab" data-toggle="tab">Details</a></li>
   				  				<li><a href="#dd_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
-  				  				<li id="dd_sqlTabLi"><a href="#dd_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+  				  				<li id="dd_sqlTabli"><a href="#dd_sqlTab" role="tab" data-toggle="tab">Live SQL</a></li>
 					  			</ul>
 					  		</div>
 					  		<!-- Tab panes -->
@@ -793,8 +802,8 @@ input[readonly] {
 									<br>
      				  	  <div class="tab-pane active" id="dd_dataTab">
 				    	  		<div class="input-group">
-				  		      	<label for="dd.CollectionName">Collection</label>
-							  			<input id="dd.CollectionName" type="text" class="form-control" disabled/>
+				  		      	<label for="dd.collectionName">Collection</label>
+							  			<input id="dd.collectionName" type="text" class="form-control" disabled/>
 							  		</div>
 							  		<br>
 							  		<div class="row">
@@ -822,6 +831,10 @@ input[readonly] {
     		 									<p id="dd.URL" class="form-control-static"></p>
      										</div>
   											<div class="form-group">
+		  		 			  	    	<label class="col-sm-2 control-label" for="dd.Headers">Headers:</label>
+    		 									<span><pre id="dd.Headers" class="pre-scrollable"></pre></span>
+     										</div>
+  											<div class="form-group">
   		 					  	    	<label class="col-sm-2 control-label" for="dd.Status">Status:</label>
      											<p class="form-control-static">
      												<span id="dd.Status"></span>
@@ -846,10 +859,21 @@ input[readonly] {
     				  	  </div>
               
     				  	  <div class="tab-pane " id="dd_sqlTab">
-  					  			<div>
-  				 	  	    	<label for="dd.SQL">SQL</label>
-  					  	 	 		<span><pre id="dd.SQL" class="pre-scrollable prettyprint"></pre></span>
-  					  			</div>  
+  					  			<label for="dd.SQL">Live SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="dd.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL(sqlGenerator.DELETE_DOCUMENT);return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="dd.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="dd.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="dd.1.timing"/>
+  				  	 	 		</div>
     				  	  </div>
    			      
    			  	  	</div>     			  	  
@@ -860,22 +884,22 @@ input[readonly] {
 		  		  	<div class="col-md-6">
 					     	<h2>Search Documents</h2>
  					    	<div>
-					  			<ul class="nav nav-tabs" role="tablist" id="sd.options">
-  				  				<li><a href="#sd_dataTab" role="tab" data-toggle="tab">Data</a></li>
-  				  				<li><a href="#sd_responseTab" role="tab" data-toggle="tab">Details</a></li>
-  				  				<li><a href="#sd_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
-  				  				<li id="sd_sqlTabLi"><a href="#sd_sqlTab" role="tab" data-toggle="tab">SQL</a></li>
+					  			<ul class="nav nav-tabs" role="tablist" id="qbe.options">
+  				  				<li><a href="#qbe_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  				  				<li><a href="#qbe_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  				  				<li><a href="#qbe_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  				  				<li id="qbe_sqlTabLi"><a href="#qbe_sqlTab" role="tab" data-toggle="tab">Live SQL</a></li>
 					  			</ul>
 					  		</div>
 					  		<!-- Tab panes -->
 								<div class="tab-content">
 									<br>
-     				  	  <div class="tab-pane active" id="sd_dataTab">
+     				  	  <div class="tab-pane active" id="qbe_dataTab">
 							     	<div class="form-group">
 							  		 	<div class="row">
-							  		    <label for="sd.CollectionName">Collection</label>
+							  		    <label for="qbe.collectionName">Collection</label>
 						      			<div class="input-group">
-							  					<input id="sd.CollectionName" type="text" class="form-control" disabled/>
+							  					<input id="qbe.collectionName" type="text" class="form-control" disabled/>
 							  	      	<span class="input-group-btn">
 							  				   	<button type="button" class="btn btn-default" onclick="doSearchCollection()">
 				 			  							<span class="glyphicon glyphicon-cog"></span> Go
@@ -885,101 +909,116 @@ input[readonly] {
 							  			</div>
 							  		</div>
 							     	<div class="form-group">
-				    	  	    <label for="sd.DocumentContent">Query</label>
+				    	  	    <label for="qbe.DocumentContent">Query</label>
 						          <div class="input-group">
 			  	               <span class="input-group-btn">
-			          	         <span><pre id="sd.Content" class="pre-scrollable"></pre></span>
+			          	         <span><pre id="qbe.Content" class="pre-scrollable"></pre></span>
 		    	                 <span class="btn btn-primary btn-file">
-		     	                   Browse&hellip; <input id="pd.DocumentContent" type="file" onchange="doLoadFile(this, document.getElementById('sd.Cache'),document.getElementById('sd.Content'))"/>
+		     	                   Browse&hellip; <input id="ud.DocumentContent" type="file" onchange="doLoadFile(this, document.getElementById(sqlGenerator.QUERY_BY_EXAMPLE + '.Cache'),document.getElementById(sqlGenerator.QUERY_BY_EXAMPLE + '.Content'))"/>
 		        	             </span>
 		        	             <!-- 
 		    	                 <span class="btn btn-primary btn-file">
-		     	                   Paste&hellip; <input id="pd.DocumentContent" type="file" onchange="doLoadFile(this, document.getElementById('sd.Cache'),document.getElementById('sd.Content'))"/>
+		     	                   Paste&hellip; <input id="ud.DocumentContent" type="file" onchange="doLoadFile(this, document.getElementById(sqlGenerator.QUERY_BY_EXAMPLE + '.Cache'),document.getElementById(sqlGenerator.QUERY_BY_EXAMPLE + '.Content'))"/>
 		        	             </span>
 				            	     -->
-		        	             <input id="sd.Cache" type="hidden"/>
+		        	             <input id="qbe.Cache" type="hidden"/>
 			            	     </span>
 			              	</div>
 			              </div>
      					  		<br>
   				 	  		  <div class="form-inline">
 								  		<div class="input-group">
-					  		      	<label for="sd.documentList">Matching Documents</label>
-								  	 		<select id="sd.documentList" class="form-control" onchange="setDocumentId(this.value)"></select>
+					  		      	<label for="qbe.documentList">Matching Documents</label>
+								  	 		<select id="qbe.documentList" class="form-control" onchange="setDocumentId(this.value)"></select>
 								  	 	</div>
   		  				  		<div class="input-group">
-					  		      	<label for="sd.ReferenceList">Matching References</label>
-								  	 		<select id="sd.ReferenceList" class="form-control" onchange="setDocumentId(this.value)"></select>
+					  		      	<label for="qbe.ReferenceList">Matching References</label>
+								  	 		<select id="qbe.ReferenceList" class="form-control" onchange="setDocumentId(this.value)"></select>
 								  	 	</div>
   		  	 					</div>
 						   		</div>
               
-    				  	  <div class="tab-pane" id="sd_responseTab">
+    				  	  <div class="tab-pane" id="qbe_responseTab">
   		 			  	    <div class="form-group col-sm-10">
   		 			  	    	<div class="form-horizontal" role="form">
   											<div class="form-group">
-    			 			  	    	<label class="col-sm-2 control-label" for="sd.Method">Method:</label>
-     											<p id="sd.Method" class="form-control-static"></p>
+    			 			  	    	<label class="col-sm-2 control-label" for="qbe.Method">Method:</label>
+     											<p id="qbe.Method" class="form-control-static"></p>
      										</div>
   											<div class="form-group">
-		  		 			  	    	<label class="col-sm-2 control-label" for="sd.URL">URL:</label>
-    		 									<p id="sd.URL" class="form-control-static"></p>
+		  		 			  	    	<label class="col-sm-2 control-label" for="qbe.URL">URL:</label>
+    		 									<p id="qbe.URL" class="form-control-static"></p>
      										</div>
   											<div class="form-group">
-  		 					  	    	<label class="col-sm-2 control-label" for="sd.Status">Status:</label>
+		  		 			  	    	<label class="col-sm-2 control-label" for="qbe.Headers">Headers:</label>
+    		 									<span><pre id="qbe.Headers" class="pre-scrollable"></pre></span>
+     										</div>
+  											<div class="form-group">
+  		 					  	    	<label class="col-sm-2 control-label" for="qbe.Status">Status:</label>
      											<p class="form-control-static">
-     												<span id="sd.Status"></span>
+     												<span id="qbe.Status"></span>
      												<span> (</span>
-     												<span id="sd.StatusText"></span>
+     												<span id="qbe.StatusText"></span>
      												<span>)</span></p>
      										</div>
      									</div>
 	   			  	  		  <br>
   	 			  	  		  <div>
-  				 		      	  <label for="sd.Response">Response</label>
-   				  	  			  <span><pre id="sd.Response" class="pre-scrollable"></pre></span>
+  				 		      	  <label for="qbe.Response">Response</label>
+   				  	  			  <span><pre id="qbe.Response" class="pre-scrollable"></pre></span>
    				  	  		  </div>
    			  	  		  </div>
    			  	  	  </div>
    			  	  	                
-    				  	  <div class="tab-pane" id="sd_javaScriptTab">
+    				  	  <div class="tab-pane" id="qbe_javaScriptTab">
   					  			<div>
-  				 	  	    	<label for="sd.Code">Code</label>
-  					  	 	 		<span><pre id="sd.Code" class="pre-scrollable prettyprint"></pre></span>
+  				 	  	    	<label for="qbe.Code">Code</label>
+  					  	 	 		<span><pre id="qbe.Code" class="pre-scrollable prettyprint"></pre></span>
   					  			</div>  
     				  	  </div>
               
-    				  	  <div class="tab-pane " id="sd_sqlTab">
-  					  			<div>
-  				 	  	    	<label for="sd.SQL">SQL</label>
-  					  	 	 		<span><pre id="sd.SQL" class="pre-scrollable prettyprint"></pre></span>
-  					  			</div>  
+    				  	  <div class="tab-pane " id="qbe_sqlTab">
+  					  			<label for="qbe.SQL">Live SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="qbe.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL(sqlGenerator.QUERY_BY_EXAMPLE);return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="qbe.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="qbe.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="qbe.1.timing"/>
+  				  	 	 		</div>
     				  	  </div>
    			      
    			  	  	</div>  
    			  		</div>
    			 		</div> 
                         
-		  		  <div class="tab-pane" id="BulkLoad">
+		  		  <div class="tab-pane" id="BulkInsert">
 		  		  	<div class="col-md-6">
 					     	<h2>Bulk Upload (From Array)</h2>
 					    	<div>
-					  			<ul class="nav nav-tabs" role="tablist" id="bl.options">
-  				  				<li><a href="#bl_dataTab" role="tab" data-toggle="tab">Data</a></li>
-  				  				<li><a href="#bl_responseTab" role="tab" data-toggle="tab">Details</a></li>
-  				  				<!-- <li><a href="#bl_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li> -->
-  				  				<!-- <li><a href="#bl_sqlTab" role="tab" data-toggle="tab">SQL</a></li> -->
+					  			<ul class="nav nav-tabs" role="tablist" id="bi.options">
+  				  				<li><a href="#bi_dataTab" role="tab" data-toggle="tab">Data</a></li>
+  				  				<li><a href="#bi_responseTab" role="tab" data-toggle="tab">Details</a></li>
+  				  				<li><a href="#bi_javaScriptTab" role="tab" data-toggle="tab">JavaScript</a></li>
+  				  				<li id="bi_sqlTabLi"><a href="#bi_sqlTab" role="tab" data-toggle="tab">Live SQL</a></li>
 					  			</ul>
 					  		</div>
 					  		<!-- Tab panes -->
 								<div class="tab-content">
 									<br>
-     				  	  <div class="tab-pane active" id="bl_dataTab">
+     				  	  <div class="tab-pane active" id="bi_dataTab">
 							     	<div class="form-group">
 							  		 	<div class="row">
-							  		    <label for="bl.CollectionName">Collection</label>
+							  		    <label for="bi.collectionName">Collection</label>
 						      			<div class="input-group">
-							  					<input id="bl.CollectionName" type="text" class="form-control" disabled/>
+							  					<input id="bi.collectionName" type="text" class="form-control" disabled/>
 							  	      	<span class="input-group-btn">
 							  				  	<button type="button" class="btn btn-default" onclick="doBulkLoad()">
 				 			  							<span class="glyphicon glyphicon-cog"></span> Go
@@ -987,59 +1026,74 @@ input[readonly] {
 							  					</span>
 							  				</div>
 							  		  </div>
-				    	  	    <label for="bl.DocumentContent">Content</label>
+				    	  	    <label for="bi.DocumentContent">Content</label>
 						          <div class="input-group">
 			  	              <span class="input-group-btn">
-			          	        <span><pre id="bl.Content" class="pre-scrollable"></pre></span>
+			          	        <span><pre id="bi.Content" class="pre-scrollable"></pre></span>
 			    	              <span class="btn btn-primary btn-file">
-			      	              Browse&hellip; <input id="bl.DocumentContent" type="file" onchange="doLoadArray(this, document.getElementById('bl.Cache'),document.getElementById('bl.Content'))"/>
+			      	              Browse&hellip; <input id="bi.DocumentContent" type="file" onchange="doLoadArray(this, document.getElementById(sqlGenerator.BULK_INSERT + '.Cache'),document.getElementById(sqlGenerator.BULK_INSERT + '.Content'))"/>
 			          	        </span>
-			          	        <input id="bl.Cache" type="hidden"/>
+			          	        <input id="bi.Cache" type="hidden"/>
 			            	    </span>
 			              	</div>
 			              </div>
 						   		</div>
               
-    				  	  <div class="tab-pane" id="bl_responseTab">
+    				  	  <div class="tab-pane" id="bi_responseTab">
   		 			  	    <div class="form-group col-sm-10">
   		 			  	    	<div class="form-horizontal" role="form">
   											<div class="form-group">
-    			 			  	    	<label class="col-sm-2 control-label" for="bl.Method">Method:</label>
-     											<p id="bl.Method" class="form-control-static"></p>
+    			 			  	    	<label class="col-sm-2 control-label" for="bi.Method">Method:</label>
+     											<p id="bi.Method" class="form-control-static"></p>
      										</div>
   											<div class="form-group">
-		  		 			  	    	<label class="col-sm-2 control-label" for="bl.URL">URL:</label>
-    		 									<p id="bl.URL" class="form-control-static"></p>
+		  		 			  	    	<label class="col-sm-2 control-label" for="bi.URL">URL:</label>
+    		 									<p id="bi.URL" class="form-control-static"></p>
      										</div>
   											<div class="form-group">
-  		 					  	    	<label class="col-sm-2 control-label" for="bl.Status">Status:</label>
+		  		 			  	    	<label class="col-sm-2 control-label" for="bi.Headers">Headers:</label>
+    		 									<span><pre id="bi.Headers" class="pre-scrollable"></pre></span>
+     										</div>
+  											<div class="form-group">
+  		 					  	    	<label class="col-sm-2 control-label" for="bi.Status">Status:</label>
      											<p class="form-control-static">
-     												<span id="bl.Status"></span>
+     												<span id="bi.Status"></span>
      												<span> (</span>
-     												<span id="bl.StatusText"></span>
+     												<span id="bi.StatusText"></span>
      												<span>)</span></p>
      										</div>
      									</div>
 	   			  	  		  <br>
   	 			  	  		  <div>
-  				 		      	  <label for="bl.Response">Response</label>
-   				  	  			  <span><pre id="bl.Response" class="pre-scrollable"></pre></span>
+  				 		      	  <label for="bi.Response">Response</label>
+   				  	  			  <span><pre id="bi.Response" class="pre-scrollable"></pre></span>
    			  	  		  </div>
    			  	  		  </div>
    			  	  	  </div>
    			  	  	                
-    				  	  <div class="tab-pane" id="bl_javaScriptTab">
+    				  	  <div class="tab-pane" id="bi_javaScriptTab">
   					  			<div>
-  				 	  	    	<label for="bl.Code">Code</label>
-  					  	 	 		<span><pre id="bl.Code" class="pre-scrollable prettyprint"></pre></span>
+  				 	  	    	<label for="bi.Code">Code</label>
+  					  	 	 		<span><pre id="bi.Code" class="pre-scrollable prettyprint"></pre></span>
   					  			</div>  
     				  	  </div>
               
-    				  	  <div class="tab-pane " id="bl_sqlTab">
-  					  			<div>
-  				 	  	    	<label for="bl.SQL">SQL</label>
-  					  	 	 		<span><pre id="bl.SQL" class="pre-scrollable prettyprint"></pre></span>
-  					  			</div>  
+    				  	  <div class="tab-pane " id="bi_sqlTab">
+  					  			<label for="bi.SQL">Live SQL</label>
+  			 	  	    	<span class="pull-right">
+  			 	  	    		<button id="bi.executeSQL" type="button" class="btn btn-default btn-med" onclick="doExecuteSQL(sqlGenerator.BULK_INSERT);return false">
+												<img src="/XFILES/lib/icons/executeSQL.png" alt="Execute" border="0" width="16" height="16"/>
+											</button>
+										</span>
+										<br>
+										<br>
+										<br>
+  				  	 	 		<div><pre id="bi.SQL" class="pre-scrollable prettyprint"></pre></div>
+										<br>
+  				  	 	 		<div><pre id="bi.1.result" class="pre-scrollable prettyprint"></pre></div>
+  				  	 	 		<div>
+  				  	 	 			<input type="hidden" id="bi.1.timing"/>
+  				  	 	 		</div>
     				  	  </div>
    			      
    			  	  	</div>     			  	 
@@ -1062,9 +1116,11 @@ input[readonly] {
 		<script type="text/javascript" language="javascript" src="/XFILES/common/js/jsonPrettyPrint.js"></script>
 		<script type="text/javascript" language="javascript" src="/XFILES/common/js/common.js"></script>
   	<script type="text/javascript" language="javascript" src="/XFILES/common/js/xmlDocumentObject.js"></script>
+    <script type="text/javascript" language="javascript" src="/XFILES/common/js/runtime.js"></script>
 		<script type="text/javascript" language="javascript" src="/XFILES/common/js/userManagement.js"></script>
 		<script type="text/javascript" language="javascript" src="/XFILES/common/js/RestUtilities.js"></script>
 		<script type="text/javascript" language="javascript" src="/XFILES/common/js/RestAPI.js"></script>
+		<script type="text/javascript" language="javascript" src="/XFILES/lite/js/common.js"></script>
 		<script type="text/javascript" language="javascript" src="js/JSONREST.js"></script>
 	</body>
 </html>

@@ -87,8 +87,8 @@ Sub remapDrive()
   window.resizeTo 650,140
   
   Set XHELPER         = new xmlHelper
-  Set CONFIGURATION   = new configurationManager  
   Set IOMANAGER       = new fileSystemControl
+  Set CONFIGURATION   = new configurationManager  
   
   showDriveMappingForm(CONFIGURATION.getInstallationParameters())
    
@@ -98,7 +98,7 @@ Sub showDriveMappingForm(INSTALLATION)
 
   Dim xslFilename, target
   
-  If (CONFIGURATION.getWindowsVersion < 6.1) Then
+  If (ENVIRONMENT.getWindowsVersion < 6.1) Then
   	MsgBox "Mapping XML DB repository to Drive Letter only supported on Windows 7 and higher",vbCritical
   	self.close()
   End If
@@ -168,10 +168,10 @@ Sub installDemo()
   
   Set ENVIRONMENT      = new EnvironmentHelper
   Set APPLICATION      = new WindowsInstaller
+  Set IOMANAGER        = new FileSystemControl
 
   Set CONFIGURATION    = new ConfigurationManager
   Set DEMONSTRATION    = new DemonstrationConfiguration
-  Set IOMANAGER        = new FileSystemControl
   Set SQLPLUS          = new SQLPlusControl
   Set SQLLDR		       = new SQLLdrControl
   Set FTP              = new FTPControl
@@ -189,7 +189,7 @@ Sub getPorts()
 
   CONFIGURATION.readInstallationDialog
   
-  If (validOracleHome(CONFIGURATION)) Then
+  If (validOracleHome()) Then
     If (validDBA(CONFIGURATION,SQLPLUS)) Then
     	httpPortNumber = SQLPLUS.getHttpPort(CONFIGURATION.getDBAUsername, CONFIGURATION.getDBAPassword)
   	  document.getElementById("httpPort").value = httpPortNumber
@@ -205,7 +205,7 @@ Sub cancelInstall()
   Dim logFilePath
 
   APPLICATION.writeLogMessage "Installation Cancelled"
-  logFilePath = writeLogFile(LOGBUFFER)
+  logFilePath = APPLICATION.writeLog
   self.close()
 
 End Sub
@@ -253,7 +253,7 @@ Sub showInputForm(INSTALLATION)
   ' TODO : Check Vista
   ' TODO : Check Drive Letter in Windows XP
   
-  If (CONFIGURATION.getWindowsVersion < 6.1) Then
+  If (ENVIRONMENT.getWindowsVersion < 6.1) Then
   	Set target = document.getElementById("driveLetter")
   	If (Not target Is Nothing) Then
   		target.style.display = "none"
@@ -1423,7 +1423,7 @@ Sub doPostInstallActions()
   window.clearTimeOut(CURRENTTIMER)
   installationSuccessful CONFIGURATION  
   APPLICATION.writeLogMessage "Installation Successful"
-  writeLogFile LOGBUFFER
+  APPLICATION.writeLog
   self.close()
    
 End Sub
@@ -2748,13 +2748,13 @@ End Class
 CLASS demonstrationConfiguration
 
   Dim DOCUMENT
-  Dim Configuration
+  Dim DemoConfiguration
 
   Private Sub Class_Initialize()
    
     Set DOCUMENT = CreateObject("Msxml2.FreeThreadedDOMDocument.6.0")
-    Set Configuration = DOCUMENT.createElement("Configuration")
-    DOCUMENT.appendChild(Configuration)
+    Set DemoConfiguration = DOCUMENT.createElement("Configuration")
+    DOCUMENT.appendChild(DemoConfiguration)
   
   End Sub
   
@@ -2763,12 +2763,12 @@ CLASS demonstrationConfiguration
     Dim element,text
     
     Set element = DOCUMENT.createElement("rootFolder")
-    Configuration.appendChild(element)
+    DemoConfiguration.appendChild(element)
     Set text = DOCUMENT.createTextnode(CONFIGURATION.replaceMacros("%DEMOLOCAL%",false))
     element.appendChild(text)
 
     Set element = DOCUMENT.createElement("commonFolder")
-    Configuration.appendChild(element)
+    DemoConfiguration.appendChild(element)
     Set text = DOCUMENT.createTextnode(CONFIGURATION.replaceMacros("%DEMOCOMMON%",false))
     element.appendChild(text)
 
@@ -2863,7 +2863,7 @@ CLASS demonstrationConfiguration
     Dim stepElement, element, text
      
     Set stepElement = DOCUMENT.createElement("Step")
-    Configuration.appendChild(stepElement)
+    DemoConfiguration.appendChild(stepElement)
 
     Set element = DOCUMENT.createElement("name")
     stepElement.appendChild(element)
@@ -2923,13 +2923,25 @@ Class environmentHelper
 
   Function isBatchInstall() 
   
-   isBatchInstall = ((NOT interactiveInstall) and (right(Wscript.ScriptName,4) = ".wsf"))
+   isBatchInstall = false
+   
+   If (NOT interactiveInstall) Then
+   	 If (right(Wscript.ScriptName,4) = ".wsf") Then
+   	   isBatchInstall = true
+   	 End If
+  End If
   
   End Function
 
 	Function isScriptGenerator()
 	
-	  isScriptGenerator = ((NOT interactiveInstall) and (Wscript.ScriptName = "linuxInstaller.wsf"))
+   isScriptGenerator = false
+   
+   If (NOT interactiveInstall) Then
+   	 If (Wscript.ScriptName = "linuxInstaller.wsf") Then
+   	   isScriptGenerator = true
+   	 End If
+   End If
 	  
 	End Function
 
@@ -3407,7 +3419,7 @@ Class ConfigurationManager
   End Function
 
   Public Function getTNSAliasFromRegistry()
-    getTNSAliasFromRegistry = ENVIRONMENT.getOracleSID
+    getTNSAliasFromRegistry = ENVIRONMENT.getOracleSID()
   End Function
   
   Public Function getInstallationParameters()
@@ -3431,7 +3443,7 @@ Class ConfigurationManager
   End Function
 
   Public Function getLaunchPadFolderName()
-    getLaunchPadFolderName = getFSO().getFileName(getLaunchPadFolderPath())
+    getLaunchPadFolderName = ENVIRONMENT.getFSO().getFileName(getLaunchPadFolderPath())
   End Function
 
   Public Function getDesktopPath()
@@ -3601,7 +3613,7 @@ Class ConfigurationManager
 
   Public Function readDriveLetter()
   
-    If getWindowsVersion >= 6.1 Then
+    If ENVIRONMENT.getWindowsVersion >= 6.1 Then
       Dim target
       set target = Document.getElementById("driveLetter")
       If (target Is Nothing) Then
@@ -3858,11 +3870,11 @@ Class WindowsInstaller
 	DIM appHelper
   DIM logFilePath
   
-	Public Sub class_initialize
+	Public Sub class_initialize()
 	
 	  Set appHelper = new HTMLAppHelper
-	  logFilePath = ENVIRONMENT.getInstallFolderPath() & FILE_SEPERATOR & ENVIRONMENT.getDemoFolderName() & ".log"   
-	  
+	  ' logFilePath = CONFIGURATION.getInstallFolderPath() & FILE_SEPERATOR & ENVIRONMENT.getDemoFolderName() & ".log"   
+	  logFilePath = ENVIRONMENT.getWshell().CurrentDirectory & FILE_SEPERATOR & ENVIRONMENT.getDemoFolderName() & ".log" 
 	End Sub
 
   Public Function GetInstallType

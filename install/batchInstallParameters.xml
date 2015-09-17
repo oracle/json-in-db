@@ -3,4 +3,5 @@
 	<Demo name="JSON-HOL"       user="SCOTT" password="tiger"/>
 	<Demo name="RESTDEMO"       user="XFILES" password="XFILES"/> 
 	<Demo name="SCHEMALESS"     user="SCOTT" password="tiger"/>
+	<Demo name="SODA4REST-HOL"     user="SCOTT" password="tiger"/>
 </InstallList>		

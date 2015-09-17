@@ -1,0 +1,22 @@
+<!-- edited with XML Spy v4.4 U (http://www.xmlspy.com) by Mark D. Drake and Geoff Lee (Oracle XML Dev) -->
+<installerConfiguration>
+	<parameters>
+		<parameter name="%DEMONAME%"              value="SODA for REST : Oracle Database 12c (12.1.0.2.0)"/>
+		<parameter name="%HOL_BASE%"              value="$HOL_BASE"/>
+		<parameter name="%LABID%"                 value="soda4rest"/>
+	</parameters>
+
+	<installation/>
+
+	<make>
+		<folders/>
+	</make>	
+	
+	<clone>
+		<files/>
+		<folders/>
+	</clone>
+	
+	<shortCuts/>		
+	
+</installerConfiguration>

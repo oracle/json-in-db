@@ -17,6 +17,7 @@
 
 		<parameter name="enableHTTPTrace"         value="false"/>
 		<parameter name="%HOL_BASE%"              value="$HOL_BASE"/>
+		<parameter name="%HOL_ROOT%"              value="~/Desktop/Database_Track/JSON"/>
 		<parameter name="%LABID%"                 value="json"/>
 	</parameters>
 

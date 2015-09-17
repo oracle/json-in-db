@@ -79,6 +79,8 @@ DBAPWD=${2}
 USER=${3}
 USERPWD=${4}
 SERVER=${5}
+HOL_BASE="~/Desktop/Database_Track/SODA4REST"
+LABID="soda4rest"
 demohome="$(dirname "$(pwd)")"
 logfilename=$demohome/hol/installHandsOnLab.log
 echo "Log File : $logfilename"

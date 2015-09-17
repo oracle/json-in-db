@@ -3,6 +3,7 @@
 	<parameters>
 		<parameter name="%DEMONAME%"              value="SODA for REST : Oracle Database 12c (12.1.0.2.0)"/>
 		<parameter name="%HOL_BASE%"              value="$HOL_BASE"/>
+		<parameter name="%HOL_ROOT%"              value="~/Desktop/Database_Track/SODA4REST"/>
 		<parameter name="%LABID%"                 value="soda4rest"/>
 	</parameters>
 

@@ -10,7 +10,10 @@
 	<installation/>
 
 	<make>
-		<folders/>
+		<folders>
+			<folder>%HOL_BASE%</folder>
+			<folder>%HOL_BASE%\manual</folder>
+		</folders>
 	</make>	
 	
 	<clone>

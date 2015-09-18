@@ -36,9 +36,10 @@
 
 	<make>
 		<folders>
-			<folder>%DEMODIRECTORY%\%USER%</folder>
-			<folder>%DEMODIRECTORY%\%USER%\sql</folder>
-			<folder>%DEMODIRECTORY%\%USER%\install</folder>
+			<folder>%HOL_BASE%</folder>
+			<folder>%HOL_BASE%\sql</folder>
+			<folder>%HOL_BASE%\install</folder>
+			<folder>%HOL_BASE%\manual</folder>
 		</folders>
 	</make>	
 	
@@ -53,7 +54,7 @@
 				<target>%HOL_BASE%\install\setupLab.sh</target>
 			</file>
 			<file>
-				<source>%DEMODIRECTORY%\hol\clone\setupLab.sql</source>
+				<source>%DEMODIRECTORY%\setup\install\setupLab.sql</source>
 				<target>%HOL_BASE%\install\setupLab.sql</target>
 			</file>
 		</files>

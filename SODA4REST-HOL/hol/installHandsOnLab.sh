@@ -69,6 +69,8 @@ doInstall() {
     exit 4
   fi
   rm -rf "$HOL_BASE"
+  mkdir -p "$HOL_BASE"
+  mkdir -p "$HOL_BASE/manual"
   unzip -o -qq "$demohome/manual/manual.zip" -d "$HOL_BASE/manual"
   ln -s "$HOL_BASE/manual/manual.htm" "$HOL_BASE/manual/index.html"
   chmod +x "$HOME/reset_soda4rest"
@@ -79,10 +81,13 @@ DBAPWD=${2}
 USER=${3}
 USERPWD=${4}
 SERVER=${5}
-HOL_BASE="~/Desktop/Database_Track/SODA4REST"
+HOL_BASE="$HOME/Desktop/Database_Track/SODA4REST"
 LABID="soda4rest"
 demohome="$(dirname "$(pwd)")"
 logfilename=$demohome/hol/installHandsOnLab.log
 echo "Log File : $logfilename"
-rm $logfilename
+if [ -f "$logfilename" ]
+then
+  rm $logfilename
+fi
 doInstall 2>&1 | tee -a $logfilename

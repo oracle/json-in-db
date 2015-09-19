@@ -54,12 +54,8 @@
 				<target>%HOL_BASE%\install\setupLab.sh</target>
 			</file>
 			<file>
-				<source>%DEMODIRECTORY%\hol\sql\setupLab.sql</source>
+				<source>%DEMODIRECTORY%\setup\sql\setupLab.sql</source>
 				<target>%HOL_BASE%\install\setupLab.sql</target>
-			</file>
-			<file>
-				<source>%DEMODIRECTORY%\hol\sql\resetLab.sql</source>
-				<target>%HOL_BASE%\install\resetLab.sql</target>
 			</file>
 		</files>
 		
@@ -70,6 +66,15 @@
 			</folder>
 		</folders>
 	</clone>
+
+	<copy>
+		<files>
+			<file>
+				<source>$HOL_BASE\sql\0.0 RESET_DEMO.sql</source>
+				<target>$HOL_BASE\install\resetLab.sql</target>
+			</file>
+		</files>
+	</copy>
 
 	<shortCuts/>		
 </installerConfiguration>

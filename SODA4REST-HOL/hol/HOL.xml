@@ -7,13 +7,13 @@
 		<parameter name="%LABID%"                 value="soda4rest"/>
 	</parameters>
 
-	<installation/>
+	<installation>
 			<action type="MAKEFOLDERS"/>
 	</installation>
 
 	<make>
 		<folders>
-			<folder>%HOL_BASE%\manual</folder>
+			<folder>%HOL_BASE%</folder>
 			<folder>%HOL_BASE%\manual</folder>
 		</folders>
 	</make>	

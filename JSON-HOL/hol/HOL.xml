@@ -30,7 +30,7 @@
 
 		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\grantPermissions.sql %USER%</action>
 		<action type="RUNSQL" user="%USER%" password="%PASSWORD%">%DEMODIRECTORY%\install\sql\createHomeFolder.sql</action>
-		<action type="SYSDBA" user="%DBA%"  password="%DBAPASSWORD%">"%HOL_BASE%\install\setupLab.sql" %USER% %PASSWORD% </action>
+		<action type="SYSDBA" user="%DBA%"  password="%DBAPASSWORD%">"%HOL_BASE%\install\setupLab.sql" %USER% %PASSWORD% %TNSALIAS%</action>
 		<action type="RUNSQL" user="%USER%" password="%PASSWORD%">"%HOL_BASE%\install\resetLab.sql"</action>
 	</installation>
 

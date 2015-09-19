@@ -94,7 +94,7 @@ doInstall() {
   cp "$HOL_BASE/sql/0.0 RESET_DEMO.sql" "$HOL_BASE/install/resetLab.sql"
   sqlplus $DBA/$DBAPWD@$ORACLE_SID @$demohome/install/sql/grantPermissions.sql $USER
   sqlplus $USER/$USERPWD@$ORACLE_SID @$demohome/install/sql/createHomeFolder.sql
-  sqlplus $DBA/$DBAPWD@$ORACLE_SID as sysdba @"$HOL_BASE/install/setupLab.sql" $USER $USERPWD
+  sqlplus $DBA/$DBAPWD@$ORACLE_SID as sysdba @"$HOL_BASE/install/setupLab.sql" $USER $USERPWD $ORACLE_SID
   sqlplus $USER/$USERPWD@$ORACLE_SID @"$HOL_BASE/install/resetLab.sql"
   unzip -o -qq "$demohome/manual/manual.zip" -d "$HOL_BASE/manual"
   ln -s "$HOL_BASE/manual/manual.htm" "$HOL_BASE/manual/index.html"

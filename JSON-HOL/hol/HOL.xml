@@ -54,7 +54,7 @@
 				<target>%HOL_BASE%\install\setupLab.sh</target>
 			</file>
 			<file>
-				<source>%DEMODIRECTORY%\setup\sql\setupLab.sql</source>
+				<source>%DEMODIRECTORY%\setup\install\setupLab.sql</source>
 				<target>%HOL_BASE%\install\setupLab.sql</target>
 			</file>
 		</files>

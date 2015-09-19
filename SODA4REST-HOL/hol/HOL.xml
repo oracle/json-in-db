@@ -3,15 +3,17 @@
 	<parameters>
 		<parameter name="%DEMONAME%"              value="SODA for REST : Oracle Database 12c (12.1.0.2.0)"/>
 		<parameter name="%HOL_BASE%"              value="$HOL_BASE"/>
-		<parameter name="%HOL_ROOT%"              value="~/Desktop/Database_Track/SODA4REST"/>
+		<parameter name="%HOL_ROOT%"              value="$HOME/Desktop/Database_Track/SODA4REST"/>
 		<parameter name="%LABID%"                 value="soda4rest"/>
 	</parameters>
 
 	<installation/>
+			<action type="MAKEFOLDERS"/>
+	</installation>
 
 	<make>
 		<folders>
-			<folder>%HOL_BASE%</folder>
+			<folder>%HOL_BASE%\manual</folder>
 			<folder>%HOL_BASE%\manual</folder>
 		</folders>
 	</make>	

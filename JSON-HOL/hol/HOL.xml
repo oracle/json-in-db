@@ -17,7 +17,7 @@
 
 		<parameter name="enableHTTPTrace"         value="false"/>
 		<parameter name="%HOL_BASE%"              value="$HOL_BASE"/>
-		<parameter name="%HOL_ROOT%"              value="~/Desktop/Database_Track/JSON"/>
+		<parameter name="%HOL_ROOT%"              value="$HOME/Desktop/Database_Track/JSON"/>
 		<parameter name="%LABID%"                 value="json"/>
 	</parameters>
 
@@ -30,7 +30,7 @@
 
 		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\grantPermissions.sql %USER%</action>
 		<action type="RUNSQL" user="%USER%" password="%PASSWORD%">%DEMODIRECTORY%\install\sql\createHomeFolder.sql</action>
-		<action type="RUNSQL" user="%DBA%"  password="%DBAPASSWORD%">"%HOL_BASE%\install\setupLab.sql" %USER% %PASSWORD% %TNSALIAS%</action>
+		<action type="SYSDBA" user="%DBA%"  password="%DBAPASSWORD%">"%HOL_BASE%\install\setupLab.sql" %USER% %PASSWORD% </action>
 		<action type="RUNSQL" user="%USER%" password="%PASSWORD%">"%HOL_BASE%\install\resetLab.sql"</action>
 	</installation>
 
@@ -54,8 +54,12 @@
 				<target>%HOL_BASE%\install\setupLab.sh</target>
 			</file>
 			<file>
-				<source>%DEMODIRECTORY%\setup\install\setupLab.sql</source>
+				<source>%DEMODIRECTORY%\hol\sql\setupLab.sql</source>
 				<target>%HOL_BASE%\install\setupLab.sql</target>
+			</file>
+			<file>
+				<source>%DEMODIRECTORY%\hol\sql\resetLab.sql</source>
+				<target>%HOL_BASE%\install\resetLab.sql</target>
 			</file>
 		</files>
 		

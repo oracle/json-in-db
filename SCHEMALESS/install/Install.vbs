@@ -18,6 +18,7 @@ Const LINUX_INSTALL = 1
 Const HOL_INSTALL = 2
 Const DOS_INSTALL = 3
 Const WINDOWS_INSTALL = 4
+Const ORDS_INSTALL = 5
 
 ' Shortcut Logic.
 

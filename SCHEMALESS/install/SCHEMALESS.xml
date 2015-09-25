@@ -36,5 +36,6 @@
   		</action>
   		
   	</action>
+	  <action type="ORDS"></action>
  	</installation>
 </installerConfiguration>

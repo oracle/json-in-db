@@ -39,6 +39,7 @@
   	
 		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\unzipArchive.sql %DOCLIBRARY%/manual/manual.zip %DOCLIBRARY%/manual %DOCLIBRARY%/manual/manual.log</action>
 		<action type="HOL"/>
+    <action type="ORDS"></action>
 	</installation>
 
 

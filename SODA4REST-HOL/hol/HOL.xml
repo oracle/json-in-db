@@ -8,7 +8,9 @@
 	</parameters>
 
 	<installation>
-			<action type="MAKEFOLDERS"/>
+		<action type="MAKEFOLDERS"/>
+		<action type="CLONEFOLDERS"/>
+		<action type="CLONEFILES"/>
 	</installation>
 
 	<make>
@@ -19,8 +21,20 @@
 	</make>	
 	
 	<clone>
-		<files/>
-		<folders/>
+		<files>
+			<file>
+				<source>%DEMODIRECTORY%\hol\clone\resetLab.sh</source>
+				<target>$HOME\reset_%LABID%</target>
+			</file>
+			<file>
+				<source>%DEMODIRECTORY%\hol\clone\setupLab.sh</source>
+				<target>%HOL_BASE%\install\setupLab.sh</target>
+			</file>
+			<file>
+				<source>%DEMODIRECTORY%\setup\install\setupLab.sql</source>
+				<target>%HOL_BASE%\install\setupLab.sql</target>
+			</file>
+		</files>
 	</clone>
 	
 	<shortCuts/>		

@@ -121,7 +121,8 @@
   			<local>%DEMODIRECTORY%\css\demo.css</local>
   			<remote>%DEMOLOCAL%/css/demo.css</remote>
   		</action>
-  		
+		
   	</action>
+	  <action type="ORDS"></action>
  	</installation>
 </installerConfiguration>

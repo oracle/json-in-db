@@ -12,17 +12,10 @@
 # */
 doInstall() {
   echo "ORDS Installation Parameters: Oracle SODA For REST Instroduction."
-  echo "\$DBA            : $DBA"
+  echo "\$ORDS_ROOT      : $ORDS_ROOT"
   echo "\$USER           : $USER"
   echo "\$SERVER         : $SERVER"
   echo "\$DEMOHOME       : $demohome"
-  echo "\$ORACLE_HOME    : $ORACLE_HOME"
-  echo "\$ORACLE_SID     : $ORACLE_SID"
-  spexe=$(which sqlplus | head -1)
-  echo "sqlplus      : $spexe"
-  unset http_proxy
-  unset https_proxy
-  unset no_proxy
   rm -rf "$ORDS_ROOT/publishedContent/Hands-On-Labs/SODA4REST"
   rc=$?
   echo "DELETE "$ORDS_ROOT/publishedContent/Hands-On-Labs/SODA4REST" : $rc" >> $logfilename
@@ -78,13 +71,11 @@ doInstall() {
   fi
   echo "Installation Complete. See $logfilename for details."
 }
-DBA=${1}
-DBAPWD=${2}
-USER=${3}
-USERPWD=${4}
-SERVER=${5}
+ORDS_ROOT=${1}
+USER=${2}
+SERVER=${3}
 demohome="$(dirname "$(pwd)")"
-logfilename=$demohome/ORDS/installHandsOnLab.log
+logfilename=$demohome/ORDS/install.log
 echo "Log File : $logfilename"
 if [ -f "$logfilename" ]
 then

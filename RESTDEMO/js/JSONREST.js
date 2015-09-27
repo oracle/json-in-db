@@ -19,11 +19,12 @@ var sqlGenerator = new SqlGenerator()
 
 var serviceList = [
       sqlGenerator.CREATE_COLLECTION,
+      sqlGenerator.LIST_COLLECTIONS,
       sqlGenerator.DROP_COLLECTION,
       sqlGenerator.POST_DOCUMENT,
       sqlGenerator.GET_DOCUMENT,
-      // sqlGenerator.UPDATE_DOCUMENT,
-      sqlGenerator.DELELE_DOCUMENT, 
+      sqlGenerator.UPDATE_DOCUMENT,
+      sqlGenerator.DELETE_DOCUMENT, 
       sqlGenerator.LIST_KEYS,
       // sqlGenerator.LIST_DOCUMENTS,
       sqlGenerator.BULK_INSERT,
@@ -1276,7 +1277,7 @@ function init() {
 		  pwd.parentNode.removeChild(pwd);
 		  // Remove SQL Tabs from form.
 			for (var i =0; i<serviceList.length; i++) {
-				var tab = document.getElementById(serviceList[i] & ".sqlTabLi");
+				var tab = document.getElementById(serviceList[i] + "_sqlTabLi");
 				tab.parentNode.removeChild(tab);
     	}
     }

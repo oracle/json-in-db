@@ -1,5 +1,5 @@
 doSetup() {
-  cd %HOLDIRECTORY%/install
+  cd %HOL_ROOT%/install
   sh setupLab.sh ${DBAPWD} ${USERPWD}
 }
 DBAPWD=${1:-oracle}

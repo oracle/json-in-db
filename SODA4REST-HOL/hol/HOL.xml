@@ -11,12 +11,15 @@
 		<action type="MAKEFOLDERS"/>
 		<action type="CLONEFOLDERS"/>
 		<action type="CLONEFILES"/>
+		<action type="COPYFOLDERS"/>
 	</installation>
 
 	<make>
 		<folders>
 			<folder>%HOL_BASE%</folder>
 			<folder>%HOL_BASE%\manual</folder>
+			<folder>%HOL_BASE%\install</folder>
+			<folder>%HOL_BASE%\SampleDocuments</folder>
 		</folders>
 	</make>	
 	
@@ -34,8 +37,21 @@
 				<source>%DEMODIRECTORY%\setup\install\setupLab.sql</source>
 				<target>%HOL_BASE%\install\setupLab.sql</target>
 			</file>
+			<file>
+				<source>%DEMODIRECTORY%\hol\clone\resetLab.sql</source>
+				<target>%HOL_BASE%\install\resetLab.sql</target>
+			</file>
 		</files>
 	</clone>
+
+	<copy>
+		<folders>
+			<folder>
+				<source>%DEMODIRECTORY%/setup/SampleDocuments</source>
+				<target>%HOL_BASE%/SampleDocuments</target>
+			</folder>
+		</folders>
+	</copy>
 	
 	<shortCuts/>		
 	

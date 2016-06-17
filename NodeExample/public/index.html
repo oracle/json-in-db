@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+
+<html ng-app="movieTicketing">
+	<head>
+		<style>
+
+.btn-group-vertical > button{
+    margin-bottom:28px;
+    border-radius:10px !important;
+}
+
+.glyphicon.spinning {
+    animation: spin 1s infinite linear;
+    -webkit-animation: spin2 1s infinite linear;
+}
+
+@keyframes spin {
+    from { transform: scale(1) rotate(0deg); }
+    to { transform: scale(1) rotate(360deg); }
+}
+
+@-webkit-keyframes spin2 {
+    from { -webkit-transform: rotate(0deg); }
+    to { -webkit-transform: rotate(360deg); }
+}
+
+.voffset2  { margin-bottom: 2px; }
+.voffset4  { margin-bottom: 4px; }
+.voffset8  { margin-bottom: 8px; }
+.voffset16 { margin-bottom: 16px; }
+.voffset32 { margin-bottom: 32px; }
+.voffset64 { margin-bottom: 64px; }
+	
+body {
+    padding: 25px;
+}
+
+		</style>
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="/frameworks/bootstrap/dist/css/bootstrap.min.css">
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="/frameworks/bootstrap/dist/css/bootstrap-theme.min.css">
+		<!-- Include Bootstrap Datepicker -->
+		<link rel="stylesheet" href="/frameworks/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" />
+		<link rel="stylesheet" href="/frameworks/bootstrap-datepicker/dist/css/bootstrap-datepicker3.min.css" />
+
+	</head>
+	<body onload="formLoad()">
+        <div class="page-header">
+            <span>
+			    <span style="vertical-align:middle; display: inline-block">
+			        <img class="h3" src="OracleLogo.png" style="height:2em;margin-right:1em;" alt="OracleLogo">
+			    </span>
+			    <span style="vertical-align:middle; display: inline-block">
+			        <h3>Movie<br>Ticketing</h3>
+			    </span>
+            </span>
+            <!-- Nav tabs -->
+		    <span style="vertical-align:bottom; display: inline-block">
+			    <ul class="nav nav-tabs" role="tablist" id="tabset_MovieTickets">
+  				    <li><a href="#tab_TheaterList"     role="tab" data-toggle="tab">List Theaters</a></li>
+  				    <li><a href="#tab_MovieList"       role="tab" data-toggle="tab">List Movies</a></li>
+  				    <li><a style="display: none;" href="#tab_MoviesByTheater" role="tab" data-toggle="tab">Movies By Theater</a></li>
+  				    <li><a style="display: none;" href="#tab_TheatersByMovie" role="tab" data-toggle="tab">Theater By Movies</a></li>
+  				    <li><a href="#tab_LoadTestData"    role="tab" data-toggle="tab">Load Test Data</a></li>
+			    </ul>
+  	        </span>
+    	    <span class="pull-right" style="vertical-align:bottom; display: inline-block">
+                <span class="pull-right"><a href="/documentation/index.htm" target="_movieTicketDocumentation">documentation</a></span>
+                <br>
+                <br>
+                <span class="date form-inline" >
+ 	     	        <label for="date" class="control-label">Date</label>
+	  	            <div class="input-group input-append date" id="datePicker">
+      	  		        <input id="date" type="text" size="10" class="form-control" name="date" />
+    	   	            <span class="input-group-addon add-on"><span class="glyphicon glyphicon-calendar"></span></span>
+      	            </div>
+                </span>
+            </span>
+		</div>
+			
+		<!-- Tab panes -->
+		<div class="tab-content container">
+			
+  		<div class="tab-pane active" id="tab_TheaterList">
+				<div id="TheaterList" class="panel panel-default" ng-controller="theatersCtrl">
+      		<div class="panel-heading">
+     				<h3 class="panel-title" style="line-height:35px;">Theater Information
+	   				<span class="pull-right">
+	  					<button class="btn btn-success btn-med" id="btn_TheaterSearch" type="button" onclick="showTheaterSearch()">
+						 		<span class="glyphicon glyphicon-search"></span>
+							</button>
+					  </span>
+						</h3>
+      		</div>
+      		<div class="panel-body" style="height:65vh; overflow: auto;">
+      			<table class="table table-fixed">
+      				<thead>
+      					<tr>
+      						<th>Name</th>
+      						<th>Address</th>
+      					  <th></th>
+      					</tr>
+      				</thead>
+      				<tbody>
+      					<tr ng-repeat="theater in theaterService.theaters">
+     							<td>{{theater.value.name}}</td>
+     							<td>{{theater.value.location.street}} {{theater.value.location.city}} {{theater.value.location.state}} {{theater.value.location.zipCode}}</td>
+     							<td>
+      							<button id="btn_MoviesByTheater" type="button" class="btn btn-default btn-success" ng-click="theaterService.getMoviesByTheater(theater.id)">Movies</button>
+     						  </td>
+     						</tr>
+     					</tbody>
+     				</table>
+     			</div>
+					<div>
+						<br>
+					</div>
+		      <div class="container row" id="log_TheaterList">
+    	    	<table>
+		      		<tbody>
+ 			      		<tr>
+			      			<td style="padding-right:1em; width:100px; vertical-align:top;">
+			      				<div class="btn-group" role="group">
+  							    	<button type="button" class="btn btn-default btn-med" ng-disabled="true" >
+  								    	<span class="glyphicon glyphicon-arrow-up"></span>
+  							    	</button>
+  							    	<button type="button" class="btn btn-default btn-med" ng-disabled="true">
+  								    	<span class="glyphicon glyphicon-arrow-down"></span>
+  							    	</button>
+  							    </div>
+  						  	</td>
+	  						 	<td>
+	  						 		<table>
+	  						 			<tbody>
+	  						 				<tr>
+	  						 					<td>
+				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{theaterService.logRecord[0].value.method}}</span>
+  	  				      	 			<span style="margin-right:1em;"><strong>URL:</strong> {{theaterService.logRecord[0].value.url}}</span>
+    	  	    				 		<td>
+      	  	  	 				</tr>
+        	  		 				<tr ng-if="theaterService.logRecord[0].value.request.body.length > 0">
+      	 									<td><strong>Body:</strong> {{theaterService.logRecord[0].value.request.body}}</td>
+      	 								</tr>
+	          		 				<tr>
+      				 						<td><strong>Status:</strong> {{theaterService.logRecord[0].value.response.statusCode}} [{{theaterService.logRecord[0].value.response.statusText}}] <strong>Elapsed Time:</strong> {{theaterService.logRecord[0].value.elapsedTime}}ms.</td>
+      	 								</tr>
+      	 							</tbody>
+      	 						</table>
+      	 					</td>
+      	 				<tr>	
+      	 			</tbody>
+      	 		</table>
+      	 	</div>
+     		</div>
+			</div>
+			
+	  	<div class="tab-pane" id="tab_MovieList">
+      	<div id="MovieList" class="panel panel-default" ng-controller="moviesCtrl">
+      		<div class="panel-heading">
+      			<h4 class="panel-title" style="line-height:35px;">Movie Information
+  	   				<span class="pull-right">
+    						<button class="btn btn-success btn-med" id="btn_MovieSearch" type="button" onclick="showMovieSearch()">
+						 			<span class="glyphicon glyphicon-search"></span>
+								</button>
+							</span>
+						</h4>
+      		</div>
+      		<div class="panel-body" style="height:65vh; overflow: auto;" >
+      			<table class="table">
+      				<thead>
+      					<tr>
+      						<th>Name</th>
+      						<th>Address</th>
+      					</tr>
+      				</thead>
+      				<tbody>
+      					<tr ng-repeat="movie in movieService.movies">
+      						<td>
+      							<table class="table">
+      								<tr><td><img src="{{movie.value.posterURL}}"></td></tr>
+      							  <tr><td>{{movie.value.title}}</td></tr>
+      							</table>
+      						</td>
+      						<td>
+      							<table>
+      								<tbody>
+	      								<tr><td>{{movie.value.plot}}</td></tr>
+  	    								<tr>
+				      						<td>
+      											<button id="btn_TheatersByMovie" type="button" class="btn btn-default btn-success" ng-click="movieService.getTheatersByMovie(movie.id)">Theaters</button>
+      										</td>
+      									</tr>
+      								</tbody>
+      							</table>      							  		
+      						</td>
+      					</tr>
+      				</tbody>
+     				</table>
+      		</div>
+					<div>
+						<br>
+					</div>
+		      <div class="container row" id="log_MovieList" >
+    	    	<table>
+		      		<tbody>
+ 			      		<tr>
+			      			<td style="padding-right:1em; width:100px; vertical-align:top;">
+  							    <div class="btn-group" role="group">
+  							    	<button type="button" class="btn btn-default btn-med" ng-disabled="true" >
+  								    	<span class="glyphicon glyphicon-arrow-up"></span>
+  							    	</button>
+  							    	<button type="button" class="btn btn-default btn-med" ng-disabled="true">
+  								    	<span class="glyphicon glyphicon-arrow-down"></span>
+  							    	</button>
+  							    </div>
+  						  	</td>
+	  						 	<td>
+	  						 		<table>
+	  						 			<tbody>
+	  						 				<tr>
+	  						 					<td>
+				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{movieService.logRecord[0].value.method}}</span>
+    	      	 							<span style="margin-right:1em;"><strong>URL:</strong> {{movieService.logRecord[0].value.url}}</span>
+							    	 			<td>
+        	  	 					</tr>
+          		 					<tr ng-if="movieService.logRecord[0].value.request.body.length > 0">
+						  	 					<td><strong>Body:</strong> {{movieService.logRecord[0].value.request.body}}</td>
+      	 								</tr>
+				          		 	<tr>
+      										<td><strong>Status:</strong> {{movieService.logRecord[0].value.response.statusCode}} [{{movieService.logRecord[0].value.response.statusText}}] <strong>Elapsed Time:</strong> {{movieService.logRecord[0].value.elapsedTime}}ms.</td>
+      	 								</tr>
+      	 							</tbody>
+      	 						</table>
+      	 					</td>
+      	 				<tr>	
+      	 			</tbody>
+      	 		</table>
+	      	</div>
+      	</div>
+      </div>
+
+	  	<div class="tab-pane" id="tab_MoviesByTheater">
+      	<div id="MovieList" class="panel panel-default" ng-controller="moviesByTheaterCtrl">
+      		<div class="panel-heading">
+      			<h4 class="panel-title">Movies and Showtimes for {{theaterService.moviesByTheater.theater.name}} {{theaterService.moviesByTheater.theater.location.street}} {{theaterService.moviesByTheater.theater.location.city}} {{theaterService.moviesByTheater.theater.location.state}} {{theaterService.moviesByTheater.theater.location.zipCode}}</h4>
+      		</div>
+      		<div class="panel-body" style="height:65vh; overflow: auto;">
+      			<table class="table">
+      				<thead>
+      					<tr>
+      						<th>Title</th>
+      						<th>Plot</th>
+      					</tr>
+      				</thead>
+      				<tbody>
+      					<tr ng-repeat="m in theaterService.moviesByTheater.movies">
+      						<td>
+      							<table class="table">
+      								<tr><td><img src="{{m.movie.posterURL}}"></td></tr>
+      							  <tr><td>{{m.movie.title}}</td></tr>
+      							</table>
+      						</td>
+      						<td>
+      							<div>{{m.movie.plot}}</div>
+      							<div>
+      							<table>
+      								<tr><td></td></tr>
+      							  <tr class="voffset8">
+      							  	<td>
+	 		      							<table class="table">
+  			    								<thead>
+        											<th style="width:100px;">Auditorium</th>
+  	    											<th>Show Times</th>
+  	    										</thead>
+  	    						  			<tbody>
+  	    						  				<tr class="voffset4" ng-repeat="screen in m.screens">
+  	    						  					<th scope="row">{{screen.id}}</th>
+  	    						  	  			<td > 
+  	    						  	  				<div class="btn-toolbar " role="toolbar">
+  	    						  	  					<div ng-repeat="show in screen.showTimes"  class="btn-group" role="group">
+						  	  			  						<button ng-disabled="(!(show.startTime > now) && (show.seatsRemaining > 0))" type="button" class="btn btn-secondary" ng-click="bookingService.getBookingInfo(show.id)" data-toggle="tooltip" title="{{show.startTime}}">{{show.startTime | date : 'hh:mma'}}</button>
+  	    						  	  			 		</div>
+  	    						  	  			 	</div>
+																<td>
+  	    						  				</tr>
+  	    						 				</tbody>
+  	    									</table>
+      							  	</td>
+      							 	</tr>
+      							</table>      							  		
+      							<div>
+      						</td>
+      					</tr>
+      				</tbody>
+     				</table>
+      		</div>
+					<div>
+						<br>
+					</div>
+		      <div class="container row" id="log_MoviesByTheater" ng-repeat="l in theaterService.mbtLogRecord" ng-show="theaterService.logRecordIndex == $index" ng-init="theaterService.logRecordIndex = 0">
+		      	<table>
+		      		<tbody>
+ 			      		<tr>
+			      			<td style="padding-right:1em; width:100px; vertical-align:top;">
+			      				<div class="btn-group" role="group">
+  							    	<button type="button" class="btn btn-default btn-med" ng-click="theaterService.showPrevLogEntry()" ng-disabled="$first" >
+	  								    <span class="glyphicon glyphicon-arrow-up"></span>
+  							    	</button>
+  							    	<button type="button" class="btn btn-default btn-med" ng-click="theaterService.showNextLogEntry()" ng-disabled="$last">
+	  								    <span class="glyphicon glyphicon-arrow-down"></span>
+  							    	</button>
+  							    </div>
+  						  	</td>
+	  						 	<td>
+	  						 		<table>
+	  						 			<tbody>
+	  						 				<tr>
+	  						 					<td>
+				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{l.value.method}}</span>
+    	      	 							<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.url}}</span>
+				      	    	 		<td>
+       				 	  	 		</tr>
+          		 					<tr ng-if="l.value.request.body.length > 0">
+				      	 					<td><strong>Body:</strong> {{l.value.request.body}}</td>
+				      	 				</tr>
+          		 					<tr>
+      	 									<td><strong>Status:</strong> {{l.value.response.statusCode}} [{{l.value.response.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
+      	 								</tr>
+      	 							</tbody>
+      	 						</table>
+      	 					</td>
+      	 				</tr>
+      	 			</tbody>
+      	 		</table>
+	      	</div>
+      	</div>
+      </div>
+
+	  	<div class="tab-pane" id="tab_TheatersByMovie">
+      	<div id="MovieList" class="panel panel-default" ng-controller="theaterByMovieCtrl">
+      		<div class="panel-heading" style="line-height:35px;">
+      			<h4>Theaters and Showtimes for:{{movieService.theatersByMovie.movie.title}}</h4>
+      		</div>
+      		<div Class="panel-body" style="height:65vh; overflow: auto;">
+      			<table class="table">
+      				<tbody>
+      					<tr>
+      						<td>
+      							<table class="table">
+      								<tr><td><img src="{{movieService.theatersByMovie.movie.posterURL}}"></td></tr>
+      							  <tr><td>{{movieService.theatersByMovie.movie.title}}</td></tr>
+      							</table>
+      						</td>
+      						<td>
+      							<div>{{movieService.theatersByMovie.movie.plot}}</div>
+      							<div>
+        							<table>
+        								<tr><td></td></tr>
+        							  <tr class="voffset8">
+        							  	<td>
+  	 		      							<table class="table">
+    	    						  			<tbody>
+    	    						  				<tr class="voffset4" ng-repeat="t in movieService.theatersByMovie.theaters">
+    	    						  					<td>
+    	    						  						<div>
+  				 		      									<table>
+    	  			  						  					<tbody>
+    	  			  						  						<tr>
+  	  	    								  							<th>{{t.theater.name}}</th>
+	  	  	    								  					</tr>
+  		  	    								  					<tr>
+    			    								  						<td>{{t.theater.location.street}} {{t.theater.location.city}} {{t.theater.location.state}} {{t.theater.location.zipCode}}</td>
+    			    								  					</tr>
+    		    								  					</tbody>
+    		    								  				</table>
+    		    								  			</div>
+    		    								  			<div>
+  				 		      								<table class="table">
+  				  			    								<thead>
+          															<th style="width:100px;">Auditorium</th>
+    	    															<th>Show Times</th>
+    	    														</thead>		
+    	  			  						  				<tbody>
+  				  	    						  				<tr class="voffset4" ng-repeat="screen in t.screens">
+    	  				  						  					<th scope="row">{{screen.id}}</th>
+   	    											  	  			<td> 
+   	    											  	  				<div class="btn-toolbar " role="toolbar">
+   	    							  	  									<div ng-repeat="show in screen.showTimes"  class="btn-group" role="group">
+											  	  			  						<button ng-disabled="(!(show.startTime > now) && (show.seatsRemaining > 0))" type="button" class="btn btn-secondary" ng-click="bookingService.getBookingInfo(show.id)" data-toggle="tooltip" title="{{show.startTime}}">{{show.startTime | date : 'hh:mma'}}</button>
+   	    							  	  			 						</div>
+   	    						  		  			 					</div>
+  																				</td>
+  																			</tr>
+  																		</tbody>
+  																	</table>
+  																</div>
+  																</td>
+    	    						  				</tr>
+    	    						 				</tbody>
+    	    									</table>
+        							  	</td>
+        							 	</tr>
+        							</table>      							  		
+        						</div>
+  	    					</td>
+      					</tr>
+      				</tbody>
+     				</table>
+      		</div>
+      		<div ng-if="movieService.theatersByMovie.theaters.length == 0" class="panel-body">
+      			<h3>Sorry this movie is not playing in any nearby theaters on the choosen date.</h3>
+      		</div>
+					<div>
+						<br>
+					</div>
+		      <div class="container row" id="log_TheatersByMovie" ng-repeat="l in movieService.tbmLogRecord" ng-show="movieService.logRecordIndex == $index" ng-init="movieService.logRecordIndex = 0">
+		      	<table>
+		      		<tbody>
+ 			      		<tr>
+			      			<td style="padding-right:1em; width:100px; vertical-align:top;">
+			      				<div class="btn-group" role="group">
+  							    	<button type="button" class="btn btn-default btn-med" ng-click="movieService.showPrevLogEntry()" ng-disabled="$first" >
+  								    	<span class="glyphicon glyphicon-arrow-up"></span>
+  							    	</button>
+  							    	<button type="button" class="btn btn-default btn-med" ng-click="movieService.showNextLogEntry()" ng-disabled="$last">
+  								    	<span class="glyphicon glyphicon-arrow-down"></span>
+  							    	</button>
+  							    </div>
+  						  	</td>
+	  						 	<td>
+	  						 		<table>
+	  						 			<tbody>
+	  						 				<tr>
+	  						 					<td>
+				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{l.value.method}}</span>
+				    	      	 			<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.url}}</span>
+				      	    	 		<td>
+				        	  	 	</tr>
+				          		 	<tr ng-if="l.value.request.body.length > 0">
+				      	 					<td><strong>Body:</strong> {{l.value.request.body}}</td>
+      	 								</tr>
+				          		 	<tr>
+				      	 					<td><strong>Status:</strong> {{l.value.response.statusCode}} [{{l.value.response.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
+      	 								</tr>
+      	 							</tbody>
+      	 						</table>
+      	 					</td>
+      	 				</tr>
+      	 			</tbody>
+      	 		</table>
+	      	</div>
+      	</div>
+      </div>
+      
+	  	<div class="tab-pane" id="tab_LoadTestData">
+      	<div id="LoadTestData" class="panel panel-default">
+     			<div class="panel-heading">
+     				<h4 class="panel-title" style="line-height:35px;">Movie Ticket Data Generator</h4>
+     			</div>
+      		<div class="panel-body" style="height:65vh; overflow: auto;">
+      			<div class="row">
+      				<div class=" col-xs-4 btn-group-vertical" role="toolbar">
+      					<button id="btn_LoadTheaters" type="button" class="btn btn-default btn-success has-spinner" onclick="loadTheaters(this)">Load Theaters  
+      						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+      					</button>
+      					<button id="btn_LoadMovies" type="button" class="btn btn-default btn-success has-spinner" onclick="loadMovies(this)">Load Movies
+      						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>		
+      					</button>
+      					<button id="btn_LoadPosters" type="button" class="btn btn-default btn-success has-spinner" onclick="loadPosters(this)">Load Posters
+      						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>		
+      					</button>
+      					<button id="btn_GenerateScreenings" type="button" class="btn btn-default btn-success has-spinner" onclick="generateScreenings(this)">Generate Screenings
+      						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>		
+      					</button>
+      				</div>
+      				<div class="col-xs-8">
+      					<div class="input-group-vertical">
+      						<div id="status_LoadTheaters" class="well well-sm">Pending</div>
+      						<div id="status_LoadMovies" class="well well-sm">Pending</div>
+      						<div id="status_LoadPosters" class="well well-sm">Pending</div>
+      						<div id="status_GenerateScreenings" class="well well-sm">Pending</div>
+      					</div>
+      				</div>
+      			</div>
+      		</div>
+      	</div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="dialog_PurchaseTickets" tabindex="-1" role="dialog" aria-labelledby="title_BookTickets" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content" ng-controller="bookingCtrl">								
+          <div class="modal-header">
+          	<div>
+            	<span class="h4 modal-title" id="title_BookTickets">Select number of tickets</span>
+  					</div>
+  	      </div>
+          <div class="modal-body">
+  	      <form class="form-horizontal">
+  	      	<div class="form-group">
+  	      		<label for="adultTickets" class="col-sm-2">Adult</label>
+  	      		<div class="col-sm-4">
+		    		      <input id="adultTickets"  type="text" class="form-control" name="adultTickets" ng-model="adult"/>
+  	      		</div>
+  	      		<div class="col-sm-4">
+        		  	<strong><span> x </span><span>${{bookingService.screening.ticketPricing.adultPrice}}</span><span> = $</span><span >{{(bookingService.screening.ticketPricing.adultPrice * adult)| number:2}}</span></strong>
+  	      		</div>
+  	      	</div>
+  	      	<div class="form-group">
+  	      		<label for="seniorTickets" class="col-sm-2">Senior</label>
+  	      		<div class="col-sm-4">
+		    		      <input id="seniorTickets"  type="text" class="form-control" name="seniorTickets" ng-model="senior"/>
+  	      		</div>
+  	      		<div class="col-sm-4">
+	        		  	<strong><span> x </span><span>${{bookingService.screening.ticketPricing.seniorPrice}}</span><span> = $</span><span >{{(bookingService.screening.ticketPricing.adultPrice * senior)| number:2}}</span></strong>
+  	      		</div>
+  	      	</div>
+  	      	<div class="form-group">
+  	      		<label for="childTickets" class="col-sm-2">Child</label>
+  	      		<div class="col-sm-4">
+		    		      <input id="childTickets"  type="text" class="form-control" name="childTickets" ng-model="child"/>
+  	      		</div>
+  	      		<div class="col-sm-4">
+	        		  	<strong><span> x </span><span>${{bookingService.screening.ticketPricing.childPrice}}</span><span> = $</span><span >{{(bookingService.screening.ticketPricing.childPrice * child)| number:2}}</span></strong>
+  	      		</div>
+  	      	</div>
+  	      </form>	        	
+          </div>
+          <div class="modal-footer">
+  					<button id="btn_cancelBookTickets" type="button" class="btn btn-default btn-med" onclick="$('#dialog_PurchaseTickets').modal('hide');return false;">
+  						<span class="glyphicon glyphicon-ban-circle"></span>
+  					</button>
+  					<button id= "btn_doBookTickets" type="button" class="btn btn-default btn-med" ng-click="bookingService.bookTickets(adult,senior,child)">
+  						<span class="glyphicon glyphicon-usd"></span>
+  					</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal fade" id="dialog_SearchTheaters" tabindex="-1" role="dialog" aria-labelledby="title_SearchTheaters" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content" ng-controller="searchTheatersCtrl">								
+          <div class="modal-header">
+          	<div>
+            	<span class="h4 modal-title" id="title_SearchTheaters">Theater Search</span>
+  					</div>
+  	      </div>
+          <div class="modal-body">
+  	      <form class="form-horizontal">
+  	      	<div class="form-group">
+  	      		<label for="search_TheaterName" class="col-sm-2">Name</label>
+  	      		<div class="col-sm-4">
+		    		      <input id="search_TheaterName"  type="text" class="form-control" name="search_TheaterName" ng-model="theaterName"/>
+  	      		</div>
+  	      	</div>
+  	      	<div class="form-group">
+  	      		<label for="search_TheaterCity" class="col-sm-2">City</label>
+  	      		<div class="col-sm-4">
+		    		      <input id="search_TheaterCity"  type="text" class="form-control" name="search_TheaterCity" ng-model="theaterCity"/>
+  	      		</div>
+  	      	</div>
+  	      	<div class="form-group">
+  	      		<label for="search_TheaterZip" class="col-sm-2">Zip Code</label>
+  	      		<div class="col-sm-4">
+		    		      <input id="search_TheaterZip"  type="text" class="form-control" name="search_TheaterZip" ng-model="theaterZip"/>
+  	      		</div>
+  	      	</div>
+  	      </form>	        	
+          </div>
+          <div class="modal-footer">
+  					<button id="btn_cancelTheaterSearch" type="button" class="btn btn-default btn-med" onclick="$('#dialog_SearchTheaters').modal('hide');return false;">
+  						<span class="glyphicon glyphicon-ban-circle"></span>
+  					</button>
+  					<button id= "btn_doTheaterSearch" type="button" class="btn btn-default btn-med" ng-click="theaterService.searchTheaters(theaterName,theaterCity,theaterZip)">
+  						<span class="glyphicon glyphicon-search"></span>
+  					</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="dialog_SearchMovies" tabindex="-1" role="dialog" aria-labelledby="title_SearchMovies" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content" ng-controller="searchMoviesCtrl">								
+          <div class="modal-header">
+          	<div>
+            	<span class="h4 modal-title" id="title_SearchMovies">Movie Search</span>
+  					</div>
+  	      </div>
+          <div class="modal-body">
+  	      <form class="form-horizontal">
+  	      	<div class="form-group">
+  	      		<label for="search_MovieName" class="col-sm-2">Where</label>
+  	      		<div class="col-sm-4">
+		    		      <select id="search_MovieWhere"  class="form-control" name="search_MovieWhere" ng-model="where">
+		    		      	<!-- <option value="Anywhere" >Anywhere</option> -->
+		    		      	<option value="Title" selected="selected">Title</option>
+		    		      	<option value="Plot">Plot</option>
+		    		      	<!-- <option value="CastAndCrew">Cast & Crew</option> -->
+		    		      </select>
+  	      		</div>
+  	      	</div>
+  	      	<div class="form-group">
+  	      		<label for="title_SearchMovies" class="col-sm-2">Criteria</label>
+  	      		<div class="col-sm-4">
+		    		      <input id="title_SearchMovies"  type="text" class="form-control" name="title_SearchMovies" ng-model="what"/>
+  	      		</div>
+  	      	</div>
+  	      </form>	        	
+          </div>
+          <div class="modal-footer">
+  					<button id="btn_cancelMovieSearch" type="button" class="btn btn-default btn-med" onclick="$('#dialog_SearchMovies').modal('hide');return false;">
+  						<span class="glyphicon glyphicon-ban-circle"></span>
+  					</button>
+  					<button id= "btn_doMovieSearch" type="button" class="btn btn-default btn-med" ng-click="movieService.searchMovies(where,what)">
+  						<span class="glyphicon glyphicon-search"></span>
+  					</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="dialog_SuccessMessage" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog">
+    		<div class="modal-content">
+        	<div class="alert-success modal-body">
+          	<button type="button" class="close" data-dismiss="modal">&times;</button>
+          	<p id="content_SuccessMessage"></p>
+        	</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="dialog_ErrorMessage" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog">
+    		<div class="modal-content">
+        	<div class="alert-error modal-body">
+          	<button type="button" class="close" data-dismiss="modal">&times;</button>
+          	<p id="content_ErrorMessage"></p>
+        	</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+    	<span class="pull-right">
+  	  	Movie Information downloaded from The Movie Database 
+  	  	<a href="http://www.tmdb.org">
+					<img alt="TheMovieDatabase"style="width:40px;" src="https://assets.tmdb.org/images/logos/var_8_0_tmdb-logo-2_Bree.svg">
+				</a>
+	    </span>
+    </div>
+
+	<!-- Latest compiled and minified JavaScript -->
+  	<script src="/frameworks/jquery/dist/jquery.min.js"></script>
+	<script src="/frameworks/bootstrap/dist/js/bootstrap.min.js"></script>
+	<script src="/frameworks/angular/angular.min.js"></script>
+	<script src="/frameworks/angular-cookies/angular-cookies.min.js"></script>
+	<!-- Include Bootstrap Datepicker -->
+    <script src="/frameworks/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
+	<script src="js/movieticketing.js"></script>
+  </body>
+</html>
+

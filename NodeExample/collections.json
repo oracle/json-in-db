@@ -1,0 +1,266 @@
+{
+  "Movie": {
+  	"tableName": "Movie",
+  	"keyColumn": {
+  		"name": "ID",
+  		"sqlType": "VARCHAR2",
+  		"maxLength": 255,
+  		"assignmentMethod": "UUID"
+  	},
+  	"contentColumn": {
+  		"name": "JSON_DOCUMENT",
+  		"sqlType": "BLOB",
+  		"compress": "NONE",
+  		"cache": true,
+  		"encrypt": "NONE",
+  		"validation": "STANDARD"
+  	},
+  	"lastModifiedColumn": {
+  		"name": "LAST_MODIFIED"
+  	},
+  	"versionColumn": {
+  		"name": "VERSION",
+  		"method": "SHA256"
+  	},
+  	"creationTimeColumn": {
+  		"name": "CREATED_ON"
+  	},
+  	"readOnly": false,
+  	"indexes": [
+  		{
+  			"name": "MOVIE_ID",
+  			"unique": true,
+  			"singleton" : true,
+  			"fields": [
+  				{
+  					"path": "id",
+  					"datatype": "number",
+  					"order": "asc"
+  				}
+  			]
+  		},{
+  			"name": "MOVIE_SEARCH",
+  			"language": "english"
+  		}
+  	]
+  },
+  "Poster": {
+  	"tableName": "Poster",
+  	"keyColumn": {
+  		"name": "ID",
+  		"sqlType": "VARCHAR2",
+  		"maxLength": 255,
+  		"assignmentMethod": "UUID"
+  	},
+  	"contentColumn": {
+  		"name": "JSON_DOCUMENT",
+  		"sqlType": "BLOB",
+  		"compress": "NONE",
+  		"cache": true,
+  		"encrypt": "NONE",
+  		"validation": "STANDARD"
+  	},
+  	"lastModifiedColumn": {
+  		"name": "LAST_MODIFIED"
+  	},
+  	"versionColumn": {
+  		"name": "VERSION",
+  		"method": "SHA256"
+  	},
+  	"mediaTypeColumn" : {
+  	  "name" : "CONTENT_TYPE"},
+  	"creationTimeColumn": {
+  		"name": "CREATED_ON"
+  	},
+  	"readOnly": false,
+  	"indexes": []
+  },
+  "Screening": {
+  	"tableName": "Screening",
+  	"keyColumn": {
+  		"name": "ID",
+  		"sqlType": "VARCHAR2",
+  		"maxLength": 255,
+  		"assignmentMethod": "UUID"
+  	},
+  	"contentColumn": {
+  		"name": "JSON_DOCUMENT",
+  		"sqlType": "BLOB",
+  		"compress": "NONE",
+  		"cache": true,
+  		"encrypt": "NONE",
+  		"validation": "STANDARD"
+  	},
+  	"lastModifiedColumn": {
+  		"name": "LAST_MODIFIED"
+  	},
+  	"versionColumn": {
+  		"name": "VERSION",
+  		"method": "SHA256"
+  	},
+  	"creationTimeColumn": {
+  		"name": "CREATED_ON"
+  	},
+  	"readOnly": false,
+  	"indexes": [
+  		{
+  			"name": "THEATER_STARTTIME",
+  			"unique": false,
+  			"singleton" : true,
+  			"fields": [
+  				{
+  					"path": "theaterId",
+  					"datatype": "number",
+  					"order": "asc"
+  				}, {
+  					"path": "startTime",
+  					"datatype": "datetime",
+  					"order": "asc"
+  				}
+  			]
+  		}, {
+  			"name": "MOVIE_STARTTIME",
+  			"unique": false,
+  			"singleton" : true,
+  			"fields": [
+  				{
+  					"path": "movieId",
+  					"datatype": "number",
+  					"order": "asc"
+  				}, {
+  					"path": "startTime",
+  					"datatype": "datetime",
+  					"order": "asc"
+  				}
+  			]
+  		}
+  	]
+  },
+  "Theater": {
+  	"tableName": "THEATER",
+  	"keyColumn": {
+  		"name": "ID",
+  		"sqlType": "VARCHAR2",
+  		"maxLength": 255,
+  		"assignmentMethod": "UUID"
+  	},
+  	"contentColumn": {
+  		"name": "JSON_DOCUMENT",
+  		"sqlType": "BLOB",
+  		"compress": "NONE",
+  		"cache": true,
+  		"encrypt": "NONE",
+  		"validation": "STANDARD"
+  	},
+  	"lastModifiedColumn": {
+  		"name": "LAST_MODIFIED"
+  	},
+  	"versionColumn": {
+  		"name": "VERSION",
+  		"method": "SHA256"
+  	},
+  	"creationTimeColumn": {
+  		"name": "CREATED_ON"
+  	},
+  	"readOnly": false,
+  	"indexes": [
+  		{
+  			"name": "THEATER_ID",
+  			"unique": true,
+  			"singleton" : true,
+  			"fields": [
+  				{
+  					"path": "id",
+  					"datatype": "number",
+  					"order": "asc"
+  				}
+  			]
+  		},
+  		{
+  			"name": "LOCATION_CITY",
+  			"unique": false,
+  			"singleton" : true,
+  			"fields": [
+  				{
+  					"path": "location.city",
+  					"datatype": "string",
+  					"order": "asc"
+  				}
+  			]
+  		}, {
+  			"name": "LOCATION_ZIPCODE",
+  			"unique": false,
+  			"singleton" : true,
+  			"fields": [
+  				{
+  					"path": "location.zipCode",
+  					"datatype": "number",
+  					"order": "asc"
+  				}
+  			]
+  		}, {
+  			"name": "THEATER_SEARCH",
+  			"language": "english"
+  		},
+  	  {
+  			"name": "THEATER_SPATIAL",
+  			"spatial": "location.geoCoding"
+  		}
+  	]
+  },
+  "TicketSale": {
+  	"tableName": "TicketSale",
+  	"keyColumn": {
+  		"name": "ID",
+  		"sqlType": "VARCHAR2",
+  		"maxLength": 255,
+  		"assignmentMethod": "UUID"
+  	},
+  	"contentColumn": {
+  		"name": "JSON_DOCUMENT",
+  		"sqlType": "BLOB",
+  		"compress": "NONE",
+  		"cache": true,
+  		"encrypt": "NONE",
+  		"validation": "STANDARD"
+  	},
+  	"lastModifiedColumn": {
+  		"name": "LAST_MODIFIED"
+  	},
+  	"versionColumn": {
+  		"name": "VERSION",
+  		"method": "SHA256"
+  	},
+  	"creationTimeColumn": {
+  		"name": "CREATED_ON"
+  	},
+  	"readOnly": false,
+  	"indexes": []
+  },
+  "MovieTicketLog" : {
+    "tableName":"MovieTicketLog",
+    "keyColumn":{"name":"ID",
+    "sqlType":"VARCHAR2",
+    "maxLength":255,
+    "assignmentMethod":"UUID"},
+    "contentColumn":{
+      "name":"JSON_DOCUMENT",
+      "sqlType":"BLOB",
+      "compress":"NONE",
+      "cache":true,
+      "encrypt":"NONE",
+      "validation":"STANDARD"
+    },
+    "lastModifiedColumn":{
+      "name":"LAST_MODIFIED"
+    },
+    "versionColumn":{
+      "name":"VERSION",
+      "method":"SHA256"
+    },
+    "creationTimeColumn":{
+      "name":"CREATED_ON"
+    },
+    "readOnly":false
+  }
+}

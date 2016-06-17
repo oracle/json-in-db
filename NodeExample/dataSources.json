@@ -1,0 +1,30 @@
+{     
+    "useProxy"            : false,
+    "proxy"               : {
+      "hostname"          : "www-proxy.us.oracle.com",
+      "port"              : 80
+    },
+    "tmdb"                : {
+      "protocol"          : "http",
+      "hostname"          : "api.themoviedb.org",
+      "port"              : 80,
+      "apiPath"           : "/3",
+      "apiKey"            : "8ba5c4ffeeaf237c92814b465494b3d3"
+    },
+    "fandango"            : {
+      "protocol"          : "http",
+      "hostname"          : "www.fandango.com",
+      "port"              : 80,
+      "path"              : "/rss/moviesnearme_"
+    },
+    "usCensus"            : {
+      "protocol"          : "http",
+      "hostname"          : "geocoding.geo.census.gov",
+      "port"              : 80,
+      "path"              : "/geocoder/locations/onelineaddress"
+    },
+    
+    "movieStartDate"      : "2015-01-01",
+    "movieEndDate"        : "2016-06-16",     
+    "theaterZipCode"      : "94549"
+}

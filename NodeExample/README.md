@@ -236,7 +236,7 @@ The application is configured to run on port 3000
 
 2.  Click the "Load Test Data" tab. You should see the following:  
 
-    ![First Time](LoadTestData.png)  
+    ![First Time](public/documentation/LoadTestData.png)  
 
 3.  Click the "Load Theaters" button to download theater information from Fandango.
 4.  Click the "Load Movies" button to download movie information from TMDb. This operation may take a while to complete due to throughput restrictions imposed by the TMDb website.
@@ -245,7 +245,7 @@ The application is configured to run on port 3000
 
 Once all four operations have completed successfully the "Load Test Data" tab should look something like this:
 
-![Completed](TestData-Completed.png)  
+![Completed](public/documentation/TestData-Completed.png)  
 
 The data loading process only needs to be completed once, since once data loading is completed all of the information needed to run the application is stored as JSON documents in the Oracle document store. If any of the steps fail, simply click the associated button to try the step again. Note you must successfully complete "Load Movies" before attempting to run "Load Posters", and you must successfully complete "Load Theaters" and "Load Movies" before attempting to run "Generate Screenings". If you re-run either "Load Theaters" or "Load Movies" you must re-run "Generate Screenings before attempting to use the movie ticketing application. If you re-run "Load Movies" you must also re-run "Load Posters" to repopulate the Posters collection.
 

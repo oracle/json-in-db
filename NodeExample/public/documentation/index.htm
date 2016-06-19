@@ -25,9 +25,9 @@
 <body onLoad="renderSampleDocuments()" style="padding: 15px">
 <div>
   <h1>Oracle Movie Ticketing Application (NODE.js with Soda for REST).</h1>
-  <p>This application demonstrates how to develop a application that combines document centric application development techniques, JSON based data persistence, REST Services with an Oracle Database. The application is a simulation of an system for searching movies and theaters and then purchasing tickets to see a given showing of a movie. It is a single-page web application, built using a decoupled AngularJS front-end that communicates with a set of REST services provides by an application tier developed in Node.js. The application tier also uses REST to invoke micro-services provided by Oracle's SODA for REST, a component of Oracle Rest Data Services (ORDS). Soda for rest provides data persistance services for JSON and other kinds of document. The application provides the following capabilities:</p>
+  <p>This application demonstrates how to develop an application that combines document centric application development techniques, JSON based data persistence, REST Services with an Oracle Database. The application is a simulation of a system for searching movies and theaters and then purchasing tickets to see a given showing of a movie. It is a single-page web application, built using a decoupled AngularJS front-end that communicates with a set of REST services provides by an application tier developed in Node.js. The application tier also uses REST to invoke micro-services provided by Oracle's SODA for REST, a component of Oracle Rest Data Services (ORDS). Soda for rest provides data persistence services for JSON and other kinds of document. The application provides the following capabilities:</p>
   <ol>
-    <li>List theaters: Shows the available theaters. Users may drill down to a list of movies showing at the theater by clicking on the "Movies" button assoicated with a given theater. 
+    <li>List theaters: Shows the available theaters. Users may drill down to a list of movies showing at the theater by clicking on the "Movies" button associated with a given theater. 
         <br><br>
         <img src="ListTheaters.png" alt="List Theaters" style="width: 400px; height:  auto">
         <br><br>
@@ -47,12 +47,12 @@
         <img src="SearchMovies.png" alt="Search Movies" style="width: 400px; height:  auto">
         <br><br>
      </li>
-    <li>Show the movies playing at a particular theater on a given date. Uses can book a ticket to a particular screening by clicking on the showtime.
+    <li>Show the movies playing at a particular theater on a given date. Users can book a ticket to a particular screening by clicking on the show time.
         <br><br>
         <img src="MoviesByTheater.png" alt="Movies by Theater" style="width: 400px; height:  auto">
         <br><br>
     </li>
-    <li>Show the theaters showing a particular movie on a given date. Uses can book a ticket to a particular screening by clicking on the showtime.
+    <li>Show the theaters showing a particular movie on a given date. Users can book a ticket to a particular screening by clicking on the show time.
         <br><br>
         <img src="TheatersByMovie.png" alt="Theaters by Movie" style="width: 400px; height:  auto">
         <br><br>
@@ -72,10 +72,10 @@
   <h2>Data Model</h2>
   <p>The data model for the application is shown in the following diagram:</p>
   <p><p>&nbsp;</p>
-  <img src="MovieTicketingDataModel.png.png" style="width: 400px; height:  auto" alt="Movie Ticketing Data Model"><br>
-  It consists of four collections, Movie, Theater, Screening and TicketSale that are used to manage the JSON document types that represent the objects used by the application. The 5<sup>th</sup> collection, Poster, contains Binary Content (Images). Each of the collections has a unqiue, system generated primary key. Many of the object types also contain an application supplied unique id as part of the object type.</p>
+  <img src="MovieTicketingDataModel.png" style="width: 400px; height:  auto" alt="Movie Ticketing Data Model"><br>
+  It consists of four collections, Movie, Theater, Screening and TicketSale that are used to manage the JSON document types that represent the objects used by the application. The 5<sup>th</sup> collection, Poster, contains Binary Content (Images). Each of the collections has a unique, system generated primary key. Many of the object types also contain an application supplied unique id as part of the object type.</p>
   <ul>
-    <li><strong>Theater</strong>: contains information about a Theater, including a unqiue id, its location and default information about the number and capacity of its auditoriums. Click the right arrow below to see an sample theater document:<br>
+    <li><strong>Theater</strong>: contains information about a Theater, including a unique id, its location and default information about the number and capacity of its auditoriums. Click the right arrow below to see an sample theater document:<br>
       <br>
       <div>
 	       <div id="sampleTheater"></div>
@@ -89,7 +89,7 @@
        	</div>
        	<br>
     </li>
-    <li><strong>Screening</strong> : Details movie showings by theater, screen, start time, ticketp pricing for the show and number of seats remaining.&nbsp; Click the right arrow below to see an sample screening document:<br>
+    <li><strong>Screening</strong>: Details movie showings by theater, screen, start time, ticket pricing for the show and number of seats remaining.&nbsp; Click the right arrow below to see an sample screening document:<br>
       <br>
       <div>
     		<div id="sampleScreening"></div>
@@ -103,20 +103,20 @@
 		</div>
 		<br>
     </li>
-    <li><strong>Poster</strong>: Contains binary images of the postersfor the movies.</li>
+    <li><strong>Poster</strong>: Contains binary images of the posters for the movies.</li>
   </ul>
   <h2>Client Tier</h2>
     <p>The front end application consists of a single page HTML file named index.html. This file is served up by the Node.js server. The front end application logic, including the AngularJS modules, controllers and factories that invoke the REST services provided by Node.js server are contained in the file movieticketing.js file. The user interface uses the Twitter Bootstrap framework to provide a simple, clean and modern user interface.</p>
   <h2>Application Tier (Node.js)</h2>
     <p>The JavaScript code that makes up the application tier is organized into 3 layers.</p>
   <ol>
-    <li><strong>movie_ticketing.js</strong>: This  layer contains the application logic that provides the REST services exposed to the browser based componantry. Some of these services are nothing more that very thin  veneers over the underlying collections. Others perform quite complex processing that requires multiple interactions between the application code and the Document Store.<br><br></li>
+    <li><strong>movie_ticketing.js</strong>: This  layer contains the application logic that provides the REST services exposed to the browser based componentry. Some of these services are nothing more that very thin  veneers over the underlying collections. Others perform quite complex processing that requires multiple interactions between the application code and the Document Store.<br><br></li>
     <li><strong>movie_ticket_api.js</strong>: This layer provides a pre-packaged set of operations for each of the Document Types used by the Movie Ticketing application. It is a very thin veneer on top of soda-rest.js that provides collection specific implementations of the functionality exposed by soda-rest.js. This layer is also responsible for managing the collection properties that provide the definition of each of the document collections and indexes used by the application. This information is maintained in the<strong> CollectionProperties.json </strong>document. All operations on collections are routed through this layer.<br><br></li>
-    <li><strong>soda-rest.js</strong>: The sole purpose of this module is to provide a generic handler for the mechanics of invoking SODA for REST operations. This includes setting up the HTTP Request, marshalling any content or arguments that need to be provided in order to make the request and processing and returning the response. This module has no pre-determined knowledge of the collections it is interacting with, it is desgined to re-used by any Node.js application that wants to make use of SODA for REST. It provides a set of functions that expose each of the micro-services provided by the SODA for REST API. Each of the functions exposed by this module return a Javascript Promise, allowing the creation of a Promise based applications.   .<br><br></li>
+    <li><strong>soda-rest.js</strong>: The sole purpose of this module is to provide a generic handler for the mechanics of invoking SODA for REST operations. This includes setting up the HTTP Request, marshalling any content or arguments that need to be provided in order to make the request and processing and returning the response. This module has no pre-determined knowledge of the collections it is interacting with; it is designed to re-used by any Node.js application that wants to make use of SODA for REST. It provides a set of functions that expose each of the micro-services provided by the SODA for REST API. Each of the functions exposed by this module return a JavaScript Promise, allowing the creation of a Promise based applications.   .<br><br></li>
   </ol>
-  <p>In addition to the 3 main modules listed above the application includes the follwing additional modules:</p>
+  <p>In addition to the 3 main modules listed above the application includes the following additional modules:</p>
   <ul>
-    <li> <strong>index.js</strong> and <strong>routes.js</strong>: These classes use the popular Express.js frawework to handle the incoming request from the client tier and routing them to the appropriate functions exposed by movie_ticketing.js.</li>
+    <li> <strong>index.js</strong> and <strong>routes.js</strong>: These classes use the popular Express.js framework to handle the incoming request from the client tier and routing them to the appropriate functions exposed by movie_ticketing.js.</li>
     <li><strong>config.js</strong>: This class manages the connection information required by the application tier in order to talk to ORDS.</li>
     <li><strong>external_interfaces.js</strong>: This class provides a set of services that are used to load test data from external data sources (Fandango.com and TheMovieDatabase.org). </li>
   </ul>
@@ -145,14 +145,14 @@
 <h1>Overview</h1>
 <p>When the application is launched the user is presented with 3 tabs, "List Theaters", "List Movies" and "Load Test Data."</p>
     <ul>
-        <li><strong>List Theaters: </strong>shows information about theaters. The information for each theater is stored as JSON documents in the THEATER collection. There is a "Movies" button assoicated with each theater Clicking the button will open an additional tab that displays information abot the movies that are being screened at the theater on the specified date. Customers can purchase tickets to a paricular screening from this tab.</li>
-        <li><strong>List Movies: </strong>shows information about movies. The information about each movie is stored as JSON documents in the Movie collection. These is a "Theaters" button assoicated with each movie  Clicking the button will open an additional tab that display information about the theaters that are screening that movie on the specified date. Customers can purchase tickets to a paricular screening from this tab.</li>
+        <li><strong>List Theaters: </strong>shows information about theaters. The information for each theater is stored as JSON documents in the THEATER collection. There is a "Movies" button associated with each theater Clicking the button will open an additional tab that displays information about the movies that are being screened at the theater on the specified date. Customers can purchase tickets to a particularscreening from this tab.</li>
+        <li><strong>List Movies: </strong>shows information about movies. The information about each movie is stored as JSON documents in the Movie collection. These is a "Theaters" button associated with each movie  Clicking the button will open an additional tab that display information about the theaters that are screening that movie on the specified date. Customers can purchase tickets to a particularscreening from this tab.</li>
         <li><strong>Load Test Data: </strong>Provides access to services that populate the Movie Ticketing document store</li>
     </ul>
 
  <p>The following sections will examine the code behind some of these services and also look at how they are consumed in by the Browser-based component. </p>
 <h1>List Movies Service</h1>
-<p>The List Movies tab is based on the output generated by the rest service associated with a GET operation on the end point /movieticket/movie. The AngularJS contoller used to invoke this service is shown below</p>
+<p>The List Movies tab is based on the output generated by the rest service associated with a GET operation on the end point /movieticket/movie. The AngularJS controller used to invoke this service is shown below</p>
    
 <div style="padding-left: 50px;"><pre><code class="javascript">app.controller('moviesCtrl',function($scope, $http,  $cookies, movieService) {
 
@@ -180,7 +180,7 @@
 <div style="padding-left: 50px;"><pre><code id="movieServiceHTML" class="html">
 </code></pre></div>
 
-<p>When a GET operation is peformed on the URL /movieticket/movie the Node.js application invokes the function moviesService provided by the module movie_ticketing.api. The code for this module is shown below:</p>
+<p>When a GET operation is performed on the URL /movieticket/movie the Node.js application invokes the function moviesService provided by the module movie_ticketing.api. The code for this module is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function moviesService(sessionState, response, next) {
 
   console.log('movieTicketing.moviesService()');
@@ -195,7 +195,7 @@
 }	
 </code></pre></div>
 <h2>Listing the contents of a Collection</h2>
-<p>The moviesService method uses SODA for REST's  "List Collection" micro-service to get the list of movies. It invokes the function getMovies provided by the movie_ticket_api.js module and returns the resulting JSON as the repsonse. It also adds an X-SODA-LOG-TOKEN header to the response that provides the client application with a unique identifier that can be used to retrieve the log records assoicated with the operation. The getMovies method is a very thin veneer over the generic getColleciton method provided by the module soda-rest.js. The code for both functions is shown below:</p>
+<p>The moviesService method uses SODA for REST's  "List Collection" micro-service to get the list of movies. It invokes the function getMovies provided by the movie_ticket_api.js module and returns the resulting JSON as the repsonse. It also adds an X-SODA-LOG-TOKEN header to the response that provides the client application with a unique identifier that can be used to retrieve the log records associated with the operation. The getMovies method is a very thin veneer over the generic getColleciton method provided by the module soda-rest.js. The code for both functions is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function getMovies(sessionState, limit,fields) {
   
    return sodaRest.getCollection(sessionState, cfg.config, 'Movie',limit,fields)
@@ -255,12 +255,12 @@ function getCollection(sessionState, cfg, collectionName,limit,fields) {
 </ul>
 <p>The function returns a Promise that, on execution, returns the contents of the specified collection. It uses the Node.js <strong>http</strong> module to perform a GET on the target collection. The application logic is as follows:</p>
  <ul>
-   <li>Create the options object that controls the HTTP request using the connection informaton provided by the cfg object. This information comes directly from the config.json file.</li>
+   <li>Create the options object that controls the HTTP request using the connection information provided by the cfg object. This information comes directly from the config.json file.</li>
    <li>Construct a new HTTP Request, passing the option object and supplying a callback function to handle the HTTP response</li>
    <li>Initiate the HTTP operation by calling the end() function on the HTTP Request object.</li>
    <li>Process the response using the supplied callback.</li>
 </ul>
-<p>All of the methods exposed by the soda-rest.js module follow a similar design pattern. They all use a generic callback function to process the response to the HTTP request and fulfill the Promise returned by the function. The callback is generated using a factory method provided by the soda-rest.js module. If the REST operation is successful a sodaResponse object is constructed, that includes the HTTP Status, headers and response and this object is passed to the Promise's resolve() callback. It the REST call fails for some reason or if it returns an unexpected HTTP status, then an error object is contstructued that provides full details of the request and response and this object is to the Promise's reject() callback. The callback for the getCollection is shown below:</p>
+<p>All of the methods exposed by the soda-rest.js module follow a similar design pattern. They all use a generic callback function to process the response to the HTTP request and fulfill the Promise returned by the function. The callback is generated using a factory method provided by the soda-rest.js module. If the REST operation is successful a sodaResponse object is constructed, that includes the HTTP Status, headers and response and this object is passed to the Promise's resolve() callback. It the REST call fails for some reason or if it returns an unexpected HTTP status, then an error object is constructued that provides full details of the request and response and this object is to the Promise's reject() callback. The callback for the getCollection is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">
 function (sodaResponse) {
 
@@ -341,7 +341,7 @@ function (sodaResponse) {
 }
 </code></pre></div>
 <h1>List Movies By Theater Service</h1>
-<p>The "List Movies by Theater" tab is opened when the user clicks on the "Movies" button associated with one of the theaters on the "List Theaters" tab. It lists the showtimes for the movies playing at the selected theater on the specified date. The content of this tab is based on the output generated by the rest service associated with a GET operation on the end point /theaters/:id/movies/:date, where :id is the id of the theater and :date is the required date. When a GET operation is peformed on the URL the Node.js application invokes the function moviesByTheaterService provided by the module movie_ticketing.api passing the values for id and date. The code for this module is shown below:</p>
+<p>The "List Movies by Theater" tab is opened when the user clicks on the "Movies" button associated with one of the theaters on the "List Theaters" tab. It lists the show times for the movies playing at the selected theater on the specified date. The content of this tab is based on the output generated by the rest service associated with a GET operation on the end point /theaters/:id/movies/:date, where :id is the id of the theater and :date is the required date. When a GET operation is performed on the URL the Node.js application invokes the function moviesByTheaterService provided by the module movie_ticketing.api passing the values for id and date. The code for this module is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function moviesByTheaterService(sessionState, response, next, id, dateStr) {
 
   console.log('movieTicketing.moviesByTheaterService(' + id  + ',' + dateStr + ')');
@@ -360,7 +360,7 @@ function (sodaResponse) {
   });
 }
 </code></pre></div>
-<p>The moviesByTheaterService method invokes the getTheater function provided by the movie_ticket_api.js module to get the information for the specified theater using its internal key. It then calls the function getMoviesByTheaterAndDate to construct a JSON document that summarizes the movies and showtimes for the specified theater and date. The resulting JSON forms the response to the request. The code for this function is shown below:</p>
+<p>The moviesByTheaterService method invokes the getTheater function provided by the movie_ticket_api.js module to get the information for the specified theater using its internal key. It then calls the function getMoviesByTheaterAndDate to construct a JSON document that summarizes the movies and show times for the specified theater and date. The resulting JSON forms the response to the request. The code for this function is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">
 function getMoviesByTheaterAndDate(sessionState,theater, date) {
 
@@ -457,9 +457,9 @@ function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
   )   
 }
 </code></pre></div>
-<p>A queryByExample is executed by performing a POST operation on the specified collection, specifying the query string 'action=query'. The QBE specification is supplied as the body of the POST. The function returns a Promise that, on execution, returns the result of evaluating the Query-By-Example operation. The actual application logic is similar to the logic for the getCollection function, with the excpetion that this function performs a POST rather than a GET and the QBE specification is supplied as the body of the POST.</p>
+<p>A queryByExample is executed by performing a POST operation on the specified collection, specifying the query string 'action=query'. The QBE specification is supplied as the body of the POST. The function returns a Promise that, on execution, returns the result of evaluating the Query-By-Example operation. The actual application logic is similar to the logic for the getCollection function, with the exception that this function performs a POST rather than a GET and the QBE specification is supplied as the body of the POST.</p>
 <h1>Purchase Tickets Service</h1>
-<p>Both the List Movies By Theater and List Theaters by Movie tab allow the user to purchase tickets to see a movie by clicking on the showing they would like to attend. Once they have entered the number of tickets they require they can complete the purchase by clicking on the '$' icon. The purchase is made by performing a POST operation on the URL /movieticket/bookTickets. When a POST operation is perfomed on this URL the Node.js application invokes the function bookTicketService provided by the module movie_ticketing.api. The information about the number of tickets required is provided as the body of the POST operation. The function returns a simple JSON document that describes the status of the booking. This document is returned The code for this module is shown below:</p>
+<p>Both the List Movies By Theater and List Theaters by Movie tab allow the user to purchase tickets to see a movie by clicking on the showing they would like to attend. Once they have entered the number of tickets they require they can complete the purchase by clicking on the '$' icon. The purchase is made by performing a POST operation on the URL /movieticket/bookTickets. When a POST operation is performed on this URL the Node.js application invokes the function bookTicketService provided by the module movie_ticketing.api. The information about the number of tickets required is provided as the body of the POST operation. The function returns a simple JSON document that describes the status of the booking. This document is returned The code for this module is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function bookTicketService(sessionState, response, next, bookingRequest) {
 
   // console.log('movieTicketing.bookTicketService(' + JSON.stringify(bookingRequest) +')');
@@ -477,7 +477,7 @@ function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
  
 }
 </code></pre></div>
-<p>The bookTicketService method invokes the getScreening function provided by the module movie_ticketing.api to get the latest information for the specified screening using its internal key. It retrieves the document and it's assocated metadata. It passes the booking request document that was provided by the browser, together with the screening document and the screening document's ETag to the  bookTickets function which completes the booking process. The bookTickets function returns a simple JSON document that indicates whether or not the booking was successul. This JSON forms the repsonse to the bookTickets request. The code for this function is shown below:</p>
+<p>The bookTicketService method invokes the getScreening function provided by the module movie_ticketing.api to get the latest information for the specified screening using its internal key. It retrieves the document and its associated metadata. It passes the booking request document that was provided by the browser, together with the screening document and the screening document's ETag to the  bookTickets function which completes the booking process. The bookTickets function returns a simple JSON document that indicates whether or not the booking was successful. This JSON forms the response to the bookTickets request. The code for this function is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function bookTickets(sessionState, bookingRequest, screening, eTag) {
     
   var booked = false;
@@ -659,7 +659,7 @@ function putDocument(sessionState, cfg, collectionName, key, document, contentTy
   )   
 }
 </code></pre></div>
-<p>A update document operation is executed by performing a PUT on the target document. The document is identified using its internal key. The new content for the document is supplied as the body of the PUT. The putDocument function returns a Promise that, on execution, returns the result of update operation. The actual application logic is similar to the logic for the getCollection function, with the excpetion that this function performs a PUT rather than a GET and the udpated document is supplied as the body of the POST</p>
+<p>An "Update Document" operation is executed by performing a PUT on the target document. The document is identified using its internal key. The new content for the document is supplied as the body of the PUT. The putDocument function returns a Promise that, on execution, returns the result of update operation. The actual application logic is similar to the logic for the getCollection function, with the exception that this function performs a PUT rather than a GET and the uddated document is supplied as the body of the POST</p>
 <p>SODA for REST uses an optimistic locking strategy to prevent conflicting updates from taking place. This follows REST conventions and is based on the value of the documents ETag. Any time an application might need to update a document it must fetch the document metadata as well as document content in order to get the current value of the ETag. Conflicting updates are prevented by adding an "If Match" header to the HTTP request. The value of this header is the ETag that was obtained last time the document was read. If there has been a conflicting update the current ETag for the document will not match the ETag supplied by the application and the PUT operation will return HTTP Status code of 412 [Precondition Failed] indicating that the PUT operation was not successful. If there are no conflicting updates then the PUT operation will return HTTP Status code 200 [Successful].</p>
 
 <h2>Creating Documents</h2>
@@ -728,7 +728,7 @@ function postDocument(sessionState, cfg, collectionName, document, contentType) 
 }
 </code></pre></div>
 <p> 
-A insert document operation is executed by performing a POST on the target collection. The content of the new document is supplied as the body of the POST. The postDocument function returns a Promise that, on execution, returns the result of insert operation. The actual application logic is similar to the logic for the getCollection function, with the excpetion that this function performs a POST rather than a GET and the new document is supplied as the body of the POST</p>
+An "Insert Document" operation is executed by performing a POST on the target collection. The content of the new document is supplied as the body of the POST. The postDocument function returns a Promise that, on execution, returns the result of insert operation. The actual application logic is similar to the logic for the getCollection function, with the exception that this function performs a POST rather than a GET and the new document is supplied as the body of the POST</p>
 <h1>Installation and Configuration</h1>
 <p>These instructions assume you already have access to an Oracle Database 12.1.0.2.0 instance with Bundle Patch 13 installed. If you do not have this available you can start by downloading the latest version of the <a href="http://www.oracle.com/technetwork/database/enterprise-edition/databaseappdev-vm-161299.html">Oracle Developer Days VM </a> from the Oracle Technology Network. Although this VM comes with a version of Oracle Rest Data Services installed, you will need to update it from 3.0.4 to 3.0.5 by following step 1 of the instructions below </p>
     <br>
@@ -745,7 +745,7 @@ A insert document operation is executed by performing a POST on the target colle
             $ export PATH=$PATH:~/node-v4.4.5-linux-x64/bin
         </code></pre>
     </li>
-    <li>Use NPM to install the application and it's dependancies from GitHUB<br><br>
+    <li>Use NPM to install the application and it's dependencies from GitHUB<br><br>
         <pre><code>
             $ mkdir NodeExample
             $ cd NodeExample
@@ -831,7 +831,7 @@ A insert document operation is executed by performing a POST on the target colle
             INFO: Created user: MovieTicketing in file: /home/oracle/ORDS/config/ords/credentials
         </code></pre>
      </li>
-     <li>Inrease the size of the ORDS JDBC connection pool<br><br>
+     <li>Increase the size of the ORDS JDBC connection pool<br><br>
          <p>Edit the file defaults.xml. Assuming you specified /home/oracle/ORDS/config when responding to the prompt "Enter the location to store configuration data:" in step 2.1 the file is located in the folder config/ords. Locate the entry with the key "jdbc.MaxLimit" and change the value to 500. Locate the entry with the key "jdbc.InitialLimit" and change the value to 50. Save the file</p>
      </li>
      <li>Start the ORDS Server<br><br>
@@ -918,7 +918,7 @@ A insert document operation is executed by performing a POST on the target colle
             <div id="sampleConfig"></div>
          </div>
          <br>
-         <p>The file is located in the folder NodeExample/node_modules/oracle-movie-ticket-sample The keys in this file are self explanitory</p>
+         <p>The file is located in the folder NodeExample/node_modules/oracle-movie-ticket-sample The keys in this file are self explanatory</p>
          <ul>
             <li><strong>hostname: </strong>The name or ipaddress of the machine hosting the ORDS instance</li>    
             <li><strong>port: </strong>The Port number the ORDS instance in listening on. This was specified the first time the ORDS instance was started (See step 2.4).</li>
@@ -927,7 +927,7 @@ A insert document operation is executed by performing a POST on the target colle
          </ul>
      </li>
      <li>dataSources.json<br><br>
-         <p>If the applicaiton needs use a proxy server to connect to these sites information about the proxy server must be added to the dataSources.json file.</p>
+         <p>If the application needs use a proxy server to connect to these sites information about the proxy server must be added to the dataSources.json file.</p>
          <p>Click the right arrow below to see a sample dataSources.json document:</p>
           <div>
             <div id="sampleDataSources"></div>
@@ -939,12 +939,12 @@ A insert document operation is executed by performing a POST on the target colle
             <li><strong>proxy.hostname: </strong>If a proxy server is required enter the hostname or ipaddress of the proxy server</li>
             <li><strong>proxy.port: </strong>If a proxy server is required enter the port number used to communicate with the proxy server</li>
             <li><strong>tmdb.apiKey: </strong>The API key for use with TMDb (See step 4).</li>
-            <li><strong>movieStartDate & movieEndDate: </strong>The applicaton loads a small subset of the movies available on TMDb. Movies are selected based on release date. To get a current list of movies update these fields with appropraite values before loading the movie information.</li>
+            <li><strong>movieStartDate & movieEndDate: </strong>The application loads a small subset of the movies available on TMDb. Movies are selected based on release date. To get a current list of movies update these fields with appropriate values before loading the movie information.</li>
             <li><strong>theaterZipCode: </strong>The zip code to use when obtaining a list of nearby theaters from Fandango</li>
         </ul>   
     </li>
 </ol>
-<h2>6. Start the applicatiom</h2>
+<h2>6. Start the application</h2>
 <ol>
     <li>Start Node.js server.<br><br>
         <p>The following commands will work on Enterprise Linux, assuming you followed the steps outlined above.</p>
@@ -965,7 +965,7 @@ A insert document operation is executed by performing a POST on the target colle
 <h2>7. Access the application and load the test data</h2>
 <p>The application is configured to run on port 3000</p>
 <ol>
-    <li>Open a browser and naviagte to the application start page. You should see something similar to this:
+    <li>Open a browser and navigate to the application start page. You should see something similar to this:
         <br><br>
         <img src="FirstStart.png" alt="First Time" style="width: 400px; height:  auto">
         <br><br>       
@@ -978,7 +978,7 @@ A insert document operation is executed by performing a POST on the target colle
     <li>Click the "Load Theaters" button to download theater information from Fandango.</li>
     <li>Click the "Load Movies" button to download movie information from TMDb. This operation may take a while to complete due to throughput restrictions imposed by the TMDb website. </li>
     <li>Click the "Load Posters" button to download movie posters from TMDb. This operation is also subject to the throughput restrictions imposed by the TMDb website. </li>
-    <li>Click the "Generate Screenings" button to generate 2 weeks worth of screenings for the current set of theaters and movies. 
+    <li>Click the "Generate Screenings" button to generate 2 weeks' worth of screenings for the current set of theaters and movies. 
      </li>
 </ol>
 <p>Once all four operations have completed successfully the "Load Test Data" tab should look something like this:</p>

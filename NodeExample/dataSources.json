@@ -1,15 +1,15 @@
 {     
     "useProxy"            : false,
     "proxy"               : {
-      "hostname"          : "www-proxy.us.oracle.com",
-      "port"              : 80
+      "hostname"          : null,
+      "port"              : null
     },
     "tmdb"                : {
       "protocol"          : "http",
       "hostname"          : "api.themoviedb.org",
       "port"              : 80,
       "apiPath"           : "/3",
-      "apiKey"            : "8ba5c4ffeeaf237c92814b465494b3d3"
+      "apiKey"            : "EnterYourKeyHere"
     },
     "fandango"            : {
       "protocol"          : "http",
@@ -26,5 +26,5 @@
     
     "movieStartDate"      : "2015-01-01",
     "movieEndDate"        : "2016-06-16",     
-    "theaterZipCode"      : "94549"
+    "theaterZipCode"      : "94103"
 }

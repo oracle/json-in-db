@@ -128,7 +128,6 @@
   </ol>
   <p>Some of these services are nothing more that very thin veneers over the underlying collections. Other provide quite extensive processing, requiring multiple interactions between the Application Tier and the Document Management layer. </p>
 </div>
-<div>
 <h1>Overview</h1>
 <p>When the application is launched the user is presented with 3 tabs, "List Theaters", "List Movies" and "Load Test Data."</p>
     <ul>
@@ -716,44 +715,263 @@ function postDocument(sessionState, cfg, collectionName, document, contentType) 
 </code></pre></div>
 <p> 
 A insert document operation is executed by performing a POST on the target collection. The content of the new document is supplied as the body of the POST. The postDocument function returns a Promise that, on execution, returns the result of insert operation. The actual application logic is similar to the logic for the getCollection function, with the excpetion that this function performs a POST rather than a GET and the new document is supplied as the body of the POST</p>
-<h1>Installation</h1>
-<p>These instructions assume you already have access to an Oracle Database 12.1.0.2.0 instance with Bundle Patch 13 installed. If you do not have this available you can start by downloaded the latest version of the <a href="http://www.oracle.com/technetwork/database/enterprise-edition/databaseappdev-vm-161299.html">Oracle Developer Days VM </a> from the Oracle Technology Network. Although this VM comes with a version of Oracle Rest Data Services installed, you will need to update it from 3.0.4 to 3.0.5 by following step 1 of the instructions below </p>
+<h1>Installation and Configuration</h1>
+<p>These instructions assume you already have access to an Oracle Database 12.1.0.2.0 instance with Bundle Patch 13 installed. If you do not have this available you can start by downloading the latest version of the <a href="http://www.oracle.com/technetwork/database/enterprise-edition/databaseappdev-vm-161299.html">Oracle Developer Days VM </a> from the Oracle Technology Network. Although this VM comes with a version of Oracle Rest Data Services installed, you will need to update it from 3.0.4 to 3.0.5 by following step 1 of the instructions below </p>
+    <br>
+        <p>The MovieTicketing demonstration works with sample data downloaded from publically available websites. The THEATER collection is populated with data obtained from an RSS feed supplied by Fandango.com. This data is enriched with geocoding obtained from a geocoding service provided by the US Census bureau. The Movie and Poster collections are populated using data obtained from the website themoviedatabase.org  (TMDb). In order to use data from TMDb you must register with the site and obtain an API key.</p>
+<h2>1. Install and Configure Node.js</h2>
 <ol>
-    <li>Download the latest version of <a href="http://www.oracle.com/technetwork/developer-tools/rest-data-services/downloads/index.html">Oracle Rest Data Services</a> from the Oracle Technology Network.
-    <li>Download <a href="https://nodejs.org/en/download/">Node.js</a> from nodejs.org</li>
-    <li>Download the applicaiton source files from GitHub<li>
-    <li>Install ORDS<li>
-    <li>ORDS installation<li>
-    <li>Install the required node packages using NPM<li>
-    <li>Start the Application<li>
+    <li>Download <a href="https://nodejs.org/en/download/">Node.js</a> from nodejs.org<br><br></li>
+    <li>Install Node.js<br><br>
+        <p>The following commands will work on Enterprise Linux, assuming the node installation tarball is in the users Downloads folder, for other environments please refer to the platform specific platform specific installation instructions at <a href="https://docs.npmjs.com/getting-started/installing-node">https://docs.npmjs.com/getting-started/installing-node</a>.</p>
+        <pre><code>
+            $ bash
+            $ cd
+            $ tar xf Downloads/node-v4.4.5-linux-x64.tar.xz 
+            $ export PATH=$PATH:~/node-v4.4.5-linux-x64/bin
+        </code></pre>
+    </li>
+    <li>Use NPM to install the application and it's dependancies from GitHUB<br><br>
+        <pre><code>
+            $ mkdir NodeExample
+            $ cd NodeExample
+            $ npm install oracle-movie-ticket-demo
+        </code></pre>
+        <p>This should result in output similar to this:</p>
+        <pre><code>
+            oracle-movie-ticket-demo@1.0.0 node_modules/oracle-movie-ticket-demo
+            ├── angular-cookies@1.5.7
+            ├── cookie-parser@1.4.3 (cookie-signature@1.0.6, cookie@0.3.1)
+            ├── angular@1.5.7
+            ├── express-session@1.13.0 (utils-merge@1.0.0, cookie-signature@1.0.6, on-headers@1.0.1, cookie@0.2.3, parseurl@1.3.1, depd@1.1.0, crc@3.4.0,
+                uid-safe@2.0.0, debug@2.2.0)
+            ├── morgan@1.7.0 (on-headers@1.0.1, basic-auth@1.0.4, depd@1.1.0, debug@2.2.0, on-finished@2.3.0)
+            ├── serve-static@1.11.1 (escape-html@1.0.3, encodeurl@1.0.1, parseurl@1.3.1, send@0.14.1)
+            ├── body-parser@1.15.1 (content-type@1.0.2, bytes@2.3.0, depd@1.1.0, on-finished@2.3.0, qs@6.1.0, debug@2.2.0, raw-body@2.1.6, 
+                http-errors@1.4.0, iconv-lite@0.4.13, type-is@1.6.13)
+            ├── express@4.14.0 (escape-html@1.0.3, array-flatten@1.1.1, cookie-signature@1.0.6, utils-merge@1.0.0, encodeurl@1.0.1, merge-descriptors@1.0.1,
+                methods@1.1.2, content-type@1.0.2, parseurl@1.3.1, cookie@0.3.1, content-disposition@0.5.1, fresh@0.3.0, etag@1.7.0, range-parser@1.2.0, 
+                vary@1.1.0, path-to-regexp@0.1.7, depd@1.1.0, qs@6.2.0, on-finished@2.3.0, finalhandler@0.5.0, debug@2.2.0, proxy-addr@1.1.2, send@0.14.1, 
+                type-is@1.6.13, accepts@1.3.3)ffsdf
+            ├── jquery@2.2.4
+            ├── bootstrap@3.3.6
+            ├── bootstrap-datepicker@1.6.1
+            └── xml2js@0.4.16 (sax@1.2.1, xmlbuilder@4.2.1
+        </code></pre>
+        <p>At this point the Node.js server has been installed and the application has been downloaded and is ready to run</p>
+    </li>
 </ol>
-<h1>Configuration and Data Loading</h1><p>The Node.js application needs to know how to connect to Oracle Rest Data Services (ORDS) in order to talk to the Oracle Document Store. This information is provided in the file config.json. Click the right arrow below to see an sample config.json document:</p>
-<div>
-    <div id="sampleConfig"></div>
-</div>
-<p>The keys in this file are self explanitory</p>
-<ul>
-    <li><strong>hostname: </strong>The name or ipaddress of the machine hosting the ORDS instance</li>    
-    <li><strong>port: </strong>The Port number the ORDS instance in listening on</li>
-    <li><strong>path: </strong>The ORDS path that provides access to the Oracle Document Store. Note that the second component of this path is the 'lowercase' name of the database schema used to manage the Oracle Document Store</li>
-    <li><strong>username: </strong>The user name used to connect to the ORDS server (Not the database schema name)</li>
-    <li><strong>password: </strong>The password used to connect to the ORDS server</li>
-</ul>
-<p>This file must be updated with the approprate information before starting the Node.js application.</p>
-<p>The Node.js application also needs to know how to connect to the services that provide the sample data that is needed to run the application. This information is provided in the file dataSources.json. Click the right arrow below to see an sample dataSources.json document:</p>
-<div>
-  <div id="sampleDataSources"></div>
-</div>
-<p>The following keys may need to be edited before running the application.</p>
-<ul>
-    <li><strong>useProxy: </strong>Set to true if you need to use a proxy server to access external web sites.</li>    
-    <li><strong>proxy.hostname: </strong>If a proxy server is required enter the hostname or ipaddress of the proxy server</li>
-    <li><strong>proxy.port: </strong>If a proxy server is required enter the port number used to communicate with the proxy server</li>
-    <li><strong>tmdb.apiKey: </strong>The application loads movie information from "The Movie Database". Use of the site's APIs requires an API key which can be obtained here. You must obtain your own unique key and enter it here before attempting to load movie information into the document store.</li>
-    <li><strong>movieStartDate & movieEndDate: </strong>The applicaton loads a subset of movies based on the movieStartDate and movieEndDate keys. To get a current list of movies update these fields with appropraite values before attempting load movie information.</li>
-    <li><strong>theaterZipCode: </strong>This key controls the list of theaters that will be downloaded.</li>
-</ul>
-</div>
+<h2>2. Install, configure and start Oracle Rest Data Services (ORDS)</h2>
+<ol>
+    <li>Download the latest version of <a href="http://www.oracle.com/technetwork/developer-tools/rest-data-services/downloads/index.html">ORDS</a> from the Oracle Technology Network website<br><br></li>
+    <li>Install ORDS<br><br>
+        <p>The following commands will work on Enterprise Linux, assuming the node installation zip file is in the users Downloads folder, for other environments please refer to the platform specific installation instructions at <a href="https://docs.oracle.com/cd/E37099_01/doc.20/e25066/toc.htm">https://docs.oracle.com/cd/E37099_01/doc.20/e25066/toc.htm</a>.</p>
+        <pre><code>
+            $ cd
+            $ mkdir ORDS
+            $ cd ORDS
+            $ unzip ../Downloads/ords.3.0.5.124.10.54.zip 
+        </code></pre>
+        <p>Make sure that the database and listener are started and you know a TNS Alias that can connect to the database where ORDS will be installed. Then start the ORDS configuration process as shown below</p>
+        <pre><code>
+            $ java -jar ords.war
+            This Oracle REST Data Services instance has not yet been configured.
+            Please complete the following prompts
+            Enter the location to store configuration data:/home/oracle/ORDS/config
+            Enter the name of the database server [localhost]:
+            Enter the database listen port [1521]:
+            Enter 1 to specify the database service name, or 2 to specify the database SID [1]:1
+            Enter the database service name:ORCL
+            Enter the database password for ORDS_PUBLIC_USER:
+            Confirm password:
+            Please login with SYSDBA privileges to verify Oracle REST Data Services schema.
+            Enter the username with SYSDBA privileges to verify the installation [SYS]:sys
+            Enter the database password for sys:
+            Confirm password:
+            Oracle REST Data Services will be installed in ORCL
+            Enter 1 if you want to use PL/SQL Gateway or 2 to skip this step.
+            If using Oracle Application Express or migrating from mod_plsql then you must enter 1 [1]:2
+        </code></pre>
+        <p>At this point ORDS will be installed into the target database. The output will be as follows:</p>
+        <pre><code>
+            Jun 17, 2016 6:18:24 PM oracle.dbtools.common.config.file.ConfigurationFilesBase update
+            INFO: Updated configurations: defaults, apex_pu
+            Installing Oracle REST Data Services version 3.0.5.124.10.54
+            ... Log file written to /home/oracle/ORDS/logs/ords_install_core_2016-06-17_181824_00306.log
+            ... Verified database prerequisites
+            ... Created Oracle REST Data Services schema
+            ... Created Oracle REST Data Services proxy user
+            ... Granted privileges to Oracle REST Data Services
+            ... Created Oracle REST Data Services database objects
+            Completed installation for Oracle REST Data Services version 3.0.5.124.10.54. Elapsed time: 00:00:14.299 
+            Enter 1 if you wish to start in standalone mode or 2 to exit [1]:2
+        </code></pre>
+        </p>ORDS is now installed</P>
+    </li>
+    <li>Create an ORDS user that has permissions to use SODA for REST<br><br>
+       <pre><code>
+            java -jar ords.war user MovieTicketing "SODA Developer"
+            Enter a password for user MovieTicketing: 
+            Confirm password for user MovieTicketing: 
+            Jun 17, 2016 6:29:33 PM oracle.dbtools.standalone.ModifyUser execute
+            INFO: Created user: MovieTicketing in file: /home/oracle/ORDS/config/ords/credentials
+        </code></pre>
+     </li>
+     <li>Inrease the size of the ORDS JDBC connection pool<br><br>
+         <p>Edit the file defaults.xml. Assuming you specified /home/oracle/ORDS/config when responding to the prompt "Enter the location to store configuration data:" in step 2.1 the file is located in the folder config/ords. Locate the entry with the key "jdbc.MaxLimit" and change the value to 500. Locate the entry with the key "jdbc.InitialLimit" and change the value to 50. Save the file</p>
+     </li>
+     <li>Start the ORDS Server<br><br>
+        <p>The first time you start the ORDS server you are asked whether you want to use HTTP or HTTPS and to select the port the server is to listen on. This information is only required the first time ORDS is started.</p>
+        <pre><code>
+            [oracle@localhost ORDS]$ java -jar ords.war standalone
+            Enter 1 if using HTTP or 2 if using HTTPS [1]:1
+            Enter the HTTP port [8080]:
+            2016-06-17 18:22:54.846:INFO::main: Logging initialized @5506ms
+            Jun 17, 2016 6:22:55 PM oracle.dbtools.standalone.StandaloneJetty setupDocRoot
+            INFO: Disabling document root because the specified folder does not exist: /home/oracle/ORDS/config/ords/standalone/doc_root
+            2016-06-17 18:22:55.994:INFO:oejs.Server:main: jetty-9.2.z-SNAPSHOT
+            Jun 17, 2016 6:22:56 PM oracle.dbtools.auth.crypto.CryptoKeysGenerator startup
+            INFO: No encryption key found in configuration, generating key
+            Jun 17, 2016 6:22:56 PM oracle.dbtools.auth.crypto.CryptoKeysGenerator startup
+            INFO: No mac key found in configuration, generating key
+            Jun 17, 2016 6:22:56 PM oracle.dbtools.common.config.file.ConfigurationFilesBase update
+            INFO: Updated configurations: defaults
+            Jun 17, 2016 6:22:56 PM oracle.dbtools.auth.crypto.CryptoKeysGenerator startup
+            INFO: Updated configuration with generated keys
+            2016-06-17 18:22:56.539:INFO:/ords:main: INFO: Using configuration folder: /home/oracle/ORDS/config/ords
+            2016-06-17 18:22:56.539:INFO:/ords:main: FINEST: |ApplicationContext [configurationFolder=/home/oracle/ORDS/config/ords, services=Application Scope]|
+            Jun 17, 2016 6:22:56 PM oracle.dbtools.common.config.db.DatabasePools validatePool
+            INFO: Validating pool: |apex|pu|
+            Jun 17, 2016 6:22:57 PM oracle.dbtools.common.config.db.DatabasePools validatePool
+            INFO: Pool: |apex|pu| is correctly configured
+            config.dir
+            2016-06-17 18:22:57.381:INFO:/ords:main: INFO: Oracle REST Data Services initialized|Oracle REST Data Services version : 3.0.5.124.10.54|Oracle REST Data Services server info: jetty/9.2.z-SNAPSHOT|
+            2016-06-17 18:22:57.384:INFO:oejsh.ContextHandler:main: Started o.e.j.s.ServletContextHandler@2d209079{/ords,null,AVAILABLE}
+            2016-06-17 18:22:57.410:INFO:oejs.ServerConnector:main: Started ServerConnector@2c8d66b2{HTTP/1.1}{0.0.0.0:8080}
+            2016-06-17 18:22:57.414:INFO:oejs.Server:main: Started @8085ms
+            ^C2016-06-17 18:28:39.476:INFO:oejs.ServerConnector:Thread-1: Stopped ServerConnector@2c8d66b2{HTTP/1.1}{0.0.0.0:8080}
+            2016-06-17 18:28:39.482:INFO:oejsh.ContextHandler:Thread-1: Stopped o.e.j.s.ServletContextHandler@2d209079{/ords,null,UNAVAILABLE}
+        </code></pre>
+        <p>At this point the ORDS server is running and ready to service SODA for REST operations</p>
+     </li>
+</ol>
+<h2>3. Create the Database Schema that will manage the MovieTickets document collections</h2>
+<ol>
+    <li>Connect to the database and execute the following commands<br><br>
+        <pre><code>
+            $ sqlplus system@ORCL
+
+            SQL*Plus: Release 12.1.0.2.0 Production on Fri Jun 17 19:01:37 2016
+            Copyright (c) 1982, 2016, Oracle.  All rights reserved.
+            
+            Enter password: 
+            Last Successful login time: Fri Jun 17 2016 18:14:03 -07:00
+
+            Connected to:
+            Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production
+
+            SQL> grant connect, resource, unlimited tablespace, SODA_APP to MOVIES identified by MOVIES;
+
+            Grant succeeded.
+
+            SQL> connect MOVIES/MOVIES@ORCL
+            Connected.
+            SQL> begin
+            2    ORDS.enable_schema();
+            3    commit;
+            4  end;
+            5  /
+
+            PL/SQL procedure successfully completed.
+
+            SQL> quit
+            Disconnected from Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production
+        </code></pre>
+        <p>The SODA_APP role is required to use Oracle Document Collections. The call to ORDS.enable_schema() is required to allow the schema to be accessed via ORDS. Both steps are required to use SODA for REST.</p>
+     </li>
+</ol>
+<h2>4.Register for an account with themoviedatabase.org (TMDb)</h2>
+<ol>
+    <li>Register for a TMDb account by clicking <a href="https://www.themoviedb.org/account/signup?language=en">here</a>.</li>
+    <li>Sign in to your account, click the API link in their left hand menu and follow the instructions to request an API key.</li>
+    <li>Make a note of your API key.</li>
+</ol>
+<h2>5. Update configuration files.</h2>
+<ol>
+     <li>config.json<br><br>
+         <p>The config.json file supplies the Node.js server with the information required to connect to the ORDS server. This file must be updated with the username and password and path to endpoint for the Movie Ticketing document store. Click the right arrow below to see a sample config.json document:</p>
+         <div>
+            <div id="sampleConfig"></div>
+         </div>
+         <br>
+         <p>The file is located in the folder NodeExample/node_modules/oracle-movie-ticket-sample The keys in this file are self explanitory</p>
+         <ul>
+            <li><strong>hostname: </strong>The name or ipaddress of the machine hosting the ORDS instance</li>    
+            <li><strong>port: </strong>The Port number the ORDS instance in listening on. This was specified the first time the ORDS instance was started (See step 2.4).</li>
+            <li><strong>path: </strong>The endpoint that provides access to the Movie Ticketing document store. The second component of this path is the database schema name (See step 3.1). The schema name is entered lowercase.</li>
+            <li><strong>username & password </strong>The user name and password used to authenticate with the ORDS server. Note this is the ORDS username and password from step 2.3, not the database schema name and password from step 3.1.<br><br></li>
+         </ul>
+     </li>
+     <li>dataSources.json<br><br>
+         <p>If the applicaiton needs use a proxy server to connect to these sites information about the proxy server must be added to the dataSources.json file.</p>
+         <p>Click the right arrow below to see a sample dataSources.json document:</p>
+          <div>
+            <div id="sampleDataSources"></div>
+          </div>
+          <br>
+          <p>The file is located in the folder NodeExample/node_modules/oracle-movie-ticket-sample. The following keys may need to be edited before running the application.</p>
+          <ul>
+            <li><strong>useProxy: </strong>Set to true if you need to use a proxy server to access external web sites.</li>    
+            <li><strong>proxy.hostname: </strong>If a proxy server is required enter the hostname or ipaddress of the proxy server</li>
+            <li><strong>proxy.port: </strong>If a proxy server is required enter the port number used to communicate with the proxy server</li>
+            <li><strong>tmdb.apiKey: </strong>The API key for use with TMDb (See step 4).</li>
+            <li><strong>movieStartDate & movieEndDate: </strong>The applicaton loads a small subset of the movies available on TMDb. Movies are selected based on release date. To get a current list of movies update these fields with appropraite values before loading the movie information.</li>
+            <li><strong>theaterZipCode: </strong>The zip code to use when obtaining a list of nearby theaters from Fandango</li>
+        </ul>   
+    </li>
+</ol>
+<h2>6. Start the applicatiom</h2>
+<ol>
+    <li>Start Node.js server.<br><br>
+        <p>The following commands will work on Enterprise Linux, assuming you followed the steps outlined above.</p>
+        <pre><code>
+            $ cd
+            $ export PATH=$PATH:~/node-v4.4.5-linux-x64/bin
+            $ cd NodeExample/oracle-movie-ticket-demo
+            $ node index.js
+        </code></pre>
+        <p>And the system should respond with something similar to this</p>
+        <pre><code>
+            MovieTicket Webserver listening on localhost:3000
+            Full Text Search Supported: false
+            Spatial Indexing Supported: false
+        </code></pre>
+      </li>
+</ol>
+<h2>7. Access the application and load the test data</h2>
+<p>The application is configured to run on port 3000</p>
+<ol>
+    <li>Open a browser and naviagte to the application start page. You should see something similar to this:
+        <br><br>
+        <img src="FirstStart.png" alt="First Time" style="width: 400px; height:  auto">
+        <br><br>       
+    </li>
+    <li>Click the "Load Test Data" tab. You should see the following:
+        <br><br>
+        <img src="LoadTestData.png" alt="First Time" style="width: 400px; height:  auto">
+        <br><br>       
+    </li>
+    <li>Click the "Load Theaters" button to download theater information from Fandango.</li>
+    <li>Click the "Load Movies" button to download movie information from TMDb. This operation may take a while to complete due to throughput restrictions imposed by the TMDb website. </li>
+    <li>Click the "Load Posters" button to download movie posters from TMDb. This operation is also subject to the throughput restrictions imposed by the TMDb website. </li>
+    <li>Click the "Generate Screenings" button to generate 2 weeks worth of screenings for the current set of theaters and movies. 
+     </li>
+</ol>
+<p>Once all four operations have completed successfully the "Load Test Data" tab should look something like this:</p>
+<img src="TestData-Completed.png" alt="Completed" style="width: 400px; height:  auto">
+<br><br>
+<p>The data loading process only needs to be completed once, since once data loading is completed all of the information needed to run the application is stored as JSON documents in the Oracle document store. If any of the steps fail, simply click the associated button to try the step again. Note you must successfully complete "Load Movies" before attempting to run "Load Posters", and you must successfully complete "Load Theaters" and "Load Movies" before attempting to run "Generate Screenings". If you re-run either "Load Theaters" or "Load Movies" you must re-run "Generate Screenings before attempting to use the movie ticketing application. If you re-run "Load Movies" you must also re-run "Load Posters" to repopulate the Posters collection.</p>
+<p>Once the data loading process has been successfully completed you can simply refresh the page to start using the Application.</p>
 <script type="text/javascript" lang="javascript" src="jsonViewer.js"></script>
 <script type="text/javascript" lang="javascript" src="sampleDocuments.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>

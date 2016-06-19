@@ -311,5 +311,9 @@ function getLogRecordByOperationId(id) {
 
 function initialize() {
 	sodaRest.featureDetection(cfg.config);
-	createTicketSaleCollection(sodaLoggingDisabled);
+  createTicketSaleCollection(sodaLoggingDisabled).catch(function(e){
+		console.log('Error during initialization of movie_ticket_api.js');
+		console.log(JSON.stringify(e));
+		throw e;
+  });
 }

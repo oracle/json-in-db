@@ -202,41 +202,57 @@
      
 }
 
-function getCollection(sessionState, cfg, collectionName,limit,fields) {
+function setOptions(method,collectionName,cfg,headers,localPath,eTag) {
 
-  var moduleId = 'getCollection(' + collectionName + ')';
-
-  var path = cfg.path 
-           + '/' + collectionName
-           + addLimitAndFields(limit,fields);
-     
   var options = {
     hostname : cfg.hostname,
     port     : cfg.port,
-    method   : 'GET',
-    path     : path,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {'Content-Type': 'application/json'}
-  };    
-        
+    method   : method,
+    path     : cfg.path + "/" + collectionName,
+    headers  : headers !== undefined ? headers : {}
+  }    
+  
+  if (localPath !== undefined) {
+  	options.path = options.path + localPath;
+  }
+
+  if (options.headers['Content-Type'] === undefined) {
+  	options.headers['Content-Type'] = 'application/json';
+  }
+  
+  if (eTag !== undefined) {
+    options.headers["If-Match"] = eTag;
+  }
+  
+  if (cfg.authMethod === 'Basic') {
+    options.auth = cfg.username + ":" + cfg.password;
+  }
+  
+  return options
+}
+
+function getCollection(sessionState, cfg, collectionName,limit,fields) {
+
+  var moduleId = 'getCollection(' + collectionName + ')';
+  var options = setOptions('GET',collectionName,cfg,undefined,addLimitAndFields(limit,fields))
   var logOptions = logRequest(sessionState, options);
 
   return new Promise(
   
     function(resolve, reject) {
 
-   	  // console.log('Execute Promise: ' + moduleId);
-   	      
+      // console.log('Execute Promise: ' + moduleId);
+          
       var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
       
-	  request.on(
+      request.on(
         'error', 
         (e) => {
-        	var details = { 
-         	  module         : moduleId + '.request(error)',
-         	  requestOptions : options,
-         	  cause          : e
-         	}
+          var details = { 
+            module         : moduleId + '.request(error)',
+            requestOptions : options,
+            cause          : e
+          }
           reject(new SodaError(details));
         }
       );
@@ -255,7 +271,7 @@ function getCollection(sessionState, cfg, collectionName,limit,fields) {
 </ul>
 <p>The function returns a Promise that, on execution, returns the contents of the specified collection. It uses the Node.js <strong>http</strong> module to perform a GET on the target collection. The application logic is as follows:</p>
  <ul>
-   <li>Create the options object that controls the HTTP request using the connection information provided by the cfg object. This information comes directly from the config.json file.</li>
+   <li>Uses the function setOptions, shown above to create the options object that controls the behavoir of the HTTP request. It uses the connection information provided by the cfg object. This information comes directly from the config.json file.</li>
    <li>Construct a new HTTP Request, passing the option object and supplying a callback function to handle the HTTP response</li>
    <li>Initiate the HTTP operation by calling the end() function on the HTTP Request object.</li>
    <li>Process the response using the supplied callback.</li>
@@ -409,45 +425,34 @@ function getMoviesByTheaterAndDate(sessionState,theater, date) {
 function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
 
   var qbeText  = JSON.stringify(qbe);
-  var moduleId = 'queryByExample(' + collectionName + ',' + qbeText +')';
-  
-  var path = cfg.path 
-           + '/' + collectionName 
-           + addLimitAndFields(limit,fields)
-           + '&' + 'action=' + 'query';
-  
-  // console.log('queryByExample() path = ' + path);
+  var moduleId = 'queryByExample(' + collectionName + ',' + qbeText +')';  
 
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : 'POST',
-    path     : path,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {
-     'Content-Type' : 'application/json',
-     'Content-Length' : Buffer.byteLength(qbeText, 'utf8')
-    }
+  var headers = {
+    'Content-Length' : Buffer.byteLength(qbeText, 'utf8')
   }
-      
-  var	logOptions = logRequest(sessionState, options, qbeText);
-	
+
+  var queryString = addLimitAndFields(limit,fields)
+                  + '&' + 'action=' + 'query';
+
+  var options = setOptions('POST',collectionName,cfg,headers,queryString);      
+  var logOptions = logRequest(sessionState, options, qbeText);
+  
   return new Promise(
 
     function(resolve, reject) {
      
-   	  // console.log('Execute promise : ' + moduleId);
+      // console.log('Execute promise : ' + moduleId);
 
       var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
-		  
-	  request.on(
+      
+      request.on(
         'error', 
         (e) => {
-      	  var details = { 
-       	    module         : moduleId + '.request(error)',
-       	    requestOptions : options,
-       	    cause          : e
-         	}
+          var details = { 
+            module         : moduleId + '.request(error)',
+            requestOptions : options,
+            cause          : e
+          }
           reject(new SodaError(details));
         }
       );
@@ -606,49 +611,35 @@ function putJSON(sessionState, cfg, collectionName,key,json,eTag) {
 function putDocument(sessionState, cfg, collectionName, key, document, contentType, eTag) {
 
   var moduleId = 'putDocument(' + collectionName + ')' + key + ',' + contentType + ')';
-  
-  var path = cfg.path 
-           + '/' + collectionName 
-           + '/' + key;
 
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : 'PUT',
-    path     : path,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {
-     'Content-Type' : contentType,
-     'Content-Length' : Buffer.byteLength(document)
-    }
-  }    
-  
-  if (eTag) {
-  	headers["If-Match"] = eTag;
+  var headers = {
+    'Content-Type'   : contentType,
+    'Content-Length' : Buffer.byteLength(document)
   }
 
-  var	logOptions = logRequest(sessionState, options, document);
+  var options = setOptions('PUT',collectionName,cfg,headers,'/' + key, eTag);  
+  var logOptions = logRequest(sessionState, options, document);
 
   return new Promise(
 
     function(resolve, reject) {
 
-   	  // console.log('Execute promise : ' + moduleId);
-   	  
+      // console.log('Execute promise : ' + moduleId);
+      
       var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
 
       request.on(
         'error', 
         (e) => {
-        	if ((e.code) && (e.code == 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
-        		resolve({status:200})
+          if ((e.code) && (e.code === 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
+            resolve({status:200})
           }
           else {
-          	var details = { 
-       	      module         : moduleId + '.request(error)',
-           	  requestOptions : options,
-           	  cause          : e
-           	}
+            var details = { 
+              module         : moduleId + '.request(error)',
+              requestOptions : options,
+              cause          : e
+            }
             reject(new SodaError(details));
           }
         }
@@ -660,7 +651,7 @@ function putDocument(sessionState, cfg, collectionName, key, document, contentTy
 }
 </code></pre></div>
 <p>An "Update Document" operation is executed by performing a PUT on the target document. The document is identified using its internal key. The new content for the document is supplied as the body of the PUT. The putDocument function returns a Promise that, on execution, returns the result of update operation. The actual application logic is similar to the logic for the getCollection function, with the exception that this function performs a PUT rather than a GET and the uddated document is supplied as the body of the POST</p>
-<p>SODA for REST uses an optimistic locking strategy to prevent conflicting updates from taking place. This follows REST conventions and is based on the value of the documents ETag. Any time an application might need to update a document it must fetch the document metadata as well as document content in order to get the current value of the ETag. Conflicting updates are prevented by adding an "If Match" header to the HTTP request. The value of this header is the ETag that was obtained last time the document was read. If there has been a conflicting update the current ETag for the document will not match the ETag supplied by the application and the PUT operation will return HTTP Status code of 412 [Precondition Failed] indicating that the PUT operation was not successful. If there are no conflicting updates then the PUT operation will return HTTP Status code 200 [Successful].</p>
+<p>SODA for REST uses an optimistic locking strategy to prevent conflicting updates from taking place. This follows REST conventions and is based on the value of the documents ETag. Any time an application might need to update a document it must fetch the document metadata as well as document content in order to get the current value of the ETag. Conflicting updates are prevented by adding an "If Match" header to the HTTP request. The value of this header is the ETag that was obtained last time the document was read. The "If-Match" header is added during the call to the setOptions function if a value is proved for the eTag argument. If there has been a conflicting update the current ETag for the document will not match the ETag supplied by the application and the PUT operation will return HTTP Status code of 412 [Precondition Failed] indicating that the PUT operation was not successful. If there are no conflicting updates then the PUT operation will return HTTP Status code 200 [Successful].</p>
 
 <h2>Creating Documents</h2>
 <p>The bookTickets method uses SODA for REST's  "InsertDocument" micro-service to create the ticketSale document. The creation of the new document is handled by the call to the function insertTicketSale provided by the movie_ticket_api.js module, which in turn calls the postJSON and postDocument functions provided by the soda-rest.js module. The insertTicketSale and postJSON functions are simply thin veneers over the postDocument function. The postDocument function performs the REST operation that inserts the document. The code for these functions is shown below:</p>
@@ -681,24 +672,16 @@ function postJSON(sessionState, cfg, collectionName,json) {
    
 }
 
-function postDocument(sessionState, cfg, collectionName, document, contentType) {
+function postDocument(sessionState, cfg, collectionName,document,contentType) {
 
   var moduleId = 'postDocument(' + collectionName + ',' + contentType + ')';
 
-  var path = cfg.path+ '/' + collectionName;
+  var headers  = {
+    'Content-Type'   : contentType,
+    'Content-Length' : Buffer.byteLength(document)
+  }
 
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : 'POST',
-    path     : path,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {
-     'Content-Type'   : contentType,
-     'Content-Length' : Buffer.byteLength(document)
-    }
-  }    
-
+  var options = setOptions('POST',collectionName,cfg,headers)
   var logOptions = logRequest(sessionState, options,document);
 
   return new Promise(

@@ -11,6 +11,8 @@
  * ================================================
  */
  
+"use strict";
+
 var fs = require('fs');
 
 var configData = fs.readFileSync('config.json');

@@ -1,30 +1,30 @@
-{     
-    "useProxy"            : false,
-    "proxy"               : {
-      "hostname"          : null,
-      "port"              : null
-    },
-    "tmdb"                : {
-      "protocol"          : "http",
-      "hostname"          : "api.themoviedb.org",
-      "port"              : 80,
-      "apiPath"           : "/3",
-      "apiKey"            : "EnterYourKeyHere"
-    },
-    "fandango"            : {
-      "protocol"          : "http",
-      "hostname"          : "www.fandango.com",
-      "port"              : 80,
-      "path"              : "/rss/moviesnearme_"
-    },
-    "usCensus"            : {
-      "protocol"          : "http",
-      "hostname"          : "geocoding.geo.census.gov",
-      "port"              : 80,
-      "path"              : "/geocoder/locations/onelineaddress"
-    },
-    
-    "movieStartDate"      : "2015-01-01",
-    "movieEndDate"        : "2016-06-16",     
-    "theaterZipCode"      : "94103"
+{
+  "useProxy": false,
+  "proxy": {
+    "hostname": null,
+    "port": null
+  },
+  "tmdb": {
+    "protocol": "http",
+    "hostname": "api.themoviedb.org",
+    "port": 80,
+    "apiPath": "/3",
+    "apiKey": "YOUR_TMDB_KEY_GOES_HERE"
+  },
+  "fandango": {
+    "protocol": "http",
+    "hostname": "www.fandango.com",
+    "port": 80,
+    "path": "/rss/moviesnearme_"
+  },
+  "usCensus": {
+    "protocol": "http",
+    "hostname": "geocoding.geo.census.gov",
+    "port": 80,
+    "path": "/geocoder/locations/onelineaddress"
+  },
+  "movieStartDate": "2015-01-01",
+  "movieEndDate": "2016-06-30",
+  "movieLanguage": "en",
+  "theaterZipCode": "94103"
 }

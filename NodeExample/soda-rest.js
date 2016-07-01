@@ -10,8 +10,10 @@
  *
  * ================================================
  */
+
+"use strict";
  
- var http = require('http');
+var http = require('http');
 
 module.exports.SodaError                   = SodaError;
 module.exports.createCollection            = createCollection
@@ -24,6 +26,8 @@ module.exports.postJSON                    = postJSON
 module.exports.postDocument                = postDocument
 module.exports.putJSON                     = putJSON
 module.exports.putDocument                 = putDocument
+module.exports.deleteJSON                  = deleteDocument
+module.exports.deleteDocument              = deleteDocument
 module.exports.getCollection               = getCollection
 module.exports.getJSON                     = getJSON
 module.exports.getDocument                 = getDocument
@@ -38,7 +42,7 @@ var spatialIndexSupported    = true;
 function SodaError(details) {
   this.name    = 'SodaError';
   this.message = 'Unexpected Error while invoking Oracle Soda for Rest';
-  if (details.statusCode) {
+  if (details.statusCode !== undefined ) {
     this.statusCode = details.statusCode
   }
   this.stack   = details.cause.stack;
@@ -57,6 +61,36 @@ function generateURL(options) {
        + options.path;
          
 }
+
+function setOptions(method,collectionName,cfg,headers,localPath,eTag) {
+
+  var options = {
+    hostname : cfg.hostname,
+    port     : cfg.port,
+    method   : method,
+    path     : cfg.path + "/" + collectionName,
+    headers  : headers !== undefined ? headers : {}
+  }    
+  
+  if (localPath !== undefined) {
+  	options.path = options.path + localPath;
+  }
+
+  if (options.headers['Content-Type'] === undefined) {
+  	options.headers['Content-Type'] = 'application/json';
+  }
+  
+  if (eTag !== undefined) {
+    options.headers["If-Match"] = eTag;
+  }
+  
+  if (cfg.authMethod === 'Basic') {
+    options.auth = cfg.username + ":" + cfg.password;
+  }
+  
+  return options
+}
+  
 
 function newLogEntry(sessionId, operationId, options, content) {
 
@@ -103,7 +137,7 @@ function logResponse(cfg, response, endTime, logOptions) {
   
   // console.log('logResponse(' + JSON.stringify(logOptions) + ')');
 
-  if (logOptions != null) {
+  if ((logOptions !== undefined) && (logOptions != null)) {
 
     logOptions.logEntry.module               = response.module;
     logOptions.logEntry.elapsedTime          = endTime - logOptions.logEntry.startTime 
@@ -133,7 +167,7 @@ function responseFactory(cfg, moduleName, options, logOptions, resolve, reject) 
 
     // console.log(moduleName + '.readResponse(): statusCode = ' + sodaResponse.statusCode + ', content-length = ' + sodaResponse.headers["content-length"] +', content-type = ' + sodaResponse.headers["content-type"]);
 
-    if (sodaResponse.headers["content-type"] == 'application/json') {
+    if (sodaResponse.headers["content-type"] === 'application/json') {
       sodaResponse.on(
         'data' ,
         function(chunk) {
@@ -156,12 +190,12 @@ function responseFactory(cfg, moduleName, options, logOptions, resolve, reject) 
 
         var endTime = new Date();
         
-        if ((sodaResponse.statusCode == 200) || (sodaResponse.statusCode == 201)) {
+        if ((sodaResponse.statusCode === 200) || (sodaResponse.statusCode === 201)) {
 
-          if (sodaResponse.headers["content-type"] == 'application/json') {
+          if (sodaResponse.headers["content-type"] === 'application/json') {
             json = JSON.parse(body);
             body = null;
-            if ((json != null) && (json.items)) {
+            if ((json !== null) && (json.items)) {
               json = json.items;
             }
           }
@@ -193,7 +227,7 @@ function responseFactory(cfg, moduleName, options, logOptions, resolve, reject) 
             statusText     : http.STATUS_CODES[sodaResponse.statusCode],
             options        : options,
             headers        : sodaResponse.headers,
-            bytesRecieved  : body == null ? 0 : body.length,
+            bytesRecieved  : body === null ? 0 : body.length,
             responseText   : body,
             cause          : new Error()
           }
@@ -209,27 +243,17 @@ function createCollection(sessionState, cfg, collectionName, collectionPropertie
 
   var serializedJSON = "";
   
-  if ((typeof collectionProperties === "object") & (collectionProperties != null)) {
+  if ((typeof collectionProperties === "object") & (collectionProperties !== null)) {
     serializedJSON = JSON.stringify(collectionProperties);
   }
 
   var moduleId = 'createCollection(' + collectionName + ',' + serializedJSON + ')';
 
-  var path = cfg.path 
-           + '/' + collectionName;
- 
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : 'PUT',
-    path     : path,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {
-     'Content-Type': 'application/json',
+  var  headers = {
      'Content-Length' : Buffer.byteLength(serializedJSON, 'utf8')
     }
-  };
-  
+
+  var options = setOptions('PUT',collectionName,cfg,headers)   
   var logOptions = logRequest(sessionState, options, serializedJSON);
 
   return new Promise(
@@ -243,7 +267,7 @@ function createCollection(sessionState, cfg, collectionName, collectionPropertie
       request.on(
         'error', 
         (e) => {
-          if ((e.code) && (e.code == 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
+          if ((e.code) && (e.code === 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
             resolve()
           }
           else {
@@ -270,22 +294,13 @@ function createIndex(sessionState, cfg, collectionName, indexDefinition) {
 
   var moduleId = 'createIndex(' + collectionName + ',' + indexDefinition.name + ')'; 
 
-  var path = cfg.path 
-          + '/' + collectionName
-          + '?' + 'action=' + 'index'
+  var queryString = '?' + 'action=' + 'index'
+
+  var headers = {
+   'Content-Length' : Buffer.byteLength(serializedJSON, 'utf8')
+  }
  
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : 'POST',
-    path     : path,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {
-     'Content-Type': 'application/json',
-     'Content-Length' : Buffer.byteLength(serializedJSON, 'utf8')
-    }
-  };
-              
+  var options = setOptions('POST',collectionName,cfg,headers,queryString);
   var logOptions = logRequest(sessionState, options, serializedJSON);
 
   // Skip Spatial Indexes in environments where spatial operations on Geo-JSON are not supported
@@ -306,7 +321,7 @@ function createIndex(sessionState, cfg, collectionName, indexDefinition) {
       request.on(
         'error', 
         (e) => {
-          if ((e.code) && (e.code == 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
+          if ((e.code) && (e.code === 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
             resolve()
           }
           else {
@@ -360,16 +375,7 @@ function createCollectionWithIndexes(sessionState, cfg, collectionName, collecti
 function dropCollection(sessionState, cfg, collectionName) {
 
   var moduleId = 'dropCollection(' + collectionName + ')';
- 
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : 'DELETE',
-    path     : cfg.path + '/' + collectionName,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {'Content-Type': 'application/json'}
-  };    
-        
+  var options = setOptions('DELETE',collectionName,cfg);
   var logOptions = logRequest(sessionState, options);
  
   return new Promise(
@@ -383,7 +389,7 @@ function dropCollection(sessionState, cfg, collectionName) {
       request.on(
         'error', 
         (e) => {
-          if ((e.code) && (e.code == 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
+          if ((e.code) && (e.code === 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
             resolve()
           }
           else {
@@ -404,20 +410,7 @@ function dropCollection(sessionState, cfg, collectionName) {
 function getCollection(sessionState, cfg, collectionName,limit,fields) {
 
   var moduleId = 'getCollection(' + collectionName + ')';
-
-  var path = cfg.path 
-           + '/' + collectionName
-           + addLimitAndFields(limit,fields);
-     
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : 'GET',
-    path     : path,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {'Content-Type': 'application/json'}
-  };    
-        
+  var options = setOptions('GET',collectionName,cfg,undefined,addLimitAndFields(limit,fields))
   var logOptions = logRequest(sessionState, options);
 
   return new Promise(
@@ -453,16 +446,7 @@ function getJSON(sessionState, cfg, collectionName, key, eTag) {
 function getDocument(sessionState, cfg, collectionName, key, eTag) {
 
   var moduleId = 'getDocument(' + collectionName + ',' + key +')';
-
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : 'GET',
-    path     : cfg.path+ '/' + collectionName + '/' + key,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {'Content-Type': 'application/json'}
-  };    
-         
+  var options = setOptions('GET',collectionName,cfg,undefined,'/' + key, eTag)
   var logOptions = logRequest(sessionState, options);
   
   return new Promise(
@@ -489,7 +473,7 @@ function getDocument(sessionState, cfg, collectionName, key, eTag) {
   )   
 }
 
-function postJSON(sessionState, cfg, collectionName,json) {
+function postJSON(sessionState, cfg, collectionName, json) {
 
   // console.log('postJSON(' + collectionName + ')');
 
@@ -504,20 +488,12 @@ function postDocument(sessionState, cfg, collectionName,document,contentType) {
 
   var moduleId = 'postDocument(' + collectionName + ',' + contentType + ')';
 
-  var path = cfg.path+ '/' + collectionName;
+  var headers  = {
+    'Content-Type'   : contentType,
+    'Content-Length' : Buffer.byteLength(document)
+  }
 
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : 'POST',
-    path     : path,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {
-     'Content-Type'   : contentType,
-     'Content-Length' : Buffer.byteLength(document)
-    }
-  }    
-
+  var options = setOptions('POST',collectionName,cfg,headers)
   var logOptions = logRequest(sessionState, options,document);
 
   return new Promise(
@@ -546,30 +522,19 @@ function postDocument(sessionState, cfg, collectionName,document,contentType) {
   )   
 }
 
-
 function bulkInsert(sessionState, cfg, collectionName,documents) {
 
   var moduleId = 'bulkInsert(' + collectionName + ')';
-  
   var serializedJSON = JSON.stringify(documents);
   // console.log(serializedJSON);
 
-  var path = cfg.path 
-           + '/' + collectionName 
-           + '?' + 'action=' + 'insert';
+  var headers  = {
+    'Content-Length' : Buffer.byteLength(serializedJSON, 'utf8')
+  }
 
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : 'POST',
-    path     : path,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {
-     'Content-Type' : 'application/json',
-     'Content-Length' : Buffer.byteLength(serializedJSON, 'utf8')
-    }
-  }    
+  var queryString = '?' + 'action=' + 'insert';
 
+  var options = setOptions('POST',collectionName,cfg,headers,queryString);
   var logOptions = logRequest(sessionState, options, serializedJSON);
 
   return new Promise(
@@ -612,27 +577,13 @@ function putJSON(sessionState, cfg, collectionName,key,json,eTag) {
 function putDocument(sessionState, cfg, collectionName, key, document, contentType, eTag) {
 
   var moduleId = 'putDocument(' + collectionName + ')' + key + ',' + contentType + ')';
-  
-  var path = cfg.path 
-           + '/' + collectionName 
-           + '/' + key;
 
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : 'PUT',
-    path     : path,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {
-     'Content-Type' : contentType,
-     'Content-Length' : Buffer.byteLength(document)
-    }
-  }    
-  
-  if (eTag) {
-    headers["If-Match"] = eTag;
+  var headers = {
+    'Content-Type'   : contentType,
+    'Content-Length' : Buffer.byteLength(document)
   }
 
+  var options = setOptions('PUT',collectionName,cfg,headers,'/' + key, eTag);  
   var logOptions = logRequest(sessionState, options, document);
 
   return new Promise(
@@ -646,7 +597,49 @@ function putDocument(sessionState, cfg, collectionName, key, document, contentTy
       request.on(
         'error', 
         (e) => {
-          if ((e.code) && (e.code == 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
+          if ((e.code) && (e.code === 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
+            resolve({status:200})
+          }
+          else {
+            var details = { 
+              module         : moduleId + '.request(error)',
+              requestOptions : options,
+              cause          : e
+            }
+            reject(new SodaError(details));
+          }
+        }
+      );
+      request.write(document);
+      request.end();
+    }
+  )   
+}
+
+function deleteDocument(sessionState, cfg, collectionName, key, document, eTag) {
+
+  var moduleId = 'deleteDocument(' + collectionName + ')' + key + ')';
+  
+  var path = cfg.path 
+           + '/' + collectionName 
+           + '/' + key;
+
+  options = setOptions(cfg,'DELETE',path,eTag);
+  
+  var logOptions = logRequest(sessionState, options, document);
+
+  return new Promise(
+
+    function(resolve, reject) {
+
+      // console.log('Execute promise : ' + moduleId);
+      
+      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
+
+      request.on(
+        'error', 
+        (e) => {
+          if ((e.code) && (e.code === 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
             resolve({status:200})
           }
           else {
@@ -672,8 +665,7 @@ function addLimitAndFields(limit,fields) {
       }
       
       var query = '?' + 'fields=' + fields;
-       
-      
+             
       if (limit) {
         query = query
              + '&' + 'limit=' + limit;
@@ -686,27 +678,16 @@ function addLimitAndFields(limit,fields) {
 function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
 
   var qbeText  = JSON.stringify(qbe);
-  var moduleId = 'queryByExample(' + collectionName + ',' + qbeText +')';
-  
-  var path = cfg.path 
-           + '/' + collectionName 
-           + addLimitAndFields(limit,fields)
-           + '&' + 'action=' + 'query';
-  
-  // console.log('queryByExample() path = ' + path);
+  var moduleId = 'queryByExample(' + collectionName + ',' + qbeText +')';  
 
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : 'POST',
-    path     : path,
-    auth     : cfg.username + ":" + cfg.password,
-    headers  : {
-     'Content-Type' : 'application/json',
-     'Content-Length' : Buffer.byteLength(qbeText, 'utf8')
-    }
+  var headers = {
+    'Content-Length' : Buffer.byteLength(qbeText, 'utf8')
   }
-      
+
+  var queryString = addLimitAndFields(limit,fields)
+                  + '&' + 'action=' + 'query';
+
+  var options = setOptions('POST',collectionName,cfg,headers,queryString);      
   var logOptions = logRequest(sessionState, options, qbeText);
   
   return new Promise(
@@ -737,7 +718,7 @@ function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
 function recreateCollection(sessionState, cfg, collectionName,collectionProperties) {
    
   return dropCollection(sessionState, cfg, collectionName).catch(function(e){
-     if ((e) && (e.statusCode) && (e.statusCode == 404)) {
+     if ((e) && (e.statusCode) && (e.statusCode === 404)) {
        console.log('recreateCollection(' + collectionName + '): Not Found.');
     }
     else {
@@ -771,16 +752,16 @@ function featureDetection(cfg) {
   
   var collectionName = 'TMP-' + generateRandomName();
   
-  createCollection(disableSodaLogging, cfg, collectionName).then(function(){;
+  return createCollection(disableSodaLogging, cfg, collectionName).then(function(){;
     var qbe = {id : {"$contains" : 'XXX'}}
     return queryByExample(disableSodaLogging, cfg, collectionName, qbe)
   }).then(function(sodaResponse){
   }).catch(function(sodaError){
-    if (sodaError.details.statusCode == 400) {
+    if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
       sodaErrorDetails = JSON.parse(sodaError.details.responseText);
       // console.log(JSON.stringify(sodaErrorDetails));
-      if (sodaErrorDetails.title == 'The field name $contains is not a recognized operator.') {
-      // if (sodaErrorDetails['o:errorCode'] == 'SODA-02002') {
+      if (sodaErrorDetails.title === 'The field name $contains is not a recognized operator.') {
+      // if (sodaErrorDetails['o:errorCode'] === 'SODA-02002') {
         fullTextSearchSupported = false;
       }
     }
@@ -804,19 +785,23 @@ function featureDetection(cfg) {
     return queryByExample(disableSodaLogging, cfg, collectionName, qbe)
   }).then(function(sodaResponse){
   }).catch(function(sodaError){
-    if (sodaError.details.statusCode == 400) {
+    if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
       sodaErrorDetails = JSON.parse(sodaError.details.responseText);
       // console.log(JSON.stringify(sodaErrorDetails));
-      if (sodaErrorDetails.title == 'The field name $near is not a recognized operator.') {
-      // if (sodaErrorDetails['o:errorCode'] == 'SODA-02002') {
+      if (sodaErrorDetails.title === 'The field name $near is not a recognized operator.') {
+      // if (sodaErrorDetails['o:errorCode'] === 'SODA-02002') {
         spatialIndexSupported = false;
       }
     }
   }).then(function() {
     return dropCollection(disableSodaLogging,cfg,collectionName);
   }).then(function() {
-   console.log('Full Text Search Supported: ' + fullTextSearchSupported);
-   console.log('Spatial Indexing Supported: ' + spatialIndexSupported);
+   console.log(new Date().toISOString() + ': Full Text Search Supported: ' + fullTextSearchSupported);
+   console.log(new Date().toISOString() + ': Spatial Indexing Supported: ' + spatialIndexSupported);
+  }).catch(function(e) {
+   console.log('Broken Promise : featureDetection().');
+   console.log(e);
+   throw e;
   });
 
 };

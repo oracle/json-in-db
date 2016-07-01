@@ -11,6 +11,8 @@
  * ================================================
  */
  
+"use strict";
+
 var sodaRest = require('./soda-rest.js');
 var cfg = require('./config.js');
 var fs = require('fs');
@@ -64,6 +66,8 @@ module.exports.getPoster                   = getPoster;
 module.exports.getLogRecordByOperationId   = getLogRecordByOperationId
 
 module.exports.initializeSodaLogging       = initializeSodaLogging;
+module.exports.logError                    = logError;
+module.exports.writeLogEntry               = writeLogEntry;
 
 initialize()
 
@@ -232,7 +236,7 @@ function updateScreening(sessionState, key,screening,eTag) {
 
 function createTicketSaleCollection(sessionState) {
 	
-	return sodaRest.createCollectionWithIndexes(sessionState, cfg.config, 'TicketSale',collectionMetadata.TicketSale);
+	return sodaRest.createCollectionWithIndexes(sessionState, cfg.config, 'TicketSale', collectionMetadata.TicketSale);
 
 }
 
@@ -244,31 +248,31 @@ function dropTicketSaleCollection(sessionState) {
 
 function recreateTicketSaleCollection(sessionState) {
 	
-	return sodaRest.recreateCollection(sessionState, cfg.config, 'TicketSale',collectionMetadata.TicketSale);
+	return sodaRest.recreateCollection(sessionState, cfg.config, 'TicketSale', collectionMetadata.TicketSale);
 
 }
 
 function insertTicketSales(sessionState, ticketSaleList) {
 	
-	return sodaRest.bulkInsert(sessionState, cfg.config, 'TicketSale',ticketSaleList);
+	return sodaRest.bulkInsert(sessionState, cfg.config, 'TicketSale', ticketSaleList);
 
 }
 
 function insertTicketSale(sessionState, ticketSale) {
 	
-	return sodaRest.postJSON(sessionState, cfg.config, 'TicketSale',ticketSale);
+	return sodaRest.postJSON(sessionState, cfg.config, 'TicketSale', ticketSale);
 
 }
 
 function updateTicketSale(sessionState, key,ticketSale,eTag) {
 	
-	return sodaRest.putJSON(sessionState, cfg.config, 'TicketSale',key,ticketSale,eTag);
+	return sodaRest.putJSON(sessionState, cfg.config, 'TicketSale', key, ticketSale,eTag);
 
 }
 
 function queryTicketSales(sessionState, qbe,limit,fields) {
 	
-	return sodaRest.queryByExample(sessionState, cfg.config, 'TicketSale',qbe,limit,fields);
+	return sodaRest.queryByExample(sessionState, cfg.config, 'TicketSale', qbe, limit, fields);
 
 }
 
@@ -277,7 +281,7 @@ function queryTicketSales(sessionState, qbe,limit,fields) {
 
 function createPosterCollection(sessionState) {
 	
-	return sodaRest.createCollectionWithIndexes(sessionState, cfg.config, 'Poster',collectionMetadata.Poster);
+	return sodaRest.createCollectionWithIndexes(sessionState, cfg.config, 'Poster', collectionMetadata.Poster);
 
 }
 
@@ -289,7 +293,7 @@ function dropPosterCollection(sessionState) {
 
 function recreatePosterCollection(sessionState) {
 	
-	return sodaRest.recreateCollection(sessionState, cfg.config, 'Poster',collectionMetadata.Poster);
+	return sodaRest.recreateCollection(sessionState, cfg.config, 'Poster', collectionMetadata.Poster);
 
 }
 
@@ -305,11 +309,31 @@ function getPoster(sessionState, key) {
 
 }
 
+function createLogRecordCollection() {
+	
+	return sodaRest.createCollectionWithIndexes(sodaLoggingDisabled, cfg.config, logCollectionName, collectionMetadata.MovieTicketLog);
+
+}
+
 function initializeSodaLogging(sessionState) {
+
 	if ((sessionState.sodaLoggingEnabled) && (sessionState.logCollectionName == null)) {
     sessionState.logCollectionName = logCollectionName;
-	  sodaRest.createCollectionWithIndexes( sodaLoggingDisabled, cfg.config, sessionState.logCollectionName, collectionMetadata.MovieTicketLog);
 	}
+
+}
+
+function writeLogEntry(logEntry) {
+	 
+	 sodaRest.postJSON(sodaLoggingDisabled, cfg.config, logCollectionName, logEntry);
+	 
+}
+
+function logError(error, body) {
+	 
+	 error.body = body;	
+	 writeLogEntry(error);
+	 
 }
 
 function getLogRecordByOperationId(id) {
@@ -322,11 +346,19 @@ function getLogRecordByOperationId(id) {
   )
 }
 
-function initialize() {
-	sodaRest.featureDetection(cfg.config);
-  createTicketSaleCollection(sodaLoggingDisabled).catch(function(e){
-		console.log('Error during initialization of movie_ticket_api.js');
+function createEmptyCollections() {
+
+  createLogRecordCollection().then(function(){
+    createTicketSaleCollection(sodaLoggingDisabled);
+  }).catch(function(e){
+   	console.log('movie_ticket_api.js: Error during Collection Creation.');
 		console.log(JSON.stringify(e));
 		throw e;
   });
+}
+
+function initialize() {
+	
+	sodaRest.featureDetection(cfg.config);
+  createEmptyCollections();	
 }

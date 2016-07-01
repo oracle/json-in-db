@@ -11,6 +11,8 @@
  * ================================================
  */
  
+"use strict";
+
 var http = require('http');
 var movieAPI = require('./movie_ticket_api.js');
 var cfg = require('./config.js');

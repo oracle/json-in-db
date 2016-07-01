@@ -11,6 +11,8 @@
  * ================================================
  */
  
+"use strict";
+
 var http = require('http');
 var express = require('express');
 var cookieParser = require('cookie-parser');
@@ -29,7 +31,7 @@ function initApp() {
   app = express();
   var port = 3000;
   
-  httpServer = http.Server(app);
+  var httpServer = http.Server(app);
 
   app.use(morgan('combined')); //logger
   app.use(bodyParser.json()); // for parsing application/json
@@ -46,7 +48,7 @@ function initApp() {
   app.use(handleError);
 
   httpServer.listen(port, function() {
-      console.log('MovieTicket Webserver listening on localhost:' + port);
+      console.log(new Date().toISOString() + ': MovieTicket Webserver listening on localhost:' + port);
   });
 }
 

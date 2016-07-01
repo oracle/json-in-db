@@ -314,7 +314,7 @@ var sampleDataSources = {
       "hostname"          : "api.themoviedb.org",
       "port"              : 80,
       "apiPath"           : "/3",
-      "apiKey"            : "PlaceYourKeyHere"
+      "apiKey"            : "YOUR_TMDB_KEY_GOES_HERE"
     },
     "fandango"            : {
       "protocol"          : "http",

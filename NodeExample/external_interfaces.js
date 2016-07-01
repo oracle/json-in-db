@@ -11,18 +11,20 @@
  * ================================================
  */
  
+"use strict";
+
 var http = require('http');
 var url = require('url');
 var cfg = require('./config.js');
 var xmlParser = require('xml2js').Parser();
 var movieAPI = require('./movie_ticket_api.js');
+var usAddressParser = require('parse-address');
 
 module.exports.ExternalError   = ExternalError;
 module.exports.loadTheaters    = loadTheaters;
 module.exports.loadMovies      = loadMovies;
 module.exports.loadScreenings  = loadScreenings;
 module.exports.loadPosters     = loadPosters;
-module.exports.showCompanyList = showCompanyList;
 
 function ExternalError(details) {
   this.name    = 'ExternalError';
@@ -70,7 +72,7 @@ function loadTheaters (sessionState, response, next) {
 
   var theaterList = [];
   
-  console.log('externalInterface.loadTheaters()');
+  console.log(new Date().toISOString() + ': externalInterface.loadTheaters()');
   getTheaterInformation().then(function(theaters) {
   	theaterList = theaters;
     return movieAPI.recreateTheaterCollection(sessionState)
@@ -80,6 +82,7 @@ function loadTheaters (sessionState, response, next) {
     response.json({count:sodaResponse.json.length})
     response.end('')
   }).catch(function(e) {
+  	movieAPI.logError(e,theaterList);
     next(e)
   });
 } 
@@ -90,7 +93,7 @@ function loadMovies(sessionState, response, next) {
   
   var sessionState = sodaLoggingState;
 
-  console.log('externalInterface.loadMovies()');
+  console.log(new Date().toISOString() + ': externalInterface.loadMovies()');
   getMoviesFromTMDB(sessionState,response).catch(function(e) {
     next(e)
   });
@@ -103,7 +106,7 @@ function loadScreenings (sessionState, response, next) {
   
   var sessionState = sodaLoggingState;
 
-  console.log('externalInterface.loadScreenings()');
+  console.log(new Date().toISOString() + ': externalInterface.loadScreenings()');
   createScreenings(sessionState).then(function(total) {
     response.json({count:total})
     response.end('')
@@ -118,7 +121,7 @@ function loadPosters(sessionState, response, next) {
   
   var sessionState = sodaLoggingState;
 
-  console.log('externalInterface.loadMovies()');
+  console.log(new Date().toISOString() + ': externalInterface.loadMovies()');
   getPostersFromTMDB(sessionState,response).catch(function(e) {
     next(e)
   });
@@ -126,7 +129,7 @@ function loadPosters(sessionState, response, next) {
 
 }
 
-function getTheaterLocation(geocodeResult) {
+function setTheaterLocation(theater, geocodeResult, benchmark) {
       
   var location = geocodeResult.input.address.address    
       
@@ -136,6 +139,7 @@ function getTheaterLocation(geocodeResult) {
   var zip = null;
  
   if (geocodeResult.addressMatches.length > 0) {
+  	
     var address = geocodeResult.input.address.address
     var streetNumber = address.substring(0,address.indexOf(' '));
 
@@ -196,13 +200,50 @@ function getTheaterLocation(geocodeResult) {
         type        : "Point",
         coordinates : [coordinates.x , coordinates.y]                                                                      
       }
-    }
-             
-  return location   
+    }             
   }
+  else {
+  	if (benchmark === 'Public_AR_Census2010') {
+  	  return geocodeTheater(theater,'Public_AR_ACS2015',0) 
+    }
+    else {
+  	  console.log(new Date().toISOString() + ': externalInterface.setTheaterLocation(' + theater.id + ',' + theater.name + '): Unable to obtain co-ordinates for: ' + location);
+			var parsedAddress = usAddressParser.parseLocation(location);
+  
+      var street    
+      if (parsedAddress.number) {
+  			street = parsedAddress.number;
+			  if (parsedAddress.prefix) {
+				  street = street + ' ' + parsedAddress.prefix;
+			  }
+			  street = street + ' ' + parsedAddress.street;
+			  if (parsedAddress.type) {
+				  street = street + ' ' + parsedAddress.type;
+		    }
+		  }
+		  
+		  if (parsedAddress.street1) {
+        street = parsedAddress.street1;
+			  if (parsedAddress.type1) {
+				  street = street + ' ' + parsedAddress.type1;
+		    }
+      }
+        			
+      location = {
+      	street      : street,
+      	city        : parsedAddress.city,
+      	zipCode     : parsedAddress.zip,
+      	state       : parsedAddress.state,
+      	phoneNumber : null,
+  	    getCoding   : {}
+  	  }
+  	  // console.log(new Date().toISOString() + ': externalInterface.setTheaterLocation(' + theater.id + ',' + theater.name + '): Using : ' + JSON.stringify(location));
+    }
+  }
+  theater.location = location;
 }
 
-function geocodeTheater(theater) {
+function geocodeTheater(theater,benchmark,count) {
 
    return new Promise(
      
@@ -223,13 +264,17 @@ function geocodeTheater(theater) {
           'end', 
           function () {
             if (response.statusCode == 200) {
-              theater.location = getTheaterLocation(JSON.parse(responseText).result);
+              setTheaterLocation(theater,JSON.parse(responseText).result,benchmark);
               resolve(theater)
             }
             else {
-              if (response.statusCode == 500) {
-                console.log('geocodeTheater().readResponse(): Geocoding Failed (500) for  ' + theater.location)
-                resolve(geocodeTheater(theater))
+              console.log(new Date().toISOString() + ': externalInterface.geocodeTheater(' + theater.id +',' + theater.name + ',' + benchmark + ').readResponse(): Geocoding Failed (' + response.statusCode + ') for  ' + theater.location)
+              if ((response.statusCode == 500) && (count < 10)) {
+                return(geocodeTheater(theater,benchmark,count+1)).then(function(t) {
+                  resolve(t);
+                }).catch(function (e) {
+                	rejec(e);
+                })
               }
               else {
                 var details = { 
@@ -248,11 +293,11 @@ function geocodeTheater(theater) {
         );
       }
     
-      // console.log('geocodeTheater() : Location = ' + theater.location);
+      // console.log(new Date().toISOString() + ': externalInterface.geocodeTheater(' + theater.id +',' + theater.name + ',' + benchmark + '): Location = ' + theater.location);
 
       var path = cfg.dataSources.usCensus.path 
                + '?' + 'format=' + 'json' 
-               + '&' + 'benchmark=' + '9' 
+               + '&' + 'benchmark=' + benchmark 
                + '&' + 'address=' + encodeURIComponent(theater.location);
 
       var options = {} 
@@ -283,7 +328,7 @@ function geocodeTheater(theater) {
         'error', 
         (e) => {
           var details = { 
-            module         : 'geocodeTheater().request(error)',
+            module         : 'geocodeTheater(' + theater.id +',' + theater.name + ',' + benchmark + ').request(error)',
             requestOptions : options,
             cause          : e
           }
@@ -301,7 +346,7 @@ function generateTheater(item, index) {
   
     function(resolve, reject) {
       
-      // console.log('generateTheater(): Processing Theater #' + index);
+      // console.log(new Date().toISOString() + ': externalInterface.generateTheater(): Processing Theater #' + index);
       
       var name = item.title[0]
       var screenCount = name.match(/\d+$/);
@@ -311,7 +356,7 @@ function generateTheater(item, index) {
        }
        var screens = []
        for (var i=0; i<screenCount; i++) {
-        screen = {
+        var screen = {
           id            : i+1,
           capacity      : getRandomBetweenValues(64,129),
             features      : {
@@ -381,7 +426,7 @@ function getTheatersFromFandango() {
         );
       }
   
-      console.log('getTheatersFromFandango()');
+      console.log(new Date().toISOString() + ': externalInterface.getTheatersFromFandango()');
 
       var path = cfg.dataSources.fandango.path + cfg.dataSources.theaterZipCode + '.rss';
 
@@ -424,13 +469,17 @@ function getTheatersFromFandango() {
     }
   )   
 }
+
+function geocode_Public_AR_Census2010(t)  {
+	return geocodeTheater(t,'Public_AR_Census2010',0)
+}
     
 function getTheaterInformation() {
   
   // Generate a set of Theater documents from the Fandango TheatersNearMe RSS feed and geocode the results.
   
   return getTheatersFromFandango().then(function(rssFeed) {
-    // console.log('loadTheaters(): Count=' + theaters.length);         
+    // console.log(new Date().toISOString() + ': externalInterface.loadTheaters(): Count=' + theaters.length);         
     var theaters = []
     xmlParser.parseString(
       rssFeed,
@@ -440,13 +489,13 @@ function getTheaterInformation() {
     );
     return Promise.all(theaters.map(generateTheater))     
   }).then(function(theaters) {
-    return Promise.all(theaters.map(geocodeTheater)) 
+    return Promise.all(theaters.map(geocode_Public_AR_Census2010)) 
   })
 }
 
 function getTMDBConfiguration() {
   
-  console.log('getTMDBConfiguration()');
+  console.log(new Date().toISOString() + ': externalInterface.getTMDBConfiguration()');
 
   return new Promise(
       
@@ -468,7 +517,7 @@ function getTMDBConfiguration() {
           function () {
             if (response.statusCode == 200) {
               try {
-                // console.log('getTMDBConfiguration().readResponse()')
+                // console.log(new Date().toISOString() + ': externalInterface.getTMDBConfiguration().readResponse()')
                 resolve(JSON.parse(responseText));
               } catch (e) {
                 reject(e);
@@ -489,7 +538,7 @@ function getTMDBConfiguration() {
         );
       }
     
-      // console.log('Executing Promise[getTMDBConfiguration()]');
+      // console.log('getTMDBConfiguration(): Executing Promise.');
   
       var path = cfg.dataSources.tmdb.apiPath + '/configuration'
                + '?' + 'api_key=' + cfg.dataSources.tmdb.apiKey;
@@ -535,7 +584,7 @@ function getTMDBConfiguration() {
 
 function getCastAndCrew(movieId) {
   
-  // console.log('getCastAndCrew(' + movieId + ')');
+  // console.log(new Date().toISOString() + ': externalInterface.getCastAndCrew(' + movieId + ')');
 
   return new Promise(
       
@@ -557,7 +606,7 @@ function getCastAndCrew(movieId) {
           function () {
             if (response.statusCode == 200) {
               try {
-                // console.log('getCastAndCrew(' + movieId + ').readResponse()')
+                // console.log(new Date().toISOString() + ': externalInterface.getCastAndCrew(' + movieId + ').readResponse()')
                 var castAndCrew = JSON.parse(responseText)
                 resolve(castAndCrew);
               } catch (e) {
@@ -579,7 +628,7 @@ function getCastAndCrew(movieId) {
         )
       }
     
-      // console.log('Executing Promise[getMovieList().getCastAndCrew(' + movieId + ')]');
+      // console.log(new Date().toISOString() + ': externalInterface.getMovieList().getCastAndCrew(' + movieId + '): Executing Promise.');
   
       var path = cfg.dataSources.tmdb.apiPath + '/movie/' + movieId + '/casts' 
                + '?' + 'api_key=' + cfg.dataSources.tmdb.apiKey;
@@ -625,12 +674,12 @@ function getCastAndCrew(movieId) {
 
 function waitAndRun(items,callback,controllerModuleName,workerModuleName,batchNo,batchSize,response) {
 	if (items.length > 0) {
-    console.log(new Date().toISOString() + ': ' + controllerModuleName + '(' + batchNo + '): ' + workerModuleName + '(): Waiting.');
+    console.log(new Date().toISOString() + ': externalInterface.' + controllerModuleName + '(' + batchNo + '): ' + workerModuleName + '(): Waiting.');
     setTimeout(
       function() {   
-        console.log(new Date().toISOString() + ':' + controllerModuleName + '(' + batchNo + '): ' + workerModuleName + '(): Running.');
+        console.log(new Date().toISOString() + ': externalInterface.' + controllerModuleName + '(' + batchNo + '): ' + workerModuleName + '(): Running.');
         return callback(items,batchNo,batchSize,response).catch(function(e) {
-        	console.log(new Date().toISOString() + ':' + controllerModuleName + '(' + batchNo + '): ' + workerModuleName + '(): Error.');
+        	console.log(new Date().toISOString() + ': externalInterface.' + controllerModuleName + '(' + batchNo + '): ' + workerModuleName + '(): Error.');
         	throw e;
         });
       },
@@ -675,7 +724,7 @@ function getMoviesFromTMDB(sessionState,response) {
       response.write('}');
       response.end();
     }).catch(function(e) {
-      console.log('Broken Promise: processMovies().');
+      console.log(new Date().toISOString() + ': externalInterface.processMovies(): Broken Promise.');
       throw e;
     })
   }
@@ -724,19 +773,19 @@ function getMoviesFromTMDB(sessionState,response) {
   function addCastAndCrew(movie) {
     
     return getCastAndCrew(movie.id).then(function(castAndCrew) {
-      // console.log('Executing Promise[getMoviesFromTMDB().addCastAndCrew(' + movie.id + ')]');
+      // console.log(new Date().toISOString() + ': externalInterface.getMoviesFromTMDB().addCastAndCrew(' + movie.id + '): Executing Promise.');
       movie.crewMember = getCrewMembers(castAndCrew);
       movie.castMember = getCastMembers(castAndCrew);
       movieCache.push(movie);
     }).catch(function (e) {
-      console.log('Broken Promise: addCastAndCrew().')
+      console.log(new Date().toISOString() + ': externalInterface.getMoviesFromTMDB().addCastAndCrew(' + movie.id + '): Broken Promise.')
       throw e
     })
   }
   
   function createMovie(tmdbMovie) {
 
-    // console.log('getMoviesFromTMDB().createMovie(' + tmdbMovie.id + ')');
+    // console.log(new Date().toISOString() + ': externalInterface.getMoviesFromTMDB().createMovie(' + tmdbMovie.id + ')');
                   	        
     var runtime;
     if (tmdbMovie.runtime) {
@@ -802,8 +851,9 @@ function getMoviesFromTMDB(sessionState,response) {
         var path = cfg.dataSources.tmdb.apiPath + '/discover/movie' 
                  + '?' + 'primary_release_date.gte=' + cfg.dataSources.movieStartDate 
                  + '&' + 'primary_release_date.lte=' + cfg.dataSources.movieEndDate 
-                 + '&' + 'original_language=' + 'en'
+                 + '&' + 'original_language=' + cfg.dataSources.movieLanguage 
                  + '&' + 'include_adult=' + 'false'
+                 + '&' + 'vote_average.gte=' + 5
                  + '&' + 'sort_by=' + 'popularity.desc'
                  + '&' + 'api_key=' + cfg.dataSources.tmdb.apiKey
   
@@ -811,7 +861,7 @@ function getMoviesFromTMDB(sessionState,response) {
           path = path + '&' + 'page=' + pageNo
         }         
   
-        // console.log('addMoviePage(' + pageNo + '): Path=' + path);
+        // console.log(new Date().toISOString() + ': externalInterface.addMoviePage(' + pageNo + '): Path=' + path);
         
         var options = {}
         
@@ -854,8 +904,8 @@ function getMoviesFromTMDB(sessionState,response) {
 
   function addCastAndCrewMembers(movies, batchNo, batchSize,response) {
 
-    batch = movies.splice(0,batchSize)
-    // console.log('addCastAndCrewMembers(' + batchNo +',' + batch.length + '): Generating addCastAndCrew() operations.');
+    var batch = movies.splice(0,batchSize)
+    // console.log(new Date().toISOString() + ': externalInterface.addCastAndCrewMembers(' + batchNo +',' + batch.length + '): Generating addCastAndCrew() operations.');
   	
     var status = {
       date   : dateWithTZOffset(new Date()),
@@ -875,20 +925,20 @@ function getMoviesFromTMDB(sessionState,response) {
       ""
     );
     var idList = idList.substring(0,idList.length-1);
-    console.log('Adding Batch ' + batchNo + ': [' + idList + '].');
+    console.log(new Date().toISOString() + ': externalInterface.addCastAndCrewMembers():Adding Batch ' + batchNo + ': [' + idList + '].');
     */
   
     // Create a Batch of addCastAndCrew() operations.
-    // console.log('addCastAndCrewMembers(' + batchNo +'): Generating addCastAndCrew operations.');
+    // console.log(new Date().toISOString() + ': externalInterface.addCastAndCrewMembers(' + batchNo +'): Generating addCastAndCrew operations.');
       
     return Promise.all(batch.map(addCastAndCrew)).then(function(){
     	if (movies.length > 0) {
-  	    console.log('addCastAndCrewMembers(' + batchNo + '): Movies remaining = ' + movies.length);
+  	    console.log(new Date().toISOString() + ': externalInterface.addCastAndCrewMembers(' + batchNo + '): Movies remaining = ' + movies.length);
       	batchNo++;
   		  return waitAndRun(movies, addCastAndCrewMembers, 'addCastAndCrewMembers', 'addCastAndCrew', batchNo, batchSize, response);
   		}
 	 		else {
-        console.log('addCastAndCrewMembers(): addCastAndCrew operations complete');
+        console.log(new Date().toISOString() + ': externalInterface.addCastAndCrewMembers(): addCastAndCrew operations complete');
         var status = {
         date   : dateWithTZOffset(new Date()),
         module : 'addCastAndCrewMembers',
@@ -897,7 +947,7 @@ function getMoviesFromTMDB(sessionState,response) {
         response.write(JSON.stringify(status))
         response.write(']');
 
-        console.log('addCastAndCrewMembers(): Movie Cache size = ' + movieCache.length);
+        console.log(new Date().toISOString() + ': externalInterface.addCastAndCrewMembers(): Movie Cache size = ' + movieCache.length);
         processMovies(movieCache);
       }
     }).catch(function(e){
@@ -922,8 +972,8 @@ function getMoviesFromTMDB(sessionState,response) {
 
   function addMoviePages(pages, batchNo, batchSize, response) {
 
-		batch = pages.splice(0,batchSize)
-    // console.log('addMoviePages(' + batchNo +',' + batch.length + '): Generating addMoviePage() operations.');
+		var batch = pages.splice(0,batchSize)
+    // console.log(new Date().toISOString() + ': externalInterface.addMoviePages(' + batchNo +',' + batch.length + '): Generating addMoviePage() operations.');
 
     var status = {
         date   :  dateWithTZOffset(new Date()),
@@ -948,11 +998,12 @@ function getMoviesFromTMDB(sessionState,response) {
     */
   
     // Create a Batch of addMoviePage() operations.
-    // console.log('addMoviePages(' + batchNo +'): Generating addMoviePage() operations.');
+    // console.log(new Date().toISOString() + ': externalInterface.addMoviePages(' + batchNo +'): Generating addMoviePage() operations.');
       
     return Promise.all(batch.map(addMoviePage)).then(function(tmdbPageContents) {
       tmdbPageContents.forEach(
         function(tmdbPage) {
+          tmdbPage.results.forEach(function(m){movieAPI.writeLogEntry(m)});
         	if (tmdbPage.results[0].popularity > 5) {
           	movies.push.apply(movies,tmdbPage.results)
           }
@@ -963,12 +1014,12 @@ function getMoviesFromTMDB(sessionState,response) {
       )
     }).then(function(){
     	if (pages.length > 0) {
-  	    console.log('addMoviePages(' + batchNo + '): Pages remaining = ' + pages.length);
+  	    console.log(new Date().toISOString() + ': externalInterface.addMoviePages(' + batchNo + '): Pages remaining = ' + pages.length);
       	batchNo++;
   		  return waitAndRun(pages, addMoviePages, 'getMoviePages', 'addMoviePages', batchNo, batchSize, response);
   		}
   		else {
-  	    console.log('addMoviePages(' + batchNo + '): Processing complete. TMDB format Movie count = ' + movies.length);
+  	    console.log(new Date().toISOString() + ': externalInterface.addMoviePages(' + batchNo + '): Processing complete. TMDB format Movie count = ' + movies.length);
   	    
   	    // Remove Duplicates and convert to Oracle Movie Format 
   	    
@@ -979,7 +1030,7 @@ function getMoviesFromTMDB(sessionState,response) {
   	      	return createMovie(movie);
   	      }
   	    )
-  	    console.log('addMoviePages(' + batchNo + '): Processing complete. Oracle format Movie count = ' + movies.length);
+  	    console.log(new Date().toISOString() + ': externalInterface.addMoviePages(' + batchNo + '): Processing complete. Oracle format Movie count = ' + movies.length);
   	     	     
  				return waitAndRun(movies,addCastAndCrewMembers, 'addCastAndCrewMembers','addCastAndCrew',1,batchSize,response);
   		}
@@ -998,10 +1049,10 @@ function getMoviesFromTMDB(sessionState,response) {
   	
   }
   
-  console.log('getMoviesFromTMDB()');
+  console.log(new Date().toISOString() + ': externalInterface.getMoviesFromTMDB()');
  
   return addMoviePage(0).then(function(tmdbPageContent) {
-    console.log('getMoviesFromTMDB() : Page Count = ' + tmdbPageContent.total_pages);
+    console.log(new Date().toISOString() + ': externalInterface.getMoviesFromTMDB() : Page Count = ' + tmdbPageContent.total_pages);
     movies.push.apply(movies,tmdbPageContent.results);
     var pages = []      
     for (var i=0; i<tmdbPageContent.total_pages; i++) {   
@@ -1011,7 +1062,7 @@ function getMoviesFromTMDB(sessionState,response) {
     response.write('{"status":[') 
     return getMoviePages(pages);
   }).catch(function(e) {
-    console.log('Broken Promise: getMoviesFromTMDB()');
+    console.log(new Date().toISOString() + ': externalInterface.getMoviesFromTMDB(): Broken Promise.');
     throw e;
   });   
 
@@ -1025,7 +1076,7 @@ function generateShowsForScreen(engagementStartDate,engagementEndDate,screen,the
   var startTime = getRandomBetweenValues(0,11) * 5;
   var firstShowTime = [12,startTime]
 
-  // console.log('generateShowsForScreen(): screen.id=' + screen.id + '. Showing movie ' + movieId);
+  // console.log(new Date().toISOString() + ': externalInterface.generateShowsForScreen(): screen.id=' + screen.id + '. Showing movie ' + movieId);
   
   // Generate Shows for Each Day of the Engagement.
 
@@ -1042,7 +1093,7 @@ function generateShowsForScreen(engagementStartDate,engagementEndDate,screen,the
   showTime.setSeconds(0)
   
   while (showTime < engagementEndDate) {
-    // console.log('generateShowsForScreen(): showTime= ' + showTime);
+    // console.log(new Date().toISOString() + ': externalInterface.generateShowsForScreen(): showTime= ' + showTime);
     var show = {
       theaterId      : theaterId,
       movieId        : movieId,
@@ -1070,7 +1121,7 @@ function generateScreeningsForTheater(sessionState,engagementStartDate,engagemen
   
   var screeningList = []
   
-  // console.log('generateScreeningsForTheater() : theater.id=' + theater.id);
+  // console.log(new Date().toISOString() + ': externalInterface.generateScreeningsForTheater() : theater.id=' + theater.id);
   
   return Promise.all(
     // Generate a Array of ShowTimes for each screen within the Theater.
@@ -1088,7 +1139,7 @@ function generateScreeningsForTheater(sessionState,engagementStartDate,engagemen
         screeningList.push(screening);
       })
     })
-    // console.log('generateScreeningsForTheater() : Batch Size=' + screeningList.length);
+    // console.log(new Date().toISOString() + ': externalInterface.generateScreeningsForTheater() : Batch Size=' + screeningList.length);
     // Load the Batch of Screenings for the Theater.
     return movieAPI.insertScreenings(sessionState, screeningList);
   })
@@ -1096,7 +1147,7 @@ function generateScreeningsForTheater(sessionState,engagementStartDate,engagemen
 
 function generateScreenings(sessionState,engagementStartDate,engagementEndDate,theaters,movies,updatedMovieList) {
 
-  console.log('generateScreenings()');
+  console.log(new Date().toISOString() + ': externalInterface.generateScreenings()');
 
   // console.log('engagementStartDate =' + engagementStartDate);
   // console.log('engagementEndDate = ' + engagementEndDate);
@@ -1115,7 +1166,7 @@ function resetMovieInTheatersFlag(movieItem,state,updatedMovieList) {
 	
 	// reset the inTheaters flag and add to the list of movies that need updating.
 	
-	// console.log('resetMovieInTheatersFlag(' + movieItem.value.id + ',' + state + ')');
+	// console.log(new Date().toISOString() + ': externalInterface.resetMovieInTheatersFlag(' + movieItem.value.id + ',' + state + ')');
 	if (movieItem.value.inTheaters != state) {
     movieItem.value.inTheaters = state;
     updatedMovieList.push(movieItem);
@@ -1129,12 +1180,14 @@ function createScreenings(sessionState) {
   engagementStartDate.setHours(0)
   engagementStartDate.setMinutes(0)
   engagementStartDate.setSeconds(0)
-  engagementEndDate = new Date();
+
+  var engagementEndDate = new Date();
   engagementEndDate.setDate(engagementStartDate.getDate() + 14);
   engagementEndDate.setHours(0)
   engagementEndDate.setMinutes(0)
   engagementEndDate.setSeconds(0)
-  console.log('createScreenings(): Date Range is ' + dateWithTZOffset(engagementStartDate)  + ' thru ' + dateWithTZOffset(engagementEndDate));
+
+  // console.log(new Date().toISOString() + ': externalInterface.createScreenings(): Date Range is ' + dateWithTZOffset(engagementStartDate)  + ' thru ' + dateWithTZOffset(engagementEndDate));
 
   var theaterList = []
   var movieList = []
@@ -1156,7 +1209,7 @@ function createScreenings(sessionState) {
   	  	resetMovieInTheatersFlag(movieItem,false,updatedMovieList);
   	  }
   	);
-  	console.log('createScreenings() : Reset List = ' + updatedMovieList.length);
+  	console.log(new Date().toISOString() + ': externalInterface.createScreenings() : Reset List = ' + updatedMovieList.length);
   	return movieAPI.recreateScreeningCollection(sessionState)
   }).then(function() {
     return generateScreenings(sessionState,engagementStartDate,engagementEndDate,theaterList,movieList,updatedMovieList)
@@ -1170,19 +1223,19 @@ function createScreenings(sessionState) {
   	  0
   	);
   }).then(function(e) {
-     console.log('createScreenings() : Reset and Update list = ' + updatedMovieList.length);
+     console.log(new Date().toISOString() + ': externalInterface.createScreenings() : Reset and Update list = ' + updatedMovieList.length);
   	 return Promise.all(updatedMovieList.map(function(movieItem) {return movieAPI.updateMovie(sessionState, movieItem.id,movieItem.value);}))
   }).then(function() {
   	 return screeningCount;
   }).catch(function(e) {
-      console.log('Broken Promise: createScreenings().');
+      console.log(new Date().toISOString() + ': externalInterface.createScreenings(): Broken Promise.');
       throw e;
   })     
 }
 
 function getMoviePoster(movieId,posterURL) {
   
-  // console.log('getMoviePoster(' + movieId + ',' + posterURL + ')');
+  // console.log(new Date().toISOString() + ': externalInterface.getMoviePoster(' + movieId + ',' + posterURL + ')');
 
   return new Promise(
       
@@ -1195,7 +1248,7 @@ function getMoviePoster(movieId,posterURL) {
         response.on(
           'data' ,
           function(chunk) {
-           // console.log('getMoviePoster(' + movieId + ',' + posterURL + ').readResponse(data): Processing Chunk');                
+           // console.log(new Date().toISOString() + ': externalInterface.getMoviePoster(' + movieId + ',' + posterURL + ').readResponse(data): Processing Chunk');                
            chunks.push(chunk);
           }
         )
@@ -1203,11 +1256,11 @@ function getMoviePoster(movieId,posterURL) {
         response.on(
           'end', 
           function () {
-            // console.log('getMoviePoster(' + movieId + ',' + posterURL + ').readResponse(end): StatusCode = ' + response.statusCode);                
+            // console.log(new Date().toISOString() + ': externalInterface.getMoviePoster(' + movieId + ',' + posterURL + ').readResponse(end): StatusCode = ' + response.statusCode);                
             if (response.statusCode == 200) {
               try {
                 var content = Buffer.concat(chunks);
-                // console.log('getMoviePoster(' + movieId + ',' + posterURL + ').readResponse(end): Chunks read = ' + chunks.length + '. Content length = ' + content.length);
+                // console.log(new Date().toISOString() + ': externalInterface.getMoviePoster(' + movieId + ',' + posterURL + ').readResponse(end): Chunks read = ' + chunks.length + '. Content length = ' + content.length);
                 resolve(content);
               } catch (e) {
                 reject(e);
@@ -1226,7 +1279,7 @@ function getMoviePoster(movieId,posterURL) {
         )
       }
     
-      // console.log('Executing Promise[getMoviePoster(' + movieId + ',' + posterURL + ')]');
+      // console.log(new Date().toISOString() + ': externalInterface.getMoviePoster(' + movieId + ',' + posterURL + '): Executing Promise.');
               		
       if (posterURL.indexOf('/movieticket/poster/') == 0) {
       	resolve(null)
@@ -1284,17 +1337,17 @@ function getPostersFromTMDB(sessionState,response) {
   	return getMoviePoster(movieItem.id, movieItem.value.posterURL).then(function(poster){
   		if (poster != null) {
         posterCount++;
-        // console.log('getPosterFromTMDB() : Poster size = ' + poster.length);
+        // console.log(new Date().toISOString() + ': externalInterface.getPosterFromTMDB() : Poster size = ' + poster.length);
   	    return movieAPI.insertPoster(sessionState, poster).then(function(sodaResponse){
   	    	var movie =  movieItem.value;
   	    	movie.externalURL = movie.posterURL
   	    	movie.posterURL = '/movieticket/poster/' + sodaResponse.json[0].id;
           return movieAPI.updateMovie(sessionState, movieItem.id,movie).catch(function(e) {
-          	console.log('Broken Promise: getPosterFromTMDB(' + movie.id + ').updateMovie()');
+          	console.log(new Date().toISOString() + ': externalInterface.getPosterFromTMDB(' + movie.id + ').updateMovie(): Broken Promise.');
           	throw e;
           })
   	    }).catch(function(e) {
-  		    console.log('Broken Promise: getPosterFromTMDB().insertPoster()');
+  		    console.log(new Date().toISOString() + ': externalInterface.getPosterFromTMDB(' + movie.id + ').insertPoster(): Broken Promise.');
   		    throw e;
         })
       }
@@ -1303,15 +1356,15 @@ function getPostersFromTMDB(sessionState,response) {
       	return Promise.resolve();
       }
     }).catch(function(e) {
-      console.log('Broken Promise: getPosterFromTMDB().');
+      console.log(new Date().toISOString() + ': externalInterface.getPosterFromTMDB(' + movie.id + '): Broken Promise.');
   	  throw e;
     })
   }
   
   function getPosterBatchFromTMDB(movieItems, batchNo, batchSize, response) {
   
-    batch = movieItems.splice(0,batchSize)
-    // console.log('getPosterBatchFromTMDB(' + batchNo +',' + batch.length + '): Generating addCastAndCrew() operations.');
+    var batch = movieItems.splice(0,batchSize)
+    // console.log(new Date().toISOString() + ': externalInterface.getPosterBatchFromTMDB(' + batchNo +',' + batch.length + '): Generating addCastAndCrew() operations.');
      
     var status = {
       date   : dateWithTZOffset(new Date()),
@@ -1335,16 +1388,16 @@ function getPostersFromTMDB(sessionState,response) {
     */
    
     // Create a Batch of getPosterFromTMDB() operations.
-    // console.log('getPosterBatchFromTMDB(' + batchNo +'): Generating getPosterFromTMDB operations.');
+    // console.log(new Date().toISOString() + ': externalInterface.getPosterBatchFromTMDB(' + batchNo +'): Generating getPosterFromTMDB operations.');
       
     return Promise.all(batch.map(getPosterFromTMDB)).then(function(){
     	if (movieItems.length > 0) {
-        console.log('getPosterBatchFromTMDB(' + batchNo + '): Movies remaining = ' + movieItems.length);
+        console.log(new Date().toISOString() + ': externalInterface.getPosterBatchFromTMDB(' + batchNo + '): Movies remaining = ' + movieItems.length);
       	batchNo++;
    	    return waitAndRun(movieItems, getPosterBatchFromTMDB, 'getPosterBatchFromTMDB', 'getPosterFromTMDB', batchNo, batchSize,response);
      	}
    		else {
-        console.log('getPosterBatchFromTMDB(): getPosterFromTMDB() operations complete');
+        console.log(new Date().toISOString() + ': externalInterface.getPosterBatchFromTMDB(): getPosterFromTMDB() operations complete');
         var status = {
         date   : dateWithTZOffset(new Date()),
         module : 'getPosterBatchFromTMDB',
@@ -1362,171 +1415,20 @@ function getPostersFromTMDB(sessionState,response) {
     })
   }
       
-  console.log('getPostersFromTMDB()');
+  console.log(new Date().toISOString() + ': externalInterface.getPostersFromTMDB()');
 
   var qbe = { posterURL : { '$ne' : null }}
   
   return movieAPI.queryMovies(sessionState, qbe,'unlimited').then(function(sodaResponse){
   	movieItems = sodaResponse.json;
   	// console.log(JSON.stringify(movieItems).substring(0,9999));
-  	console.log('getPostersFromTMDB() : Movie count = ' + movieItems.length);
+  	console.log(new Date().toISOString() + ': externalInterface.getPostersFromTMDB() : Movie count = ' + movieItems.length);
     return movieAPI.recreatePosterCollection(sessionState)
   }).then(function() {
     response.write('{"status":[') 
     return waitAndRun(movieItems, getPosterBatchFromTMDB, 'getPosterBatchFromTMDB', 'getPosterFromTMDB', 1, 35, response);
   }).catch(function(e){
-  	console.log('Broken Promise: getPostersFromTMDB()');
+  	console.log(new Date().toISOString() + ': externalInterface.getPostersFromTMDB(): Broken Promise.');
   	throw e;
   });
 }
-
-function getCompany(id) {
-  
-  var moduleId = 'getCompany(' + id + ')';
-  // console.log(moduleId);
-
-  return new Promise(
-      
-    function(resolve, reject) {
-                  
-      var readResponse = function(response) {
-          
-        var responseText = '';
-            
-        response.on(
-          'data' ,
-          function(chunk) {
-           responseText = responseText + chunk;
-          }
-        )
-        
-        response.on(
-          'end', 
-          function () {
-            if (response.statusCode == 200) {
-              try {
-                // console.log(moduleId + '.readResponse()')
-                var castAndCrew = JSON.parse(responseText)
-                resolve(castAndCrew);
-              } catch (e) {
-                reject(e);
-              }
-            }
-            else {
-              var e = { 
-                    module : moduleId + '.readResponse(end)',
-                    statusCode : response.statusCode,
-                    statusText : http.STATUS_CODES[response.statusCode],
-                    requestDetails : options,
-                    bytesRecieved : responseText.length,
-                    responeText : responseText
-                  }
-              reject(e)
-            }
-          }
-        )
-      }
-    
-      // console.log('Executing Promise: ' + moduleId);
-  
-      var path = cfg.dataSources.tmdb.apiPath + '/company/' + id 
-                 + '?' + 'api_key=' + cfg.dataSources.tmdb.apiKey
-  
-      var options = {} 
-
-      if (cfg.dataSources.useProxy) {
-        path = cfg.dataSources.tmdb.protocol + '://' + cfg.dataSources.tmdb.hostname + ':' + cfg.dataSources.tmdb.port + path;
-        options = {
-          hostname : cfg.dataSources.proxy.hostname,
-          port     : cfg.dataSources.proxy.port,
-          method   : 'GET',
-          path     : path,
-          headers : {'Content-Type': 'application/json'}
-        }
-      }
-      else {
-        options = {
-          hostname : cfg.dataSources.tmdb.hostname,
-          port     : cfg.dataSources.tmdb.port,
-          method   : 'GET',
-          path     : path,
-          headers : {'Content-Type': 'application/json'}
-        }
-      };    
-  
-      var request = http.request(options, readResponse);
-      request.on(
-        'error', 
-        (e) => {
-          var details = { 
-            module         : moduleId + '.request(error)',
-            requestOptions : options,
-            cause          : e
-          }
-          reject(new ExternalError(details));
-        }
-      );
-      request.end();
-    }
-  )   
-}                     
-
-function getCompanyList(sessionState,response) {
-
-  var companies = [];
-
-  function getCompanyFromTMDB(id) {
- 
-    console.log('getCompanyFromTMDB(' + id + ')');
-  	return getCompany(id).then(function(company){
-  	  companies.push(company)
-    }).catch(function(e) {
-      console.log('Broken Promise: getCompany(' + id + ').');
-  	  throw e;
-    })
-  }
-  
-  function getCompaniesFromTMDB(id, batchNo, batchSize) {
-
-    var startIndex = id[0]
-    console.log('getCompaniesFromTMDB(' + id + ')');
-		var batch = []
-		for (var i = 0; i < batchSize; i++) {
-			batch[i] = startIndex+i;
-		}
-
-		return Promise.all(batch.map(getCompanyFromTMDB)).then(function(){
-    	if (startIndex  < 1000) {
-      	batchNo++;
-      	startIndex = startIndex + batchSize;
-   	    return waitAndRun([startIndex], getCompaniesFromTMDB, 'getCompaniesFromTMDB', 'getCompanyFromTMDB', batchNo, batchSize, null);
-     	}
-   		else {
-        console.log('getCompanyList(): getCompany() operations complete');
-			  console.log(JSON.stringify(companies));
-        return;
-      }
-    }).catch(function(e){
-   	  throw e
-    })
-  }
-  
-  return waitAndRun([1], getCompaniesFromTMDB, 'getCompaniesFromTMDB', 'getCompanyFromTMDB', 1, 36, null);
-  
-}
-
-function showCompanyList(sessionState, response, next) {
-
-  /* Disable Soda Logging */
-  
-  var sessionState = sodaLoggingState;
-
-  console.log('externalInterface.showCompanyList()');
-  
-  getCompanyList(sessionState,response)
-
-}
-    
-   
-
-       

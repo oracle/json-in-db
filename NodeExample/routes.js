@@ -11,6 +11,8 @@
  * ================================================
  */
  
+"use strict";
+
 var express = require('express');
 var cookieParser = require('cookie-parser');
 var movieTicketing = require('./movie_ticketing.js');
@@ -85,9 +87,6 @@ function getRouter() {
 
     router.route('/config/LoadPosters')
         .get(getLoadPosters);
-
-    router.route('/config/LoadCompanies')
-        .get(getLoadCompanies);
 
     router.route('/movieticketlog/operationId/:id')
         .get(getLogRecordsByOperation);
@@ -170,10 +169,6 @@ function getLoadScreenings(req, res, next) {
 
 function getLoadPosters(req, res, next) {
 	externalInterfaces.loadPosters(req.session, res, next)
-}
-
-function getLoadCompanies(req, res, next) {
-	externalInterfaces.showCompanyList(req.session, res, next)
 }
 
 function getLogRecordsByOperation(req, res, next) {

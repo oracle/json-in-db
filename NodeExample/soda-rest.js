@@ -91,7 +91,6 @@ function setOptions(method,collectionName,cfg,headers,localPath,eTag) {
   return options
 }
   
-
 function newLogEntry(sessionId, operationId, options, content) {
 
   return {

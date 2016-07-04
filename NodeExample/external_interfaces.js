@@ -129,121 +129,28 @@ function loadPosters(sessionState, response, next) {
 
 }
 
-function setTheaterLocation(theater, geocodeResult, benchmark) {
-      
-  var location = geocodeResult.input.address.address    
-      
-  var city = null;
-  var state = null;
-  var streetAddress = null;
-  var zip = null;
- 
-  if (geocodeResult.addressMatches.length > 0) {
-  	
-    var address = geocodeResult.input.address.address
-    var streetNumber = address.substring(0,address.indexOf(' '));
-
-    var coordinates = geocodeResult.addressMatches[0].coordinates;
-    var addressInfo = geocodeResult.addressMatches[0].addressComponents;
-    
-    var streetAddress = streetNumber + ' ';
- 
-    if (addressInfo.preQualifier) {
-       streetAddress += addressInfo.preQualifier + ' '
-    }
- 
-    if (addressInfo.preDirection) {
-       streetAddress += addressInfo.preDirection + ' '
-    }
- 
-    if (addressInfo.preType) {
-       streetAddress += addressInfo.preType + ' '
-    }
- 
-    if (addressInfo.streetName) {
-       streetAddress += addressInfo.streetName + ' '
-    }
- 
-    if (addressInfo.suffixType) {
-       streetAddress += addressInfo.suffixType + ' '
-    }
- 
-    if (addressInfo.suffixDirection) {
-       streetAddress += addressInfo.suffixDirection + ' '
-    }
- 
-    if (addressInfo.suffixQualifier) {
-       streetAddress += addressInfo.suffixQualifier + ' '
-    }
-    
-    streetAddress = streetAddress.trim();
-    
-    if (addressInfo.city) {
-       city = addressInfo.city
-    }
- 
-    if (addressInfo.state) {
-       state = addressInfo.state
-    }
- 
-    if (addressInfo.zip) {
-       zip = addressInfo.zip
-    }
-
-    location = {
-      street      : streetAddress,
-      city        : city,      
-      zipCode     : zip,
-      state       : state,
-      phoneNumber : null,
-      geoCoding   : {
-        type        : "Point",
-        coordinates : [coordinates.x , coordinates.y]                                                                      
-      }
-    }             
-  }
-  else {
+function getGeoJSON(address, geocodeResult, benchmark) {
+   
+  if (geocodeResult.addressMatches.length === 0) {
   	if (benchmark === 'Public_AR_Census2010') {
-  	  return geocodeTheater(theater,'Public_AR_ACS2015',0) 
+  	  return geocodeAddress(address,'Public_AR_ACS2015',0) 
     }
     else {
-  	  console.log(new Date().toISOString() + ': externalInterface.setTheaterLocation(' + theater.id + ',' + theater.name + '): Unable to obtain co-ordinates for: ' + location);
-			var parsedAddress = usAddressParser.parseLocation(location);
-  
-      var street    
-      if (parsedAddress.number) {
-  			street = parsedAddress.number;
-			  if (parsedAddress.prefix) {
-				  street = street + ' ' + parsedAddress.prefix;
-			  }
-			  street = street + ' ' + parsedAddress.street;
-			  if (parsedAddress.type) {
-				  street = street + ' ' + parsedAddress.type;
-		    }
-		  }
-		  
-		  if (parsedAddress.street1) {
-        street = parsedAddress.street1;
-			  if (parsedAddress.type1) {
-				  street = street + ' ' + parsedAddress.type1;
-		    }
-      }
-        			
-      location = {
-      	street      : street,
-      	city        : parsedAddress.city,
-      	zipCode     : parsedAddress.zip,
-      	state       : parsedAddress.state,
-      	phoneNumber : null,
-  	    getCoding   : {}
-  	  }
-  	  // console.log(new Date().toISOString() + ': externalInterface.setTheaterLocation(' + theater.id + ',' + theater.name + '): Using : ' + JSON.stringify(location));
+  	  console.log(new Date().toISOString() + ': externalInterface.getGeoJSON("' + address + '"): Unable to obtain co-ordinates.');
+  	  return {}
     }
   }
-  theater.location = location;
+  else {
+    var coordinates = geocodeResult.addressMatches[0].coordinates;
+    var geoCoding = {
+      type        : "Point",
+      coordinates : [coordinates.x , coordinates.y]                                                                      
+    }
+    return geoCoding;  
+  }
 }
 
-function geocodeTheater(theater,benchmark,count) {
+function geocodeAddress(address,benchmark,count) {
 
    return new Promise(
      
@@ -264,19 +171,19 @@ function geocodeTheater(theater,benchmark,count) {
           'end', 
           function () {
             if (response.statusCode == 200) {
-              setTheaterLocation(theater,JSON.parse(responseText).result,benchmark);
-              resolve(theater)
+              var geoCoding = getGeoJSON(address,JSON.parse(responseText).result,benchmark);
+              resolve(geoCoding)
             }
             else {
-              console.log(new Date().toISOString() + ': externalInterface.geocodeTheater(' + theater.id +',' + theater.name + ',' + benchmark + ').readResponse(): Geocoding Failed (' + response.statusCode + ') for  ' + theater.location)
               if ((response.statusCode == 500) && (count < 10)) {
-                return(geocodeTheater(theater,benchmark,count+1)).then(function(t) {
-                  resolve(t);
+                return(geocodeAddress(address,benchmark,count+1)).then(function(geoCoding) {
+                  resolve(geoCoding);
                 }).catch(function (e) {
-                	rejec(e);
+                	reject(e);
                 })
               }
               else {
+                console.log(new Date().toISOString() + ': externalInterface.geocodeAddress("' + address + '",' + benchmark + ').readResponse(): Geocoding Failed (' + response.statusCode + ').');
                 var details = { 
                   module         : 'geocodeTheater().readResponse(end)',
                   statusCode     : response.statusCode,
@@ -293,12 +200,12 @@ function geocodeTheater(theater,benchmark,count) {
         );
       }
     
-      // console.log(new Date().toISOString() + ': externalInterface.geocodeTheater(' + theater.id +',' + theater.name + ',' + benchmark + '): Location = ' + theater.location);
+      // console.log(new Date().toISOString() + ': externalInterface.geocodeAddress("' + address + '",' + benchmark + ')');
 
       var path = cfg.dataSources.usCensus.path 
                + '?' + 'format=' + 'json' 
                + '&' + 'benchmark=' + benchmark 
-               + '&' + 'address=' + encodeURIComponent(theater.location);
+               + '&' + 'address=' + encodeURIComponent(address);
 
       var options = {} 
       
@@ -340,6 +247,64 @@ function geocodeTheater(theater,benchmark,count) {
   )
 }
    
+function geocodeTheater(theater) {
+	
+	var address = theater.location.street + " " + theater.location.city + " " + theater.location.state + " " + theater.location.zipCode;
+	// console.log(new Date().toISOString() + ': externalInterface.geocodeTheater(' + theater.id + ',' + theater.name + '): Address = "' + address + '".');
+  return geocodeAddress(address,'Public_AR_Census2010',0).then(function(geoCoding){
+  	theater.location.geoCoding = geoCoding
+  	return theater;
+  }).catch(function(e) {
+  	console.log(new Date().toISOString() + ': externalInterface.geocodeTheater(' + theater.id + ',' + theater.name + '): Unable to get location for = "' + address + '".');
+  	theater.location.geoCoding = {}
+  	return theater;
+  });
+
+}
+    
+function parseAddress(address) {
+	
+	var location = address;
+  
+  var parsedAddress = usAddressParser.parseLocation(address);
+
+  var street    
+
+  if (parsedAddress.number) {
+	  street = parsedAddress.number;
+  	if (parsedAddress.prefix) {
+	   street = street + ' ' + parsedAddress.prefix;
+	  }
+	  street = street + ' ' + parsedAddress.street;
+	  if (parsedAddress.type) {
+	    street = street + ' ' + parsedAddress.type;
+    }
+  }
+  else {
+    if (parsedAddress.street1) {
+      street = parsedAddress.street1;
+	    if (parsedAddress.type1) {
+		    street = street + ' ' + parsedAddress.type1;
+      }
+    }
+  }
+   
+  if (street !== undefined) {
+      			
+    location = {
+     	street      : street,
+  	  city        : parsedAddress.city,
+  	  zipCode     : parsedAddress.zip,
+  	  state       : parsedAddress.state,
+  	  phoneNumber : null,
+	    getCoding   : {}
+	  }
+  }
+  
+  return location;
+
+}  
+
 function generateTheater(item, index) {
 
   return new Promise(
@@ -355,7 +320,7 @@ function generateTheater(item, index) {
         screenCount = getRandomBetweenValues(8,17)
        }
        var screens = []
-       for (var i=0; i<screenCount; i++) {
+       for (var i=0; i < screenCount; i++) {
         var screen = {
           id            : i+1,
           capacity      : getRandomBetweenValues(64,129),
@@ -372,7 +337,7 @@ function generateTheater(item, index) {
         screens.push(screen);
       }
       
-      var location = item.description[0].substring(3,item.description[0].indexOf('</p>'));
+      var location = parseAddress(item.description[0].substring(3,item.description[0].indexOf('</p>')));
 
       var theater = {
         id       : index +1,
@@ -387,7 +352,6 @@ function generateTheater(item, index) {
 }
 
 function getTheatersFromFandango() {
-
   
   return new Promise(
   
@@ -428,7 +392,7 @@ function getTheatersFromFandango() {
   
       console.log(new Date().toISOString() + ': externalInterface.getTheatersFromFandango()');
 
-      var path = cfg.dataSources.fandango.path + cfg.dataSources.theaterZipCode + '.rss';
+      var path = cfg.dataSources.fandango.path + cfg.dataSources.fandango.searchCriteria.zipCode + '.rss';
 
       var options = {} 
       
@@ -470,10 +434,6 @@ function getTheatersFromFandango() {
   )   
 }
 
-function geocode_Public_AR_Census2010(t)  {
-	return geocodeTheater(t,'Public_AR_Census2010',0)
-}
-    
 function getTheaterInformation() {
   
   // Generate a set of Theater documents from the Fandango TheatersNearMe RSS feed and geocode the results.
@@ -489,7 +449,7 @@ function getTheaterInformation() {
     );
     return Promise.all(theaters.map(generateTheater))     
   }).then(function(theaters) {
-    return Promise.all(theaters.map(geocode_Public_AR_Census2010)) 
+    return Promise.all(theaters.map(geocodeTheater)) 
   })
 }
 
@@ -849,13 +809,14 @@ function getMoviesFromTMDB(sessionState,response) {
         }
   
         var path = cfg.dataSources.tmdb.apiPath + '/discover/movie' 
-                 + '?' + 'primary_release_date.gte=' + cfg.dataSources.movieStartDate 
-                 + '&' + 'primary_release_date.lte=' + cfg.dataSources.movieEndDate 
-                 + '&' + 'original_language=' + cfg.dataSources.movieLanguage 
+                 + '?' + 'api_key=' + cfg.dataSources.tmdb.apiKey
+                 + '&' + 'primary_release_date.gte=' + cfg.dataSources.tmdb.searchCriteria.releaseDates.start
+                 + '&' + 'primary_release_date.lte=' + cfg.dataSources.tmdb.searchCriteria.releaseDates.end 
+                 + '&' + 'certification_country=' + cfg.dataSources.tmdb.searchCriteria.country 
+                 + '&' + 'certification.lte=' + cfg.dataSources.tmdb.searchCriteria.certification
+                 + '&' + 'original_language=' + cfg.dataSources.tmdb.searchCriteria.language 
                  + '&' + 'include_adult=' + 'false'
-                 + '&' + 'vote_average.gte=' + 5
                  + '&' + 'sort_by=' + 'popularity.desc'
-                 + '&' + 'api_key=' + cfg.dataSources.tmdb.apiKey
   
         if (pageNo > 0) {
           path = path + '&' + 'page=' + pageNo
@@ -877,7 +838,7 @@ function getMoviesFromTMDB(sessionState,response) {
         }
         else {
           options = {
-            hostname : cfg.dataSources.tmdb.hostname,
+           hostname : cfg.dataSources.tmdb.hostname,
             port     : cfg.dataSources.tmdb.port,
             method   : 'GET',
             path     : path,
@@ -961,7 +922,8 @@ function getMoviesFromTMDB(sessionState,response) {
      return m1.id - m2.id;
     });
     for(var i = 1; i < a.length; ) {
-      if(a[i-1].id == a[i].id) {
+      if (a[i-1].id == a[i].id) {
+      	// console.log(new Date().toISOString() + ': externalInterface.removeDuplicates(' + i + ',' + a[i-1].id + ',"' + a[i-1].title + '",' + a[i].id + ',"' + a[i].title + '").')
         a.splice(i, 1);
       } else {
         i++;
@@ -1001,15 +963,25 @@ function getMoviesFromTMDB(sessionState,response) {
     // console.log(new Date().toISOString() + ': externalInterface.addMoviePages(' + batchNo +'): Generating addMoviePage() operations.');
       
     return Promise.all(batch.map(addMoviePage)).then(function(tmdbPageContents) {
+    	// tmdbPageContents = 35 Pages of Movies..
       tmdbPageContents.forEach(
         function(tmdbPage) {
-          tmdbPage.results.forEach(function(m){movieAPI.writeLogEntry(m)});
-        	if (tmdbPage.results[0].popularity > 5) {
-          	movies.push.apply(movies,tmdbPage.results)
-          }
-          else {
-          	pages = []
-          }
+          tmdbPage.results.forEach(
+            function(m){
+              if (movies.length === cfg.dataSources.tmdb.searchCriteria.movieLimit) {
+                pages = []
+              }
+              else {
+          	    if (m.popularity > cfg.dataSources.tmdb.searchCriteria.popularity) {
+          	    	console.log(new Date().toISOString() + ': externalInterface.addMoviePages(): Adding ' + m.title);
+          	      movies.push(m);
+          	    }
+          	    else {
+          	    	pages = []
+          	    }
+          	  }
+            }
+          )
         }
       )
     }).then(function(){
@@ -1031,6 +1003,7 @@ function getMoviesFromTMDB(sessionState,response) {
   	      }
   	    )
   	    console.log(new Date().toISOString() + ': externalInterface.addMoviePages(' + batchNo + '): Processing complete. Oracle format Movie count = ' + movies.length);
+  	     	     
   	     	     
  				return waitAndRun(movies,addCastAndCrewMembers, 'addCastAndCrewMembers','addCastAndCrew',1,batchSize,response);
   		}
@@ -1054,8 +1027,11 @@ function getMoviesFromTMDB(sessionState,response) {
   return addMoviePage(0).then(function(tmdbPageContent) {
     console.log(new Date().toISOString() + ': externalInterface.getMoviesFromTMDB() : Page Count = ' + tmdbPageContent.total_pages);
     movies.push.apply(movies,tmdbPageContent.results);
-    var pages = []      
-    for (var i=0; i<tmdbPageContent.total_pages; i++) {   
+    var pages = []
+    // Limit Pages to 1000.
+    var maxPageNumber = 1000;
+    var maxPageNumber = (tmdbPageContent.total_pages > maxPageNumber ) ? maxPageNumber : tmdbPageContent.total_pages;
+    for (var i=0; i < maxPageNumber; i++) {   
        pages.push(i+1)
     }
     // Response #1 Open Object, Output key "status" : Start Array

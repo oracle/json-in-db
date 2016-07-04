@@ -303,35 +303,45 @@ var sampleConfig = {
   "password" : "MovieTicketing"
 }
 
-var sampleDataSources = {     
-    "useProxy"            : false,
-    "proxy"               : {
-      "hostname"          : null,
-      "port"              : null
-    },
-    "tmdb"                : {
-      "protocol"          : "http",
-      "hostname"          : "api.themoviedb.org",
-      "port"              : 80,
-      "apiPath"           : "/3",
-      "apiKey"            : "YOUR_TMDB_KEY_GOES_HERE"
-    },
-    "fandango"            : {
-      "protocol"          : "http",
-      "hostname"          : "www.fandango.com",
-      "port"              : 80,
-      "path"              : "/rss/moviesnearme_"
-    },
-    "usCensus"            : {
-      "protocol"          : "http",
-      "hostname"          : "geocoding.geo.census.gov",
-      "port"              : 80,
-      "path"              : "/geocoder/locations/onelineaddress"
-    },
-    
-    "movieStartDate"      : "2016-04-01",
-    "movieEndDate"        : "2016-05-31",     
-    "theaterZipCode"      : "94105"
+var sampleDataSources = {
+  "useProxy": false,
+  "proxy": {
+    "hostname": null,
+    "port": null
+  },
+  "tmdb": {
+    "protocol": "http",
+    "hostname": "api.themoviedb.org",
+    "port": 80,
+    "apiPath": "/3",
+    "apiKey": "YOUR_TMDB_KEY_GOES_HERE",
+    "searchCriteria": {
+      "language": "en",
+      "country": "US",
+      "certification": "PG-13",
+      "popularity": 2,
+      "releaseDates": {
+        "start": "2013-01-01",
+        "end": "2016-06-30"
+      },
+      "movieLimit": 1024
+    }
+  },
+  "fandango": {
+    "protocol": "http",
+    "hostname": "www.fandango.com",
+    "port": 80,
+    "path": "/rss/moviesnearme_",
+    "searchCriteria": {
+      "zipCode": "94103"
+    }
+  },
+  "usCensus": {
+    "protocol": "http",
+    "hostname": "geocoding.geo.census.gov",
+    "port": 80,
+    "path": "/geocoder/locations/onelineaddress"
+  }
 }
 
 function escapeHtml(unsafe) {

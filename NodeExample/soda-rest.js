@@ -754,10 +754,9 @@ function featureDetection(cfg) {
   return createCollection(disableSodaLogging, cfg, collectionName).then(function(){;
     var qbe = {id : {"$contains" : 'XXX'}}
     return queryByExample(disableSodaLogging, cfg, collectionName, qbe)
-  }).then(function(sodaResponse){
   }).catch(function(sodaError){
     if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
-      sodaErrorDetails = JSON.parse(sodaError.details.responseText);
+      var sodaErrorDetails = JSON.parse(sodaError.details.responseText);
       // console.log(JSON.stringify(sodaErrorDetails));
       if (sodaErrorDetails.title === 'The field name $contains is not a recognized operator.') {
       // if (sodaErrorDetails['o:errorCode'] === 'SODA-02002') {
@@ -782,10 +781,9 @@ function featureDetection(cfg) {
       }
     }
     return queryByExample(disableSodaLogging, cfg, collectionName, qbe)
-  }).then(function(sodaResponse){
   }).catch(function(sodaError){
     if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
-      sodaErrorDetails = JSON.parse(sodaError.details.responseText);
+      var sodaErrorDetails = JSON.parse(sodaError.details.responseText);
       // console.log(JSON.stringify(sodaErrorDetails));
       if (sodaErrorDetails.title === 'The field name $near is not a recognized operator.') {
       // if (sodaErrorDetails['o:errorCode'] === 'SODA-02002') {

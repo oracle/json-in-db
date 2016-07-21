@@ -22,6 +22,7 @@ module.exports.theaterByIdService            = theaterByIdService;
 module.exports.searchTheatersService         = searchTheatersService;
 module.exports.moviesByTheaterService        = moviesByTheaterService;
 module.exports.moviesService                 = moviesService;
+module.exports.moviesByReleaseDateService    = moviesByReleaseDateService
 module.exports.movieByIdService              = movieByIdService;
 module.exports.searchMoviesService           = searchMoviesService;
 module.exports.theatersByMovieService        = theatersByMovieService;
@@ -134,6 +135,19 @@ function moviesService(sessionState, response, next) {
     next(e);
   });
 } 
+
+function moviesByReleaseDateService(sessionState, response, next) {
+
+  console.log('movieTicketing.moviesByReleaseDateService()');
+
+  movieAPI.moviesByReleaseDateService(sessionState).then(function (sodaResponse) {
+    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
+    response.json((sodaResponse.json));
+    response.end();
+  }).catch(function(e){
+    next(e);
+  });
+}
 
 function movieByIdService(sessionState, response, next, id) {
 
@@ -274,7 +288,7 @@ function processScreeningsByTheaterAndDate(sessionState,sodaResponse) {
      }
   }
 
-  // console.log('processScreeningsByMovieAndDate(sodaResponse.json.[' + sodaResponse.json.length + '])');
+  // console.log('processScreeningsByTheaterAndDate(sodaResponse.json.[' + sodaResponse.json.length + '])');
   
   // Transform the screenings into an array of Movies with the Screening information for each movie attached.
   
@@ -398,13 +412,19 @@ function processScreeningsByMovieAndDate(sessionState,sodaResponse) {
   
   sodaResponse.json.map(addScreeningDetails);
   
-  return getTheaterDetails(theaters.map(getTheaterIdList)).then(function(sodaResponse) {
-    sodaResponse.json.map(processTheater);
-    return theaters
-  }).catch(function(e){
-    console.log('Broken Promise. processScreeningsByMovieAndDate()');
-    throw e
-  })
+  if (theaters.length > 0) {
+    return getTheaterDetails(theaters.map(getTheaterIdList)).then(function(sodaResponse) {
+      sodaResponse.json.map(processTheater);
+      return theaters
+    }).catch(function(e){
+      console.log('Broken Promise. processScreeningsByMovieAndDate()');
+      throw e
+    })
+  }
+  else {
+  	return theaters;
+  }
+  
 }
   
 function getTheatersByMovieAndDate(sessionState,movie, date) {

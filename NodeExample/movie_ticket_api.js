@@ -37,6 +37,7 @@ module.exports.dropMovieCollection         = dropMovieCollection;
 module.exports.recreateMovieCollection     = recreateMovieCollection;
 module.exports.insertMovies                = insertMovies;
 module.exports.getMovies                   = getMovies;
+module.exports.moviesByReleaseDateService  = moviesByReleaseDateService;
 module.exports.getMovie                    = getMovie;
 module.exports.getMovieById                = getMovieById
 module.exports.updateMovie                 = updateMovie;
@@ -174,12 +175,19 @@ function getMovieById(sessionState,id) {
 
   console.log('getMovieById(' + id + ')');
   var qbe = {'id': id};
-  return sodaRest.queryByExample(sessionState, cfg.config, 'Movie',qbe).then(
+  return sodaRest.queryByExample(sessionState, cfg.config, 'Movie', qbe).then(
     function(sodaResponse) {
     	sodaResponse.json = sodaResponse.json[0]
     	return sodaResponse;
     }
   )
+}
+
+function moviesByReleaseDateService(sessionState) {
+
+  console.log('moviesByReleaseDateService()');
+  var qbe = {"$query" : {}, $orderby :{"releaseDate" :-1}};
+  return sodaRest.queryByExample(sessionState, cfg.config, 'Movie', qbe)
 }
 
 function queryMovies(sessionState, qbe,limit,fields) {

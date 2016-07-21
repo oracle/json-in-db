@@ -440,6 +440,9 @@ function showTheatersByMovie() {
 
 function showBookingForm() {
 	
+	$('#adultTickets').val("");
+  $('#seniorTickets').val("");
+  $('#childTickets').val("");
   $('#dialog_PurchaseTickets').modal('show');
   
 }

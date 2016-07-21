@@ -307,7 +307,7 @@ function parseAddress(address) {
   	  zipCode     : parsedAddress.zip,
   	  state       : parsedAddress.state,
   	  phoneNumber : null,
-	    getCoding   : {}
+	    geoCoding   : {}
 	  }
   }
   
@@ -743,43 +743,60 @@ function getMoviesFromTMDB(sessionState,response) {
     )   
   }
                            
+  function isUnratedMovie(movieDetails) {
+
+      var unrated = false
+                                 
+    	movieDetails.releases.countries.forEach(function(release) {
+        if ((release.iso_3166_1 === "US") && (release.certification === 'NR')) {
+        	unrated = true;
+        }
+      })
+         
+      return unrated;
+   
+  }
+                           
   function createMovie(tmdbMovie) {
 
 	  var moduleId = 'createMovie(' + tmdbMovie.id + ')';
     // writeLogEntry(moduleId);
 
     return getMovieFromTMDB(tmdbMovie.id).then(function(movieDetails) {
-    	
-      var releaseDetails = {}
+    	  	
+    	if (!isUnratedMovie(movieDetails)) { 
 
-    	movieDetails.releases.countries.forEach(function(release) {
-        if (release.iso_3166_1 === cfg.dataSources.tmdb.searchCriteria.country) {
-          releaseDetails.date = release.release_date
-          releaseDetails.certification = release.certification
-        }
-      })
-
-      // Need to fix this for non US Movies...
-      
-      if (releaseDetails.certification !== 'NR') {
+        var certification;
+        
+        var releaseDate = "2999-01-01";
+        
+      	movieDetails.releases.countries.forEach(function(release) {
+          if (release.iso_3166_1 === cfg.dataSources.tmdb.searchCriteria.country) {
+            if (release.release_date < releaseDate) {
+               certification = release.certification
+               releaseDate = release.release_date;
+            }
+          }
+        })
       
     	  var movie = {
-      	  id         : movieDetails.id,
-      	  title      : movieDetails.title,
-      	  plot       : movieDetails.overview,
-      	  runtime    : movieDetails.runtime,
-      	  posterURL  : baseURL
-                     + "w185"
-                     + movieDetails.poster_path
-                     + '?' + 'api_key=' + cfg.dataSources.tmdb.apiKey,
-      	  castMember : getCastMembers(movieDetails.credits.cast),
-      	  crewMember : getCrewMembers(movieDetails.credits.crew),
-          release    : releaseDetails
+      	  id            : movieDetails.id,
+      	  title         : movieDetails.title,
+      	  plot          : movieDetails.overview,
+      	  runtime       : movieDetails.runtime,
+      	  posterURL     : baseURL
+                          + "w185"
+                          + movieDetails.poster_path
+                          + '?' + 'api_key=' + cfg.dataSources.tmdb.apiKey,
+      	  castMember    : getCastMembers(movieDetails.credits.cast),
+      	  crewMember    : getCrewMembers(movieDetails.credits.crew),
+          releaseDate   : releaseDate,
+          certification : certification
       	}
         movieCache.push(movie);
       }
       else {
-      	writeLogEntry(moduleId,'Skipping NR rated movie : ' + movieDetails.title);
+      	writeLogEntry(moduleId,'Skipping unrated movie : ' + movieDetails.title);
       }
     }).catch(function (e) {
       writeLogEntry(moduleId,'Broken Promise.')

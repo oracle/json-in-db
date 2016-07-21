@@ -126,7 +126,8 @@ function getMovies(req, res, next) {
 	  movieTicketing.movieService(req.session, res, next, req.params.key);
   }
   else {
-    movieTicketing.moviesService(req.session, res, next);
+    // movieTicketing.moviesService(req.session, res, next);
+    movieTicketing.moviesByReleaseDateService(req.session, res, next);
   }
 }
 

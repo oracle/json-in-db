@@ -16,6 +16,10 @@
 <html ng-app="movieTicketing">
 	<head>
 		<style>
+#map {
+   height: 220px;
+   width:560px
+}
 
 .btn-group-vertical > button{
     margin-bottom:28px;
@@ -100,6 +104,9 @@ body {
       		<div class="panel-heading">
      				<h3 class="panel-title" style="line-height:35px;">Theater Information
 	   				<span class="pull-right">
+   						<button class="btn btn-success btn-med" id="btn_LocationSearch" type="button" ng-click="theaterService.getTheatersByLocation()">
+					 			<span class="glyphicon glyphicon-map-marker"></span>
+							</button>
 	  					<button class="btn btn-success btn-med" id="btn_TheaterSearch" type="button" onclick="showTheaterSearch()">
 						 		<span class="glyphicon glyphicon-search"></span>
 							</button>
@@ -149,7 +156,7 @@ body {
 	  						 				<tr>
 	  						 					<td>
 				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{theaterService.logRecord[0].value.method}}</span>
-  	  				      	 			<span style="margin-right:1em;"><strong>URL:</strong> {{theaterService.logRecord[0].value.url}}</span>
+  	  				      	 			<span style="margin-right:1em;"><strong>URL:</strong> {{theaterService.logRecord[0].value.uri}}</span>
     	  	    				 		<td>
       	  	  	 				</tr>
         	  		 				<tr ng-if="theaterService.logRecord[0].value.request.body.length > 0">
@@ -161,7 +168,7 @@ body {
       	 							</tbody>
       	 						</table>
       	 					</td>
-      	 				<tr>	
+      	 				</tr>	
       	 			</tbody>
       	 		</table>
       	 	</div>
@@ -234,7 +241,7 @@ body {
 	  						 				<tr>
 	  						 					<td>
 				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{movieService.logRecord[0].value.method}}</span>
-    	      	 							<span style="margin-right:1em;"><strong>URL:</strong> {{movieService.logRecord[0].value.url}}</span>
+    	      	 							<span style="margin-right:1em;"><strong>URL:</strong> {{movieService.logRecord[0].value.uri}}</span>
 							    	 			<td>
         	  	 					</tr>
           		 					<tr ng-if="movieService.logRecord[0].value.request.body.length > 0">
@@ -277,32 +284,34 @@ body {
       						<td>
       							<div>{{m.movie.plot}}</div>
       							<div>
-      							<table>
-      								<tr><td></td></tr>
-      							  <tr class="voffset8">
-      							  	<td>
-	 		      							<table class="table">
-  			    								<thead>
-        											<th style="width:100px;">Auditorium</th>
-  	    											<th>Show Times</th>
-  	    										</thead>
-  	    						  			<tbody>
-  	    						  				<tr class="voffset4" ng-repeat="screen in m.screens">
-  	    						  					<th scope="row">{{screen.id}}</th>
-  	    						  	  			<td > 
-  	    						  	  				<div class="btn-toolbar " role="toolbar">
-  	    						  	  					<div ng-repeat="show in screen.showTimes"  class="btn-group" role="group">
-						  	  			  						<button ng-disabled="(!(show.startTime > now) && (show.seatsRemaining > 0))" type="button" class="btn btn-secondary" ng-click="bookingService.getBookingInfo(show.id)" data-toggle="tooltip" title="{{show.startTime}}">{{show.startTime | date : 'hh:mma'}}</button>
+	      							<table>
+  	    								<tr><td></td></tr>
+    	  							  <tr class="voffset8">
+      								  	<td>
+	 		  	    							<table class="table">
+  			  	  								<thead>
+  			    										<tr>
+        													<th style="width:100px;">Auditorium</th>
+  	    													<th>Show Times</th>
+  	    												</tr>
+  	    											</thead>
+  	    						  				<tbody>
+  	    						  					<tr class="voffset4" ng-repeat="screen in m.screens">
+  	    						  						<th scope="row">{{screen.id}}</th>
+  	    						  	  				<td > 
+  	    						  	  					<div class="btn-toolbar " role="toolbar">
+  	    						  	  						<div ng-repeat="show in screen.showTimes"  class="btn-group" role="group">
+						  	  			  							<button ng-disabled="(!(show.startTime > now) && (show.seatsRemaining > 0))" type="button" class="btn btn-secondary" ng-click="bookingService.getBookingInfo(show.id)" data-toggle="tooltip" title="{{show.startTime}}">{{show.startTime | date : 'hh:mma'}}</button>
+  	    						  	  			 			</div>
   	    						  	  			 		</div>
-  	    						  	  			 	</div>
-																<td>
-  	    						  				</tr>
-  	    						 				</tbody>
-  	    									</table>
-      							  	</td>
-      							 	</tr>
-      							</table>      							  		
-      							<div>
+																	<td>
+  	    						  					</tr>
+  	    						 					</tbody>
+  	    										</table>
+      							  		</td>
+      							 		</tr>
+      								</table>      							  		
+      							</div>
       						</td>
       					</tr>
       				</tbody>
@@ -331,7 +340,7 @@ body {
 	  						 				<tr>
 	  						 					<td>
 				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{l.value.method}}</span>
-    	      	 							<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.url}}</span>
+    	      	 							<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.uri}}</span>
 				      	    	 		<td>
        				 	  	 		</tr>
           		 					<tr ng-if="l.value.request.body.length > 0">
@@ -394,8 +403,10 @@ body {
     		    								  			<div>
   				 		      								<table class="table">
   				  			    								<thead>
-          															<th style="width:100px;">Auditorium</th>
-    	    															<th>Show Times</th>
+  				  			    									<tr>
+          																<th style="width:100px;">Auditorium</th>
+    	    																<th>Show Times</th>
+    	    															</tr>
     	    														</thead>		
     	  			  						  				<tbody>
   				  	    						  				<tr class="voffset4" ng-repeat="screen in t.screens">
@@ -447,7 +458,7 @@ body {
 	  						 				<tr>
 	  						 					<td>
 				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{l.value.method}}</span>
-				    	      	 			<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.url}}</span>
+				    	      	 			<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.uri}}</span>
 				      	    	 		<td>
 				        	  	 	</tr>
 				          		 	<tr ng-if="l.value.request.body.length > 0">
@@ -646,6 +657,24 @@ body {
       </div>
     </div>
 
+    <div class="modal fade" id="dialog_locateTheaters" tabindex="-1" role="dialog" aria-labelledby="title_locateTheaters" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">								
+          <div class="modal-header">
+          	<button type="button" class="close" data-dismiss="modal">&times;</button>
+          	<div>
+            	<span class="h4 modal-title" id="title_locateTheaters">Select Theater</span>
+  					</div>
+  	      </div>
+          <div class="modal-body" style="height:250px">
+				    <div id="map"></div>
+          </div>
+          <div class="modal-footer">
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal fade" id="dialog_ErrorMessage" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog">
     		<div class="modal-content">
@@ -661,19 +690,18 @@ body {
     	<span class="pull-right">
   	  	Movie Information downloaded from The Movie Database 
   	  	<a href="http://www.tmdb.org">
-					<img alt="TheMovieDatabase"style="width:40px;" src="https://assets.tmdb.org/images/logos/var_8_0_tmdb-logo-2_Bree.svg">
+					<img alt="TheMovieDatabase" style="width:40px;" src="https://assets.tmdb.org/images/logos/var_8_0_tmdb-logo-2_Bree.svg">
 				</a>
 	    </span>
     </div>
-
-	<!-- Latest compiled and minified JavaScript -->
-  	<script src="/frameworks/jquery/dist/jquery.min.js"></script>
-	<script src="/frameworks/bootstrap/dist/js/bootstrap.min.js"></script>
-	<script src="/frameworks/angular/angular.min.js"></script>
-	<script src="/frameworks/angular-cookies/angular-cookies.min.js"></script>
-	<!-- Include Bootstrap Datepicker -->
+		<!-- Latest compiled and minified JavaScript -->
+ 		<script src="/frameworks/jquery/dist/jquery.min.js"></script>
+		<script src="/frameworks/bootstrap/dist/js/bootstrap.min.js"></script>
+		<script src="/frameworks/angular/angular.min.js"></script>
+		<script src="/frameworks/angular-cookies/angular-cookies.min.js"></script>
+		<!-- Include Bootstrap Datepicker -->
     <script src="/frameworks/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
-	<script src="js/movieticketing.js"></script>
+		<script src="js/movieticketing.js"></script>
   </body>
 </html>
 

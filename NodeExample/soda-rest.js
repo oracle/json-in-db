@@ -14,6 +14,7 @@
 "use strict";
  
 var http = require('http');
+var request = require('request');
 
 module.exports.SodaError                   = SodaError;
 module.exports.createCollection            = createCollection
@@ -31,6 +32,7 @@ module.exports.deleteDocument              = deleteDocument
 module.exports.getCollection               = getCollection
 module.exports.getJSON                     = getJSON
 module.exports.getDocument                 = getDocument
+module.exports.getBinaryDocument           = getBinaryDocument
 module.exports.queryByExample              = queryByExample
 module.exports.featureDetection            = featureDetection;
 
@@ -54,52 +56,36 @@ SodaError.prototype.constructor = SodaError;
 
 var disableSodaLogging = {sodaLoggingEnabled : false}
 
-function generateURL(options) {
+function setHeaders(contentType, eTag) {
+	 
+	 var headers = {};
 
-  return options.hostname 
-       + ":" + options.port
-       + options.path;
-         
-}
+   if (contentType === undefined) {
+  	 contentType = 'application/json'; 
+   }
 
-function setOptions(method,collectionName,cfg,headers,localPath,eTag) {
-
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : method,
-    path     : cfg.path + "/" + collectionName,
-    headers  : headers !== undefined ? headers : {}
-  }    
-  
-  if (localPath !== undefined) {
-  	options.path = options.path + localPath;
-  }
-
-  if (options.headers['Content-Type'] === undefined) {
-  	options.headers['Content-Type'] = 'application/json';
-  }
-  
-  if (eTag !== undefined) {
-    options.headers["If-Match"] = eTag;
-  }
-  
-  if (cfg.authMethod === 'Basic') {
-    options.auth = cfg.username + ":" + cfg.password;
-  }
-  
-  return options
+   if (contentType !== null) {
+     headers['Content-Type'] = contentType;  
+   }
+   
+   if (eTag !== undefined) {
+     headers["If-Match"] = eTag;
+   }
+   
+   return headers;
 }
   
-function newLogEntry(sessionId, operationId, options, content) {
+function newLogEntry(sessionId, operationId, requestOptions) {
 
   return {
+     sessionId           : sessionId,
+     operationId         : operationId,
      module              : null,
-     method              : options.method,
-     url                 : generateURL(options),
+     method              : requestOptions.method,
+     uri                 : requestOptions.uri,
      request             : {
-       headers           : options.headers,
-       body              : content
+       headers           : requestOptions.headers,
+       body              : requestOptions.json || requestOptions.body
      },
      response            : {
        statusCode        : null,
@@ -108,23 +94,22 @@ function newLogEntry(sessionId, operationId, options, content) {
        body              : null,
        json              : null
      },
-     sessionId           : sessionId,
-     operationId         : operationId,
      startTime           : (new Date()).getTime(),
      elapsedTime         : null
    }
 }
 
-function logRequest(sessionState, options, contentType, content) {
+function createLogRequest(sessionState, cfg, requestOptions) {
 
-  // console.log('logRequest(' + JSON.stringify(sessionState) + ')');
+  // console.log('createLogRequest(' + JSON.stringify(sessionState) + ')');
   
   var logRequest = null;
 
   if (sessionState.sodaLoggingEnabled) {
     logRequest = { 
-      logCollection : sessionState.logCollectionName,
-      logEntry      : newLogEntry(sessionState.sodaSessionId, sessionState.operationId, options, contentType, content)
+      logCollection    : sessionState.logCollectionName
+    , cfg              : cfg
+    , logEntry         : newLogEntry(sessionState.sodaSessionId, sessionState.operationId, requestOptions)
     }
   }   
 
@@ -132,211 +117,147 @@ function logRequest(sessionState, options, contentType, content) {
 
 }
 
-function logResponse(cfg, response, endTime, logOptions) {
+function logResponse(response, logRequest) {
   
-  // console.log('logResponse(' + JSON.stringify(logOptions) + ')');
+  // console.log('logResponse(' + JSON.stringify(logRequest) + ')');
 
-  if ((logOptions !== undefined) && (logOptions != null)) {
+  if ((logRequest !== undefined) && (logRequest != null)) {
 
-    logOptions.logEntry.module               = response.module;
-    logOptions.logEntry.elapsedTime          = endTime - logOptions.logEntry.startTime 
-    logOptions.logEntry.response.statusCode  = response.statusCode;
-    logOptions.logEntry.response.statusText  = response.statusText;
-    logOptions.logEntry.response.headers     = response.headers;
-    logOptions.logEntry.response.body        = response.body
-    logOptions.logEntry.response.json        = response.json
+    logRequest.logEntry.module               = response.module;
+    logRequest.logEntry.elapsedTime          = response.elapsedTime;
+    logRequest.logEntry.response.statusCode  = response.statusCode;
+    logRequest.logEntry.response.statusText  = response.statusText;
+    logRequest.logEntry.response.headers     = response.headers;
+    logRequest.logEntry.response.body        = response.body
+    logRequest.logEntry.response.json        = response.json
 
-    
-    // console.log('logResponse(' + logOptions.logCollection + ')');
-
-    postJSON(disableSodaLogging, cfg, logOptions.logCollection, logOptions.logEntry);
+    postJSON(disableSodaLogging, logRequest.cfg, logRequest.logCollection, logRequest.logEntry);
   }
 
 }
 
-function responseFactory(cfg, moduleName, options, logOptions, resolve, reject) {
-  
-  // return a custom readResponse method
-
-  return function /* readResponse */ (sodaResponse) {
-
-    var json = null
-    var body = ""
-    var chunks = []
-
-    // console.log(moduleName + '.readResponse(): statusCode = ' + sodaResponse.statusCode + ', content-length = ' + sodaResponse.headers["content-length"] +', content-type = ' + sodaResponse.headers["content-type"]);
-
-    if (sodaResponse.headers["content-type"] === 'application/json') {
-      sodaResponse.on(
-        'data' ,
-        function(chunk) {
-          body += chunk;
-        }
-      )
-    }
-    else {
-      sodaResponse.on(
-        'data' ,
-        function(chunk) {
-          chunks.push(chunk);
-        }
-      )
-    }
-    
-    sodaResponse.on(
-      'end', 
-      function () {
-
-        var endTime = new Date();
-        
-        if ((sodaResponse.statusCode === 200) || (sodaResponse.statusCode === 201)) {
-
-          if (sodaResponse.headers["content-type"] === 'application/json') {
-            json = JSON.parse(body);
-            body = null;
-            if ((json !== null) && (json.items)) {
-              json = json.items;
-            }
-          }
-          else {
-            if (chunks.length > 0) {
-              body = Buffer.concat(chunks);
-            }
-          }
-          
-          var response = {
-            module         : moduleName,
-            path           : options.path,
-            statusCode     : sodaResponse.statusCode,
-            statusText     : http.STATUS_CODES[sodaResponse.statusCode],
-            contentType    : sodaResponse.headers["content-type"],
-            headers        : sodaResponse.headers,
-            json           : json,
-            text           : body
-          }
-
-          // console.log(JSON.stringify(response));
-          logResponse(cfg, response, endTime, logOptions);
-          resolve(response)
-        }
-        else {
-          var response = { 
-            module         : moduleName + '.readResponse(end)',
-            statusCode     : sodaResponse.statusCode,
-            statusText     : http.STATUS_CODES[sodaResponse.statusCode],
-            options        : options,
-            headers        : sodaResponse.headers,
-            bytesRecieved  : body === null ? 0 : body.length,
-            responseText   : body,
-            cause          : new Error()
-          }
-          logResponse(cfg, response, endTime, logOptions);
-          reject(new SodaError(response));
-        }
-      }
-    );
-  }
+function getCollectionURL(cfg,collectionName) {
+	
+	return "http://" + cfg.hostname + ":" + cfg.port + cfg.path + "/" + collectionName;
+	
 }
 
+function getSodaError(moduleName,path,e) {
+	
+	console.log("getSodaError(): " + moduleName)
+	console.log(JSON.stringify(e));
+
+	var details = { 
+    module         : moduleName,
+    requestOptions : path,
+    cause          : e
+  }
+  
+  return new SodaError(details);
+  
+}
+
+function processSodaResponse(moduleName, requestOptions, logRequest, sodaResponse, body, resolve, reject) {
+		
+  var response = {
+    module         : moduleName
+  , requestOptions : requestOptions
+  , statusCode     : sodaResponse.statusCode
+  , statusText     : http.STATUS_CODES[sodaResponse.statusCode]
+  , contentType    : sodaResponse.headers["content-type"]
+  , headers        : sodaResponse.headers
+  , elapsedTime    : sodaResponse.elapsedTime
+  }
+ 
+  
+  if ((body !== undefined) && (body !== null)) {
+  	if (response.contentType === "application/json") {
+		  // console.log('processSodaResponse("' + moduleName + '","' + response.contentType + '","' + typeof body + '")');
+  		if (typeof body === 'object') {
+	  		response.json = body
+	    }
+	    else {
+    		try {
+    			response.json = JSON.parse(body);
+    	  }
+    	  catch (e) {
+	    		response.body = body;
+	    	}
+	    }
+  		if ((response.json) && (response.json.items)) {
+ 		  	response.json = response.json.items;
+ 			}
+ 		}
+ 		else {
+		  // console.log('processSodaResponse("' + moduleName + '","' + response.contentType + '","' + Buffer.byteLength(body) + '")');	
+ 			response.body = body;
+ 		}
+  }
+
+  logResponse(response, logRequest);
+
+	if ((sodaResponse.statusCode === 200) || (sodaResponse.statusCode === 201)) {
+		resolve(response);
+	}
+  else {
+    response.cause = new Error()
+    reject(new SodaError(response));
+  }
+}
+    
 function createCollection(sessionState, cfg, collectionName, collectionProperties) {
 
-  var serializedJSON = "";
-  
-  if ((typeof collectionProperties === "object") & (collectionProperties !== null)) {
-    serializedJSON = JSON.stringify(collectionProperties);
-  }
+  var moduleId = 'createCollection(' + collectionName + ')';
 
-  var moduleId = 'createCollection(' + collectionName + ',' + serializedJSON + ')';
+  var requestOptions = {
+  	method  : 'PUT'
+  , uri     : getCollectionURL(cfg,collectionName)
+  , json    : collectionProperties
+  , time    : true
+  };
 
-  var  headers = {
-     'Content-Length' : Buffer.byteLength(serializedJSON, 'utf8')
-    }
+  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
 
-  var options = setOptions('PUT',collectionName,cfg,headers)   
-  var logOptions = logRequest(sessionState, options, serializedJSON);
-
-  return new Promise(
-  
-    function(resolve, reject) {
- 
-      // console.log('Execute promise: ' + moduleId);
-      
-      var request = http.request(options,responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
-
-      request.on(
-        'error', 
-        (e) => {
-          if ((e.code) && (e.code === 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
-            resolve()
-          }
-          else {
-            var details = { 
-              module         : moduleId + '.request(error)',
-              requestOptions : options,
-              cause          : e
-            }
-            reject(new SodaError(details));
-          }
-        }
-      );
-      if (serializedJSON.length > 0) {
-        request.write(serializedJSON);
-      }
-      request.end();
-    }
-  )   
+  return new Promise(function(resolve, reject) {
+    // console.log('Execute Promise: ' + moduleId);
+ 	  request(requestOptions, function(error, response, body) {
+ 	  	if (error) {
+  		  reject(getSodaError(moduleId,requestOptions,err));
+			};
+			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
+		}).auth(cfg.username, cfg.password, true);
+  });
 }
+   
+function createIndex(sessionState, cfg, collectionName, indexProperties) {
 
-function createIndex(sessionState, cfg, collectionName, indexDefinition) {
-
-  var serializedJSON  = JSON.stringify(indexDefinition);
-
-  var moduleId = 'createIndex(' + collectionName + ',' + indexDefinition.name + ')'; 
-
-  var queryString = '?' + 'action=' + 'index'
-
-  var headers = {
-   'Content-Length' : Buffer.byteLength(serializedJSON, 'utf8')
-  }
- 
-  var options = setOptions('POST',collectionName,cfg,headers,queryString);
-  var logOptions = logRequest(sessionState, options, serializedJSON);
+  var moduleId = 'createIndex(' + collectionName + ',' + indexProperties.name + ')'; 
 
   // Skip Spatial Indexes in environments where spatial operations on Geo-JSON are not supported
 
-  if ((indexDefinition.spatial) && !spatialIndexSupported) {
-    console.log('Skipped creation of unsupported spatial index : ' + indexDefinition.name);
+  if ((indexProperties.spatial) && !spatialIndexSupported) {
+    console.log(moduleId + 'Skipped creation of unsupported spatial index');
     return new Promise(function(resolve, reject) {resolve()});
   }
 
-  return new Promise(
-  
-    function(resolve, reject) {
-      
-      // console.log('Execute promise: ' + moduleId + '. [' + serializedJSON + ']');
-           
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
+  var requestOptions = {
+  	method  : 'POST'
+  , uri     : getCollectionURL(cfg,collectionName) +  '?' + 'action=' + 'index'
+  , json    : indexProperties
+  , time    : true
+  };
 
-      request.on(
-        'error', 
-        (e) => {
-          if ((e.code) && (e.code === 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
-            resolve()
-          }
-          else {
-            var details = { 
-              module         : moduleId + '.request(error)',
-              requestOptions : options,
-              cause          : e
-            }
-            reject(new SodaError(details));
-          }
-        }
-      );
-      request.write(serializedJSON);      
-      request.end();
-    }
-  )   
+  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
+
+  return new Promise(function(resolve, reject) {
+    // console.log('Execute Promise: ' + moduleId);
+ 	  request(requestOptions, function(error, response, body) {
+ 	  	if (error) {
+  		  reject(getSodaError(moduleId,requestOptions,err));
+			};
+			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
+		}).auth(cfg.username, cfg.password, true);
+  });
 }
 
 
@@ -374,66 +295,48 @@ function createCollectionWithIndexes(sessionState, cfg, collectionName, collecti
 function dropCollection(sessionState, cfg, collectionName) {
 
   var moduleId = 'dropCollection(' + collectionName + ')';
-  var options = setOptions('DELETE',collectionName,cfg);
-  var logOptions = logRequest(sessionState, options);
- 
-  return new Promise(
-  
-    function(resolve, reject) {
 
-      // console.log('Execute promise: ' + moduleId);
+  var requestOptions = {
+  	method  : 'DELETE'
+  , uri     : getCollectionURL(cfg,collectionName)
+  , time    : true
+  };
 
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
+  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
 
-      request.on(
-        'error', 
-        (e) => {
-          if ((e.code) && (e.code === 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
-            resolve()
-          }
-          else {
-            var details = { 
-              module         : moduleId + '.request(error)',
-              requestOptions : options,
-              cause          : e
-            }
-            reject(new SodaError(details));
-          }
-        }
-      );
-      request.end();
-    }
-  )   
+  return new Promise(function(resolve, reject) {
+    // console.log('Execute Promise: ' + moduleId);
+ 	  request(requestOptions, function(error, response, body) {
+ 	  	if (error) {
+  		  reject(getSodaError(moduleId,requestOptions,err));
+			};
+			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
+		}).auth(cfg.username, cfg.password, true);
+  });
 }
 
 function getCollection(sessionState, cfg, collectionName,limit,fields) {
 
   var moduleId = 'getCollection(' + collectionName + ')';
-  var options = setOptions('GET',collectionName,cfg,undefined,addLimitAndFields(limit,fields))
-  var logOptions = logRequest(sessionState, options);
-
-  return new Promise(
   
-    function(resolve, reject) {
+	var requestOptions = {
+  	method  : 'GET'
+  , uri     : getCollectionURL(cfg,collectionName)
+  , headers : setHeaders()
+  , time    : true
+  };
 
-      // console.log('Execute Promise: ' + moduleId);
-          
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
-      
-      request.on(
-        'error', 
-        (e) => {
-          var details = { 
-            module         : moduleId + '.request(error)',
-            requestOptions : options,
-            cause          : e
-          }
-          reject(new SodaError(details));
-        }
-      );
-      request.end();
-    }
-  )   
+  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
+
+  return new Promise(function(resolve, reject) {
+    // console.log('Execute Promise: ' + moduleId);
+ 	  request(requestOptions, function(error, response, body) {
+ 	  	if (error) {
+  		  reject(getSodaError(moduleId,requestOptions,err));
+			};
+			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
+		}).auth(cfg.username, cfg.password, true);
+  });
 }
 
 function getJSON(sessionState, cfg, collectionName, key, eTag) {
@@ -442,219 +345,168 @@ function getJSON(sessionState, cfg, collectionName, key, eTag) {
   
 }
 
+function getBinaryDocument(sessionState, cfg, collectionName, key, eTag) {
+ 
+  return getDocumentContent(sessionState, cfg, collectionName, key, true, eTag);
+
+}
+
 function getDocument(sessionState, cfg, collectionName, key, eTag) {
 
+  return getDocumentContent(sessionState, cfg, collectionName, key, false, eTag);
+
+}
+
+function getDocumentContent(sessionState, cfg, collectionName, key, binary, eTag) {
+
   var moduleId = 'getDocument(' + collectionName + ',' + key +')';
-  var options = setOptions('GET',collectionName,cfg,undefined,'/' + key, eTag)
-  var logOptions = logRequest(sessionState, options);
-  
-  return new Promise(
-  
-    function(resolve, reject) {
 
-      // console.log('Execute promise : ' + moduleId);
-      
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
+	var requestOptions = {
+  	method  : 'GET'
+  , uri     : getCollectionURL(cfg,collectionName) + '/' + key
+  , headers : setHeaders(null, eTag)
+  , time    : true
+  };
 
-      request.on(
-        'error', 
-        (e) => {
-          var details = { 
-            module         : moduleId + '.request(error)',
-            requestOptions : options,
-            cause          : e
-          }
-          reject(new SodaError(details));
-        }
-      );
-      request.end();
-    }
-  )   
+  if (binary) {
+  	requestOptions.encoding = null;
+  }
+  
+  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
+
+  return new Promise(function(resolve, reject) {
+    // console.log('Execute Promise: ' + moduleId);
+ 	  request(requestOptions, function(error, response, body) {
+ 	  	if (error) {
+  		  reject(getSodaError(moduleId,requestOptions,err));
+			};
+			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
+		}).auth(cfg.username, cfg.password, true);
+  });
 }
 
 function postJSON(sessionState, cfg, collectionName, json) {
 
   // console.log('postJSON(' + collectionName + ')');
-
-  var serializedJSON = JSON.stringify(json);
-  // console.log(serializedJSON);
    
-  return postDocument(sessionState, cfg, collectionName,serializedJSON,'application/json');
+  return postDocument(sessionState, cfg, collectionName, json, 'application/json');
    
 }
 
-function postDocument(sessionState, cfg, collectionName,document,contentType) {
+function postDocument(sessionState, cfg, collectionName, document, contentType) {
 
   var moduleId = 'postDocument(' + collectionName + ',' + contentType + ')';
 
-  var headers  = {
-    'Content-Type'   : contentType,
-    'Content-Length' : Buffer.byteLength(document)
-  }
-
-  var options = setOptions('POST',collectionName,cfg,headers)
-  var logOptions = logRequest(sessionState, options,document);
-
-  return new Promise(
-
-    function(resolve, reject) {
-      
-      // console.log('Execute promise: ' + moduleId);
-
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
+	var requestOptions = {
+  	method  : 'POST'
+  , uri     : getCollectionURL(cfg,collectionName)
+  , headers : setHeaders(contentType , undefined)
+  , time    : true
+  };
   
-      request.on(
-        'error', 
-        (e) => {
-          var details = { 
-            module         : moduleId + '.request(error)',
-            requestOptions : options,
-            cause          : e
-          }
-          reject(new SodaError(details));
-        }
-      );
-      request.write(document);
-      request.end();
-      // console.log('postDocument(' + collectionName + '): Bytes written = ' + Buffer.byteLength(document));
-    }
-  )   
+  if (contentType === 'application/json') {
+  	requestOptions.json = document
+ 	}
+ 	else {
+ 		requestOptions.body = document
+ 	}
+
+  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
+
+  return new Promise(function(resolve, reject) {
+    // console.log('Execute Promise: ' + moduleId);
+ 	  request(requestOptions, function(error, response, body) {
+ 	  	if (error) {
+  		  reject(getSodaError(moduleId,requestOptions,err));
+			};
+			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
+		}).auth(cfg.username, cfg.password, true);
+  });
 }
 
-function bulkInsert(sessionState, cfg, collectionName,documents) {
+function bulkInsert(sessionState, cfg, collectionName, documents) {
 
   var moduleId = 'bulkInsert(' + collectionName + ')';
-  var serializedJSON = JSON.stringify(documents);
-  // console.log(serializedJSON);
+	var requestOptions = {
+  	method  : 'POST'
+  , uri     : getCollectionURL(cfg,collectionName) + '?' + 'action=' + 'insert'
+  , json    : documents
+  , time    : true
+  };
+  
+  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
 
-  var headers  = {
-    'Content-Length' : Buffer.byteLength(serializedJSON, 'utf8')
-  }
-
-  var queryString = '?' + 'action=' + 'insert';
-
-  var options = setOptions('POST',collectionName,cfg,headers,queryString);
-  var logOptions = logRequest(sessionState, options, serializedJSON);
-
-  return new Promise(
-
-    function(resolve, reject) {
-
-      // console.log('Execute promise: ' + moduleId);
-      
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
-
-      request.on(
-        'error', 
-        (e) => {
-          var details = { 
-            module         : moduleId + '.request(error)',
-            requestOptions : options,
-            cause          : e
-          }
-          reject(new SodaError(details));
-        }
-      );
-      request.write(serializedJSON);
-      request.end();
-    }
-  )   
+  return new Promise(function(resolve, reject) {
+    // console.log('Execute Promise: ' + moduleId);
+ 	  request(requestOptions, function(error, response, body) {
+ 	  	if (error) {
+  		  reject(getSodaError(moduleId,requestOptions,err));
+			};
+			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
+		}).auth(cfg.username, cfg.password, true);
+  });
 }
 
 
-function putJSON(sessionState, cfg, collectionName,key,json,eTag) {
+function putJSON(sessionState, cfg, collectionName, key, json, eTag) {
 
-  // console.log('putJSON(' + collectionName + ',' + key + ')');
+  // console.log('putJSON("' + collectionName + '","' + key + '")');
 
-  var serializedJSON = JSON.stringify(json);
-  // console.log(serializedJSON);
-   
-  return putDocument(sessionState, cfg, collectionName,key,serializedJSON,'application/json',eTag);
-   
+  return putDocument(sessionState, cfg, collectionName, key, json, 'application/json', eTag);   
 }
 
 function putDocument(sessionState, cfg, collectionName, key, document, contentType, eTag) {
 
-  var moduleId = 'putDocument(' + collectionName + ')' + key + ',' + contentType + ')';
+  var moduleId = 'putDocument(' + collectionName + '","' + key + '","' + contentType + '")';
+	var requestOptions = {
+  	method  : 'PUT'
+  , uri     : getCollectionURL(cfg,collectionName) + '/' + key
+  , headers : setHeaders(contentType , eTag)
+  , time    : true
+  };
+  
+  if (contentType === 'application/json') {
+  	requestOptions.json = document
+ 	}
+ 	else {
+ 		requestOptions.body = document
+ 	}
 
-  var headers = {
-    'Content-Type'   : contentType,
-    'Content-Length' : Buffer.byteLength(document)
-  }
+  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
 
-  var options = setOptions('PUT',collectionName,cfg,headers,'/' + key, eTag);  
-  var logOptions = logRequest(sessionState, options, document);
-
-  return new Promise(
-
-    function(resolve, reject) {
-
-      // console.log('Execute promise : ' + moduleId);
-      
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
-
-      request.on(
-        'error', 
-        (e) => {
-          if ((e.code) && (e.code === 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
-            resolve({status:200})
-          }
-          else {
-            var details = { 
-              module         : moduleId + '.request(error)',
-              requestOptions : options,
-              cause          : e
-            }
-            reject(new SodaError(details));
-          }
-        }
-      );
-      request.write(document);
-      request.end();
-    }
-  )   
+  return new Promise(function(resolve, reject) {
+    // console.log('Execute Promise: ' + moduleId);
+ 	  request(requestOptions, function(error, response, body) {
+ 	  	if (error) {
+  		  reject(getSodaError(moduleId,requestOptions,err));
+			};
+			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
+		}).auth(cfg.username, cfg.password, true);
+  });
 }
 
-function deleteDocument(sessionState, cfg, collectionName, key, document, eTag) {
+function deleteDocument(sessionState, cfg, collectionName, key, eTag) {
 
   var moduleId = 'deleteDocument(' + collectionName + ')' + key + ')';
+
+	var requestOptions = {
+  	method  : 'DELETE'
+  , uri     : getCollectionURL(cfg,collectionName) + '/' + key
+  , headers : setHeaders(undefined, eTag)
+  , time    : true
+  };
   
-  var path = cfg.path 
-           + '/' + collectionName 
-           + '/' + key;
+  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
 
-  options = setOptions(cfg,'DELETE',path,eTag);
-  
-  var logOptions = logRequest(sessionState, options, document);
-
-  return new Promise(
-
-    function(resolve, reject) {
-
-      // console.log('Execute promise : ' + moduleId);
-      
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
-
-      request.on(
-        'error', 
-        (e) => {
-          if ((e.code) && (e.code === 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
-            resolve({status:200})
-          }
-          else {
-            var details = { 
-              module         : moduleId + '.request(error)',
-              requestOptions : options,
-              cause          : e
-            }
-            reject(new SodaError(details));
-          }
-        }
-      );
-      request.write(document);
-      request.end();
-    }
-  )   
+  return new Promise(function(resolve, reject) {
+    // console.log('Execute Promise: ' + moduleId);
+ 	  request(requestOptions, function(error, response, body) {
+ 	  	if (error) {
+  		  reject(getSodaError(moduleId,requestOptions,err));
+			};
+			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
+		}).auth(cfg.username, cfg.password, true);
+  });
 }
 
 function addLimitAndFields(limit,fields) {
@@ -676,42 +528,26 @@ function addLimitAndFields(limit,fields) {
 
 function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
 
-  var qbeText  = JSON.stringify(qbe);
-  var moduleId = 'queryByExample(' + collectionName + ',' + qbeText +')';  
-
-  var headers = {
-    'Content-Length' : Buffer.byteLength(qbeText, 'utf8')
-  }
-
-  var queryString = addLimitAndFields(limit,fields)
-                  + '&' + 'action=' + 'query';
-
-  var options = setOptions('POST',collectionName,cfg,headers,queryString);      
-  var logOptions = logRequest(sessionState, options, qbeText);
+  var moduleId = 'queryByExample(' + collectionName + ',' + JSON.stringify(qbe) +')'; 
+ 
+	var requestOptions = {
+  	method  : 'POST'
+  , uri     : getCollectionURL(cfg,collectionName) + addLimitAndFields(limit,fields) + '&' + 'action=' + 'query'
+  , json    : qbe
+  , time    : true
+  };
   
-  return new Promise(
+  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
 
-    function(resolve, reject) {
-     
-      // console.log('Execute promise : ' + moduleId);
-
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
-      
-      request.on(
-        'error', 
-        (e) => {
-          var details = { 
-            module         : moduleId + '.request(error)',
-            requestOptions : options,
-            cause          : e
-          }
-          reject(new SodaError(details));
-        }
-      );
-      request.write(qbeText);
-      request.end();
-    }
-  )   
+  return new Promise(function(resolve, reject) {
+    // console.log('Execute Promise: ' + moduleId);
+ 	  request(requestOptions, function(error, response, body) {
+ 	  	if (error) {
+  		  reject(getSodaError(moduleId,requestOptions,err));
+			};
+			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
+		}).auth(cfg.username, cfg.password, true);
+  });
 }
 
 function recreateCollection(sessionState, cfg, collectionName,collectionProperties) {
@@ -802,8 +638,3 @@ function featureDetection(cfg) {
   });
 
 };
-
-  
-  
-  
-  

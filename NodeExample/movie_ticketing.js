@@ -21,6 +21,7 @@ module.exports.theatersService               = theatersService;
 module.exports.theaterByIdService            = theaterByIdService;
 module.exports.searchTheatersService         = searchTheatersService;
 module.exports.moviesByTheaterService        = moviesByTheaterService;
+module.exports.locateTheatersService         = locateTheatersService;
 module.exports.moviesService                 = moviesService;
 module.exports.moviesByReleaseDateService    = moviesByReleaseDateService
 module.exports.movieByIdService              = movieByIdService;
@@ -34,6 +35,8 @@ module.exports.logRecordsByOperationService  = logRecordsByOperationService
                                              
 module.exports.initializeSodaLogging         = initializeSodaLogging;
 module.exports.setSessionState               = setSessionState;
+module.exports.getGoogleConfiguration        = getGoogleConfiguration;
+module.exports.getTheaterCenter              = getTheaterCenter;
 
 function dateWithTZOffset(date) {
   var tzo = -date.getTimezoneOffset()
@@ -95,6 +98,33 @@ function theaterByIdService(sessionState, response, next, id) {
 function searchTheatersService(sessionState, response, next, qbe) {
 
   console.log('searchTheaterService(' + JSON.stringify(qbe) + ')');
+
+  movieAPI.queryTheaters(sessionState, qbe).then(function (sodaResponse) {
+    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
+    response.json(sodaResponse.json);
+    response.end();
+  }).catch(function(e){
+    next(e);
+  });
+} 
+
+
+function locateTheatersService(sessionState, response, next, lat, long, distance) {
+
+  var qbe = {
+    "location.geoCoding": {
+      "$near"           : {
+        "$geometry"    : {
+        	 "type"      : "Point", 
+        	 "coordinates" : [lat,long]
+        },
+        "$distance" : distance,
+        "$unit" : "mile"
+      }
+    }
+  };
+
+  console.log('locateTheatersService(' + JSON.stringify(qbe) + ')');
 
   movieAPI.queryTheaters(sessionState, qbe).then(function (sodaResponse) {
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
@@ -563,9 +593,11 @@ function posterService(sessionState, response, next, key) {
   var sessionState = sodaLoggingDisabled;
   
   movieAPI.getPoster(sessionState, key).then(function(sodaResponse) {
-    response.setHeader('content-type','image/jpeg');
-    // console.log('posterService(' + key + '): Image Size = ' + sodaResponse.text.length);
-    response.write(sodaResponse.text);
+    response.setHeader('content-type',sodaResponse.contentType);
+    // response.setHeader('content-length', Buffer.byteLength(sodaResponse.body));
+    // console.log('posterService(' + key + '): Image Size = ' + Buffer.byteLength(sodaResponse.body));
+    // response.end(sodaResponse.body,'binary');
+    response.write(sodaResponse.body);
     response.end();
   }).catch(function(e) {
     next(e);
@@ -602,3 +634,45 @@ function logRecordsByOperationService(sessionState, response, next, id) {
     next(e);
   });
 }                                                                                                                                    
+
+function getGoogleConfiguration(sessionState, response, next) {
+
+  response.json(cfg.dataSources.google);                                      
+  response.end();                                            
+
+}
+
+function getTheaterCenter(sessionState, response, next) {
+	
+  movieAPI.getTheaters(sessionState).then(function (sodaResponse) {
+  	var boundsBox = {
+  		latitude  : [ 360, -360 ],
+  		longitude : [ 360, -360 ]
+  	}
+  	
+  	for (var i=0; i < sodaResponse.json.length; i++) {
+  	  if (sodaResponse.json[i].value.location.geoCoding.coordinates) {
+  	  	var latitude = sodaResponse.json[i].value.location.geoCoding.coordinates[0]
+  	  	var longitude = sodaResponse.json[i].value.location.geoCoding.coordinates[1]
+	  	  if (latitude < boundsBox.latitude[0]) {
+  		  	boundsBox.latitude[0] = latitude;
+  		  }
+  	 	 	if (latitude > boundsBox.latitude[1]) {
+  	  		boundsBox.latitude[1] = latitude;
+  	  	}
+
+	  	  if (longitude < boundsBox.longitude[0]) {
+  		  	boundsBox.longitude[0] = longitude;
+  		  }
+  	 	 	if (longitude > boundsBox.longitude[1]) {
+  	  		boundsBox.longitude[1] = longitude;
+  	  	}
+  	  }
+  	}	
+    response.json({latitude : ((boundsBox.latitude[0] + boundsBox.latitude[1])/2),longitude : ((boundsBox.longitude[0] + boundsBox.longitude[1])/2)});
+    response.end();
+  }).catch(function(e){
+    next(e);
+  });
+  	
+}

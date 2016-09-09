@@ -313,7 +313,7 @@ function insertPoster(sessionState, poster) {
 
 function getPoster(sessionState, key) {
 	
-	return sodaRest.getDocument(sessionState, cfg.config, 'Poster',key);
+	return sodaRest.getBinaryDocument(sessionState, cfg.config, 'Poster',key);
 
 }
 

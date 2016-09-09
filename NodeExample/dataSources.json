@@ -19,7 +19,7 @@
         "start": "2013-01-01",
         "end": "2016-06-30"
       },
-      "movieLimit": 10242
+      "movieLimit": 1024
     }
   },
   "fandango": {
@@ -28,7 +28,7 @@
     "port": 80,
     "path": "/rss/moviesnearme_",
     "searchCriteria": {
-      "zipCode": "94103"
+      "zipCode": "94501"
     }
   },
   "usCensus": {
@@ -36,5 +36,8 @@
     "hostname": "geocoding.geo.census.gov",
     "port": 80,
     "path": "/geocoder/locations/onelineaddress"
+  },
+  "google": {
+    "apiKey": "YOUR_GOOGLE_KEY_GOES_HERE"
   }
 }

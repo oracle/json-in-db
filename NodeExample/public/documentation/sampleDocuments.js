@@ -353,50 +353,79 @@ function escapeHtml(unsafe) {
          .replace(/'/g, "&#039;");
 }
 
-var movieServiceHTML = 
-`<div id="MovieList" class="panel panel-default" ng-controller="moviesCtrl">
-   <div class="panel-heading">
-      <h4 class="panel-title" style="line-height:35px;">Movie Information
-        <span class="pull-right">
-          <button class="btn btn-success btn-med" id="btn_MovieSearch" type="button" onclick="showMovieSearch()">
-            <span class="glyphicon glyphicon-search"></span>
-          </button>
-        </span>
-      </h4>
+var theaterServiceHTML = 
+`<div class="tab-pane active" id="tab_TheaterList">
+	<div id="TheaterList" class="panel panel-default" ng-controller="theatersCtrl">
+  		<div class="panel-heading">
+  			<h3 class="panel-title" style="line-height:35px;">Theater Information
+	    		<span class="pull-right">
+	  	    		<button class="btn btn-success btn-med" id="btn_TheaterSearch" type="button" onclick="showTheaterSearch()">
+				 		<span class="glyphicon glyphicon-search"></span>
+					</button>
+			    </span>
+			</h3>
+    	</div>
+      	<div class="panel-body" style="height:65vh; overflow: auto;">
+      		<table class="table table-fixed">
+      			<thead>
+      				<tr>
+      					<th>Name</th>
+      					<th>Address</th>
+      				  <th></th>
+      				</tr>
+      			</thead>
+      			<tbody>
+      				<tr ng-repeat="theater in theaterService.theaters">
+     					<td>{{theater.value.name}}</td>
+     					<td>{{theater.value.location.street}} {{theater.value.location.city}} {{theater.value.location.state}} {{theater.value.location.zipCode}}</td>
+     					<td>
+      	    				<button id="btn_MoviesByTheater" type="button" class="btn btn-default btn-success" ng-click="theaterService.getMoviesByTheater(theater.id)">Movies</button>
+     				    </td>
+     				</tr>
+     			</tbody>
+     		</table>
+     	</div>
+		<div>
+			<br>
+		</div>
+	    <div class="container row" id="log_TheaterList">
+        	<table>
+	      		<tbody>
+ 		      		<tr>
+		      			<td style="padding-right:1em; width:100px; vertical-align:top;">
+		      				<div class="btn-group" role="group">
+  						    	<button type="button" class="btn btn-default btn-med" ng-disabled="true" >
+  							    	<span class="glyphicon glyphicon-arrow-up"></span>
+  						    	</button>
+  						    	<button type="button" class="btn btn-default btn-med" ng-disabled="true">
+  							    	<span class="glyphicon glyphicon-arrow-down"></span>
+  						    	</button>
+  						    </div>
+  					  	</td>
+					 	<td>
+					 		<table>
+					 			<tbody>
+					 				<tr>
+					 					<td>
+	    			  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{theaterService.logRecord[0].value.method}}</span>
+  	  	    			      	 			<span style="margin-right:1em;"><strong>URL:</strong> {{theaterService.logRecord[0].value.url}}</span>
+    	  	    				 		<td>
+      	  	     	 				</tr>
+        	  		 				<tr ng-if="theaterService.logRecord[0].value.request.body.length > 0">
+      	 								<td><strong>Body:</strong> {{theaterService.logRecord[0].value.request.body}}</td>
+      	 							</tr>
+	          		 				<tr>
+      				 					<td><strong>Status:</strong> {{theaterService.logRecord[0].value.response.statusCode}} [{{theaterService.logRecord[0].value.response.statusText}}] <strong>Elapsed Time:</strong> {{theaterService.logRecord[0].value.elapsedTime}}ms.</td>
+      	 							</tr>
+      	 						</tbody>
+      	 					</table>
+      	 				</td>
+      	 			</tr>	
+      	 		</tbody>
+      	 	</table>
+      	 </div>
     </div>
-    <div class="panel-body" style="height:65vh; overflow: auto;" >
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Address</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr ng-repeat="movie in movieService.movies">
-            <td>
-              <table class="table">
-                <tr><td><img src="{{movie.value.posterURL}}"></td></tr>
-                <tr><td>{{movie.value.title}}</td></tr>
-              </table>
-            </td>
-            <td>
-              <table>
-                <tbody>
-                  <tr><td>{{movie.value.plot}}</td></tr>
-                  <tr>
-                    <td>
-                     <button id="btn_TheatersByMovie" type="button" class="btn btn-default btn-success" ng-click="movieService.getTheatersByMovie(movie.value.id)">Theaters</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>                          
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
- </div>`;
+</div>`;
 
 function renderSampleDocuments() {
   
@@ -406,5 +435,5 @@ function renderSampleDocuments() {
   jPP.printJson(document.getElementById("sampleTicketSale"),null,ticketSale);
   jPP.printJson(document.getElementById("sampleConfig"),null,sampleConfig);
   jPP.printJson(document.getElementById("sampleDataSources"),null,sampleDataSources);
-  document.getElementById('movieServiceHTML').innerHTML=hljs.highlight('html', movieServiceHTML).value;
+  document.getElementById('theaterServiceHTML').innerHTML=hljs.highlight('html', theaterServiceHTML).value;
 }

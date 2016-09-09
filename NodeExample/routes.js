@@ -37,6 +37,12 @@ function getRouter() {
   		next();
 		});
 
+    router.route('/googleConfiguration')
+        .get(getGoogleConfiguration);
+
+    router.route('/theaters/geoCoding/center')
+        .get(getTheaterCenter);
+
     router.route('/theaters')
         .get(getTheaters);
 
@@ -51,6 +57,9 @@ function getRouter() {
 
     router.route('/theaters/:id/movies/:date')
         .get(getMoviesByTheater);
+
+    router.route('/theaters/latitude/:latitude/longitude/:longitude/distance/:distance')
+        .get(getTheatersByLocation);
 
     router.route('/movies')
         .get(getMovies);
@@ -111,6 +120,10 @@ function getTheaterById(req, res, next) {
 
 function searchTheaters(req, res, next) {
   movieTicketing.searchTheatersService(req.session, res, next, req.body);
+}
+
+function getTheatersByLocation(req, res, next) {
+  movieTicketing.locateTheatersService(req.session, res, next, parseFloat(req.params.latitude), parseFloat(req.params.longitude), parseFloat(req.params.distance));
 }
 
 function getTheatersByMovie(req, res, next) {
@@ -174,4 +187,12 @@ function getLoadPosters(req, res, next) {
 
 function getLogRecordsByOperation(req, res, next) {
   movieTicketing.logRecordsByOperationService(req.session, res, next, req.params.id);
+}
+
+function getTheaterCenter(req, res, next) {
+  movieTicketing.getTheaterCenter(req.session, res, next);
+}
+
+function getGoogleConfiguration(req, res, next) {
+  movieTicketing.getGoogleConfiguration(req.session, res, next);
 }

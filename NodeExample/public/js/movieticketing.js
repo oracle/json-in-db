@@ -173,6 +173,8 @@ app.factory('theaterService', function($http) {
 	var factory = {};
 	
 	factory.theaters = [];
+  factory.position = null;
+  factory.theaterMap = null;
 	factory.logRecordIndex = 0;
 	factory.logRecord = null;
 
@@ -206,6 +208,64 @@ app.factory('theaterService', function($http) {
   
 	factory.moviesByTheater = [];
 	factory.mbtLogRecord = null;
+	
+  factory.addMarkersToMap = function(data) {
+	  for (var i=0; i < data.length; i++) {
+  	  var marker = new google.maps.Marker({
+       	position: {lat: data[i].value.location.geoCoding.coordinates[0] , lng: data[i].value.location.geoCoding.coordinates[1]},
+        map: factory.theaterMap,
+        title: data[i].value.name,
+        id : data[i].id
+      });
+      marker.addListener('click', function() {
+        this.map.setZoom(10);
+        this.map.setCenter(marker.getPosition());
+        $('#dialog_locateTheaters').modal('hide');
+        factory.getMoviesByTheater(this.id);
+      });
+    }
+  }
+	
+	factory.getTheatersByLocation = function ()  {
+		
+		factory.theaterMap = showLocationOnMap(factory.position);
+
+    var path = '/movieticket/theaters/latitude/' + factory.position.coords.latitude + '/longitude/' + factory.position.coords.longitude + '/distance/5';
+    
+    $http.get(path).success(function(data, status, headers) {
+  	  if (data.length > 0) {
+  	  	factory.addMarkersToMap(data);
+     	  var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
+        $http.get(path).success(function(data, status, headers) {
+          factory.logRecord = data
+        });
+      }
+      else {
+     		console.log('theaterService: getTheatersByLocation(): No Theaters near current location.');
+				var path = '/movieticket/theaters/geoCoding/center';
+				$http.get(path).success(function(data, status, headers) {
+					factory.position = {
+					  "coords" : data
+					}
+    	  	console.log('theaterService: getTheaterCenter() returned: ' + JSON.stringify(factory.position.coords.latitude + ',' + factory.position.coords.longitude));
+    	  	factory.theaterMap = showLocationOnMap(factory.position);
+			    var path = '/movieticket/theaters/latitude/' + factory.position.coords.latitude + '/longitude/' + factory.position.coords.longitude + '/distance/5';
+	        $http.get(path).success(function(data, status, headers) {
+		    	  if (data.length > 0) {
+  			    	factory.addMarkersToMap(data);
+     	 		  	var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
+        		  $http.get(path).success(function(data, status, headers) {
+              	factory.logRecord = data
+        	    });
+          	}
+          	else {
+        	  	console.log('theaterService: getTheatersByLocation(): Unable to find nearby theaters');
+        	  }
+	  	    })
+    		});
+  	  }
+    })
+  }
 	
 	factory.getMoviesByTheater = function (theaterId) {
    	 var date = new Date($('#datePicker').datepicker('getUTCDate'));
@@ -244,6 +304,45 @@ app.controller('theatersCtrl',function($scope, $http, $cookies, theaterService) 
   $cookies.put('movieTicketGUID', GUID)
 
   $scope.theaterService = theaterService;
+  
+  function getTheaterCenter() {
+		var path = '/movieticket/theaters/geoCoding/center';
+		$http.get(path).success(function(data, status, headers) {
+			$scope.theaterService.position = {
+				"coords" : data
+			}	
+    	console.log('theatersCtrl: getTheaterCenter() returned: ' + JSON.stringify($scope.theaterService.position.coords.latitude + ',' + $scope.theaterService.position.coords.longitude));
+  	})
+	}  	
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position){
+    	if (position.coords.latitude) {
+        $scope.$apply(function(){
+          $scope.theaterService.position = position;
+      	  console.log('theatersCtrl: navigator.geolocation.getCurrentPosition() returned: ' + JSON.stringify($scope.theaterService.position.coords.latitude + ',' + $scope.theaterService.position.coords.longitude));
+        });
+      }
+      else {
+      	console.log('theatersCtrl: navigator.geolocation.getCurrentPosition() failed to obtain current position');
+   			getTheaterCenter();   	
+      }
+    });
+	}
+	else {
+   	console.log('theatersCtrl: navigator.geolocation unavaiable');
+		getTheaterCenter();   			
+	}
+	
+	var path = '/movieticket/googleConfiguration'
+  $http.get(path).success(function(data, status, headers) {
+  	if (data.apiKey === 'YOUR_GOOGLE_KEY_GOES_HERE') {
+  		showErrorMessage('Please update dataSources.json with a valid Google API key and restart the Node.');	
+  	}
+  	else {
+  	  initGoogleMaps(data.apiKey);
+  	}
+  })
 
   $http({
     method: 'GET',
@@ -418,6 +517,7 @@ function formLoad() {
 	  		hideDetailTabs()
 	    }	
   })
+
 }
 
 function showMoviesByTheater() {
@@ -485,4 +585,77 @@ function showErrorMessage(message) {
 	document.getElementById('content_ErrorMessage').textContent = message
   $('#dialog_ErrorMessage').modal('show');
 
+}
+
+function initGoogleMaps(apikey) {
+
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://maps.googleapis.com/maps/api/js'
+              + '?' + 'key=' + apikey
+              // + '&' + 'callback=' + 'googleMapsReady'
+  document.body.appendChild(script);
+
+}
+
+function googleMapsReady() {
+	
+	alert('Google maps loaded');
+
+}
+
+function showCurrentPosition() {
+	
+	navigator.geolocation.getCurrentPosition(showLocationOnMap,geoLocationError);
+ 
+}
+
+function showLocationOnMap(position) {
+	
+	if (position.coords === undefined) {
+	  showErrorMessage('Sorry current position not yet available. Please try again in 30 seconds');
+	  return null;
+	}
+	
+  $('#dialog_locateTheaters').modal('show');
+  
+  var theaterMap = new google.maps.Map(
+                  document.getElementById('map'), 
+                  {
+                    center: {
+                             	lat: position.coords.latitude , 
+                             	lng: position.coords.longitude
+                            },
+          					zoom: 10
+        					});
+        					
+	$("#dialog_locateTheaters").on("shown.bs.modal", function () {
+		map
+    google.maps.event.trigger(theaterMap, "resize");
+    var myLatlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+		theaterMap.panTo(myLatlng);
+  });        					
+
+  var marker = new google.maps.Marker({
+    position: {lat: position.coords.latitude , lng: position.coords.longitude},
+    map: theaterMap,
+    title: 'Your Location'
+  });
+  
+  return theaterMap;
+  
+}
+
+function geoLocationError(e) {
+	switch(error.code)  
+        {  
+            case error.PERMISSION_DENIED: console.log("geoLocationError(): User did not share geolocation data");  
+            break;  
+            case error.POSITION_UNAVAILABLE: console.log("geoLocationError(): Could not detect current position");  
+            break;  
+            case error.TIMEOUT: console.log("geoLocationError(): Timeout while retrieving position");  
+            break;  
+            default: console.log("geoLocationError(): Unknown Error");  
+            break;  
+        }  
 }

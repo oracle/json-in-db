@@ -150,7 +150,7 @@ function getGeoJSON(address, geocodeResult, benchmark) {
     var coordinates = geocodeResult.addressMatches[0].coordinates;
     var geoCoding = {
       type        : "Point",
-      coordinates : [coordinates.x , coordinates.y]                                                                      
+      coordinates : [coordinates.y , coordinates.x]                                                                      
     }
     return geoCoding;  
   }
@@ -243,7 +243,7 @@ function geocodeAddress(address,benchmark,count) {
         'error', 
         (e) => {
           var details = { 
-            module         : 'geocodeTheater(' + theater.id +',' + theater.name + ',' + benchmark + ').request(error)',
+            module         : moduleId + '.request(error)',
             requestOptions : options,
             cause          : e
           }
@@ -266,6 +266,7 @@ function geocodeTheater(theater) {
   	return theater;
   }).catch(function(e) {
   	writeLogEntry(moduleId,'Unable to get location for = "' + address + '".');
+  	// console.log(JSON.stringify(e));
   	theater.location.geoCoding = {}
   	return theater;
   });
@@ -274,43 +275,52 @@ function geocodeTheater(theater) {
     
 function parseAddress(address) {
 	
-	var location = address;
+	var location = {
+		address : address,
+		city : "unavailable",
+		zipCode : 0
+  }
+  
+	var moduleId = 'parseAddress("' + address + '")';
   
   var parsedAddress = usAddressParser.parseLocation(address);
 
   var street    
-
-  if (parsedAddress.number) {
-	  street = parsedAddress.number;
-  	if (parsedAddress.prefix) {
-	   street = street + ' ' + parsedAddress.prefix;
-	  }
-	  street = street + ' ' + parsedAddress.street;
-	  if (parsedAddress.type) {
-	    street = street + ' ' + parsedAddress.type;
-    }
-  }
-  else {
-    if (parsedAddress.street1) {
-      street = parsedAddress.street1;
-	    if (parsedAddress.type1) {
-		    street = street + ' ' + parsedAddress.type1;
+  if (parsedAddress != null) {  	
+    if (parsedAddress.number) {
+  	  street = parsedAddress.number;
+    	if (parsedAddress.prefix) {
+  	   street = street + ' ' + parsedAddress.prefix;
+  	  }
+  	  street = street + ' ' + parsedAddress.street;
+  	  if (parsedAddress.type) {
+  	    street = street + ' ' + parsedAddress.type;
       }
     }
-  }
-   
-  if (street !== undefined) {
-      			
-    location = {
-     	street      : street,
-  	  city        : parsedAddress.city,
-  	  zipCode     : parsedAddress.zip,
-  	  state       : parsedAddress.state,
-  	  phoneNumber : null,
-	    geoCoding   : {}
+    else {
+      if (parsedAddress.street1) {
+        street = parsedAddress.street1;
+  	    if (parsedAddress.type1) {
+  		    street = street + ' ' + parsedAddress.type1;
+        }
+      }
+    }
+  
+    if (street !== undefined) {      			
+      location = {
+       	street      : street,
+  	    city        : parsedAddress.city.toUpperCase(), // Match the US Census Geocoder's behavoir
+  	    zipCode     : parsedAddress.zip,
+  	    state       : parsedAddress.state,
+  	    phoneNumber : null,
+	      geoCoding   : {}
+	    }
 	  }
   }
-  
+  else {
+  	writeLogEntry(moduleId,'Failed to parse address.');
+  }
+
   return location;
 
 }  
@@ -1223,7 +1233,9 @@ function createScreenings(sessionState) {
   	);
   }).then(function(e) {
      writeLogEntry(moduleId,'Reset and Update list = ' + updatedMovieList.length);
-  	 return Promise.all(updatedMovieList.map(function(movieItem) {return movieAPI.updateMovie(sessionState, movieItem.id,movieItem.value);}))
+  	 return Promise.all(updatedMovieList.map(function(movieItem) {
+  	 	 return movieAPI.updateMovie(sessionState, movieItem.id, movieItem.value);
+  	 }))
   }).then(function() {
   	 return screeningCount;
   }).catch(function(e) {
@@ -1332,16 +1344,17 @@ function getPostersFromTMDB(sessionState,response) {
 
   
   function getPosterFromTMDB(movieItem) {
+
+  	var movie =  movieItem.value;
  
-  	return getMoviePoster(movieItem.id, movieItem.value.posterURL).then(function(poster){
+  	return getMoviePoster(movieItem.id, movie.posterURL).then(function(poster){
   		if (poster != null) {
         posterCount++;
         // writeLogEntry('getPosterFromTMDB() : Poster size = ' + poster.length);
   	    return movieAPI.insertPoster(sessionState, poster).then(function(sodaResponse){
-  	    	var movie =  movieItem.value;
   	    	movie.externalURL = movie.posterURL
   	    	movie.posterURL = '/movieticket/poster/' + sodaResponse.json[0].id;
-          return movieAPI.updateMovie(sessionState, movieItem.id,movie).catch(function(e) {
+          return movieAPI.updateMovie(sessionState, movieItem.id, movie).catch(function(e) {
           	writeLogEntry('getPosterFromTMDB(' + movie.id + ').updateMovie(): Broken Promise.');
           	throw e;
           })

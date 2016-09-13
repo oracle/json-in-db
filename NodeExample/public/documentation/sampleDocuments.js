@@ -140,132 +140,135 @@ var theater = {
 };
 
 var movie = {
-  "id": 153518,
-  "title": "The Angry Birds Movie",
-  "plot": "An island populated entirely by happy, flightless birds or almost entirely. In this paradise, Red, a bird with a temper problem, speedy Chuck, and the volatile Bomb have always been outsiders. But when the island is visited by mysterious green piggies, it∆s up to these unlikely outcasts to figure out what the pigs are up to.",
-  "runtime": 128,
-  "posterURL": "http://image.tmdb.org/t/p/w185/t2mZzQXjpQxmqtJOPpe8Dr2YpMl.jpg?api_key=8ba5c4ffeeaf237c92814b465494b3d3",
-  "castMember": [
-    {
-      "name": "Peter Dinklage",
-      "character": "Mighty Eagle (voice)"
-    }, {
-      "name": "Jason Sudeikis",
-      "character": "Red (voice)"
-    }, {
-      "name": "Maya Rudolph",
-      "character": "Matilda (voice)"
-    }, {
-      "name": "Josh Gad",
-      "character": "Chuck (voice)"
-    }, {
-      "name": "Danny McBride",
-      "character": "Bomb (voice)"
-    }, {
-      "name": "Kate McKinnon",
-      "character": "Stella / Eva the Birthday Mom (voice)"
-    }, {
-      "name": "Bill Hader",
-      "character": "Minion Pigs (voice)"
-    }, {
-      "name": "Jillian Bell",
-      "character": "Helen the Lunch Mom / Yoga Instructor (voice)"
-    }, {
-      "name": "Ike Barinholtz",
-      "character": "Tiny (voice)"
-    }, {
-      "name": "Keegan-Michael Key",
-      "character": "Judge Peckinpah (voice)"
-    }, {
-      "name": "Danielle Brooks",
-      "character": "Olive Blue / Monica the Crossing Guard (voice)"
-    }, {
-      "name": "Tony Hale",
-      "character": "Ross / Cyrus / Mime (voice)"
-    }, {
-      "name": "Cristela Alonzo",
-      "character": "Shirley the Old Lady Bird (voice)"
-    }, {
-      "name": "Romeo Santos",
-      "character": "Early Bird (voice)"
-    }, {
-      "name": "Anthony Padilla",
-      "character": "Hal (voice)"
-    }, {
-      "name": "Ian Hecox",
-      "character": "Bubbles (voice)"
-    }, {
-      "name": "Sean Penn",
-      "character": "Terence(voice)"
-    }, {
-      "name": "Hannibal Buress",
-      "character": "Edward the Birthday Dad (voice)"
-    }, {
-      "name": "Tituss Burgess",
-      "character": "Photog (voice)"
-    }, {
-      "name": "Billy Eichner",
-      "character": "Chef Pig / Phillip (voice)"
-    }, {
-      "name": "Blake Shelton",
-      "character": "Earl Pig (voice)"
-    }, {
-      "name": "CHARLI XCX",
-      "character": "Willow (voice)"
-    }, {
-      "name": "Ali Wong",
-      "character": "Betty Bird (voice)"
-    }, {
-      "name": "Mckenna Grace",
-      "character": "Ella Bird (voice)"
-    }, {
-      "name": "Ava Acres",
-      "character": "Timothy the Birthday Bird (voice)"
-    }, {
-      "name": "Geoffrey Arend",
-      "character": "Day Care Teacher (voice)"
-    }, {
-      "name": "Alex Borstein",
-      "character": "Sophie Bird / Peggy Bird (voice)"
-    }, {
-      "name": "Max Charles",
-      "character": "Bobby Bird (voice)"
-    }, {
-      "name": "Fergal Reilly",
-      "character": "Foreman Pig (voice)"
-    }, {
-      "name": "Kevin Bigley",
-      "character": "Greg Blue (voice)"
-    }, {
-      "name": "Fred Tatasciore",
-      "character": "Monty Pig (voice)"
-    }, {
-      "name": "Judah Friedlander",
-      "character": "Bill Beakins (voice)"
-    }
-  ],
-  "crewMember": [
-    {
-      "name": "Clay Kaytis",
-      "job": "Director"
-    }, {
-      "name": "Fergal Reilly",
-      "job": "Director"
-    }, {
-      "name": "Jon Vitti",
-      "job": "Writer"
-    }, {
-      "name": "John Cohen",
-      "job": "Producer"
-    }, {
-      "name": "Kent Beyda",
-      "job": "Editor"
-    }, {
-      "name": "Kevin Webb",
-      "job": "Animation"
-    }
-  ]
-};
+	"id": 153518,
+	"title": "The Angry Birds Movie",
+	"plot": "An island populated entirely by happy, flightless birds or almost entirely. In this paradise, Red, a bird with a temper problem, speedy Chuck, and the volatile Bomb have always been outsiders. But when the island is visited by mysterious green piggies, it∆s up to these unlikely outcasts to figure out what the pigs are up to.",
+	"runtime": 95,
+	"posterURL": "/movieticket/poster/42ADAE57A4F44BDBAC41925E726673DA",
+	"castMember": [
+		{
+			"name": "Jason Sudeikis",
+			"character": "Red (voice)"
+		}, {
+			"name": "Josh Gad",
+			"character": "Chuck (voice)"
+		}, {
+			"name": "Danny McBride",
+			"character": "Bomb (voice)"
+		}, {
+			"name": "Maya Rudolph",
+			"character": "Matilda (voice)"
+		}, {
+			"name": "Bill Hader",
+			"character": "Leonard (voice)"
+		}, {
+			"name": "Peter Dinklage",
+			"character": "Mighty Eagle (voice)"
+		}, {
+			"name": "Sean Penn",
+			"character": "Terence (voice)"
+		}, {
+			"name": "Keegan-Michael Key",
+			"character": "Judge Peckinpah (voice)"
+		}, {
+			"name": "Kate McKinnon",
+			"character": "Stella / Eva the Birthday Mom (voice)"
+		}, {
+			"name": "Tony Hale",
+			"character": "Ross / Cyrus / Mime (voice)"
+		}, {
+			"name": "Hannibal Buress",
+			"character": "Edward the Birthday Dad (voice)"
+		}, {
+			"name": "Ike Barinholtz",
+			"character": "Tiny (voice)"
+		}, {
+			"name": "Tituss Burgess",
+			"character": "Photog (voice)"
+		}, {
+			"name": "Ian Hecox",
+			"character": "Bubbles (voice)"
+		}, {
+			"name": "Anthony Padilla",
+			"character": "Hal (voice)"
+		}, {
+			"name": "Jillian Bell",
+			"character": "Helen the Lunch Mom / Yoga Instructor (voice)"
+		}, {
+			"name": "Billy Eichner",
+			"character": "Chef Pig / Phillip (voice)"
+		}, {
+			"name": "Blake Shelton",
+			"character": "Earl Pig (voice)"
+		}, {
+			"name": "CHARLI XCX",
+			"character": "Willow (voice)"
+		}, {
+			"name": "Ali Wong",
+			"character": "Betty Bird (voice)"
+		}, {
+			"name": "Mckenna Grace",
+			"character": "Ella Bird (voice)"
+		}, {
+			"name": "Ava Acres",
+			"character": "Timothy the Birthday Bird (voice)"
+		}, {
+			"name": "Geoffrey Arend",
+			"character": "Day Care Teacher (voice)"
+		}, {
+			"name": "Alex Borstein",
+			"character": "Sophie Bird / Peggy Bird (voice)"
+		}, {
+			"name": "Max Charles",
+			"character": "Bobby Bird (voice)"
+		}, {
+			"name": "Fergal Reilly",
+			"character": "Foreman Pig (voice)"
+		}, {
+			"name": "Kevin Bigley",
+			"character": "Greg Blue (voice)"
+		}, {
+			"name": "Fred Tatasciore",
+			"character": "Monty Pig (voice)"
+		}, {
+			"name": "Judah Friedlander",
+			"character": "Bill Beakins (voice)"
+		}, {
+			"name": "Danielle Brooks",
+			"character": "Olive Blue / Monica the Crossing Guard (voice)"
+		}, {
+			"name": "Romeo Santos",
+			"character": "Early Bird (voice)"
+		}, {
+			"name": "Cristela Alonzo",
+			"character": "Shirley the Old Lady Bird (voice)"
+		}
+	],
+	"crewMember": [
+		{
+			"name": "Clay Kaytis",
+			"job": "Director"
+		}, {
+			"name": "Fergal Reilly",
+			"job": "Director"
+		}, {
+			"name": "Jon Vitti",
+			"job": "Writer"
+		}, {
+			"name": "John Cohen",
+			"job": "Producer"
+		}, {
+			"name": "Kent Beyda",
+			"job": "Editor"
+		}, {
+			"name": "Kevin Webb",
+			"job": "Animation"
+		}
+	],
+	"releaseDate": "2016-05-20",
+	"certification": "PG",
+	"externalURL": "http://image.tmdb.org/t/p/w185/t2mZzQXjpQxmqtJOPpe8Dr2YpMl.jpg?api_key=ebdef9b4d4764fa65c16039d09eb0eed"
+}
 
 var screening = {
   "theaterId": 62,
@@ -333,7 +336,7 @@ var sampleDataSources = {
     "port": 80,
     "path": "/rss/moviesnearme_",
     "searchCriteria": {
-      "zipCode": "94103"
+      "zipCode": "94501"
     }
   },
   "usCensus": {
@@ -341,6 +344,9 @@ var sampleDataSources = {
     "hostname": "geocoding.geo.census.gov",
     "port": 80,
     "path": "/geocoder/locations/onelineaddress"
+  },
+  "google": {
+    "apiKey": "YOUR_GOOGLE_KEY_GOES_HERE"
   }
 }
 

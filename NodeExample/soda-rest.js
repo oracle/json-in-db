@@ -75,6 +75,21 @@ function setHeaders(contentType, eTag) {
    return headers;
 }
   
+function addLimitAndFields(queryProperties,limit,fields) {
+ 
+  if (fields === undefined) {
+    fields = 'all';
+  }
+
+  queryProperties.fields = fields;      
+      
+  if (limit !== undefined) {
+  	queryProperties.limit = limit;
+  }
+    
+  return queryProperties;
+}
+
 function newLogEntry(sessionId, operationId, requestOptions) {
 
   return {
@@ -114,7 +129,6 @@ function createLogRequest(sessionState, cfg, requestOptions) {
   }   
 
   return logRequest;
-
 }
 
 function logResponse(response, logRequest) {
@@ -133,10 +147,9 @@ function logResponse(response, logRequest) {
 
     postJSON(disableSodaLogging, logRequest.cfg, logRequest.logCollection, logRequest.logEntry);
   }
-
 }
 
-function getCollectionURL(cfg,collectionName) {
+function getDocumentStoreURI(cfg,collectionName) {
 	
 	return "http://" + cfg.hostname + ":" + cfg.port + cfg.path + "/" + collectionName;
 	
@@ -205,33 +218,39 @@ function processSodaResponse(moduleName, requestOptions, logRequest, sodaRespons
   }
 }
     
+function generateRequest(moduleId, sessionState, cfg, requestOptions) {
+  
+  return new Promise(function(resolve, reject) {
+	  // console.log('Execute Promise: ' + moduleId);
+ 	  var logRequest = createLogRequest(sessionState, cfg, requestOptions)
+    request(requestOptions, function(error, response, body) {
+ 	  	if (error) {
+  		  reject(getSodaError(moduleId,requestOptions,err));
+			}
+			else {
+			  processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
+			}
+		}).auth(cfg.username, cfg.password, true);
+  });
+}
+
 function createCollection(sessionState, cfg, collectionName, collectionProperties) {
 
-  var moduleId = 'createCollection(' + collectionName + ')';
+  var moduleId = 'createCollection("' + collectionName + '")';
 
   var requestOptions = {
   	method  : 'PUT'
-  , uri     : getCollectionURL(cfg,collectionName)
+  , uri     : getDocumentStoreURI(cfg,collectionName)
   , json    : collectionProperties
   , time    : true
   };
 
-  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
-
-  return new Promise(function(resolve, reject) {
-    // console.log('Execute Promise: ' + moduleId);
- 	  request(requestOptions, function(error, response, body) {
- 	  	if (error) {
-  		  reject(getSodaError(moduleId,requestOptions,err));
-			};
-			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
-		}).auth(cfg.username, cfg.password, true);
-  });
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
 }
    
 function createIndex(sessionState, cfg, collectionName, indexProperties) {
 
-  var moduleId = 'createIndex(' + collectionName + ',' + indexProperties.name + ')'; 
+  var moduleId = 'createIndex("' + collectionName + '","' + indexProperties.name + '")'; 
 
   // Skip Spatial Indexes in environments where spatial operations on Geo-JSON are not supported
 
@@ -242,24 +261,177 @@ function createIndex(sessionState, cfg, collectionName, indexProperties) {
 
   var requestOptions = {
   	method  : 'POST'
-  , uri     : getCollectionURL(cfg,collectionName) +  '?' + 'action=' + 'index'
+  , uri     : getDocumentStoreURI(cfg,collectionName) 
+  , qs      : {action : 'index'}
   , json    : indexProperties
   , time    : true
   };
 
-  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
-
-  return new Promise(function(resolve, reject) {
-    // console.log('Execute Promise: ' + moduleId);
- 	  request(requestOptions, function(error, response, body) {
- 	  	if (error) {
-  		  reject(getSodaError(moduleId,requestOptions,err));
-			};
-			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
-		}).auth(cfg.username, cfg.password, true);
-  });
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
 }
 
+function dropCollection(sessionState, cfg, collectionName) {
+
+  var moduleId = 'dropCollection("' + collectionName + '")';
+
+  var requestOptions = {
+  	method  : 'DELETE'
+  , uri     : getDocumentStoreURI(cfg,collectionName)
+  , time    : true
+  };
+
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+}
+
+function getCollection(sessionState, cfg, collectionName,limit,fields) {
+
+  var moduleId = 'getCollection("' + collectionName + '")';
+  
+	var requestOptions = {
+  	method  : 'GET'
+  , uri     : getDocumentStoreURI(cfg,collectionName)
+  , qs      : addLimitAndFields({},limit,fields)
+  , headers : setHeaders()
+  , time    : true
+  , json    : true
+  };
+
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+}
+
+function getDocumentContent(sessionState, cfg, collectionName, key, binary, eTag) {
+
+  var moduleId = 'getDocument("' + collectionName + '","' + key +'")';
+
+	var requestOptions = {
+  	method  : 'GET'
+  , uri     : getDocumentStoreURI(cfg,collectionName) + '/' + key
+  , headers : setHeaders(null, eTag)
+  , time    : true
+  };
+
+  if (binary) {
+  	requestOptions.encoding = null;
+  }
+  
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+}
+
+function postJSON(sessionState, cfg, collectionName, json) {
+
+  // console.log('postJSON("' + collectionName + '")');
+   
+  return postDocument(sessionState, cfg, collectionName, json, 'application/json');
+   
+}
+
+function postDocument(sessionState, cfg, collectionName, document, contentType) {
+
+  var moduleId = 'postDocument("' + collectionName + '","' + contentType + '")';
+
+	var requestOptions = {
+  	method  : 'POST'
+  , uri     : getDocumentStoreURI(cfg,collectionName)
+  , headers : setHeaders(contentType , undefined)
+  , time    : true
+  };
+  
+  if (contentType === 'application/json') {
+  	requestOptions.json = document
+ 	}
+ 	else {
+ 		requestOptions.body = document
+ 	}
+
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+}
+
+function bulkInsert(sessionState, cfg, collectionName, documents) {
+
+  var moduleId = 'bulkInsert("' + collectionName + '")';
+  
+  var requestOptions = {
+  	method  : 'POST'
+  , uri     : getDocumentStoreURI(cfg,collectionName)
+  , qs      : {action : 'insert'}
+  , json    : documents
+  , time    : true
+  };
+  
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+}
+
+function putDocument(sessionState, cfg, collectionName, key, document, contentType, eTag) {
+
+  var moduleId = 'putDocument(' + collectionName + '","' + key + '","' + contentType + '")';
+	var requestOptions = {
+  	method  : 'PUT'
+  , uri     : getDocumentStoreURI(cfg,collectionName) + '/' + key
+  , headers : setHeaders(contentType , eTag)
+  , time    : true
+  };
+  
+  if (contentType === 'application/json') {
+  	requestOptions.json = document
+ 	}
+ 	else {
+ 		requestOptions.body = document
+ 	}
+
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+}
+
+function deleteDocument(sessionState, cfg, collectionName, key, eTag) {
+
+  var moduleId = 'deleteDocument("' + collectionName + '","' + key + '")';
+
+	var requestOptions = {
+  	method  : 'DELETE'
+  , uri     : getDocumentStoreURI(cfg,collectionName) + '/' + key
+  , headers : setHeaders(undefined, eTag)
+  , time    : true
+  };
+  
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+}
+
+function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
+
+  var moduleId = 'queryByExample("' + collectionName + '",' + JSON.stringify(qbe) + ')'; 
+  console.log(moduleId);
+   
+	var requestOptions = {
+  	method  : 'POST'
+  , uri     : getDocumentStoreURI(cfg,collectionName)
+  , qs      : addLimitAndFields({action : "query"},limit,fields)
+  , json    : qbe
+  , time    : true
+  };
+  
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+}
+
+function putJSON(sessionState, cfg, collectionName, key, json, eTag) {
+
+  // console.log('putJSON("' + collectionName + '","' + key + '")');
+
+  return putDocument(sessionState, cfg, collectionName, key, json, 'application/json', eTag);   
+}
+
+function getJSON(sessionState, cfg, collectionName, key, eTag) {
+  
+  return getDocument(sessionState, cfg, collectionName, key, eTag);
+}
+
+function getDocument(sessionState, cfg, collectionName, key, eTag) {
+
+  return getDocumentContent(sessionState, cfg, collectionName, key, false, eTag);
+}
+
+function getBinaryDocument(sessionState, cfg, collectionName, key, eTag) {
+ 
+  return getDocumentContent(sessionState, cfg, collectionName, key, true, eTag);
+}
 
 function createCollectionWithIndexes(sessionState, cfg, collectionName, collectionProperties) {
 
@@ -291,264 +463,6 @@ function createCollectionWithIndexes(sessionState, cfg, collectionName, collecti
     )
   })
 }  
-
-function dropCollection(sessionState, cfg, collectionName) {
-
-  var moduleId = 'dropCollection(' + collectionName + ')';
-
-  var requestOptions = {
-  	method  : 'DELETE'
-  , uri     : getCollectionURL(cfg,collectionName)
-  , time    : true
-  };
-
-  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
-
-  return new Promise(function(resolve, reject) {
-    // console.log('Execute Promise: ' + moduleId);
- 	  request(requestOptions, function(error, response, body) {
- 	  	if (error) {
-  		  reject(getSodaError(moduleId,requestOptions,err));
-			};
-			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
-		}).auth(cfg.username, cfg.password, true);
-  });
-}
-
-function getCollection(sessionState, cfg, collectionName,limit,fields) {
-
-  var moduleId = 'getCollection(' + collectionName + ')';
-  
-	var requestOptions = {
-  	method  : 'GET'
-  , uri     : getCollectionURL(cfg,collectionName)
-  , headers : setHeaders()
-  , time    : true
-  };
-
-  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
-
-  return new Promise(function(resolve, reject) {
-    // console.log('Execute Promise: ' + moduleId);
- 	  request(requestOptions, function(error, response, body) {
- 	  	if (error) {
-  		  reject(getSodaError(moduleId,requestOptions,err));
-			};
-			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
-		}).auth(cfg.username, cfg.password, true);
-  });
-}
-
-function getJSON(sessionState, cfg, collectionName, key, eTag) {
-  
-  return getDocument(sessionState, cfg, collectionName, key, eTag)
-  
-}
-
-function getBinaryDocument(sessionState, cfg, collectionName, key, eTag) {
- 
-  return getDocumentContent(sessionState, cfg, collectionName, key, true, eTag);
-
-}
-
-function getDocument(sessionState, cfg, collectionName, key, eTag) {
-
-  return getDocumentContent(sessionState, cfg, collectionName, key, false, eTag);
-
-}
-
-function getDocumentContent(sessionState, cfg, collectionName, key, binary, eTag) {
-
-  var moduleId = 'getDocument(' + collectionName + ',' + key +')';
-
-	var requestOptions = {
-  	method  : 'GET'
-  , uri     : getCollectionURL(cfg,collectionName) + '/' + key
-  , headers : setHeaders(null, eTag)
-  , time    : true
-  };
-
-  if (binary) {
-  	requestOptions.encoding = null;
-  }
-  
-  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
-
-  return new Promise(function(resolve, reject) {
-    // console.log('Execute Promise: ' + moduleId);
- 	  request(requestOptions, function(error, response, body) {
- 	  	if (error) {
-  		  reject(getSodaError(moduleId,requestOptions,err));
-			};
-			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
-		}).auth(cfg.username, cfg.password, true);
-  });
-}
-
-function postJSON(sessionState, cfg, collectionName, json) {
-
-  // console.log('postJSON(' + collectionName + ')');
-   
-  return postDocument(sessionState, cfg, collectionName, json, 'application/json');
-   
-}
-
-function postDocument(sessionState, cfg, collectionName, document, contentType) {
-
-  var moduleId = 'postDocument(' + collectionName + ',' + contentType + ')';
-
-	var requestOptions = {
-  	method  : 'POST'
-  , uri     : getCollectionURL(cfg,collectionName)
-  , headers : setHeaders(contentType , undefined)
-  , time    : true
-  };
-  
-  if (contentType === 'application/json') {
-  	requestOptions.json = document
- 	}
- 	else {
- 		requestOptions.body = document
- 	}
-
-  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
-
-  return new Promise(function(resolve, reject) {
-    // console.log('Execute Promise: ' + moduleId);
- 	  request(requestOptions, function(error, response, body) {
- 	  	if (error) {
-  		  reject(getSodaError(moduleId,requestOptions,err));
-			};
-			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
-		}).auth(cfg.username, cfg.password, true);
-  });
-}
-
-function bulkInsert(sessionState, cfg, collectionName, documents) {
-
-  var moduleId = 'bulkInsert(' + collectionName + ')';
-	var requestOptions = {
-  	method  : 'POST'
-  , uri     : getCollectionURL(cfg,collectionName) + '?' + 'action=' + 'insert'
-  , json    : documents
-  , time    : true
-  };
-  
-  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
-
-  return new Promise(function(resolve, reject) {
-    // console.log('Execute Promise: ' + moduleId);
- 	  request(requestOptions, function(error, response, body) {
- 	  	if (error) {
-  		  reject(getSodaError(moduleId,requestOptions,err));
-			};
-			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
-		}).auth(cfg.username, cfg.password, true);
-  });
-}
-
-
-function putJSON(sessionState, cfg, collectionName, key, json, eTag) {
-
-  // console.log('putJSON("' + collectionName + '","' + key + '")');
-
-  return putDocument(sessionState, cfg, collectionName, key, json, 'application/json', eTag);   
-}
-
-function putDocument(sessionState, cfg, collectionName, key, document, contentType, eTag) {
-
-  var moduleId = 'putDocument(' + collectionName + '","' + key + '","' + contentType + '")';
-	var requestOptions = {
-  	method  : 'PUT'
-  , uri     : getCollectionURL(cfg,collectionName) + '/' + key
-  , headers : setHeaders(contentType , eTag)
-  , time    : true
-  };
-  
-  if (contentType === 'application/json') {
-  	requestOptions.json = document
- 	}
- 	else {
- 		requestOptions.body = document
- 	}
-
-  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
-
-  return new Promise(function(resolve, reject) {
-    // console.log('Execute Promise: ' + moduleId);
- 	  request(requestOptions, function(error, response, body) {
- 	  	if (error) {
-  		  reject(getSodaError(moduleId,requestOptions,err));
-			};
-			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
-		}).auth(cfg.username, cfg.password, true);
-  });
-}
-
-function deleteDocument(sessionState, cfg, collectionName, key, eTag) {
-
-  var moduleId = 'deleteDocument(' + collectionName + ')' + key + ')';
-
-	var requestOptions = {
-  	method  : 'DELETE'
-  , uri     : getCollectionURL(cfg,collectionName) + '/' + key
-  , headers : setHeaders(undefined, eTag)
-  , time    : true
-  };
-  
-  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
-
-  return new Promise(function(resolve, reject) {
-    // console.log('Execute Promise: ' + moduleId);
- 	  request(requestOptions, function(error, response, body) {
- 	  	if (error) {
-  		  reject(getSodaError(moduleId,requestOptions,err));
-			};
-			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
-		}).auth(cfg.username, cfg.password, true);
-  });
-}
-
-function addLimitAndFields(limit,fields) {
-
-      if (!fields) {
-        fields = 'all';
-      }
-      
-      var query = '?' + 'fields=' + fields;
-             
-      if (limit) {
-        query = query
-             + '&' + 'limit=' + limit;
-      }
-        
-      return query;
-  
-}
-
-function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
-
-  var moduleId = 'queryByExample(' + collectionName + ',' + JSON.stringify(qbe) +')'; 
- 
-	var requestOptions = {
-  	method  : 'POST'
-  , uri     : getCollectionURL(cfg,collectionName) + addLimitAndFields(limit,fields) + '&' + 'action=' + 'query'
-  , json    : qbe
-  , time    : true
-  };
-  
-  var logRequest = createLogRequest(sessionState, cfg, requestOptions);
-
-  return new Promise(function(resolve, reject) {
-    // console.log('Execute Promise: ' + moduleId);
- 	  request(requestOptions, function(error, response, body) {
- 	  	if (error) {
-  		  reject(getSodaError(moduleId,requestOptions,err));
-			};
-			processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
-		}).auth(cfg.username, cfg.password, true);
-  });
-}
 
 function recreateCollection(sessionState, cfg, collectionName,collectionProperties) {
    
@@ -636,5 +550,4 @@ function featureDetection(cfg) {
    console.log(e);
    throw e;
   });
-
 };

@@ -234,20 +234,71 @@ function moviesInTheatersService(sessionState, response, next) {
     next(e);
   });
 } 
+  
+function bookTickets(sessionState, bookingRequest) {
+
+  // console.log('movieTicketing.bookTickets(' + JSON.stringify(bookingRequest) +')');
+
+  var key           = bookingRequest.key;
+  var eTag          = null;
+  var screening     = {}
+  var seatsRequired = bookingRequest.adult + bookingRequest.senior + bookingRequest.child;
+  
+  return movieAPI.getScreening(sessionState, key).then(function(sodaResponse) {
+  	eTag = sodaResponse.eTag;
+  	screening = sodaResponse.json;
+	  if (screening.seatsRemaining < seatsRequired) {
+    	return {
+    	  status : 'SoldOut', 
+    	  message : 'Only ' + screening.seatsRemaining + ' seats are available for this performance.'
+      };
+    }
+    else {
+    screening.seatsRemaining = screening.seatsRemaining - seatsRequired;
+      return movieAPI.updateScreening(sessionState, key, screening, eTag).then(function(sodaResponse) {
+        switch (sodaResponse.statusCode) {
+          case 200: // Seat Reserved : Record Ticket Sale
+            var ticketSale = makeTicketSale(bookingRequest, screening);
+            return movieAPI.insertTicketSale(sessionState, ticketSale).then(function(sodaResponse) {
+              switch (sodaResponse.statusCode) {
+                case 201: // Booking Completed
+                  return { 
+                    status  : "Booked",
+                    message : "Please enjoy your movie."
+                  }
+                default:
+                	throw sodaResponse;
+              }
+            }).catch(function (err) {
+            	throw err;     
+            })
+          default:
+            throw sodaResponse;
+        }
+      }).catch(function (err) {
+        switch (err.statusCode) {
+          case 412: // Conflicting Ticket Sales : Try again
+            return bookTickets(sessionState,bookingRequest) 
+          default:
+        		throw err;
+        }
+      })
+    }
+  }).catch(function (err) {
+   	throw err;     
+  })
+}
 
 function bookTicketService(sessionState, response, next, bookingRequest) {
 
   // console.log('movieTicketing.bookTicketService(' + JSON.stringify(bookingRequest) +')');
-    
-  movieAPI.getScreening(sessionState, bookingRequest.key).then(function(sodaResponse) {
-    return bookTickets(sessionState, bookingRequest, sodaResponse.json, sodaResponse.headers.eTag) 
-  }).then (function(bookingStatus) {
-    // console.log('bookTicketService() : status = ' + JSON.stringify(bookingStatus));
+
+  bookTickets(sessionState, bookingRequest).then(function (bookingStatus) {
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(bookingStatus);
     response.end();
-  }).catch(function(e){
-    next(e);
+  }).catch(function(err) {
+    next(err);
   });
  
 }
@@ -495,7 +546,7 @@ function getTheatersByMovieAndDate(sessionState,movie, date) {
 
 function screeningService(sessionState, response, next, key) {
 
-  console.log('screeningService(' + key + ')');
+  // console.log('screeningService(' + key + ')');
 
   movieAPI.getScreening(sessionState, key).then(function(sodaResponse) {
     // console.log(JSON.stringify(sodaResponse));
@@ -521,69 +572,6 @@ function makeTicketSale(bookingRequest, screening) {
   bookingRequest.purchaseDate = dateWithTZOffset(purchaseDate);
   return bookingRequest;
 
-}
-
-function bookTickets(sessionState, bookingRequest, screening, eTag) {
-    
-  var booked = false;
-  var key = bookingRequest.key;
-  var totalTickets = bookingRequest.adult + bookingRequest.senior + bookingRequest.child;
-    
-  while (!booked) {
-    // console.log('bookTickets().updateScreening(): Seats Required = ' + totalTickets + '. Seats Reamaining = ' + screening.seatsRemaining);
-    if (screening.seatsRemaining < totalTickets) {
-      return { 
-        status : 'SoldOut',
-        reason : 'Sorry there are only ' + screening.seatsRemaining + ' seats available for this performance.'
-      }
-    }
-    else {
-      screening.seatsRemaining = screening.seatsRemaining - totalTickets;
-      return movieAPI.updateScreening(sessionState, key,screening, eTag).then(function(sodaResponse) {
-        if (sodaResponse.statusCode == 200) {
-          booked = true;
-          // Seats were reserved successfully: Create Ticket Sale document.
-          var ticketSale = makeTicketSale(bookingRequest, screening);
-          return movieAPI.insertTicketSale(sessionState, ticketSale).then(function(sodaResponse) {
-            // console.log('makeBooking().putTicketSale(): sodaResponse = ' + JSON.stringify(sodaResponse));
-            if (sodaResponse.statusCode == 201) {
-              // console.log('bookTickets().putTicketSales(): Sale sucessfully recorded.');
-              return { 
-                status  : "Booked",
-                message : "Please enjoy your movie."
-              }
-            }
-            else {
-              return sodaResponse;
-            }
-          }).catch(function(err) {
-            console.log('Broken Promise. makeBooking().putTicketSale()');
-            throw err;
-          })
-        }
-        else {
-          if (sodaResponse.statusCode == 412) {
-            // Screening has been updated. Re-read record and try again.
-           return movieAPI.getScreening(sessionState, key).then(function(sodaResponse) {
-             screening = sodaResponse.json, 
-             eTag = sodaResponse.headers.eTag
-           }).catch(function(err) {
-             console.log('Broken Promise. makeBooking().getScreening(): ' + JSON.stringify(err))
-             throw err;
-           })
-          }
-          else {
-          	var errorMsg = 'Broken Promise. makeBooking().updateScreening(): Unexpected HTTP Status. ' + JSON.stringify(status);
-            console.log(errorMsg);
-            throw errorMsg;
-          }
-        }
-      }).catch(function(err) {
-        console.log('Broken Promise. makeBooking()');
-        throw err;
-      })
-    }
-  }
 }
 
 function posterService(sessionState, response, next, key) {

@@ -164,11 +164,11 @@
     method: 'GET',
     url: '/movieticket/theaters/',
   }).success(function(data, status, headers) {
- 	  $scope.theaterService.theaters = data;
-	  var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
+    $scope.theaterService.theaters = data;
+    var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
     $http.get(path).success(function(data, status, headers) {
-    	 $scope.theaterService.logRecord = data
-    	 // console.log(JSON.stringify($scope.theaterService.logRecord));
+      $scope.theaterService.logRecord = data
+      // console.log(JSON.stringify($scope.theaterService.logRecord));
     });
   });
       				
@@ -202,66 +202,24 @@
      
 }
 
-function setOptions(method,collectionName,cfg,headers,localPath,eTag) {
-
-  var options = {
-    hostname : cfg.hostname,
-    port     : cfg.port,
-    method   : method,
-    path     : cfg.path + "/" + collectionName,
-    headers  : headers !== undefined ? headers : {}
-  }    
-  
-  if (localPath !== undefined) {
-  	options.path = options.path + localPath;
-  }
-
-  if (options.headers['Content-Type'] === undefined) {
-  	options.headers['Content-Type'] = 'application/json';
-  }
-  
-  if (eTag !== undefined) {
-    options.headers["If-Match"] = eTag;
-  }
-  
-  if (cfg.authMethod === 'Basic') {
-    options.auth = cfg.username + ":" + cfg.password;
-  }
-  
-  return options
-}
-
 function getCollection(sessionState, cfg, collectionName,limit,fields) {
 
-  var moduleId = 'getCollection(' + collectionName + ')';
-  var options = setOptions('GET',collectionName,cfg,undefined,addLimitAndFields(limit,fields))
-  var logOptions = logRequest(sessionState, options);
-
-  return new Promise(
+  var moduleId = 'getCollection("' + collectionName + '")';
   
-    function(resolve, reject) {
+  var requestOptions = {
+    method  : 'GET'
+  , uri     : getDocumentStoreURI(cfg,collectionName)
+  , qs      : addLimitAndFields({},limit,fields)
+  , headers : setHeaders()
+  , time    : true
+  , json    : true
+  };
 
-      // console.log('Execute Promise: ' + moduleId);
-          
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
-      
-      request.on(
-        'error', 
-        (e) => {
-          var details = { 
-            module         : moduleId + '.request(error)',
-            requestOptions : options,
-            cause          : e
-          }
-          reject(new SodaError(details));
-        }
-      );
-      request.end();
-    }
-  )   
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+
 }
 </code></pre></div>
-<p>The getCollection method performs a GET operation on the specified collection. The method takes the following parameters:</p>
+<p>The getCollection() method lists the content of the specified collection. The method takes the following parameters:</p>
 <ul>
   <li><strong>sessionState: </strong>Provides session state, in this case primarily used to manage logging of the SODA for REST operations.</li>
   <li><strong>cfg: </strong>Provides the connection information needed to invoke the rest service.</li>
@@ -269,93 +227,79 @@ function getCollection(sessionState, cfg, collectionName,limit,fields) {
 <li><strong>limit: </strong>Provides control over the number of documents retuned by the operation. The default is 100 documents</li>
 <li><strong>fields: </strong>Provides control over whether to return just metadata, just content or both. The default is metadata and content.</li>
 </ul>
-<p>The function returns a Promise that, on execution, returns the contents of the specified collection. It uses the Node.js <strong>http</strong> module to perform a GET on the target collection. The application logic is as follows:</p>
+<p>The function returns a JavaScript Promise object that, on execution, returns the contents of the specified collection. Under the covers the HTTP request is performed using the Node.js module <strong>request.js</strong>. The application logic is as follows:</p>
  <ul>
-   <li>Uses the function setOptions, shown above to create the options object that controls the behavoir of the HTTP request. It uses the connection information provided by the cfg object. This information comes directly from the config.json file.</li>
-   <li>Construct a new HTTP Request, passing the option object and supplying a callback function to handle the HTTP response</li>
-   <li>Initiate the HTTP operation by calling the end() function on the HTTP Request object.</li>
-   <li>Process the response using the supplied callback.</li>
+   <li>Set up an options object. The options object defines the MEHTOD and URI for the HTTP operation. A getCollection() operation is executed by performing a GET on the URI the collection is bound to. The options objects also specifies any query string parameters or HTTP headers that need to be provided as part of the HTTP request. </li>
+   <li>Construct a Promise that uses the request.js moodule to execute the getCollection() operaiton </li>
 </ul>
-<p>All of the methods exposed by the soda-rest.js module follow a similar design pattern. They all use a generic callback function to process the response to the HTTP request and fulfill the Promise returned by the function. The callback is generated using a factory method provided by the soda-rest.js module. If the REST operation is successful a sodaResponse object is constructed, that includes the HTTP Status, headers and response and this object is passed to the Promise's resolve() callback. It the REST call fails for some reason or if it returns an unexpected HTTP status, then an error object is constructued that provides full details of the request and response and this object is to the Promise's reject() callback. The callback for the getCollection is shown below:</p>
-<div style="padding-left: 50px;"><pre><code class="javascript">
-function (sodaResponse) {
-
-  var json = null
-  var body = ""
-  var chunks = []
-
-  // console.log(moduleName + '.readResponse(): statusCode = ' + sodaResponse.statusCode + ', content-length = ' + sodaResponse.headers["content-length"] +', content-type = ' + sodaResponse.headers["content-type"]);
-
-  if (sodaResponse.headers["content-type"] == 'application/json') {
-    sodaResponse.on(
-    'data' ,
-      function(chunk) {
-        body += chunk;
+<p>All of the methods exposed by the soda-rest.js module follow a similar design pattern. They construct an options object that specifies the operation to be performed and then use the function generateRequest() to generate a JavaScript promise that invokes the request.js module to perform the required operation. The Promise is then returned to the calling function. The code to generate the promise is shown below:</p>
+<div style="padding-left: 50px;"><pre><code class="javascript">function generateRequest(moduleId, sessionState, cfg, requestOptions) {
+  
+  return new Promise(function(resolve, reject) {
+	// console.log('Execute Promise: ' + moduleId);
+    var logRequest = createLogRequest(sessionState, cfg, requestOptions)
+    request(requestOptions, function(error, response, body) {
+      if (error) {
+        reject(getSodaError(moduleId,requestOptions,err));
       }
-    )
-  }
-  else {
-    sodaResponse.on(
-      'data' ,
-      function(chunk) {
-        chunks.push(chunk);
+	  else {
+        processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
       }
-    )
-  }
-
-  sodaResponse.on(
-    'end',
-    function () {
-
-      var endTime = new Date();
-     
-      if ((sodaResponse.statusCode == 200) || (sodaResponse.statusCode == 201)) {
-        if (sodaResponse.headers["content-type"] == 'application/json') {
-          json = JSON.parse(body);
-          body = null;
-          if ((json != null) && (json.items)) {
-            json = json.items;
-          }
-        }
-        else {
-          if (chunks.length > 0) {
-            body = Buffer.concat(chunks);
-          }
-        }
-         
-        var response = {
-          module         : moduleName,
-          path           : options.path,
-          statusCode     : sodaResponse.statusCode,
-          statusText     : http.STATUS_CODES[sodaResponse.statusCode],
-          contentType    : sodaResponse.headers["content-type"],
-          headers        : sodaResponse.headers,
-          json           : json,
-          text           : body
-        }
-
-        // console.log(JSON.stringify(response));
-        logResponse(cfg, response, endTime, logOptions);
-        resolve(response)
-      }
-      else {
-        var response = {
-          module         : moduleName + '.readResponse(end)',
-          statusCode     : sodaResponse.statusCode,
-          statusText     : http.STATUS_CODES[sodaResponse.statusCode],
-          options        : options,
-          headers        : sodaResponse.headers,
-          bytesRecieved  : body == null ? 0 : body.length,
-          responseText   : body,
-          cause          : new Error()
-        }
-        logResponse(cfg, response, endTime, logOptions);
-        reject(new SodaError(response));
-      }
-    }
-  );
+    }).auth(cfg.username, cfg.password, true);
+  });
 }
 </code></pre></div>
+<p>generateRequest() uses a generic callback function, processSodaResponse() to processes the response to the HTTP request and fulfill the Promise returned by the function. If the REST operation is successful a sodaResponse object is constructed, that includes the HTTP Status, headers and response and this object is passed to the Promise's resolve() callback. It the REST call fails for some reason or if it returns an unexpected HTTP status, then an error object is constructued that provides full details of the request and response and this object is to the Promise's reject() callback. The callback used by generateRequest() is shown below:</p>
+<div style="padding-left: 50px;"><pre><code class="javascript">function processSodaResponse(moduleName, requestOptions, logRequest, sodaResponse, body, resolve, reject) {
+    
+  var response = {
+    module         : moduleName
+  , requestOptions : requestOptions
+  , statusCode     : sodaResponse.statusCode
+  , statusText     : http.STATUS_CODES[sodaResponse.statusCode]
+  , contentType    : sodaResponse.headers["content-type"]
+  , headers        : sodaResponse.headers
+  , elapsedTime    : sodaResponse.elapsedTime
+  }
+ 
+  
+  if ((body !== undefined) && (body !== null)) {
+    if (response.contentType === "application/json") {
+      // console.log('processSodaResponse("' + moduleName + '","' + response.contentType + '","' + typeof body + '")');
+      if (typeof body === 'object') {
+        response.json = body
+      }
+      else {
+        try {
+          response.json = JSON.parse(body);
+        }
+        catch (e) {
+          response.body = body;
+        }
+      }
+      if ((response.json) && (response.json.items)) {
+        response.json = response.json.items;
+      }
+    }
+    else {
+      // console.log('processSodaResponse("' + moduleName + '","' + response.contentType + '","' + Buffer.byteLength(body) + '")'); 
+      response.body = body;
+    }
+  }
+
+  logResponse(response, logRequest);
+
+  if ((sodaResponse.statusCode === 200) || (sodaResponse.statusCode === 201)) {
+    resolve(response);
+  }
+  else {
+    response.cause = new Error()
+    reject(new SodaError(response));
+  }
+}
+</code></pre></div>
+
+       
 <h1>List Movies By Theater Service</h1>
 <p>The "List Movies by Theater" tab is opened when the user clicks on the "Movies" button associated with one of the theaters on the "List Theaters" tab. It lists the show times for the movies playing at the selected theater on the specified date. The content of this tab is based on the output generated by the rest service associated with a GET operation on the end point /theaters/:id/movies/:date, where :id is the id of the theater and :date is the required date. When a GET operation is performed on the URL the Node.js application invokes the function moviesByTheaterService provided by the module movie_ticketing.api passing the values for id and date. The code for this module is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function moviesByTheaterService(sessionState, response, next, id, dateStr) {
@@ -366,15 +310,15 @@ function (sodaResponse) {
     var theater = sodaResponse.json;
     delete(theater.screens);
     return getMoviesByTheaterAndDate(sessionState,theater,dateStr)
-	}).then(function (moviesByTheater) {
+  }).then(function (moviesByTheater) {
     // console.log(JSON.stringify(moviesByTheater))     
-  	response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
+    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(moviesByTheater);
     response.end();
   }).catch(function(e){
     next(e);
   });
-}
+} 
 </code></pre></div>
 <p>The moviesByTheaterService method invokes the getTheater function provided by the movie_ticket_api.js module to get the information for the specified theater using its internal key. It then calls the function getMoviesByTheaterAndDate to construct a JSON document that summarizes the movies and show times for the specified theater and date. The resulting JSON forms the response to the request. The code for this function is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">
@@ -424,126 +368,90 @@ function getMoviesByTheaterAndDate(sessionState,theater, date) {
 
 function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
 
-  var qbeText  = JSON.stringify(qbe);
-  var moduleId = 'queryByExample(' + collectionName + ',' + qbeText +')';  
-
-  var headers = {
-    'Content-Length' : Buffer.byteLength(qbeText, 'utf8')
-  }
-
-  var queryString = addLimitAndFields(limit,fields)
-                  + '&' + 'action=' + 'query';
-
-  var options = setOptions('POST',collectionName,cfg,headers,queryString);      
-  var logOptions = logRequest(sessionState, options, qbeText);
+  var moduleId = 'queryByExample("' + collectionName + '",' + JSON.stringify(qbe) + ')'; 
+  console.log(moduleId);
+   
+  var requestOptions = {
+    method  : 'POST'
+  , uri     : getDocumentStoreURI(cfg,collectionName)
+  , qs      : addLimitAndFields({action : "query"},limit,fields)
+  , json    : qbe
+  , time    : true
+  };
   
-  return new Promise(
-
-    function(resolve, reject) {
-     
-      // console.log('Execute promise : ' + moduleId);
-
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
-      
-      request.on(
-        'error', 
-        (e) => {
-          var details = { 
-            module         : moduleId + '.request(error)',
-            requestOptions : options,
-            cause          : e
-          }
-          reject(new SodaError(details));
-        }
-      );
-      request.write(qbeText);
-      request.end();
-    }
-  )   
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
 }
 </code></pre></div>
 <p>A queryByExample is executed by performing a POST operation on the specified collection, specifying the query string 'action=query'. The QBE specification is supplied as the body of the POST. The function returns a Promise that, on execution, returns the result of evaluating the Query-By-Example operation. The actual application logic is similar to the logic for the getCollection function, with the exception that this function performs a POST rather than a GET and the QBE specification is supplied as the body of the POST.</p>
 <h1>Purchase Tickets Service</h1>
-<p>Both the List Movies By Theater and List Theaters by Movie tab allow the user to purchase tickets to see a movie by clicking on the showing they would like to attend. Once they have entered the number of tickets they require they can complete the purchase by clicking on the '$' icon. The purchase is made by performing a POST operation on the URL /movieticket/bookTickets. When a POST operation is performed on this URL the Node.js application invokes the function bookTicketService provided by the module movie_ticketing.api. The information about the number of tickets required is provided as the body of the POST operation. The function returns a simple JSON document that describes the status of the booking. This document is returned The code for this module is shown below:</p>
+<p>Both the List Movies By Theater and List Theaters by Movie tab allow the user to purchase tickets to see a movie by clicking on the showing they would like to attend. Once they have entered the number of tickets they require they can complete the purchase by clicking on the '$' icon. The purchase is made by performing a POST operation on the URL /movieticket/bookTickets. When a POST operation is performed on this URL the Node.js application invokes the function bookTicketService() provided by the module movie_ticketing.api. The information about the number of tickets required is provided as the body of the POST operation. The code for this module is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function bookTicketService(sessionState, response, next, bookingRequest) {
 
   // console.log('movieTicketing.bookTicketService(' + JSON.stringify(bookingRequest) +')');
-		
-	movieAPI.getScreening(sessionState, bookingRequest.key).then(function(sodaResponse) {
-		return bookTickets(sessionState,bookingRequest,sodaResponse.json,sodaResponse.headers.ETag) 
-	}).then (function(bookingStatus) {
-		// console.log('bookTicketService() : status = ' + JSON.stringify(bookingStatus));
-  	response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
+
+  bookTickets(sessionState, bookingRequest).then(function (bookingStatus) {
+    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(bookingStatus);
     response.end();
-  }).catch(function(e){
-    next(e);
+  }).catch(function(err) {
+    next(err);
   });
  
 }
 </code></pre></div>
-<p>The bookTicketService method invokes the getScreening function provided by the module movie_ticketing.api to get the latest information for the specified screening using its internal key. It retrieves the document and its associated metadata. It passes the booking request document that was provided by the browser, together with the screening document and the screening document's ETag to the  bookTickets function which completes the booking process. The bookTickets function returns a simple JSON document that indicates whether or not the booking was successful. This JSON forms the response to the bookTickets request. The code for this function is shown below:</p>
-<div style="padding-left: 50px;"><pre><code class="javascript">function bookTickets(sessionState, bookingRequest, screening, eTag) {
-    
-  var booked = false;
-  var key = bookingRequest.key;
-  var totalTickets = bookingRequest.adult + bookingRequest.senior + bookingRequest.child;
-    
-  while (!booked) {
-    // console.log('bookTickets().updateScreening(): Seats Required = ' + totalTickets + '. Seats Reamaining = ' + screening.seatsRemaining);
-    if (screening.seatsRemaining < totalTickets) {
-      return { 
-        status : 'SoldOut',
-        reason : 'Sorry there are only ' + screening.seatsRemaining + ' seats available for this performance.'
-      }
+<p>The bookTicketService method invokes the bookTickets function provided by the module movie_ticketing.api to record the ticket sale. This functions returns a Promise that when executed will generate a simple JSON document that indicates whether or not the booking was successful. This document is returned to the front end. The code for this function is shown below:</p>
+<div style="padding-left: 50px;"><pre><code class="javascript">function bookTickets(sessionState, bookingRequest) {
+
+  // console.log('movieTicketing.bookTickets(' + JSON.stringify(bookingRequest) +')');
+
+  var key           = bookingRequest.key;
+  var eTag          = null;
+  var screening     = {}
+  var seatsRequired = bookingRequest.adult + bookingRequest.senior + bookingRequest.child;
+  
+  return movieAPI.getScreening(sessionState, key).then(function(sodaResponse) {
+  	eTag = sodaResponse.eTag;
+  	screening = sodaResponse.json;
+	  if (screening.seatsRemaining < seatsRequired) {
+    	return {
+    	  status : 'SoldOut', 
+    	  message : 'Only ' + screening.seatsRemaining + ' seats are available for this performance.'
+      };
     }
     else {
-      screening.seatsRemaining = screening.seatsRemaining - totalTickets;
-      return movieAPI.updateScreening(sessionState, key,screening, eTag).then(function(sodaResponse) {
-        if (sodaResponse.statusCode == 200) {
-          booked = true;
-          // Seats were reserved successfully: Create Ticket Sale document.
-          var ticketSale = makeTicketSale(bookingRequest, screening);
-          return movieAPI.insertTicketSale(sessionState, ticketSale).then(function(sodaResponse) {
-            // console.log('makeBooking().putTicketSale(): sodaResponse = ' + JSON.stringify(sodaResponse));
-            if (sodaResponse.statusCode == 201) {
-              // console.log('bookTickets().putTicketSales(): Sale sucessfully recorded.');
-              return { 
-                status  : "Booked",
-                message : "Please enjoy your movie."
+      screening.seatsRemaining = screening.seatsRemaining - seatsRequired;
+      return movieAPI.updateScreening(sessionState, key, screening, eTag).then(function(sodaResponse) {
+        switch (sodaResponse.statusCode) {
+          case 200: // Seat Reserved : Record Ticket Sale
+            var ticketSale = makeTicketSale(bookingRequest, screening);
+            return movieAPI.insertTicketSale(sessionState, ticketSale).then(function(sodaResponse) {
+              switch (sodaResponse.statusCode) {
+                case 201: // Booking Completed
+                  return { 
+                    status  : "Booked",
+                    message : "Please enjoy your movie."
+                  }
+                default:
+                	throw sodaResponse;
               }
-            }
-            else {
-              return sodaResponse;
-            }
-          }).catch(function(err) {
-            console.log('Broken Promise. makeBooking().putTicketSale()');
-            throw err;
-          })
+            }).catch(function (err) {
+            	throw err;     
+            })
+          default:
+            throw sodaResponse;
         }
-        else {
-          if (sodaResponse.statusCode == 412) {
-            // Screening has been updated. Re-read record and try again.
-           return movieAPI.getScreening(sessionState, key).then(function(sodaResponse) {
-             screening = sodaResponse.json, 
-             eTag = sodaResponse.headers.eTag
-           }).catch(function(err) {
-             console.log('Broken Promise. makeBooking().getScreening(): ' + JSON.stringify(err))
-             throw err;
-           })
-          }
-          else {
-          	var errorMsg = 'Broken Promise. makeBooking().updateScreening(): Unexpected HTTP Status. ' + JSON.stringify(status);
-            console.log(errorMsg);
-            throw errorMsg;
-          }
+      }).catch(function (err) {
+        switch (err.statusCode) {
+          case 412: // Conflicting Ticket Sales : Try again
+            return bookTickets(sessionState,bookingRequest) 
+          default:
+        		throw err;
         }
-      }).catch(function(err) {
-        console.log('Broken Promise. makeBooking()');
-        throw err;
       })
     }
-  }
+  }).catch(function (err) {
+   	throw err;     
+  })
 }
 </code></pre></div>
 <p>The application logic for completing the booking is as follows:</p>
@@ -555,6 +463,7 @@ function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
  <div class="subNumberedList">
  <ol>
    <li>Calculate the total number of seats required.</li>
+   <li>Get the latest version of the specified screening document using its internal key. Retrieve the document and the associated metadata.</li>
    <li>Check the number of seats remaining for the required screening
      <ol>
        <li>Insufficent seats remain to fulfill the request:
@@ -565,20 +474,19 @@ function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
         <li>Sufficient seats remain to fulfull the request:
            <ol>
               <li>Decrement the seats count for the screening and complete the booking process</li>
-              <li>Invoke the updateScreening method provided by the movie_ticket_api.js module to update the Screening document.</li>
+              <li>Update the Screening document using the updateScreening method provided by the movie_ticket_api.js module.</li>
               <li>Check the status of the HTTP request
                   <ol>
                       <li>Status 200: Successful update
                           <ol>
                              <li>Construct the Ticket Sale document</li>
-                             <li>Invoke the insertTicketSale method provided by the movie_ticket_api.js module to insert the ticketSale document into the document store.</li>
+                             <li>Insert the ticketSale document into the document using the insertTicketSale method provided by the movie_ticket_api.js module.</li>
                              <li>Return a 'Booking Successful' message</li>
                           </ol>
                       </li>
                       <li>Status 412 : There has been a conflicting update
                           <ol>
-                             <li>Reload the screening document</li>
-                             <li>Repeat from Step 2.</li>
+                             <li>Repeat this process</li>
                           </ol>
                       </li>
                   </ol>
@@ -593,7 +501,7 @@ function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
 <p>The bookTickets method uses SODA for REST's "UpdateDocument" micro-service to update the screening document. The update of the screening document is handled by the call to the function updateScreening provided by the movie_ticket_api.js module, which in turn calls the putJSON and putDocument functions provided by the soda-rest.js module. The updateScreening and putJSON functions are simply thin veneers over the putDocument function. The putDocument function performs the REST operation that updates the document. The code for these functions is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function updateScreening(sessionState, key,screening,eTag) {
 	
-	return sodaRest.putJSON(sessionState, cfg.config, 'Screening',key,screening,eTag);
+  return sodaRest.putJSON(sessionState, cfg.config, 'Screening',key,screening,eTag);
 
 }
 
@@ -610,54 +518,33 @@ function putJSON(sessionState, cfg, collectionName,key,json,eTag) {
 
 function putDocument(sessionState, cfg, collectionName, key, document, contentType, eTag) {
 
-  var moduleId = 'putDocument(' + collectionName + ')' + key + ',' + contentType + ')';
+  var moduleId = 'putDocument(' + collectionName + '","' + key + '","' + contentType + '")';
 
-  var headers = {
-    'Content-Type'   : contentType,
-    'Content-Length' : Buffer.byteLength(document)
+  var requestOptions = {
+    method  : 'PUT'
+  , uri     : getDocumentStoreURI(cfg,collectionName) + '/' + key
+  , headers : setHeaders(contentType , eTag)
+  , time    : true
+  };
+  
+  if (contentType === 'application/json') {
+  	requestOptions.json = document
+  }
+  else {
+    requestOptions.body = document
   }
 
-  var options = setOptions('PUT',collectionName,cfg,headers,'/' + key, eTag);  
-  var logOptions = logRequest(sessionState, options, document);
-
-  return new Promise(
-
-    function(resolve, reject) {
-
-      // console.log('Execute promise : ' + moduleId);
-      
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
-
-      request.on(
-        'error', 
-        (e) => {
-          if ((e.code) && (e.code === 'HPE_UNEXPECTED_CONTENT_LENGTH')) {
-            resolve({status:200})
-          }
-          else {
-            var details = { 
-              module         : moduleId + '.request(error)',
-              requestOptions : options,
-              cause          : e
-            }
-            reject(new SodaError(details));
-          }
-        }
-      );
-      request.write(document);
-      request.end();
-    }
-  )   
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
 }
 </code></pre></div>
 <p>An "Update Document" operation is executed by performing a PUT on the target document. The document is identified using its internal key. The new content for the document is supplied as the body of the PUT. The putDocument function returns a Promise that, on execution, returns the result of update operation. The actual application logic is similar to the logic for the getCollection function, with the exception that this function performs a PUT rather than a GET and the uddated document is supplied as the body of the POST</p>
-<p>SODA for REST uses an optimistic locking strategy to prevent conflicting updates from taking place. This follows REST conventions and is based on the value of the documents ETag. Any time an application might need to update a document it must fetch the document metadata as well as document content in order to get the current value of the ETag. Conflicting updates are prevented by adding an "If Match" header to the HTTP request. The value of this header is the ETag that was obtained last time the document was read. The "If-Match" header is added during the call to the setOptions function if a value is proved for the eTag argument. If there has been a conflicting update the current ETag for the document will not match the ETag supplied by the application and the PUT operation will return HTTP Status code of 412 [Precondition Failed] indicating that the PUT operation was not successful. If there are no conflicting updates then the PUT operation will return HTTP Status code 200 [Successful].</p>
+<p>SODA for REST uses an optimistic locking strategy to prevent conflicting updates from taking place. This follows REST conventions and is based on the value of the documents ETag. Any time an application might need to update a document it must fetch the document metadata as well as document content in order to get the current value of the ETag. Conflicting updates are prevented by adding an "If Match" header to the HTTP request. The value of this header is the ETag that was obtained last time the document was read. If there has been a conflicting update the current ETag for the document will not match the ETag supplied by the application and the PUT operation will return HTTP Status code of 412 [Precondition Failed] indicating that the PUT operation was not successful. If there are no conflicting updates then the PUT operation will return HTTP Status code 200 [Successful].</p>
 
 <h2>Creating Documents</h2>
 <p>The bookTickets method uses SODA for REST's  "InsertDocument" micro-service to create the ticketSale document. The creation of the new document is handled by the call to the function insertTicketSale provided by the movie_ticket_api.js module, which in turn calls the postJSON and postDocument functions provided by the soda-rest.js module. The insertTicketSale and postJSON functions are simply thin veneers over the postDocument function. The postDocument function performs the REST operation that inserts the document. The code for these functions is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function insertTicketSale(sessionState, ticketSale) {
 	
-	return sodaRest.postJSON(sessionState, cfg.config, 'TicketSale',ticketSale);
+  return sodaRest.postJSON(sessionState, cfg.config, 'TicketSale',ticketSale);
 
 }
 
@@ -672,42 +559,25 @@ function postJSON(sessionState, cfg, collectionName,json) {
    
 }
 
-function postDocument(sessionState, cfg, collectionName,document,contentType) {
+function postDocument(sessionState, cfg, collectionName, document, contentType) {
 
-  var moduleId = 'postDocument(' + collectionName + ',' + contentType + ')';
+  var moduleId = 'postDocument("' + collectionName + '","' + contentType + '")';
 
-  var headers  = {
-    'Content-Type'   : contentType,
-    'Content-Length' : Buffer.byteLength(document)
+  var requestOptions = {
+    method  : 'POST'
+  , uri     : getDocumentStoreURI(cfg,collectionName)
+  , headers : setHeaders(contentType , undefined)
+  , time    : true
+  };
+  
+  if (contentType === 'application/json') {
+    requestOptions.json = document
+  }
+  else {
+    requestOptions.body = document
   }
 
-  var options = setOptions('POST',collectionName,cfg,headers)
-  var logOptions = logRequest(sessionState, options,document);
-
-  return new Promise(
-
-    function(resolve, reject) {
-      
-      // console.log('Execute promise: ' + moduleId);
-
-      var request = http.request(options, responseFactory(cfg, moduleId, options, logOptions, resolve, reject));
-  
-      request.on(
-        'error', 
-        (e) => {
-          var details = { 
-            module         : moduleId + '.request(error)',
-            requestOptions : options,
-            cause          : e
-          }
-          reject(new SodaError(details));
-        }
-      );
-      request.write(document);
-      request.end();
-      // console.log('postDocument(' + collectionName + '): Bytes written = ' + Buffer.byteLength(document));
-    }
-  )   
+  return generateRequest(moduleId, sessionState, cfg, requestOptions);
 }
 </code></pre></div>
 <p> 

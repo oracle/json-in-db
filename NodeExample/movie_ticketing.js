@@ -280,7 +280,7 @@ function bookTickets(sessionState, bookingRequest) {
           case 412: // Conflicting Ticket Sales : Try again
             return bookTickets(sessionState,bookingRequest) 
           default:
-        		throw err;
+            throw err;
         }
       })
     }
@@ -408,16 +408,12 @@ function getMoviesByTheaterAndDate(sessionState,theater, date) {
   
   var qbe = { theaterId : theater.id, startTime : { "$gte" : startDate, "$lt" : endDate }, "$orderby" : { screenId : 1, startTime : 2}};
 
-  return movieAPI.queryScreenings(sessionState, qbe).then(
-    function(items) {
-      return processScreeningsByTheaterAndDate(sessionState,items)
-    }
-  ).then( 
-    function(movies) {
-      moviesByTheater.movies = movies;
-      return moviesByTheater;
-    }
-  )
+  return movieAPI.queryScreenings(sessionState, qbe).then(function(items) {
+    return processScreeningsByTheaterAndDate(sessionState,items)
+  }).then(function(movies) {
+    moviesByTheater.movies = movies;
+    return moviesByTheater;
+  })
 }
   
 function processScreeningsByMovieAndDate(sessionState,sodaResponse) {
@@ -532,16 +528,12 @@ function getTheatersByMovieAndDate(sessionState,movie, date) {
 
   var qbe = { movieId : movie.id, startTime : { "$gte" : startDate, "$lt" : endDate } , "$orderby" : { screenId : 1, startTime : 2}};
 
-  return movieAPI.queryScreenings(sessionState, qbe).then(
-    function(items) {
-      return processScreeningsByMovieAndDate(sessionState,items)
-    }
-  ).then( 
-    function(theaters) {
-      theatersByMovie.theaters = theaters;
-      return theatersByMovie;
-    }
-  )
+  return movieAPI.queryScreenings(sessionState, qbe).then(function(items) {
+    return processScreeningsByMovieAndDate(sessionState,items)
+  }).then(function(theaters) {
+    theatersByMovie.theaters = theaters;
+    return theatersByMovie;
+  })
 }
 
 function screeningService(sessionState, response, next, key) {

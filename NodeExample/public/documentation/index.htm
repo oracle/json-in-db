@@ -242,7 +242,7 @@ function getCollection(sessionState, cfg, collectionName,limit,fields) {
       if (error) {
         reject(getSodaError(moduleId,requestOptions,err));
       }
-      else {
+	  else {
         processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
       }
     }).auth(cfg.username, cfg.password, true);
@@ -321,7 +321,8 @@ function getCollection(sessionState, cfg, collectionName,limit,fields) {
 } 
 </code></pre></div>
 <p>The moviesByTheaterService method invokes the getTheater function provided by the movie_ticket_api.js module to get the information for the specified theater using its internal key. It then calls the function getMoviesByTheaterAndDate to construct a JSON document that summarizes the movies and show times for the specified theater and date. The resulting JSON forms the response to the request. The code for this function is shown below:</p>
-<div style="padding-left: 50px;"><pre><code class="javascript">function getMoviesByTheaterAndDate(sessionState,theater, date) {
+<div style="padding-left: 50px;"><pre><code class="javascript">
+function getMoviesByTheaterAndDate(sessionState,theater, date) {
 
   var moviesByTheater = { 
     'theater' : theater,
@@ -345,12 +346,16 @@ function getCollection(sessionState, cfg, collectionName,limit,fields) {
   
   var qbe = { theaterId : theater.id, startTime : { "$gte" : startDate, "$lt" : endDate }, "$orderby" : { screenId : 1, startTime : 2}};
 
-  return movieAPI.queryScreenings(sessionState, qbe).then(function(items) {
-    return processScreeningsByTheaterAndDate(sessionState,items)
-  }).then(function(movies) {
-    moviesByTheater.movies = movies;
-    return moviesByTheater;
-  })
+  return movieAPI.queryScreenings(sessionState, qbe).then(
+    function(items) {
+      return processScreeningsByTheaterAndDate(sessionState,items)
+    }
+  ).then( 
+    function(movies) {
+      moviesByTheater.movies = movies;
+      return moviesByTheater;
+    }
+  )
 }
 </code></pre></div>
 <h2>Searching for Documents in Collection</h2>
@@ -440,7 +445,7 @@ function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
           case 412: // Conflicting Ticket Sales : Try again
             return bookTickets(sessionState,bookingRequest) 
           default:
-            throw err;
+        		throw err;
         }
       })
     }
@@ -830,11 +835,8 @@ An "Insert Document" operation is executed by performing a POST on the target co
      </li>
 </ol>
 <p>Once all four operations have completed successfully the "Load Test Data" tab should look something like this:</p>
-<dl>
-    <dt><dd>
-        <img src="TestData-Completed.png" alt="Completed" style="width: 400px; height:  auto">
-    </dd></dt>
-</dl>
+<img src="TestData-Completed.png" alt="Completed" style="width: 400px; height:  auto">
+<br><br>
 <p>The data loading process only needs to be completed once, since once data loading is completed all of the information needed to run the application is stored as JSON documents in the Oracle document store. If any of the steps fail, simply click the associated button to try the step again. Note you must successfully complete "Load Movies" before attempting to run "Load Posters", and you must successfully complete "Load Theaters" and "Load Movies" before attempting to run "Generate Screenings". If you re-run either "Load Theaters" or "Load Movies" you must re-run "Generate Screenings before attempting to use the movie ticketing application. If you re-run "Load Movies" you must also re-run "Load Posters" to repopulate the Posters collection.</p>
 <p>Once the data loading process has been successfully completed you can simply refresh the page to start using the Application.</p>
 <script type="text/javascript" lang="javascript" src="jsonViewer.js"></script>

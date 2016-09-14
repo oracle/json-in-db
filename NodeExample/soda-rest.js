@@ -225,7 +225,7 @@ function generateRequest(moduleId, sessionState, cfg, requestOptions) {
  	  var logRequest = createLogRequest(sessionState, cfg, requestOptions)
     request(requestOptions, function(error, response, body) {
  	  	if (error) {
-  		  reject(getSodaError(moduleId,requestOptions,err));
+  		  reject(getSodaError(moduleId,requestOptions,error));
 			}
 			else {
 			  processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
@@ -398,7 +398,7 @@ function deleteDocument(sessionState, cfg, collectionName, key, eTag) {
 function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
 
   var moduleId = 'queryByExample("' + collectionName + '",' + JSON.stringify(qbe) + ')'; 
-  console.log(moduleId);
+  // console.log(moduleId);
    
 	var requestOptions = {
   	method  : 'POST'
@@ -501,53 +501,55 @@ function featureDetection(cfg) {
   
   var collectionName = 'TMP-' + generateRandomName();
   
-  return createCollection(disableSodaLogging, cfg, collectionName).then(function(){;
+  return createCollection(disableSodaLogging, cfg, collectionName).then(function(){
     var qbe = {id : {"$contains" : 'XXX'}}
-    return queryByExample(disableSodaLogging, cfg, collectionName, qbe)
-  }).catch(function(sodaError){
-    if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
-      var sodaErrorDetails = JSON.parse(sodaError.details.responseText);
-      // console.log(JSON.stringify(sodaErrorDetails));
-      if (sodaErrorDetails.title === 'The field name $contains is not a recognized operator.') {
-      // if (sodaErrorDetails['o:errorCode'] === 'SODA-02002') {
-        fullTextSearchSupported = false;
-      }
-    }
-  }).then(function() {
-
-  /*
-  ** Test for $NEAR support and spatial indexes.
-  */ 
-  
-    var qbe = {
-      "geoCoding":
-      {
-        "$near" :
-        {
-          "$geometry" : {"type" : "Point", "coordinates" : [-122.12469369777311,37.895215209615884]},
-          "$distance" : 5,
-          "$unit" : "mile"
+    return queryByExample(disableSodaLogging, cfg, collectionName, qbe).catch(function(sodaError){
+      if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
+        var sodaErrorDetails = sodaError.details.json;
+        // if (sodaErrorDetails['o:errorCode'] === 'SODA-02002') {
+        if (sodaErrorDetails.title === 'The field name $contains is not a recognized operator.') {
+          fullTextSearchSupported = false;
         }
       }
-    }
-    return queryByExample(disableSodaLogging, cfg, collectionName, qbe)
-  }).catch(function(sodaError){
-    if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
-      var sodaErrorDetails = JSON.parse(sodaError.details.responseText);
-      // console.log(JSON.stringify(sodaErrorDetails));
-      if (sodaErrorDetails.title === 'The field name $near is not a recognized operator.') {
-      // if (sodaErrorDetails['o:errorCode'] === 'SODA-02002') {
-        spatialIndexSupported = false;
+    }).then(function() {
+
+      /*
+      ** Test for $NEAR support and spatial indexes.
+      */ 
+  
+      var qbe = {
+        geoCoding          : {
+        	$near            : {
+            $geometry      : {
+            	 type        : "Point", 
+            	 coordinates : [-122.12469369777311,37.895215209615884]
+            },
+            $distance      : 5,
+            $unit          : "mile"
+          }
+        }
       }
-    }
+    
+      return queryByExample(disableSodaLogging, cfg, collectionName, qbe).catch(function(sodaError){
+        if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
+          var sodaErrorDetails = sodaError.details.json;
+          // console.log(JSON.stringify(sodaErrorDetails));
+          // if (sodaErrorDetails['o:errorCode'] === 'SODA-02002') {
+          if (sodaErrorDetails.title === 'The field name $near is not a recognized operator.') {
+            spatialIndexSupported = false;
+          }
+        }
+      })
+    })
   }).then(function() {
-    return dropCollection(disableSodaLogging,cfg,collectionName);
+  	return dropCollection(disableSodaLogging, cfg, collectionName)
   }).then(function() {
-   console.log(new Date().toISOString() + ': Full Text Search Supported: ' + fullTextSearchSupported);
-   console.log(new Date().toISOString() + ': Spatial Indexing Supported: ' + spatialIndexSupported);
+    console.log(new Date().toISOString() + ': Full Text Search Supported: ' + fullTextSearchSupported);
+    console.log(new Date().toISOString() + ': Spatial Indexing Supported: ' + spatialIndexSupported);
   }).catch(function(e) {
-   console.log('Broken Promise : featureDetection().');
-   console.log(e);
-   throw e;
+    console.log('Broken Promise : featureDetection().');
+    console.log(e);
+    console.log(e.stack);
+    throw e;
   });
 };

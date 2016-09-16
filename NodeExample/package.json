@@ -1,6 +1,6 @@
 {
   "name": "oracle-movie-ticket-demo",
-  "version": "2.0.3",
+  "version": "2.0.5",
   "description": "Sample application for demonstrating the use of Node.js and SODA for REST with the Oracle 12c Database",
   "main": "index.js",
   "scripts": {
@@ -10,6 +10,7 @@
   "author": "Mark Drake <mark.drake@oracle.com>",
   "license": "ISC",
   "dependencies": {
+    "@google/maps": "^0.2.1",
     "angular": "^1.5.5",
     "angular-cookies": "^1.5.5",
     "body-parser": "^1.15.1",

@@ -25,11 +25,10 @@ var sodaRest = require('./soda-rest.js');
 var externalInterfaces = require('./external_interfaces.js');
 
 var app;
-
 function initApp() {
 
+	var port = process.env.PORT || 3000;
   app = express();
-  var port = 3000;
   
   var httpServer = http.Server(app);
 

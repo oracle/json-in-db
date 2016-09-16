@@ -31,6 +31,7 @@
       "zipCode": "94501"
     }
   },
+  "geoCoder": "google",
   "usCensus": {
     "protocol": "http",
     "hostname": "geocoding.geo.census.gov",

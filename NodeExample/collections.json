@@ -30,7 +30,6 @@
   		{
   			"name": "MOVIE_ID",
   			"unique": true,
-  			"singleton" : true,
   			"fields": [
   				{
   					"path": "id",
@@ -40,6 +39,7 @@
   			]
   		},{
   			"name": "MOVIE_SEARCH",
+  			"dataguide" : "text_value",
   			"language": "english"
   		}
   	]
@@ -106,7 +106,6 @@
   		{
   			"name": "THEATER_STARTTIME",
   			"unique": false,
-  			"singleton" : true,
   			"fields": [
   				{
   					"path": "theaterId",
@@ -121,7 +120,6 @@
   		}, {
   			"name": "MOVIE_STARTTIME",
   			"unique": false,
-  			"singleton" : true,
   			"fields": [
   				{
   					"path": "movieId",
@@ -167,7 +165,6 @@
   		{
   			"name": "THEATER_ID",
   			"unique": true,
-  			"singleton" : true,
   			"fields": [
   				{
   					"path": "id",
@@ -179,7 +176,6 @@
   		{
   			"name": "LOCATION_CITY",
   			"unique": false,
-  			"singleton" : true,
   			"fields": [
   				{
   					"path": "location.city",
@@ -190,7 +186,6 @@
   		}, {
   			"name": "LOCATION_ZIPCODE",
   			"unique": false,
-  			"singleton" : true,
   			"fields": [
   				{
   					"path": "location.zipCode",
@@ -200,6 +195,7 @@
   			]
   		}, {
   			"name": "THEATER_SEARCH",
+  			"dataguide" : "text_value",
   			"language": "english"
   		},
   	  {

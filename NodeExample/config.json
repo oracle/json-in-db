@@ -4,5 +4,10 @@
   "path"       : "/ords/movies/soda/latest",
   "authMethod" : "Basic",
   "username"   : "MovieTicketing",
-  "password"   : "MovieTicketing"
+  "password"   : "MovieTicketing",
+  "useProxy"   : false,
+  "proxy"      : {
+    "hostname" : "",
+    "port"     : null
+  }
 }

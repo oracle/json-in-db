@@ -36,8 +36,9 @@ module.exports.getBinaryDocument           = getBinaryDocument
 module.exports.queryByExample              = queryByExample
 module.exports.featureDetection            = featureDetection;
 
-var fullTextSearchSupported  = true;
-var spatialIndexSupported    = true;
+var fullTextSearchSupported   = true;
+var spatialIndexSupported     = true;
+var nullOnEmptySupported = true;
 
 // Create a new object, that prototypally inherits from the Error constructor
 
@@ -157,8 +158,8 @@ function getDocumentStoreURI(cfg,collectionName) {
 
 function getSodaError(moduleName,path,e) {
 	
-	console.log("getSodaError(): " + moduleName)
-	console.log(JSON.stringify(e));
+	console.log('getSodaError("' + moduleName + '"')
+	// console.log(JSON.stringify(e));
 
 	var details = { 
     module         : moduleName,
@@ -184,7 +185,7 @@ function processSodaResponse(moduleName, requestOptions, logRequest, sodaRespons
  
   
   if ((body !== undefined) && (body !== null)) {
-  	if (response.contentType === "application/json") {
+  	if ((response.contentType !== undefined) && (response.contentType.startsWith("application/json"))) {
 		  // console.log('processSodaResponse("' + moduleName + '","' + response.contentType + '","' + typeof body + '")');
   		if (typeof body === 'object') {
 	  		response.json = body
@@ -219,6 +220,10 @@ function processSodaResponse(moduleName, requestOptions, logRequest, sodaRespons
 }
     
 function generateRequest(moduleId, sessionState, cfg, requestOptions) {
+
+	if (cfg.useProxy) {
+		requestOptions.proxy = 'http://' + cfg.proxy.hostname + ':' + cfg.proxy.port
+	}
   
   return new Promise(function(resolve, reject) {
 	  // console.log('Execute Promise: ' + moduleId);
@@ -259,6 +264,12 @@ function createIndex(sessionState, cfg, collectionName, indexProperties) {
     return new Promise(function(resolve, reject) {resolve()});
   }
 
+	// Remove the Singleton Key from the index definition if we are in a Pre 12.2 database
+
+  if ((!nullOnEmptySupported) && (indexProperties.fields !== undefined) && (!indexProperties.scalarRequired))  {
+    indexProperties.scalarRequired = true;
+  }
+ 
   var requestOptions = {
   	method  : 'POST'
   , uri     : getDocumentStoreURI(cfg,collectionName) 
@@ -539,13 +550,37 @@ function featureDetection(cfg) {
             spatialIndexSupported = false;
           }
         }
-      })
+      }).then(function() { 
+      	
+      	/*
+      	** Test for 'singleton' support in index creation
+      	*/
+      	
+      	var indexDef = {
+      		name       : "TEST_IDX"
+  			, unique     : true
+  			, fields     : [{
+  				  path     : "id"
+  			,	  datatype : "number"
+  			,   order    : "asc"
+  			  }]
+  		  }
+        return createIndex(disableSodaLogging, cfg, collectionName, indexDef).catch(function(sodaError){
+          if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
+            var sodaErrorDetails = sodaError.details.json;
+            if (sodaErrorDetails['o:errorCode'] === 'SQL-00907') {
+               nullOnEmptySupported = false;
+            }
+          }
+  		  })
+  		})  
     })
   }).then(function() {
   	return dropCollection(disableSodaLogging, cfg, collectionName)
   }).then(function() {
-    console.log(new Date().toISOString() + ': Full Text Search Supported: ' + fullTextSearchSupported);
-    console.log(new Date().toISOString() + ': Spatial Indexing Supported: ' + spatialIndexSupported);
+    console.log(new Date().toISOString() + ': Full Text Search Supported:  ' + fullTextSearchSupported);
+    console.log(new Date().toISOString() + ': Spatial Indexing Supported:  ' + spatialIndexSupported);
+    console.log(new Date().toISOString() + ': NULL ON EMPTY Supported: ' + nullOnEmptySupported);
   }).catch(function(e) {
     console.log('Broken Promise : featureDetection().');
     console.log(e);

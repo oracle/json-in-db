@@ -14,11 +14,13 @@
 "use strict";
 
 var http = require('http');
+var request = require('request');
 var url = require('url');
 var cfg = require('./config.js');
 var xmlParser = require('xml2js').Parser();
 var movieAPI = require('./movie_ticket_api.js');
 var usAddressParser = require('parse-address');
+var googleMapsClient = require('@google/maps').createClient({key: cfg.dataSources.google.apiKey});
 
 module.exports.ExternalError   = ExternalError;
 module.exports.loadTheaters    = loadTheaters;
@@ -68,6 +70,81 @@ function dateWithTZOffset(date) {
 function getRandomBetweenValues(low,high) {
   return Math.floor(Math.random() * (high-low) + low);
 }	
+
+function getExternalError(moduleName,path,e) {
+	
+	// writeLogEntry('getExtenalError()',moduleName)
+	var details = { 
+    module         : moduleName,
+    requestOptions : path,
+    cause          : e
+  }
+  
+  writeLogEntry(JSON.stringify(details));
+  return new ExternalError(details);
+  
+}
+function processResponse(moduleName, requestOptions, httpResponse, body, resolve, reject) {
+	
+	var moduleId = 'processResponse("' + moduleName + '","' + httpResponse.contentType + '","' + typeof body + '")'
+
+  var response = {
+    module         : moduleName
+  , requestOptions : requestOptions
+  , statusCode     : httpResponse.statusCode
+  , statusText     : http.STATUS_CODES[httpResponse.statusCode]
+  , contentType    : httpResponse.headers["content-type"]
+  , headers        : httpResponse.headers
+  , elapsedTime    : httpResponse.elapsedTime
+  }
+ 
+  if ((body !== undefined) && (body !== null)) {
+  	if (response.contentType.startsWith("application/json")) {
+		  // writeLogEntry(moduleId);
+  		if (typeof body === 'object') {
+	  		response.json = body
+	    }
+	    else {
+    		try {
+    			response.json = JSON.parse(body);
+    	  }
+    	  catch (e) {
+	    		response.body = body;
+	    	}
+	    }
+ 		}
+ 		else {
+		  // writeLogEntry(moduleId,'Body length = ' + Buffer.byteLength(body));	
+ 			response.body = body;
+ 		}
+  }
+
+	if ((httpResponse.statusCode === 200) || (httpResponse.statusCode === 201)) {
+		resolve(response);
+	}
+  else {
+    response.cause = new Error()
+    reject(new ExternalError(response));
+  }
+}
+    
+function generateRequest(moduleId, cfg, requestOptions) {
+
+	if (cfg.dataSources.useProxy) {
+		requestOptions.proxy = 'http://' + cfg.dataSources.proxy.hostname + ':' + cfg.dataSources.proxy.port
+	}
+  
+  return new Promise(function(resolve, reject) {
+    request(requestOptions, function(error, response, body) {
+ 	  	if (error) {
+  		  reject(getExternalError(moduleId,requestOptions,error));
+			}
+			else {
+			  processResponse(moduleId, requestOptions, response, body, resolve, reject);
+			}
+		});
+  });
+}
 
 function loadTheaters (sessionState, response, next) {
 
@@ -126,13 +203,34 @@ function loadPosters(sessionState, response, next) {
   
   var sessionState = sodaLoggingState;
 
-  writeLogEntry('loadMovies()');
+  writeLogEntry('loadPosters()');
   getPostersFromTMDB(sessionState,response).catch(function(e) {
     next(e)
   });
 
 }
 
+function doGeocoding(address,benchmark) {
+
+  var moduleId = 'geocodeAddress("' + address + '",' + benchmark + ')';
+
+  var requestOptions = {
+  	method  : 'GET'
+  , uri     : cfg.dataSources.usCensus.protocol + '://' 
+            + cfg.dataSources.usCensus.hostname + ':' 
+            + cfg.dataSources.usCensus.port 
+            + cfg.dataSources.usCensus.path 
+            + '?' + 'format=' + 'json' 
+            + '&' + 'benchmark=' + benchmark 
+            + '&' + 'address=' + encodeURIComponent(address)
+  , json    : true
+  , time    : true
+  };
+     
+  return generateRequest(moduleId, cfg, requestOptions);  
+
+}
+   
 function getGeoJSON(address, geocodeResult, benchmark) {
    
   var moduleId = 'getGeoJSON("' + address + '")';
@@ -149,8 +247,8 @@ function getGeoJSON(address, geocodeResult, benchmark) {
   else {
     var coordinates = geocodeResult.addressMatches[0].coordinates;
     var geoCoding = {
-      type        : "Point",
-      coordinates : [coordinates.y , coordinates.x]                                                                      
+      type        : "Point"
+    , coordinates : [coordinates.y , coordinates.x]                                                                      
     }
     return geoCoding;  
   }
@@ -158,119 +256,77 @@ function getGeoJSON(address, geocodeResult, benchmark) {
 
 function geocodeAddress(address,benchmark,count) {
 
-   var moduleId = 'geocodeAddress("' + address + '",' + benchmark + ')';
+  var moduleId = 'geocodeAddress("' + address + '","' + benchmark + '",' + count +')';
 
-   return new Promise(
-     
-     function(resolve, reject) {
+	return doGeocoding(address,benchmark).then(function(httpResponse) {
+     return getGeoJSON(address,httpResponse.json,benchmark);
+  }).catch(function(error) {
+    if ((error.statusCode == 500) && (count < 10)) {
+  		writeLogEntry(moduleId,JSON.stringify(error));
+      return(geocodeAddress(address,benchmark,count+1))
+    }
+    else {
+    	throw error;
+    }
+  })
 
-      var readResponse = function(response) {
-      
-        var responseText = '';
-        
-        response.on(
-          'data' ,
-           function(chunk) {
-            responseText = responseText + chunk;
-          }
-        )
-        
-        response.on(
-          'end', 
-          function () {
-            if (response.statusCode == 200) {
-              var geoCoding = getGeoJSON(address,JSON.parse(responseText).result,benchmark);
-              resolve(geoCoding)
-            }
-            else {
-              if ((response.statusCode == 500) && (count < 10)) {
-                return(geocodeAddress(address,benchmark,count+1)).then(function(geoCoding) {
-                  resolve(geoCoding);
-                }).catch(function (e) {
-                	reject(e);
-                })
-              }
-              else {
-                writeLogEntry(moduleId + '.readResponse()','Geocoding Failed (' + response.statusCode + ').');
-                var details = { 
-                  module         : moduleId + '.readResponse(end)',
-                  statusCode     : response.statusCode,
-                  statusText     : http.STATUS_CODES[response.statusCode],
-                  requestOptions : options,
-                  bytesRecieved  : responseText.length,
-                  responeText    : responseText,
-                  cause          : new Error()
-                }
-                reject(new ExternalError(details));
-              }
-            }
-          }
-        );
-      }
-    
-      // writeLogEntry(moduleId);
+}
 
-      var path = cfg.dataSources.usCensus.path 
-               + '?' + 'format=' + 'json' 
-               + '&' + 'benchmark=' + benchmark 
-               + '&' + 'address=' + encodeURIComponent(address);
-
-      var options = {} 
-      
-      if (cfg.dataSources.useProxy) {
-        path = cfg.dataSources.usCensus.protocol + '://' + cfg.dataSources.usCensus.hostname + ':' + cfg.dataSources.usCensus.port + path;
-        options = {
-          hostname : cfg.dataSources.proxy.hostname,
-          port     : cfg.dataSources.proxy.port,
-          method   : 'GET',
-          path     : path,
-          headers : {'Content-Type': 'application/json'}
-        }
+function geocodeAddressGoogle(address) {
+	
+	var moduleId = 'geocodeAddressGoogle("' + address + '")';
+	
+	return new Promise(function(resolve,reject) {
+		return googleMapsClient.geocode({
+      address: address
+    }, function(err, response) {
+      if (err) {
+      	reject(err) 
       }
       else {
-	      options = {
-          hostname : cfg.dataSources.usCensus.hostname,
-          port : cfg.dataSources.usCensus.port,
-          method : 'GET',
-          path : path,
-          headers : {'Content-Type': 'application/json'}
-        };    
-      }
-           
-      var request = http.request(options, readResponse);
-
-       request.on(
-        'error', 
-        (e) => {
-          var details = { 
-            module         : moduleId + '.request(error)',
-            requestOptions : options,
-            cause          : e
+      	try {
+        	var location = response.json.results[0].geometry.location
+          var geoCoding = {
+            type        : "Point"
+          , coordinates : [location.lat, location.lng]                                                                      
           }
-          reject(new ExternalError(details));
-        }
-      );
-      request.end();
-    }
-  )
+      	  resolve(geoCoding);
+      	} catch(e) {
+      		reject(e);
+      	}
+      }
+    })
+  });
+
 }
-   
+
 function geocodeTheater(theater) {
 	
 	var moduleId = 'geocodeTheater(' + theater.id + ',' + theater.name + ')'
 	
 	var address = theater.location.street + " " + theater.location.city + " " + theater.location.state + " " + theater.location.zipCode;
 	// writeLogEntry(moduleId,'Address = "' + address + '".');
-  return geocodeAddress(address,'Public_AR_Census2010',0).then(function(geoCoding){
-  	theater.location.geoCoding = geoCoding
-  	return theater;
-  }).catch(function(e) {
-  	writeLogEntry(moduleId,'Unable to get location for = "' + address + '".');
-  	// console.log(JSON.stringify(e));
-  	theater.location.geoCoding = {}
-  	return theater;
-  });
-
+	
+	if (cfg.dataSources.geoCoder === "usCensus") {
+      return geocodeAddress(address,'Public_AR_Census2010',0).then(function(geoCoding){
+  	  theater.location.geoCoding = geoCoding
+  	  return theater;
+    }).catch(function(e) {
+  	  writeLogEntry(moduleId,'Unable to get location for = "' + address + '".');
+  	  theater.location.geoCoding = {}
+  	  return theater;
+    });
+  }
+  else {
+  	return geocodeAddressGoogle(address).then(function(geoCoding) {
+  	  theater.location.geoCoding = geoCoding
+  	  return theater;
+    }).catch(function(e) {
+  	  writeLogEntry(moduleId,'Unable to get location for = "' + address + '".');
+  	  theater.location.geoCoding = {}
+  	  return theater;
+    });
+  }
 }
     
 function parseAddress(address) {
@@ -377,103 +433,41 @@ function getTheatersFromFandango() {
   
   var moduleId = 'getTheatersFromFandango()';
   
-  return new Promise(
-  
-    function(resolve, reject) {
-
-      var readResponse = function(response) {
-      
-      var responseText = '';
-        
-      response.on(
-        'data' ,
-         function(chunk) {
-            responseText = responseText + chunk;
-          }
-        )
-        
-        response.on(
-          'end', 
-          function () {
-            if (response.statusCode == 200) { 
-              resolve(responseText)
-            }
-            else {
-              var details = { 
-                module : 'getTheatersFromFandango().readResponse(end)',
-                statusCode     : response.statusCode,
-                statusText     : http.STATUS_CODES[response.statusCode],
-                requestOptions : options,
-                bytesRecieved  : responseText.length,
-                responeText    : responseText,
-                cause          : new Error()
-              }
-              reject(new ExternalError(details));
-            }
-          }
-        );
-      }
-  
-      writeLogEntry(moduleId);
-
-      var path = cfg.dataSources.fandango.path + cfg.dataSources.fandango.searchCriteria.zipCode + '.rss';
-
-      var options = {} 
-      
-      if (cfg.dataSources.useProxy) {
-      	 path = cfg.dataSources.fandango.protocol + '://' + cfg.dataSources.fandango.hostname + ':' + cfg.dataSources.fandango.port + path;
-         options = {
-       	   hostname : cfg.dataSources.proxy.hostname,
-	         port     : cfg.dataSources.proxy.port,
-	         method   : 'GET',
-	         path     : path,
-	         headers : {'Content-Type': 'application/json'}
-	       }
-      }
-      else {
-        var options = {
-          hostname : cfg.dataSources.fandango.hostname,
-          port : cfg.dataSources.fandango.port,
-          method : 'GET',
-          path : path,
-          headers : {'Content-Type': 'application/rss+xml'}
-        }
-      };    
-            
-      var request = http.request(options, readResponse);
-
-      request.on(
-        'error', 
-        (e) => {
-          var details = { 
-            module         : moduleId + '.request(error)',
-            requestOptions : options,
-            cause          : e
-          }
-          reject(new ExternalError(details));
-        }
-      );
-      request.end();
-    }
-  )   
+  var requestOptions = {
+  	method  : 'GET'
+  , uri     : cfg.dataSources.fandango.protocol + '://' 
+            + cfg.dataSources.fandango.hostname + ':' 
+            + cfg.dataSources.fandango.port 
+            + cfg.dataSources.fandango.path 
+            + cfg.dataSources.fandango.searchCriteria.zipCode 
+            + '.rss'
+  , time    : true
+  };
+     
+  return generateRequest(moduleId, cfg, requestOptions);  
+     
 }
 
 function getTheaterInformation() {
   
   
+  var moduleId = "getTheaterInformation()"
+	// writeLogEntry(moduleId,'Fetching Theaters');
+  
   // Generate a set of Theater documents from the Fandango TheatersNearMe RSS feed and geocode the results.
   
-  return getTheatersFromFandango().then(function(rssFeed) {
+  return getTheatersFromFandango().then(function(response) {
     // writeLogEntry('getTheaterInformation()','Count=' + theaters.length);         
     var theaters = []
     xmlParser.parseString(
-      rssFeed,
+      response.body,
       function(err,jsonRSS) {
         theaters = jsonRSS.rss.channel[0].item
       }         
     );
     return Promise.all(theaters.map(generateTheater))     
   }).then(function(theaters) {
+  	// writeLogEntry(moduleId,'Starting Geocoding');
     return Promise.all(theaters.map(geocodeTheater)) 
   })
 }
@@ -517,91 +511,21 @@ function getMoviesFromTMDB(sessionState,response) {
   function getTMDBConfiguration() {
     
     var moduleId = 'getTMDBConfiguration()'
-    // writeLogEntry(moduleId);
   
-    return new Promise(
-        
-      function(resolve, reject) {
-                    
-        var readResponse = function(response) {
-                  
-          var responseText = '';
-          
-          response.on(
-            'data' ,
-             function(chunk) {
-              responseText = responseText + chunk;
-            }
-          );
-          
-          response.on(
-            'end', 
-            function () {
-              if (response.statusCode == 200) {
-                try {
-                  // writeLogEntry(moduleId + '.readResponse()')
-                  resolve(JSON.parse(responseText));
-                } catch (e) {
-                  reject(e);
-                }
-              }
-              else {
-                var e = { 
-                      module : moduleId + '.readResponse(end)',
-                      statusCode : response.statusCode,
-                      statusText : http.STATUS_CODES[response.statusCode],
-                      requestDetails : options,
-                      bytesRecieved : responseText.length,
-                      responeText : responseText
-                    }
-                reject(e)
-              }
-            }
-          );
-        }
-      
-        // console.log(moduleId,'Executing Promise.');
-    
-        var path = cfg.dataSources.tmdb.apiPath + '/configuration'
-                 + '?' + 'api_key=' + cfg.dataSources.tmdb.apiKey;
-  
-        var options = {} 
-  
-        if (cfg.dataSources.useProxy) {
-          path = cfg.dataSources.tmdb.protocol + '://' + cfg.dataSources.tmdb.hostname + ':' + cfg.dataSources.tmdb.port + path;
-          options = {
-            hostname : cfg.dataSources.proxy.hostname,
-            port     : cfg.dataSources.proxy.port,
-            method   : 'GET',
-            path     : path,
-            headers : {'Content-Type': 'application/json'}
-          }
-        }
-        else {
-          options = {
-            hostname : cfg.dataSources.tmdb.hostname,
-            port     : cfg.dataSources.tmdb.port,
-            method   : 'GET',
-            path     : path,
-            headers : {'Content-Type': 'application/json'}
-          }
-        };    
-    
-        var request = http.request(options, readResponse);
-        request.on(
-          'error', 
-          (e) => {
-            var details = { 
-              module         : moduleId + '.request(error)',
-              requestOptions : options,
-              cause          : e
-            }
-            reject(new ExternalError(details));
-          }
-        );
-        request.end();
-      }
-    )   
+    var requestOptions = {
+    	method  : 'GET'
+    , uri     : cfg.dataSources.tmdb.protocol + '://' 
+              + cfg.dataSources.tmdb.hostname + ':' 
+              + cfg.dataSources.tmdb.port 
+              + cfg.dataSources.tmdb.apiPath 
+              + '/configuration'
+ 		, qs      : { api_key : cfg.dataSources.tmdb.apiKey}
+    , json    : true
+    , time    : true
+    };
+     
+    return generateRequest(moduleId, cfg, requestOptions);  
+
   }
       
   function saveMovies(movieCache) {
@@ -666,91 +590,20 @@ function getMoviesFromTMDB(sessionState,response) {
     
     var moduleId = 'getMovieFromTMDB(' + movieId + ')';
   
-    return new Promise(
-        
-      function(resolve, reject) {
-                    
-        var readResponse = function(response) {
-            
-          var responseText = '';
-              
-          response.on(
-            'data' ,
-            function(chunk) {
-             responseText = responseText + chunk;
-            }
-          )
-          
-          response.on(
-            'end', 
-            function () {
-              if (response.statusCode == 200) {
-                try {
-                  // writeLogEntry(moduleId + '.readResponse()')
-                  var movieDetails = JSON.parse(responseText)
-                  resolve(movieDetails);
-                } catch (e) {
-                  reject(e);
-                }
-              }
-              else {
-                var e = { 
-                      module         : moduleId + '.readResponse(end)',
-                      statusCode     : response.statusCode,
-                      statusText     : http.STATUS_CODES[response.statusCode],
-                      requestDetails : options,
-                      bytesRecieved  : responseText.length,
-                      responeText    : responseText
-                    }
-                reject(e)
-              }
-            }
-          )
-        }
-      
-        // writeLogEntry(moduleId,'Executing Promise.');
-    
-        var path = cfg.dataSources.tmdb.apiPath + '/movie/' + movieId  
-                 + '?' + 'api_key=' + cfg.dataSources.tmdb.apiKey
-                 + '&' + 'append_to_response=' + 'credits,releases'
-                 
-        var options = {} 
-  
-        if (cfg.dataSources.useProxy) {
-          path = cfg.dataSources.tmdb.protocol + '://' + cfg.dataSources.tmdb.hostname + ':' + cfg.dataSources.tmdb.port + path;
-          options = {
-            hostname : cfg.dataSources.proxy.hostname,
-            port     : cfg.dataSources.proxy.port,
-            method   : 'GET',
-            path     : path,
-            headers : {'Content-Type': 'application/json'}
-          }
-        }
-        else {
-          options = {
-            hostname : cfg.dataSources.tmdb.hostname,
-            port     : cfg.dataSources.tmdb.port,
-            method   : 'GET',
-            path     : path,
-            headers : {'Content-Type': 'application/json'}
-          }
-        };    
-    
-        var request = http.request(options, readResponse);
-        request.on(
-          'error', 
-          (e) => {
-            var details = { 
-              module         : moduleId + '.request(error)',
-              requestOptions : options,
-              cause          : e
-            }
-            reject(new ExternalError(details));
-          }
-        );
-        request.end();
-      }
-    )   
+    var requestOptions = {
+    	method  : 'GET'
+    , uri     : cfg.dataSources.tmdb.protocol + '://' 
+              + cfg.dataSources.tmdb.hostname + ':' 
+              + cfg.dataSources.tmdb.port 
+ 							+ cfg.dataSources.tmdb.apiPath 
+ 							+ '/movie/' + movieId 
+ 		, qs      : { api_key : cfg.dataSources.tmdb.apiKey, append_to_response : 'credits,releases'}
+    , json    : true
+    , time    : true
+    };
+
+    return generateRequest(moduleId, cfg, requestOptions);  
+
   }
                            
   function isUnratedMovie(movieDetails) {
@@ -772,7 +625,9 @@ function getMoviesFromTMDB(sessionState,response) {
 	  var moduleId = 'createMovie(' + tmdbMovie.id + ')';
     // writeLogEntry(moduleId);
 
-    return getMovieFromTMDB(tmdbMovie.id).then(function(movieDetails) {
+    return getMovieFromTMDB(tmdbMovie.id).then(function(httpResponse) {
+    	
+    	var movieDetails = httpResponse.json;
     	  	
     	if (!isUnratedMovie(movieDetails)) { 
 
@@ -819,98 +674,36 @@ function getMoviesFromTMDB(sessionState,response) {
   function getMoviePage(pageNo) {
   	
   	var moduleId = 'getMoviePage(' + pageNo + ')';
-  
-    return new Promise(
-    
-      function(resolve, reject) {
-  
-        var readResponse = function(response) {
-        
-        var responseText = '';
-          
-        response.on(
-          'data' ,
-           function(chunk) {
-              responseText = responseText + chunk;
-            }
-          )
-          
-          response.on(
-            'end', 
-            function () {
-              if (response.statusCode == 200) {
-                var page = JSON.parse(responseText)
-                resolve(page);
-              }
-              else {                
-                var details = { 
-                  module         : moduleId + '.response(end)',
-                  statusCode     : response.statusCode,
-                  statusText     : http.STATUS_CODES[response.statusCode],
-                  requestOptions : options,
-                  bytesRecieved  : responseText.length,
-                  responeText    : responseText,
-                  cause          : new Error()
-                }
-                reject(new ExternalError(details));
-              }
-            }
-          );
-        }
-  
-        var path = cfg.dataSources.tmdb.apiPath + '/discover/movie' 
-                 + '?' + 'api_key=' + cfg.dataSources.tmdb.apiKey
-                 + '&' + 'primary_release_date.gte=' + cfg.dataSources.tmdb.searchCriteria.releaseDates.start
-                 + '&' + 'primary_release_date.lte=' + cfg.dataSources.tmdb.searchCriteria.releaseDates.end 
-                 + '&' + 'certification_country=' + cfg.dataSources.tmdb.searchCriteria.country 
-                 + '&' + 'certification.lte=' + cfg.dataSources.tmdb.searchCriteria.certification
-                 + '&' + 'original_language=' + cfg.dataSources.tmdb.searchCriteria.language 
-                 + '&' + 'include_adult=' + 'false'
-                 + '&' + 'sort_by=' + 'popularity.desc'
-  
-        if (pageNo > 0) {
-          path = path + '&' + 'page=' + pageNo
-        }         
-  
-        // console.log(new Date().toISOString() + ": " + moduleId + '): Path=' + path);
-        
-        var options = {}
-        
-        if (cfg.dataSources.useProxy) {
-           path = cfg.dataSources.tmdb.protocol + '://' + cfg.dataSources.tmdb.hostname + ':' + cfg.dataSources.tmdb.port + path;
-           options = {
-             hostname : cfg.dataSources.proxy.hostname,
-             port     : cfg.dataSources.proxy.port,
-             method   : 'GET',
-             path     : path,
-             headers : {'Content-Type': 'application/json'}
-           }
-        }
-        else {
-          options = {
-           hostname : cfg.dataSources.tmdb.hostname,
-            port     : cfg.dataSources.tmdb.port,
-            method   : 'GET',
-            path     : path,
-            headers : {'Content-Type': 'application/json'}
-          };  
-        }  
+  	
+  	var qs = {
+      api_key                    : cfg.dataSources.tmdb.apiKey
+    , "primary_release_date.gte" : cfg.dataSources.tmdb.searchCriteria.releaseDates.start
+    , "primary_release_date.lte" : cfg.dataSources.tmdb.searchCriteria.releaseDates.end 
+    , certification_country      : cfg.dataSources.tmdb.searchCriteria.country 
+    , "certification.lte"        : cfg.dataSources.tmdb.searchCriteria.certification
+    , original_language          : cfg.dataSources.tmdb.searchCriteria.language 
+    , include_adult              : false
+    , sort_by                    : 'popularity.desc'
+    }
 
-        var request = http.request(options, readResponse);
-        request.on(
-          'error', 
-          (e) => {
-            var details = { 
-              module         : moduleId + '.request(error)',
-              requestOptions : options,
-              cause          : e
-            }
-            reject(new ExternalError(details));
-          }
-        );
-        request.end();
-      }
-    )   
+    if (pageNo > 0) {
+      qs.page =pageNo
+    }         
+
+    var requestOptions = {
+    	method  : 'GET'
+    , uri     : cfg.dataSources.tmdb.protocol + '://' 
+              + cfg.dataSources.tmdb.hostname + ':' 
+              + cfg.dataSources.tmdb.port 
+ 							+ cfg.dataSources.tmdb.apiPath 
+              + '/discover/movie' 
+ 		, qs      : qs
+    , json    : true
+    , time    : true
+    };
+
+    return generateRequest(moduleId, cfg, requestOptions);  
+  
   }
 
   function getMovieDetails(movies, batchNo, batchSize,response) {
@@ -995,15 +788,15 @@ function getMoviesFromTMDB(sessionState,response) {
       ""
     );
     var idList = idList.substring(0,idList.length-1);
-    console.log(moduleId,'Adding Batch ' + batchNo + ': [' + idList + '].');
+    writeLogEntry(moduleId,'Adding Batch ' + batchNo + ': [' + idList + '].');
     */
   
     // Create a Batch of getMovieListPage() operations.
     // writeLogEntry(moduleId, 'Generating getMoviePage() operations.');
       
-    return Promise.all(batch.map(getMoviePage)).then(function(tmdbPages) {
-    	// tmdbPages = 35 Pages of Movies..
-    	processPages(tmdbPages);
+    return Promise.all(batch.map(getMoviePage)).then(function(httpResponses) {
+    	// httpResponse.json = 35 Pages. Each containing multiple Movies. 
+    	processPages(httpResponses);
     	if (pages.length > 0) {
   	    writeLogEntry(moduleId,'Pages remaining = ' + pages.length);
       	batchNo++;
@@ -1018,12 +811,13 @@ function getMoviesFromTMDB(sessionState,response) {
     })
   }
   
-  function processPages(tmdbPages) {
+  function processPages(httpResponses) {
   	
   	moduleId = 'processPages';
-    tmdbPages.forEach(
-      function(tmdbPage) {
-        tmdbPage.results.forEach(
+
+    httpResponses.forEach(
+      function(httpResponse) {
+        httpResponse.json.results.forEach(
           function(m){
             if (movies.length === cfg.dataSources.tmdb.searchCriteria.movieLimit) {
               // writeLogEntry(moduleId,'Processing completed. ' + cfg.dataSources.tmdb.searchCriteria.movieLimit + ' movies selected.');
@@ -1047,15 +841,15 @@ function getMoviesFromTMDB(sessionState,response) {
 
   writeLogEntry(moduleId);
 
-  return getTMDBConfiguration().then(function(tmdbConfiguration) {
-    baseURL = tmdbConfiguration.images.base_url
+  return getTMDBConfiguration().then(function(httpResponse) {
+    baseURL = httpResponse.json.images.base_url
     // writeLogEntry(moduleId,'Poster URL = ' + baseURL);
   }).then(function() {
     return getMoviePage(0)
-  }).then(function(tmdbPage) {
-    writeLogEntry(moduleId,'Page Count = ' + tmdbPage.total_pages);
+  }).then(function(httpResponse) {
+    writeLogEntry(moduleId,'Page Count = ' + httpResponse.json.total_pages);
  
-    maxPageNumber = (tmdbPage.total_pages > maxPageNumber ) ? maxPageNumber : tmdbPage.total_pages;
+    maxPageNumber = (httpResponse.json.total_pages > maxPageNumber ) ? maxPageNumber : httpResponse.json.total_pages;
 
     for (var i=0; i < maxPageNumber; i++) {   
        pages.push(i+1)
@@ -1063,7 +857,8 @@ function getMoviesFromTMDB(sessionState,response) {
 
     // Response #1 Open Object, Output key "status" : Start Array
     response.write('{"status":[') 
-    // processPages([tmdbPage]);
+    // Processing page '0' leads to duplicates
+    // processPages([httpResponse]);
     return waitAndRun(pages, getMoviePages, 'getMoviePages', 'getMoviePage', 1, batchSize, response);
   }).catch(function(e) {
     writeLogEntry(moduleId,'Broken Promise.');
@@ -1246,95 +1041,27 @@ function createScreenings(sessionState) {
 
 function getMoviePoster(movieId,posterURL) {
   
-  // writeLogEntry('getMoviePoster(' + movieId + ',' + posterURL + ')');
+  var moduleId = 'getMoviePoster(' + movieId + ',"' + posterURL + '")';
+  // writeLogEntry(moduleId);
 
-  return new Promise(
-      
-    function(resolve, reject) {
-                  
-      var readResponse = function(response) {
-          
-        var chunks = [];
-            
-        response.on(
-          'data' ,
-          function(chunk) {
-           // writeLogEntry('getMoviePoster(' + movieId + ',' + posterURL + ').readResponse(data): Processing Chunk');                
-           chunks.push(chunk);
-          }
-        )
-        
-        response.on(
-          'end', 
-          function () {
-            // writeLogEntry('getMoviePoster(' + movieId + ',' + posterURL + ').readResponse(end): StatusCode = ' + response.statusCode);                
-            if (response.statusCode == 200) {
-              try {
-                var content = Buffer.concat(chunks);
-                // writeLogEntry('getMoviePoster(' + movieId + ',' + posterURL + ').readResponse(end): Chunks read = ' + chunks.length + '. Content length = ' + content.length);
-                resolve(content);
-              } catch (e) {
-                reject(e);
-              }
-            }
-            else {
-              var e = { 
-                    module : 'getMoviePoster(' + movieId + ',' + posterURL + ').readResponse(end)',
-                    statusCode : response.statusCode,
-                    statusText : http.STATUS_CODES[response.statusCode],
-                    requestDetails : options,
-                  }
-              reject(e)
-            }
-          }
-        )
-      }
-    
-      // writeLogEntry('getMoviePoster(' + movieId + ',' + posterURL + '): Executing Promise.');
-              		
-      if (posterURL.indexOf('/movieticket/poster/') == 0) {
-      	resolve(null)
-      	return;
-      }
-      
-      var options = {} 
+  if (posterURL.indexOf('/movieticket/poster/') == 0) {
+   	return Promise.resolve({body : null});
+  }
 
-      if (cfg.dataSources.useProxy) {
-        var path = posterURL;
-        options = {
-          hostname : cfg.dataSources.proxy.hostname,
-          port     : cfg.dataSources.proxy.port,
-          method   : 'GET',
-          path     : posterURL,
-          headers : {'Content-Type': 'application/json'}
-        }
-      }
-      else {
-     		var imageURL = url.parse(posterURL);
-        options = {
-          hostname : imageURL.hostname,
-          port     : imageURL.port,
-          method   : 'GET',
-          path     : imageURL.path,
-          headers : {'Content-Type': 'application/json'}
-        }
-      };    
+	var imageURL = url.parse(posterURL);
+
+  var requestOptions = {
+  	method    : 'GET'
+  , uri       : cfg.dataSources.tmdb.protocol + '://' 
+              + imageURL.hostname + ':' 
+              + imageURL.port 
+						  + imageURL.path 
+	, encoding  : null
+  , time      : true
+  };
+
+  return generateRequest(moduleId, cfg, requestOptions);  
   
-      var request = http.request(options, readResponse);
-      request.on(
-        'error', 
-        (e) => {
-          var details = { 
-            module         : 'getMoviePoster(' + movieId + ',' + posterURL + ').request(error)',
-            requestOptions : options,
-            cause          : e
-          }
-          reject(new ExternalError(details));
-        }
-      );
-      request.end();
-    }
-  )   
 }                         
 
 function getPostersFromTMDB(sessionState,response) {
@@ -1347,11 +1074,11 @@ function getPostersFromTMDB(sessionState,response) {
 
   	var movie =  movieItem.value;
  
-  	return getMoviePoster(movieItem.id, movie.posterURL).then(function(poster){
-  		if (poster != null) {
+  	return getMoviePoster(movieItem.id, movie.posterURL).then(function(httpResponse){
+  		if (httpResponse.body != null) {
         posterCount++;
         // writeLogEntry('getPosterFromTMDB() : Poster size = ' + poster.length);
-  	    return movieAPI.insertPoster(sessionState, poster).then(function(sodaResponse){
+  	    return movieAPI.insertPoster(sessionState, httpResponse.body).then(function(sodaResponse){
   	    	movie.externalURL = movie.posterURL
   	    	movie.posterURL = '/movieticket/poster/' + sodaResponse.json[0].id;
           return movieAPI.updateMovie(sessionState, movieItem.id, movie).catch(function(e) {
@@ -1374,10 +1101,11 @@ function getPostersFromTMDB(sessionState,response) {
   }
   
   function getPosterBatchFromTMDB(movieItems, batchNo, batchSize, response) {
-  
+  	
     var batch = movieItems.splice(0,batchSize)
-    // writeLogEntry('getPosterBatchFromTMDB(' + batchNo +',' + batch.length + '): Generating getMovieFromTMDB() operations.');
      
+  	var moduleId = 'getPosterBatchFromTMDB(' + batchNo +',' + batch.length + ')';
+  
     var status = {
       date   : dateWithTZOffset(new Date()),
    	  module : 'getPosterBatchFromTMDB()',
@@ -1396,7 +1124,7 @@ function getPostersFromTMDB(sessionState,response) {
       ""
     );
     var idList = idList.substring(0,idList.length-1);
-    console.log('Adding Batch ' + batchNo + ': [' + idList + '].');
+    writeLogEntry('Adding Batch ' + batchNo + ': [' + idList + '].');
     */
    
     // Create a Batch of getPosterFromTMDB() operations.
@@ -1406,7 +1134,7 @@ function getPostersFromTMDB(sessionState,response) {
     	if (movieItems.length > 0) {
         writeLogEntry('getPosterBatchFromTMDB(' + batchNo + '): Movies remaining = ' + movieItems.length);
       	batchNo++;
-   	    return waitAndRun(movieItems, getPosterBatchFromTMDB, 'getPosterBatchFromTMDB', 'getPosterFromTMDB', batchNo, batchSize,response);
+   	    return waitAndRun(movieItems, getPosterBatchFromTMDB, 'getPosterBatchFromTMDB', 'getPosterFromTMDB', batchNo, batchSize, response);
      	}
    		else {
         writeLogEntry('getPosterBatchFromTMDB(): getPosterFromTMDB() operations complete');
@@ -1427,13 +1155,13 @@ function getPostersFromTMDB(sessionState,response) {
     })
   }
       
-  writeLogEntry('getPostersFromTMDB()');
+  var moduleId = 'getPostersFromTMDB()';
 
   var qbe = { posterURL : { '$ne' : null }}
   
   return movieAPI.queryMovies(sessionState, qbe,'unlimited').then(function(sodaResponse){
   	movieItems = sodaResponse.json;
-  	// console.log(JSON.stringify(movieItems).substring(0,9999));
+  	// console.log(moduleId,JSON.stringify(movieItems).substring(0,9999));
   	writeLogEntry('getPostersFromTMDB() : Movie count = ' + movieItems.length);
     return movieAPI.recreatePosterCollection(sessionState)
   }).then(function() {

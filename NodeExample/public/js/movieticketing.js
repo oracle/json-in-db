@@ -294,7 +294,15 @@ app.factory('theaterService', function($http) {
   factory.showPrevLogEntry = function() {
   	factory.logRecordIndex--;
   };
-      				    				  
+  
+  factory.getQueryString = function(qs) {
+  	return getQueryString(qs);
+  }
+  				    				  
+  factory.isObject = function (obj) {
+  	return angular.isObject(obj);
+  }
+
   return factory;
 });
 
@@ -457,6 +465,14 @@ app.factory('movieService', function($http, $cookies) {
   factory.showPrevLogEntry = function() {
   	factory.logRecordIndex--;
   };
+
+  factory.getQueryString = function(qs) {
+  	return getQueryString(qs);
+  }
+
+  factory.isObject = function (obj) {
+  	return angular.isObject(obj);
+  }
 
   return factory;
 });
@@ -658,4 +674,20 @@ function geoLocationError(e) {
             default: console.log("geoLocationError(): Unknown Error");  
             break;  
         }  
+}
+
+function getQueryString(qs) {
+	var queryString = "";
+	if (typeof qs === 'object') {
+	  Object.keys(qs).forEach(function(key,index) {
+		  queryString += encodeURIComponent(key) + "=" + encodeURIComponent(qs[key]) + "&"  
+    })
+  }
+  
+  if (queryString.length > 0) {
+    queryString = "?" + queryString.substring(0,queryString.length-1);
+  }
+  
+  return queryString
+		
 }

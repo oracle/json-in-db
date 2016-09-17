@@ -91,31 +91,26 @@ function addLimitAndFields(queryProperties,limit,fields) {
   return queryProperties;
 }
 
-function newLogEntry(sessionId, operationId, requestOptions) {
+function newLogEntry(moduleId, sessionId, operationId, requestOptions) {
 
   return {
-     sessionId           : sessionId,
-     operationId         : operationId,
-     module              : null,
-     method              : requestOptions.method,
-     uri                 : requestOptions.uri,
-     request             : {
-       headers           : requestOptions.headers,
-       body              : requestOptions.json || requestOptions.body
-     },
-     response            : {
-       statusCode        : null,
-       statusText        : null,
-       headers           : null,
-       body              : null,
-       json              : null
-     },
-     startTime           : (new Date()).getTime(),
-     elapsedTime         : null
+      sessionId           : sessionId
+    , operationId         : operationId
+    , module              : moduleId
+    , request             : requestOptions
+    , response            : {
+       statusCode         : null
+     , statusText         : null
+     , headers            : null
+     , body               : null
+     , json               : null
+     }
+   , startTime           : (new Date()).getTime()
+   , elapsedTime         : null
    }
 }
 
-function createLogRequest(sessionState, cfg, requestOptions) {
+function createLogRequest(moduleId, sessionState, cfg, requestOptions) {
 
   // console.log('createLogRequest(' + JSON.stringify(sessionState) + ')');
   
@@ -125,7 +120,7 @@ function createLogRequest(sessionState, cfg, requestOptions) {
     logRequest = { 
       logCollection    : sessionState.logCollectionName
     , cfg              : cfg
-    , logEntry         : newLogEntry(sessionState.sodaSessionId, sessionState.operationId, requestOptions)
+    , logEntry         : newLogEntry(moduleId, sessionState.sodaSessionId, sessionState.operationId, requestOptions)
     }
   }   
 
@@ -138,7 +133,6 @@ function logResponse(response, logRequest) {
 
   if ((logRequest !== undefined) && (logRequest != null)) {
 
-    logRequest.logEntry.module               = response.module;
     logRequest.logEntry.elapsedTime          = response.elapsedTime;
     logRequest.logEntry.response.statusCode  = response.statusCode;
     logRequest.logEntry.response.statusText  = response.statusText;
@@ -227,7 +221,7 @@ function generateRequest(moduleId, sessionState, cfg, requestOptions) {
   
   return new Promise(function(resolve, reject) {
 	  // console.log('Execute Promise: ' + moduleId);
- 	  var logRequest = createLogRequest(sessionState, cfg, requestOptions)
+ 	  var logRequest = createLogRequest(moduleId, sessionState, cfg, requestOptions)
     request(requestOptions, function(error, response, body) {
  	  	if (error) {
   		  reject(getSodaError(moduleId,requestOptions,error));

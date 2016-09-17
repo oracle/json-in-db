@@ -136,7 +136,7 @@ body {
 					<div>
 						<br>
 					</div>
-		      <div class="container row" id="log_TheaterList">
+		      <div class="container row" id="log_TheaterList" ng-repeat="l in theaterService.logRecord">
     	    	<table>
 		      		<tbody>
  			      		<tr>
@@ -155,15 +155,15 @@ body {
 	  						 			<tbody>
 	  						 				<tr>
 	  						 					<td>
-				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{theaterService.logRecord[0].value.method}}</span>
-  	  				      	 			<span style="margin-right:1em;"><strong>URL:</strong> {{theaterService.logRecord[0].value.uri}}</span>
+				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{l.value.request.method}}</span>
+  	  				      	 			<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.request.uri}}{{theaterService.getQueryString(l.value.request.qs)}}</span>
     	  	    				 		<td>
       	  	  	 				</tr>
-        	  		 				<tr ng-if="theaterService.logRecord[0].value.request.body.length > 0">
-      	 									<td><strong>Body:</strong> {{theaterService.logRecord[0].value.request.body}}</td>
+        	  		 				<tr ng-if="theaterService.isObject(l.value.request.json)">
+      	 									<td><strong>Body:</strong> {{l.value.request.json}}</td>
       	 								</tr>
 	          		 				<tr>
-      				 						<td><strong>Status:</strong> {{theaterService.logRecord[0].value.response.statusCode}} [{{theaterService.logRecord[0].value.response.statusText}}] <strong>Elapsed Time:</strong> {{theaterService.logRecord[0].value.elapsedTime}}ms.</td>
+      				 						<td><strong>Status:</strong> {{l.value.response.statusCode}} [{{l.value.response.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
       	 								</tr>
       	 							</tbody>
       	 						</table>
@@ -221,7 +221,7 @@ body {
 					<div>
 						<br>
 					</div>
-		      <div class="container row" id="log_MovieList" >
+		      <div class="container row" id="log_MovieList" ng-repeat="l in movieService.logRecord">
     	    	<table>
 		      		<tbody>
  			      		<tr>
@@ -240,15 +240,15 @@ body {
 	  						 			<tbody>
 	  						 				<tr>
 	  						 					<td>
-				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{movieService.logRecord[0].value.method}}</span>
-    	      	 							<span style="margin-right:1em;"><strong>URL:</strong> {{movieService.logRecord[0].value.uri}}</span>
+				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{l.value.request.method}}</span>
+    	      	 							<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.request.uri}}{{movieService.getQueryString(l.value.request.qs)}}</span>
 							    	 			<td>
         	  	 					</tr>
-          		 					<tr ng-if="movieService.logRecord[0].value.request.body.length > 0">
-						  	 					<td><strong>Body:</strong> {{movieService.logRecord[0].value.request.body}}</td>
+        	  		 				<tr ng-if="movieService.isObject(l.value.request.json)">
+						  	 					<td><strong>Body:</strong> {{l.value.request.json}}</td>
       	 								</tr>
-				          		 	<tr>
-      										<td><strong>Status:</strong> {{movieService.logRecord[0].value.response.statusCode}} [{{movieService.logRecord[0].value.response.statusText}}] <strong>Elapsed Time:</strong> {{movieService.logRecord[0].value.elapsedTime}}ms.</td>
+          		 					<tr>
+      										<td><strong>Status:</strong> {{l.value.response.statusCode}} [{{l.value.response.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
       	 								</tr>
       	 							</tbody>
       	 						</table>
@@ -339,12 +339,12 @@ body {
 	  						 			<tbody>
 	  						 				<tr>
 	  						 					<td>
-				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{l.value.method}}</span>
-    	      	 							<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.uri}}</span>
+				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{l.value.request.method}}</span>
+    	      	 							<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.request.uri}}{{theaterService.getQueryString(l.value.request.qs)}}</span>
 				      	    	 		<td>
        				 	  	 		</tr>
-          		 					<tr ng-if="l.value.request.body.length > 0">
-				      	 					<td><strong>Body:</strong> {{l.value.request.body}}</td>
+          		 					<tr ng-if="theaterService.isObject(l.value.request.json)">
+				      	 					<td><strong>Body:</strong> {{l.value.request.json}}</td>
 				      	 				</tr>
           		 					<tr>
       	 									<td><strong>Status:</strong> {{l.value.response.statusCode}} [{{l.value.response.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
@@ -457,12 +457,12 @@ body {
 	  						 			<tbody>
 	  						 				<tr>
 	  						 					<td>
-				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{l.value.method}}</span>
-				    	      	 			<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.uri}}</span>
+				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{l.value.request.method}}</span>
+				    	      	 			<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.request.uri}}{{movieService.getQueryString(l.value.request.qs)}}</span>
 				      	    	 		<td>
 				        	  	 	</tr>
-				          		 	<tr ng-if="l.value.request.body.length > 0">
-				      	 					<td><strong>Body:</strong> {{l.value.request.body}}</td>
+				          		 	<tr ng-if="movieService.isObject(l.value.request.json)">
+				      	 					<td><strong>Body:</strong> {{l.value.request.json}}</td>
       	 								</tr>
 				          		 	<tr>
 				      	 					<td><strong>Status:</strong> {{l.value.response.statusCode}} [{{l.value.response.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>

@@ -47,6 +47,7 @@ module.exports.createScreeningCollection   = createScreeningCollection;
 module.exports.dropScreeningCollection     = dropScreeningCollection;
 module.exports.recreateScreeningCollection = recreateScreeningCollection;
 module.exports.insertScreenings            = insertScreenings;
+module.exports.getScreenings               = getScreenings;
 module.exports.getScreening                = getScreening;
 module.exports.queryScreenings             = queryScreenings;
 module.exports.updateScreening             = updateScreening;
@@ -62,6 +63,7 @@ module.exports.createPosterCollection      = createPosterCollection;
 module.exports.dropPosterCollection        = dropPosterCollection;
 module.exports.recreatePosterCollection    = recreatePosterCollection;
 module.exports.insertPoster                = insertPoster;
+module.exports.getPosters                  = getPosters;
 module.exports.getPoster                   = getPoster;
 
 module.exports.getLogRecordByOperationId   = getLogRecordByOperationId
@@ -97,9 +99,9 @@ function insertTheaters(sessionState, theaterList) {
 
 }
 
-function getTheaters(sessionState, limit,fields) {
+function getTheaters(sessionState, limit, fields, total) {
   
-   return sodaRest.getCollection(sessionState, cfg.config, 'Theater',limit,fields)
+   return sodaRest.getCollection(sessionState, cfg.config, 'Theater', limit, fields, total)
      
 }
 
@@ -121,9 +123,9 @@ function getTheaterById(sessionState, id) {
   )
 }
 
-function queryTheaters(sessionState, qbe,limit,fields) {
+function queryTheaters(sessionState, qbe, limit, fields, total) {
 	
-	return sodaRest.queryByExample(sessionState, cfg.config, 'Theater',qbe,limit,fields);
+	return sodaRest.queryByExample(sessionState, cfg.config, 'Theater',qbe, limit, fields, total);
 
 }
 
@@ -153,9 +155,9 @@ function insertMovies(sessionState, movieList) {
 
 }
 
-function getMovies(sessionState, limit,fields) {
+function getMovies(sessionState,  limit, fields, total) {
   
-   return sodaRest.getCollection(sessionState, cfg.config, 'Movie',limit,fields)
+   return sodaRest.getCollection(sessionState, cfg.config, 'Movie', limit, fields, total)
      
 }
 
@@ -190,9 +192,9 @@ function moviesByReleaseDateService(sessionState) {
   return sodaRest.queryByExample(sessionState, cfg.config, 'Movie', qbe)
 }
 
-function queryMovies(sessionState, qbe,limit,fields) {
+function queryMovies(sessionState, qbe, limit, fields, total) {
 	
-	return sodaRest.queryByExample(sessionState, cfg.config, 'Movie',qbe,limit,fields);
+	return sodaRest.queryByExample(sessionState, cfg.config, 'Movie',qbe, limit, fields, total);
 
 }
 
@@ -222,15 +224,21 @@ function insertScreenings(sessionState, screeningList) {
 
 }
 
+function getScreenings(sessionState,  limit, fields, total) {
+  
+   return sodaRest.getCollection(sessionState, cfg.config, 'Screening', limit, fields, total)
+     
+}
+
 function getScreening(sessionState, key, eTag) {
 	
 	return sodaRest.getJSON(sessionState, cfg.config, 'Screening', key, eTag);
 
 }
 
-function queryScreenings(sessionState, qbe,limit,fields) {
+function queryScreenings(sessionState, qbe, limit, fields, total) {
 	
-	return sodaRest.queryByExample(sessionState, cfg.config, 'Screening',qbe,limit,fields);
+	return sodaRest.queryByExample(sessionState, cfg.config, 'Screening',qbe, limit, fields, total);
 
 }
 
@@ -278,9 +286,9 @@ function updateTicketSale(sessionState, key,ticketSale,eTag) {
 
 }
 
-function queryTicketSales(sessionState, qbe,limit,fields) {
+function queryTicketSales(sessionState, qbe, limit, fields, total) {
 	
-	return sodaRest.queryByExample(sessionState, cfg.config, 'TicketSale', qbe, limit, fields);
+	return sodaRest.queryByExample(sessionState, cfg.config, 'TicketSale', qbe, limit, fields, total);
 
 }
 
@@ -309,6 +317,12 @@ function insertPoster(sessionState, poster) {
 	
 	return sodaRest.postDocument(sessionState, cfg.config, 'Poster',poster,'image/jpeg');
 
+}
+
+function getPosters(sessionState, limit, fields, total) {
+  
+   return sodaRest.getCollection(sessionState, cfg.config, 'Poster', limit, fields, total)
+     
 }
 
 function getPoster(sessionState, key) {

@@ -37,9 +37,6 @@ function getRouter() {
   		next();
 		});
 
-    router.route('/googleConfiguration')
-        .get(getGoogleConfiguration);
-
     router.route('/theaters/geoCoding/center')
         .get(getTheaterCenter);
 
@@ -94,8 +91,17 @@ function getRouter() {
     router.route('/config/loadScreenings')
         .get(getLoadScreenings);
 
-    router.route('/config/LoadPosters')
+    router.route('/config/loadPosters')
         .get(getLoadPosters);
+
+    router.route('/config/googleConfiguration')
+        .get(getGoogleConfiguration);
+
+    router.route('/config/status')
+        .get(getMovieTicketingStatus);
+
+    router.route('/config/updateKeys')
+        .post(postUpdateKeys);
 
     router.route('/movieticketlog/operationId/:id')
         .get(getLogRecordsByOperation);
@@ -195,4 +201,12 @@ function getTheaterCenter(req, res, next) {
 
 function getGoogleConfiguration(req, res, next) {
   movieTicketing.getGoogleConfiguration(req.session, res, next);
+}
+
+function getMovieTicketingStatus(req, res, next) {
+  externalInterfaces.loadStatus(req.session, res, next);
+}
+
+function postUpdateKeys(req, res, next) {
+	externalInterfaces.updateKeys(req.session, res, next, req.body)
 }

@@ -31,14 +31,20 @@
       "zipCode": "94501"
     }
   },
-  "geoCoder": "google",
   "usCensus": {
     "protocol": "http",
     "hostname": "geocoding.geo.census.gov",
     "port": 80,
     "path": "/geocoder/locations/onelineaddress"
   },
+  "geoCoder": "google",
   "google": {
-    "apiKey": "YOUR_GOOGLE_KEY_GOES_HERE"
+    "apiKey": "YOUR_GOOGLE_KEY_GOES_HERE",
+    "geocoding": {
+      "protocol": "https",
+      "hostname": "maps.googleapis.com",
+      "port": 443,
+      "path": "/maps/api/geocode/json"
+    }
   }
 }

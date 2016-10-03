@@ -477,39 +477,106 @@ body {
       	</div>
       </div>
       
-	  	<div class="tab-pane" id="tab_LoadTestData">
-      	<div id="LoadTestData" class="panel panel-default">
+			<div class="tab-pane" id="tab_LoadTestData">
+      	<div id="LoadTestData" class="panel panel-default" ng-controller="movieTheaterStatusCtrl">
      			<div class="panel-heading">
-     				<h4 class="panel-title" style="line-height:35px;">Movie Ticket Data Generator</h4>
+     				<h4 class="panel-title" style="line-height:35px;">Movie Ticket Application Status</h4>
      			</div>
       		<div class="panel-body" style="height:65vh; overflow: auto;">
-      			<div class="row">
-      				<div class=" col-xs-4 btn-group-vertical" role="toolbar">
-      					<button id="btn_LoadTheaters" type="button" class="btn btn-default btn-success has-spinner" onclick="loadTheaters(this)">Load Theaters  
-      						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
-      					</button>
-      					<button id="btn_LoadMovies" type="button" class="btn btn-default btn-success has-spinner" onclick="loadMovies(this)">Load Movies
-      						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>		
-      					</button>
-      					<button id="btn_LoadPosters" type="button" class="btn btn-default btn-success has-spinner" onclick="loadPosters(this)">Load Posters
-      						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>		
-      					</button>
-      					<button id="btn_GenerateScreenings" type="button" class="btn btn-default btn-success has-spinner" onclick="generateScreenings(this)">Generate Screenings
-      						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>		
-      					</button>
-      				</div>
-      				<div class="col-xs-8">
-      					<div class="input-group-vertical">
-      						<div id="status_LoadTheaters" class="well well-sm">Pending</div>
-      						<div id="status_LoadMovies" class="well well-sm">Pending</div>
-      						<div id="status_LoadPosters" class="well well-sm">Pending</div>
-      						<div id="status_GenerateScreenings" class="well well-sm">Pending</div>
-      					</div>
-      				</div>
-      			</div>
+      			<table class="table">
+      				<tbody>
+      					<tr>
+      						<td>
+          					<form name="apiKeys" ng-submit="updateKeys(googleKey,tmdbKey)" class="form-horizontal">
+            					<div class="form-group well well-sm">
+           							<span class="input-group-addon label label-default">Google API Key</span><span>  A valid Google API key is required to enable geo-coding of Theaters</span>
+           							<br><br>
+            						<div class="input-group col-sm-12">
+      								  	<input id="googleKey" name="googleKey" ng-model="googleKey" type="text" class="form-control col-md-10" placeholder="Google API Key" required>
+  	    								  <span ng-show="!googleKey.length" class="input-group-btn">
+	      								  	<button type="button" class="btn btn-default btn-success" ng-click="openLinkInWindow('https://developers.google.com/maps/documentation/javascript/get-api-key','getkey')">Get Key</button>
+      										</span>
+      					  		  	<span ng-show="apiKeys.googleKey.$dirty && apiKeys.googleKey.$valid" class="input-group-btn">
+         								  	<button class="btn btn-default btn-success" type="submit">Save</button>
+      										</span>
+      									</div>
+      								</div>
+      
+            					<div class="form-group well well-sm">
+           							<span class="label label-default">TMDB API Key</span><span>  A valid TMBD key is required to enable loading of Movies</span>
+           							<br><br>
+            						<div class="input-group col-sm-12">
+	      									<input id="tmdbKey" name="tmdbKey" ng-model="tmdbKey" style="width:100%;" type="text" class="form-control" placeholder="TMDB API Key" required>
+  		  								  <span ng-show="!tmdbKey.length" class="input-group-btn">
+      											<button type="button" class="btn btn-default btn-success" ng-click="openLinkInWindow('https://www.themoviedb.org/account/signup','getkey')">Get Key</button>
+      										</span>
+      							  		<span ng-show="apiKeys.tmdbKey.$dirty && apiKeys.tmdbKey.$valid" class="input-group-btn">
+       	  	 								<button  class="btn btn-default btn-success" type="submit">Save</button>
+       										</span>
+            						</div>
+      								</div>
+      
+            					<div class="form-group well well-sm">
+           							<span class="label label-default">Theater Collection</span>
+           							<br><br>
+            						<div class="input-group col-sm-12">
+          								<input id="status_LoadTheaters" class="form-control" type="text" disabled value="{{(status.theaterCount === 0) ? 'Pending' : 'Documents: ' + status.theaterCount}}">
+       						  			<span ng-show="apiKeys.googleKey.$valid" class="input-group-btn">
+      		      						<button id="btn_LoadTheaters" type="button" class="btn btn-default btn-success has-spinner" ng-click="loadTheaters($event)">Load  
+      		      							<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+      	  	 								</button>
+       										</span>
+       									</div>
+       								</div>
+      
+            					<div class="form-group well well-sm">
+           							<span class="label label-default">Movie Collection</span>
+           							<br><br>
+            						<div class="input-group col-sm-12">
+          								<input id="status_LoadMovies" class="form-control" type="text" disabled value="{{(status.movieCount === 0) ? 'Pending' : 'Documents: ' + status.movieCount}}">
+       						  			<span ng-show="apiKeys.tmdbKey.$valid" class="input-group-btn">
+      		      						<button id="btn_LoadMovies" type="button" class="btn btn-default btn-success has-spinner" ng-click="loadMovies($event)">Load  
+      		      							<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+      	  	 								</button>
+       										</span>
+       									</div>
+       								</div>
+      
+            					<div class="form-group well well-sm">
+           							<span class="label label-default">Poster Collection</span>
+           							<br><br>
+            						<div class="input-group col-sm-12">
+          								<input id="status_LoadPosters" class="form-control" type="text" disabled value="{{(status.posterCount === 0) ? 'Pending' : 'Documents: ' + status.posterCount}}">
+       						  			<span ng-show="(status.movieCount > 0)" class="input-group-btn">
+      		      						<button id="btn_LoadPosters" type="button" class="btn btn-default btn-success has-spinner" ng-click="loadPosters($event)">Load  
+      		      							<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+      	  	 								</button>
+       										</span>
+       									</div>
+       								</div>
+      
+            					<div class="form-group well well-sm">
+           							<span class="label label-default">Screening Collection</span>
+           							<br><br>
+            						<div class="input-group col-sm-12">
+          								<input id="status_GenerateScreenings" class="form-control" type="text" disabled value="{{(status.screeningCount === 0) ? 'Pending' : 'Documents: ' + status.screeningCount}}">
+       						  			<span ng-show="((status.movieCount > 0) && (status.theaterCount > 0))" class="input-group-btn">
+      		      						<button id="btn_GenerateScreenings" type="button" class="btn btn-default btn-success has-spinner" ng-click="generateScreenings($event)">Load  
+      		      							<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+      	  	 								</button>
+       										</span>
+       									</div>
+       								</div>
+      
+         						</form>
+            			</td>
+            		</tr>
+      				</tbody>
+      			</table>
       		</div>
       	</div>
       </div>
+      
     </div>
 
     <div class="modal fade" id="dialog_PurchaseTickets" tabindex="-1" role="dialog" aria-labelledby="title_BookTickets" aria-hidden="true">

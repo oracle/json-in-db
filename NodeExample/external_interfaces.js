@@ -27,6 +27,8 @@ module.exports.loadTheaters    = loadTheaters;
 module.exports.loadMovies      = loadMovies;
 module.exports.loadScreenings  = loadScreenings;
 module.exports.loadPosters     = loadPosters;
+module.exports.loadStatus      = loadStatus;
+module.exports.updateKeys      = updateKeys;
 
 function writeLogEntry(module,message) {
 	module = ( message === undefined) ? module : module + ": " + message
@@ -153,6 +155,7 @@ function loadTheaters (sessionState, response, next) {
   var sessionState = sodaLoggingState;
 
   var theaterList = [];
+  var status = {}
   
   writeLogEntry('loadTheaters()');
   getTheaterInformation().then(function(theaters) {
@@ -161,7 +164,14 @@ function loadTheaters (sessionState, response, next) {
   }).then(function() {
     return movieAPI.insertTheaters(sessionState, theaterList);
   }).then(function(sodaResponse) {
-    response.json({count:sodaResponse.json.length})
+  	status = {count:sodaResponse.json.items.length};
+  	return movieAPI.dropScreeningCollection(sessionState).catch(function(e) {
+  		if (e.details.statusCode !== 404) {
+  			throw e;
+  		}
+  	})
+ 	}).then(function (sodaResponse) {
+    response.json(status)
     response.end('')
   }).catch(function(e) {
   	movieAPI.logError(e,theaterList);
@@ -173,10 +183,11 @@ function loadMovies(sessionState, response, next) {
 
   /* Disable Soda Logging */
   
+  var moduleId = 'loadMovies';
   var sessionState = sodaLoggingState;
 
-  writeLogEntry('loadMovies()');
-  getMoviesFromTMDB(sessionState,response).catch(function(e) {
+  writeLogEntry(moduleId);
+  return getMoviesFromTMDB(sessionState,response).catch(function(e) {
     next(e)
   });
 
@@ -210,6 +221,83 @@ function loadPosters(sessionState, response, next) {
 
 }
 
+function loadStatus(sessionState,response,next) {
+	var status = {
+		googleKey      : cfg.dataSources.google.apiKey
+	, tmdbKey        : cfg.dataSources.tmdb.apiKey
+	, movieCount     : 0
+	, theaterCount   : 0
+	, screeningCount : 0
+	, posterCount    : 0 
+	}
+	return movieAPI.getMovies(disableSodaLogging,1,undefined,true).then(function(sodaResponse){
+	   status.movieCount=sodaResponse.json.totalResults;
+	}).catch(function(e) {
+		 if (e.details.statusCode !== 404) {
+		 	 if (e.details.statusCode !== 400) {
+		 	 	 throw e;
+		 	 }
+		 	 else {
+		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
+		 	 	 	 throw e;
+		 	 	 }
+		   }
+		 }
+  }).then(function() {		 	 
+	   return movieAPI.getTheaters(disableSodaLogging,1,undefined,true)
+	}).then(function(sodaResponse){
+	   status.theaterCount=sodaResponse.json.totalResults;
+	}).catch(function(e) {
+		 if (e.details.statusCode !== 404) {
+		 	 if (e.details.statusCode !== 400) {
+		 	 	 throw e;
+		 	 }
+		 	 else {
+		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
+		 	 	 	 throw e;
+		 	 	 }
+		   }
+		 }
+  }).then(function() {		 	 
+	   return movieAPI.getScreenings(disableSodaLogging,1,undefined,true)
+	}).then(function(sodaResponse){
+	   status.screeningCount=sodaResponse.json.totalResults;
+	}).catch(function(e) {
+		 if (e.details.statusCode !== 404) {
+		 	 if (e.details.statusCode !== 400) {
+		 	 	 throw e;
+		 	 }
+		 	 else {
+		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
+		 	 	 	 throw e;
+		 	 	 }
+		   }
+		 }
+  }).then(function() {		 	 
+	   return movieAPI.getPosters(disableSodaLogging,1,undefined,true)
+	}).then(function(sodaResponse){
+	   status.posterCount=sodaResponse.json.totalResults;
+	}).catch(function(e) {
+		 if (e.details.statusCode !== 404) {
+		 	 if (e.details.statusCode !== 400) {
+		 	 	 throw e;
+		 	 }
+		 	 else {
+		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
+		 	 	 	 throw e;
+		 	 	 }
+		   }
+		 }
+  }).then(function() {		 	 
+	   response.json(status);
+	   response.end();
+  }).catch(function(e){
+  	writeLogEntry('loadStatus(): Broken Promise.');
+    next(e);
+  });
+
+}	   
+	   
 function doGeocoding(address,benchmark) {
 
   var moduleId = 'geocodeAddress("' + address + '",' + benchmark + ')';
@@ -528,23 +616,6 @@ function getMoviesFromTMDB(sessionState,response) {
 
   }
       
-  function saveMovies(movieCache) {
-  	
-  	// (Re)Create the Movie Collection.
-    
-    return movieAPI.recreateMovieCollection(sessionState).then(function() {
-      return movieAPI.insertMovies(sessionState, movieCache);
-    }).then(function(sodaResponse) {
-      response.write(',');
-      response.write('"count":' + sodaResponse.json.length);
-      response.write('}');
-      response.end();
-    }).catch(function(e) {
-      writeLogEntry('processMovies()','Broken Promise.');
-      throw e;
-    })
-  }
-
   function getCastMembers(cast) {
     
     var castMembers = []
@@ -706,12 +777,12 @@ function getMoviesFromTMDB(sessionState,response) {
   
   }
 
-  function getMovieDetails(movies, batchNo, batchSize,response) {
+ function getMovieDetails(movies, batchNo, batchSize, response) {
 
 		var moduleId = 'getMovieDetails(' + batchNo + ')';
 
     var batch = movies.splice(0,batchSize)
-    // writeLogEntry(moduleId,'Movies remaining = ' + movies.length);
+    writeLogEntry(moduleId,'Movies remaining = ' + movies.length);
     
     var status = {
       date   : dateWithTZOffset(new Date()),
@@ -722,39 +793,46 @@ function getMoviesFromTMDB(sessionState,response) {
     response.write(JSON.stringify(status));
     response.write(',');
 
-    /*
-    idList = batch.reduce(
-      function(list,movie) {
-        list = list + movie.id + ",";
-        return list
-      },
-      ""
-    );
-    var idList = idList.substring(0,idList.length-1);
-    writeLogEntry(moduleId,'Adding Batch ' + batchNo + ': [' + idList + '].');
-    */
-  
     // Create a Batch of getMovieFromTMDB() operations.
     // writeLogEntry(moduleId,'Generating getMovieFromTMDB() operations.');
         
     return Promise.all(batch.map(createMovie)).then(function(){
+    	
     	if (movies.length > 0) {
   	    writeLogEntry(moduleId,'Movies remaining = ' + movies.length);
       	batchNo++;
   		  return waitAndRun(movies, getMovieDetails, 'getMovieDetails', 'createMovie', batchNo, batchSize, response);
   		}
 	 		else {
-        writeLogEntry(moduleId, 'createMovie operations complete');
+		    writeLogEntry(moduleId, 'getMoviesFromTMDB operations complete. Movie Cache size = ' + movieCache.length); 
+		
         var status = {
-        date   : dateWithTZOffset(new Date()),
-        module : moduleId,
-        state  : "Completed"
+          date   : dateWithTZOffset(new Date()),
+          module : moduleId,
+          state  : "Completed"
         }
         response.write(JSON.stringify(status))
         response.write(']');
-
-        writeLogEntry(moduleId,'Movie Cache size = ' + movieCache.length);
-        saveMovies(movieCache);
+ 
+        return movieAPI.recreateMovieCollection(sessionState).then(function() {
+          return movieAPI.insertMovies(sessionState, movieCache);
+        }).then(function(sodaResponse) {
+          response.write(',');
+          response.write('"count":' + sodaResponse.json.items.length);
+          response.write('}');
+          response.end();
+          return movieAPI.dropPosterCollection(sessionState).catch(function(e) {
+     	  		if (e.details.statusCode !== 404) {
+  			      throw e;
+  		      }
+          })
+        }).then(function() {
+          return movieAPI.dropScreeningCollection(sessionState).catch(function(e) {
+     	  		if (e.details.statusCode !== 404) {
+  			      throw e;
+  		      }
+          });
+        })
       }
     }).catch(function(e){
    	  throw e
@@ -778,18 +856,6 @@ function getMoviesFromTMDB(sessionState,response) {
     
     response.write(JSON.stringify(status));
     response.write(',');
-
-    /*
-    idList = batch.reduce(
-      function(list,movie) {
-        list = list + movie.id + ",";
-        return list
-      },
-      ""
-    );
-    var idList = idList.substring(0,idList.length-1);
-    writeLogEntry(moduleId,'Adding Batch ' + batchNo + ': [' + idList + '].');
-    */
   
     // Create a Batch of getMovieListPage() operations.
     // writeLogEntry(moduleId, 'Generating getMoviePage() operations.');
@@ -999,7 +1065,7 @@ function createScreenings(sessionState) {
   var updatedMovieList = [];
   
   return movieAPI.getTheaters(sessionState).then(function(sodaResponse) {
-    sodaResponse.json.forEach(
+    sodaResponse.json.items.forEach(
       function(item) {
         theaterList.push(item.value);
       }
@@ -1007,7 +1073,7 @@ function createScreenings(sessionState) {
   }).then(function() {
     return movieAPI.getMovies(sessionState)
   }).then(function(sodaResponse) {
-  	movieList = sodaResponse.json
+  	movieList = sodaResponse.json.items
   	movieList.forEach(
   	  function(movieItem) { 
   	  	resetMovieInTheatersFlag(movieItem,false,updatedMovieList);
@@ -1021,7 +1087,7 @@ function createScreenings(sessionState) {
   	// writeLogEntry(moduleId,JSON.stringify(sodaResponses))
     screeningCount = sodaResponses.reduce(
   	  function (runningTotal,sodaResponse) {
-  		  runningTotal = runningTotal + sodaResponse.json.length
+  		  runningTotal = runningTotal + sodaResponse.json.items.length
   	    return runningTotal
   	  },
   	  0
@@ -1080,7 +1146,7 @@ function getPostersFromTMDB(sessionState,response) {
         // writeLogEntry('getPosterFromTMDB() : Poster size = ' + poster.length);
   	    return movieAPI.insertPoster(sessionState, httpResponse.body).then(function(sodaResponse){
   	    	movie.externalURL = movie.posterURL
-  	    	movie.posterURL = '/movieticket/poster/' + sodaResponse.json[0].id;
+  	    	movie.posterURL = '/movieticket/poster/' + sodaResponse.json.items[0].id;
           return movieAPI.updateMovie(sessionState, movieItem.id, movie).catch(function(e) {
           	writeLogEntry('getPosterFromTMDB(' + movie.id + ').updateMovie(): Broken Promise.');
           	throw e;
@@ -1115,18 +1181,6 @@ function getPostersFromTMDB(sessionState,response) {
     response.write(JSON.stringify(status));
     response.write(',');
    
-    /*
-    idList = batch.reduce(
-      function(list,movie) {
-        list = list + movie.id + ",";
-        return list
-      },
-      ""
-    );
-    var idList = idList.substring(0,idList.length-1);
-    writeLogEntry('Adding Batch ' + batchNo + ': [' + idList + '].');
-    */
-   
     // Create a Batch of getPosterFromTMDB() operations.
     // writeLogEntry('getPosterBatchFromTMDB(' + batchNo +'): Generating getPosterFromTMDB operations.');
       
@@ -1160,7 +1214,7 @@ function getPostersFromTMDB(sessionState,response) {
   var qbe = { posterURL : { '$ne' : null }}
   
   return movieAPI.queryMovies(sessionState, qbe,'unlimited').then(function(sodaResponse){
-  	movieItems = sodaResponse.json;
+  	movieItems = sodaResponse.json.items;
   	// console.log(moduleId,JSON.stringify(movieItems).substring(0,9999));
   	writeLogEntry('getPostersFromTMDB() : Movie count = ' + movieItems.length);
     return movieAPI.recreatePosterCollection(sessionState)
@@ -1171,4 +1225,17 @@ function getPostersFromTMDB(sessionState,response) {
   	writeLogEntry('getPostersFromTMDB(): Broken Promise.');
   	throw e;
   });
+}	   
+
+function updateKeys(sessionState, response, next, apiKeys) {
+	
+	console.log(JSON.stringify(apiKeys));
+	try {
+		cfg.updateKeys(apiKeys.google.apiKey,apiKeys.tmdb.apiKey);
+	  response.json({status : "success" })
+	  response.end();
+	}
+	catch (e) {
+		next(e);
+	}
 }

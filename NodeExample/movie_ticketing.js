@@ -68,16 +68,27 @@ function generateGUID(){
 
 var sodaLoggingDisabled = { sodaLoggingEnabled : false };
 
+function reportStatusCode(response, e, statusCode) {
+  	if ((e.statusCode) && (e.statusCode === statusCode)) {
+  		response.status(e.statusCode);
+  		response.end();
+  		return true;
+  	}
+  	return false
+}	
+
 function theatersService(sessionState, response, next) {
 
   console.log('movieTicketing.theatersService()');
 
   movieAPI.getTheaters(sessionState).then(function (sodaResponse) {
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json);
+    response.json(sodaResponse.json.items);
     response.end();
   }).catch(function(e){
-    next(e);
+  	if (!reportStatusCode(response, e, 404)) {
+      next(e);
+    }
   });
 } 
 
@@ -101,7 +112,7 @@ function searchTheatersService(sessionState, response, next, qbe) {
 
   movieAPI.queryTheaters(sessionState, qbe).then(function (sodaResponse) {
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json);
+    response.json(sodaResponse.json.items);
     response.end();
   }).catch(function(e){
     next(e);
@@ -128,7 +139,7 @@ function locateTheatersService(sessionState, response, next, lat, long, distance
 
   movieAPI.queryTheaters(sessionState, qbe).then(function (sodaResponse) {
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json);
+    response.json(sodaResponse.json.items);
     response.end();
   }).catch(function(e){
     next(e);
@@ -159,10 +170,12 @@ function moviesService(sessionState, response, next) {
 
   movieAPI.getMovies(sessionState).then(function (sodaResponse) {
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json((sodaResponse.json));
+    response.json((sodaResponse.json.items));
     response.end();
   }).catch(function(e){
-    next(e);
+  	if (!reportStatusCode(response, e, 404)) {
+      next(e);
+    }
   });
 } 
 
@@ -172,10 +185,12 @@ function moviesByReleaseDateService(sessionState, response, next) {
 
   movieAPI.moviesByReleaseDateService(sessionState).then(function (sodaResponse) {
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json((sodaResponse.json));
+    response.json((sodaResponse.json.items));
     response.end();
   }).catch(function(e){
-    next(e);
+  	if (!reportStatusCode(response, e, 404)) {
+      next(e);
+    }
   });
 }
 
@@ -185,7 +200,7 @@ function movieByIdService(sessionState, response, next, id) {
 
   movieAPI.getMovieById(sessionState, id).then(function (sodaResponse) {                                           
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json.value);                                      
+    response.json(sodaResponse.json.items[0].value);                                      
     response.end();                                            
   }).catch(function(e){
     next(e);
@@ -199,7 +214,7 @@ function searchMoviesService(sessionState, response, next, qbe) {
   movieAPI.queryMovies(sessionState, qbe).then(function (sodaResponse) {
     // console.log(JSON.stringify(sodaResponse));
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json);
+    response.json(sodaResponse.json.items);
     response.end();
   }).catch(function(e){
     next(e);
@@ -308,7 +323,7 @@ function processScreeningsByTheaterAndDate(sessionState,sodaResponse) {
   var movies = [];
   
   function addScreeningDetails(screeningItem) {
-  
+    
     var movieId  = screeningItem.value.movieId;
     var screenId = screeningItem.value.screenId;
     
@@ -373,10 +388,10 @@ function processScreeningsByTheaterAndDate(sessionState,sodaResponse) {
   
   // Transform the screenings into an array of Movies with the Screening information for each movie attached.
   
-  sodaResponse.json.map(addScreeningDetails);
+  sodaResponse.json.items.map(addScreeningDetails);
   
   return getMovieDetails(movies.map(getMovieIdList)).then(function(sodaResponse) {
-    sodaResponse.json.map(processMovie);
+    sodaResponse.json.items.map(processMovie);
     return movies
   }).catch(function(e){
     console.log('Broken Promise. processScreeningsByTheaterAndDate()');
@@ -408,8 +423,8 @@ function getMoviesByTheaterAndDate(sessionState,theater, date) {
   
   var qbe = { theaterId : theater.id, startTime : { "$gte" : startDate, "$lt" : endDate }, "$orderby" : { screenId : 1, startTime : 2}};
 
-  return movieAPI.queryScreenings(sessionState, qbe).then(function(items) {
-    return processScreeningsByTheaterAndDate(sessionState,items)
+  return movieAPI.queryScreenings(sessionState, qbe).then(function(sodaResponse) {
+    return processScreeningsByTheaterAndDate(sessionState,sodaResponse)
   }).then(function(movies) {
     moviesByTheater.movies = movies;
     return moviesByTheater;
@@ -487,11 +502,11 @@ function processScreeningsByMovieAndDate(sessionState,sodaResponse) {
   
   // Transform the screenings into an array of Theaters with the Screening information for each theater attached.
   
-  sodaResponse.json.map(addScreeningDetails);
+  sodaResponse.json.items.map(addScreeningDetails);
   
   if (theaters.length > 0) {
     return getTheaterDetails(theaters.map(getTheaterIdList)).then(function(sodaResponse) {
-      sodaResponse.json.map(processTheater);
+      sodaResponse.json.items.map(processTheater);
       return theaters
     }).catch(function(e){
       console.log('Broken Promise. processScreeningsByMovieAndDate()');
@@ -528,8 +543,8 @@ function getTheatersByMovieAndDate(sessionState,movie, date) {
 
   var qbe = { movieId : movie.id, startTime : { "$gte" : startDate, "$lt" : endDate } , "$orderby" : { screenId : 1, startTime : 2}};
 
-  return movieAPI.queryScreenings(sessionState, qbe).then(function(items) {
-    return processScreeningsByMovieAndDate(sessionState,items)
+  return movieAPI.queryScreenings(sessionState, qbe).then(function(sodaResponse) {
+    return processScreeningsByMovieAndDate(sessionState,sodaResponse)
   }).then(function(theaters) {
     theatersByMovie.theaters = theaters;
     return theatersByMovie;
@@ -608,7 +623,7 @@ function logRecordsByOperationService(sessionState, response, next, id) {
                                  
   movieAPI.getLogRecordByOperationId(id).then(function (sodaResponse) { 
     // console.log(JSON.stringify(sodaResponse.json))
-    response.json(sodaResponse.json);                                      
+    response.json(sodaResponse.json.items);                                      
     response.end();                                            
   }).catch(function(e){
     next(e);
@@ -630,10 +645,10 @@ function getTheaterCenter(sessionState, response, next) {
   		longitude : [ 360, -360 ]
   	}
   	
-  	for (var i=0; i < sodaResponse.json.length; i++) {
-  	  if (sodaResponse.json[i].value.location.geoCoding.coordinates) {
-  	  	var latitude = sodaResponse.json[i].value.location.geoCoding.coordinates[0]
-  	  	var longitude = sodaResponse.json[i].value.location.geoCoding.coordinates[1]
+  	for (var i=0; i < sodaResponse.json.items.length; i++) {
+  	  if (sodaResponse.json.items[i].value.location.geoCoding.coordinates) {
+  	  	var latitude = sodaResponse.json.items[i].value.location.geoCoding.coordinates[0]
+  	  	var longitude = sodaResponse.json.items[i].value.location.geoCoding.coordinates[1]
 	  	  if (latitude < boundsBox.latitude[0]) {
   		  	boundsBox.latitude[0] = latitude;
   		  }

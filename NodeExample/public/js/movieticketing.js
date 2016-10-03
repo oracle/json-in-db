@@ -39,7 +39,7 @@ function loadTestData(URL, button) {
   }
   
   var status = document.getElementById('status' + button.id.substr(3))
-  status.textContent = 'Working';
+  status.value = 'Working';
   
  	var callback = function(XHR,URL,button) {
   	var status = document.getElementById('status' + button.id.substr(3))
@@ -47,10 +47,10 @@ function loadTestData(URL, button) {
     button.classList.remove('disabled');
     if (XHR.status == 200) {
     	result = JSON.parse(XHR.responseText)
-      status.textContent = 'Success: Loaded ' + result.count + ' documents.';
+      status.value = 'Success: Loaded ' + result.count + ' documents.';
     }
     else {
-    	status.textContent = 'Failed: Status = ' + XHR.status + ' (' + XHR.statusText + ').';
+    	status.value = 'Failed: Status = ' + XHR.status + ' (' + XHR.statusText + ').';
     }
   } 
 
@@ -64,34 +64,6 @@ function loadTestData(URL, button) {
   };
   XHR.send()
 
-}
-
-function loadTheaters(button) {
-
-  var URL = '/movieticket/config/loadtheaters';
-  loadTestData(URL,button);
-   
-}
-
-function loadMovies(button) {
-
-  var URL = '/movieticket/config/loadmovies';
-  loadTestData(URL,button);
-  
-}
-
-function loadPosters(button) {
-
-  var URL = '/movieticket/config/loadposters';
-  loadTestData(URL,button);
-  
-}
-
-function generateScreenings(button) {
-
-  var URL = '/movieticket/config/loadscreenings';
-  loadTestData(URL,button);
-  
 }
 
 var app = angular.module('movieTicketing', ['ngCookies']);
@@ -166,6 +138,162 @@ app.controller('bookingCtrl',function($scope, $http, bookingService) {
 
   $scope.bookingService = bookingService;
     				    				
+});
+
+app.controller('movieTheaterStatusCtrl',function($scope, $http) {
+
+	$scope.status = {}
+	$scope.googleKey = ""
+	$scope.tmdbKey = ""
+
+	$scope.openLinkInWindow = function(link,target) {
+		window.open(link,target)
+  }
+   
+
+  $http({
+    method : 'GET',
+    url    : '/movieticket/config/status/',
+  }).success(function(data, status, headers) {
+  	var configComplete = true;
+ 	  $scope.status = data;
+
+ 	  if ($scope.status.googleKey !== 'YOUR_GOOGLE_KEY_GOES_HERE') {
+ 	  	$scope.googleKey = $scope.status.googleKey;
+ 	  }
+ 	  else {
+ 	  	configComplete = false;
+ 	  }
+
+ 	  if ($scope.status.tmdbKey !== 'YOUR_TMDB_KEY_GOES_HERE') {
+ 	  	$scope.tmdbKey = $scope.status.tmdbKey;
+ 	  }
+ 	  else {
+ 	  	configComplete = false;
+ 	  }
+ 	  
+ 	  if (configComplete) {
+ 	  	configComplete = $scope.showApplication();
+ 	  }
+
+  });
+
+  $scope.showApplication = function() {
+  	
+  	configComplete = true;
+	  if ($scope.status.movieCount === 0) {
+ 	  	configComplete = false;
+ 	  }
+
+ 	  if ($scope.status.theaterCount === 0) {
+ 	  	configComplete = false;
+ 	  }
+
+ 	  if ($scope.status.screeningCount === 0) {
+ 	  	configComplete = false;
+ 	  }
+
+	  if ($scope.status.posterCount === 0) {
+ 	  	configComplete = false;
+ 	  }
+ 	  
+ 	  if (configComplete) {
+ 	  	showApplicationTabs();
+ 	  }
+ 	  else{
+ 	  	showConfigurationTab();
+ 	  }  	
+  }
+  
+    				    				
+  $scope.updateKeys = function (googleKey, tmdbKey) {
+  	
+      var apiKeys = {
+        google    : {
+          apiKey  : googleKey
+        }
+      , tmdb      : {
+      	  apiKey  : tmdbKey
+      	}
+      }
+
+      $http.post('/movieticket/config/updateKeys', apiKeys).success(function (data, status, headers) {
+ 				initGoogleMaps(googleKey);
+      }).error(function (data, status, headers) {
+        showErrorMessage('Error saving keys');
+      });
+  };
+  
+  $scope.resetTheaters = function (theaterCount) {
+  	$scope.status.theaterCount = theaterCount;
+  	$scope.status.screeningCount = 0;
+  	$scope.showApplication();
+  }
+  
+  $scope.resetMovies = function (movieCount) {
+  	$scope.status.movieCount = movieCount;
+  	$scope.status.screeningCount = 0;
+  	$scope.status.posterCount = 0;
+  	$scope.showApplication();
+  }
+  				    				
+  $scope.resetPosters = function (posterCount) {
+  	$scope.status.posterCount = posterCount;
+  	$scope.showApplication();
+  }
+
+  $scope.resetScreenings = function (screeningCount) {
+  	$scope.status.screeningCount = screeningCount;
+  	$scope.showApplication();
+  }
+  
+  $scope.loadSampleData = function(url,button,callback,target) {
+
+    if (button.classList.contains('disabled')) {
+    	return
+    }
+    else {
+  	  button.getElementsByTagName('span')[0].classList.add('spinning')
+  	  button.classList.add('disabled')
+    }
+  
+    var statusWindow = document.getElementById('status' + button.id.substr(3))
+    statusWindow.value = 'Working';
+  
+    $http.get(url).success(function(data, status, headers) {
+ 	  	button.getElementsByTagName('span')[0].classList.remove('spinning')
+      button.classList.remove('disabled');
+      statusWindow.value = 'Documents: ' + data.count;
+    	callback(data.count);
+    }).error(function(data, status, headers) {
+    	showErrorMessage('Error Loading ' + target);
+    })
+  }
+
+  $scope.loadTheaters = function (event) {
+  
+  	$scope.loadSampleData('/movieticket/config/loadtheaters',event.target,$scope.resetTheaters,'Theaters');
+
+  }
+
+  $scope.loadMovies = function (event) {
+  
+  	$scope.loadSampleData('/movieticket/config/loadmovies',event.target,$scope.resetMovies,'Movies');
+ 
+  }
+
+  $scope.loadPosters = function (event) {
+  
+  	$scope.loadSampleData('/movieticket/config/loadposters',event.target,$scope.resetPosters,'Posters');
+ 
+  }
+
+  $scope.generateScreenings = function (event) {
+  
+  	$scope.loadSampleData('/movieticket/config/loadscreenings',event.target,$scope.resetScreenings,'Screenings');
+ 
+  }
+
 });
 
 app.factory('theaterService', function($http) {
@@ -342,7 +470,7 @@ app.controller('theatersCtrl',function($scope, $http, $cookies, theaterService) 
 		getTheaterCenter();   			
 	}
 	
-	var path = '/movieticket/googleConfiguration'
+	var path = '/movieticket/config/googleConfiguration'
   $http.get(path).success(function(data, status, headers) {
   	if (data.apiKey === 'YOUR_GOOGLE_KEY_GOES_HERE') {
   		showErrorMessage('Please update dataSources.json with a valid Google API key and restart the Node.');	
@@ -561,6 +689,23 @@ function showBookingForm() {
   $('#childTickets').val("");
   $('#dialog_PurchaseTickets').modal('show');
   
+}
+
+function showConfigurationTab() {
+
+	$('#tabset_MovieTickets a[href="#tab_TheaterList"]').hide();
+  $('#tabset_MovieTickets a[href="#tab_MovieList"]').hide();
+  $('#tabset_MovieTickets a[href="#tab_LoadTestData"]').tab('show');
+
+}
+
+function showApplicationTabs() {
+
+	$('#tabset_MovieTickets a[href="#tab_TheaterList"]').show();
+  $('#tabset_MovieTickets a[href="#tab_TheaterList"]').tab('show');
+  $('#tabset_MovieTickets a[href="#tab_MovieList"]').show();
+  $('#tabset_MovieTickets a[href="#tab_LoadTestData"]').show();
+
 }
 
 function hideBookingForm() {

@@ -76,7 +76,7 @@ function setHeaders(contentType, eTag) {
    return headers;
 }
   
-function addLimitAndFields(queryProperties,limit,fields) {
+function addLimitAndFields(queryProperties, limit, fields, total) {
  
   if (fields === undefined) {
     fields = 'all';
@@ -86,6 +86,10 @@ function addLimitAndFields(queryProperties,limit,fields) {
       
   if (limit !== undefined) {
   	queryProperties.limit = limit;
+  }
+  
+  if (total) {
+  	queryProperties.totalResults = true;
   }
     
   return queryProperties;
@@ -192,9 +196,6 @@ function processSodaResponse(moduleName, requestOptions, logRequest, sodaRespons
 	    		response.body = body;
 	    	}
 	    }
-  		if ((response.json) && (response.json.items)) {
- 		  	response.json = response.json.items;
- 			}
  		}
  		else {
 		  // console.log('processSodaResponse("' + moduleName + '","' + response.contentType + '","' + Buffer.byteLength(body) + '")');	
@@ -288,14 +289,14 @@ function dropCollection(sessionState, cfg, collectionName) {
   return generateRequest(moduleId, sessionState, cfg, requestOptions);
 }
 
-function getCollection(sessionState, cfg, collectionName,limit,fields) {
+function getCollection(sessionState, cfg, collectionName, limit, fields, total) {
 
   var moduleId = 'getCollection("' + collectionName + '")';
   
 	var requestOptions = {
   	method  : 'GET'
   , uri     : getDocumentStoreURI(cfg,collectionName)
-  , qs      : addLimitAndFields({},limit,fields)
+  , qs      : addLimitAndFields({}, limit, fields, total)
   , headers : setHeaders()
   , time    : true
   , json    : true
@@ -400,7 +401,7 @@ function deleteDocument(sessionState, cfg, collectionName, key, eTag) {
   return generateRequest(moduleId, sessionState, cfg, requestOptions);
 }
 
-function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
+function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields, total) {
 
   var moduleId = 'queryByExample("' + collectionName + '",' + JSON.stringify(qbe) + ')'; 
   // console.log(moduleId);
@@ -408,7 +409,7 @@ function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
 	var requestOptions = {
   	method  : 'POST'
   , uri     : getDocumentStoreURI(cfg,collectionName)
-  , qs      : addLimitAndFields({action : "query"},limit,fields)
+  , qs      : addLimitAndFields({action : "query"}, limit, fields, total)
   , json    : qbe
   , time    : true
   };

@@ -20,6 +20,13 @@ var config = JSON.parse(configData);
 var dataSourceData = fs.readFileSync('dataSources.json');
 var dataSources = JSON.parse(dataSourceData);
 
-module.exports.config = config;
+module.exports.config      = config;
 module.exports.dataSources = dataSources;
+module.exports.updateKeys  = updateKeys;
+
+function updateKeys(googleKey,tmdbKey) {
+	dataSources.tmdb.apiKey = tmdbKey;
+	dataSources.google.apiKey = googleKey;
+  fs.writeFileSync('dataSources.json',JSON.stringify(dataSources,null,2));
+}
 

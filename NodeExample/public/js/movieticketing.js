@@ -473,6 +473,7 @@ app.controller('theatersCtrl',function($scope, $http, $cookies, theaterService) 
 	var path = '/movieticket/config/googleConfiguration'
   $http.get(path).success(function(data, status, headers) {
   	if (data.apiKey === 'YOUR_GOOGLE_KEY_GOES_HERE') {
+      $('#tabset_MovieTickets a[href="#tab_LoadTestData"]').tab('show');
   		showErrorMessage('Please update dataSources.json with a valid Google API key and restart the Node.');	
   	}
   	else {

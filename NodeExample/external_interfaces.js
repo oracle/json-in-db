@@ -364,28 +364,55 @@ function geocodeAddressGoogle(address) {
 	
 	var moduleId = 'geocodeAddressGoogle("' + address + '")';
 	
-	return new Promise(function(resolve,reject) {
-		return googleMapsClient.geocode({
-      address: address
-    }, function(err, response) {
-      if (err) {
-      	reject(err) 
-      }
-      else {
-      	try {
-        	var location = response.json.results[0].geometry.location
-          var geoCoding = {
-            type        : "Point"
-          , coordinates : [location.lat, location.lng]                                                                      
-          }
-      	  resolve(geoCoding);
-      	} catch(e) {
-      		reject(e);
-      	}
-      }
-    })
-  });
-
+		if (cfg.dataSources.useProxy) {
+			var requestOptions = {
+	  	  method  : 'GET'
+  		, uri   : cfg.dataSources.google.geocoding.protocol + '://' 
+            	+ cfg.dataSources.google.geocoding.hostname + ':' 
+            	+ cfg.dataSources.google.geocoding.port 
+            	+ cfg.dataSources.google.geocoding.path 
+      , qs    : {key : cfg.dataSources.google.apiKey, address : address}
+	  	, json  : true
+  		, time  : true
+			, proxy : 'http://' + cfg.dataSources.proxy.hostname + ':' + cfg.dataSources.proxy.port
+	   	}
+	   	return new Promise(function(resolve,reject) {
+	   		generateRequest(moduleId, cfg, requestOptions).then(function(response) {
+ 	        var location = response.json.results[0].geometry.location
+            var geoCoding = {
+             	type        : "Point"
+            , coordinates : [location.lat, location.lng]                                                                      
+  	      }
+          resolve(geoCoding);
+        }).catch(function (e) {
+      	  reject(e);
+     	  })
+      })
+		}
+		else {
+			return new Promise(function(resolve,reject) {
+        googleMapsClient.geocode({
+	          address: address
+          },
+          function(err, response) {
+            if (err) {
+        	   reject(err) 
+            }
+            else {
+      	      try {
+        	      var location = response.json.results[0].geometry.location
+                var geoCoding = {
+                	type        : "Point"
+                  , coordinates : [location.lat, location.lng]                                                                      
+          	    }
+      	        resolve(geoCoding);
+      			  } catch(e) {
+      		      reject(e);
+      	      }
+      		  }
+    	    })
+        });
+    }
 }
 
 function geocodeTheater(theater) {
@@ -410,6 +437,7 @@ function geocodeTheater(theater) {
   	  theater.location.geoCoding = geoCoding
   	  return theater;
     }).catch(function(e) {
+      console.log(JSON.stringify(e));
   	  writeLogEntry(moduleId,'Unable to get location for = "' + address + '".');
   	  theater.location.geoCoding = {}
   	  return theater;

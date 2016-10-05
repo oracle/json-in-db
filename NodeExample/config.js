@@ -15,9 +15,9 @@
 
 var fs = require('fs');
 
-var configData = fs.readFileSync('config.json');
+var configData = fs.readFileSync(__dirname + '/config.json');
 var config = JSON.parse(configData);         
-var dataSourceData = fs.readFileSync('dataSources.json');
+var dataSourceData = fs.readFileSync(__dirname + '/dataSources.json');
 var dataSources = JSON.parse(dataSourceData);
 
 module.exports.config      = config;

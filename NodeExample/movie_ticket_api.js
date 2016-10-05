@@ -17,7 +17,7 @@ var sodaRest = require('./soda-rest.js');
 var cfg = require('./config.js');
 var fs = require('fs');
 
-var collectionDefinitions = fs.readFileSync('collections.json');
+var collectionDefinitions = fs.readFileSync(__dirname + '/collections.json');
 var collectionMetadata    = JSON.parse(collectionDefinitions);
 
 var logCollectionName     = 'MovieTicketLog';

@@ -22,13 +22,13 @@ var movieAPI = require('./movie_ticket_api.js');
 var usAddressParser = require('parse-address');
 var googleMapsClient = require('@google/maps').createClient({key: cfg.dataSources.google.apiKey});
 
-module.exports.ExternalError   = ExternalError;
-module.exports.loadTheaters    = loadTheaters;
-module.exports.loadMovies      = loadMovies;
-module.exports.loadScreenings  = loadScreenings;
-module.exports.loadPosters     = loadPosters;
-module.exports.loadStatus      = loadStatus;
-module.exports.updateKeys      = updateKeys;
+module.exports.ExternalError     = ExternalError;
+module.exports.loadTheaters      = loadTheaters;
+module.exports.loadMovies        = loadMovies;
+module.exports.loadScreenings    = loadScreenings;
+module.exports.loadPosters       = loadPosters;
+module.exports.loadStatus        = loadStatus;
+module.exports.updateDataSources = updateDataSources;
 
 function writeLogEntry(module,message) {
 	module = ( message === undefined) ? module : module + ": " + message
@@ -158,6 +158,7 @@ function loadTheaters (sessionState, response, next) {
   var status = {}
   
   writeLogEntry('loadTheaters()');
+  
   getTheaterInformation().then(function(theaters) {
   	theaterList = theaters;
     return movieAPI.recreateTheaterCollection(sessionState)
@@ -165,11 +166,7 @@ function loadTheaters (sessionState, response, next) {
     return movieAPI.insertTheaters(sessionState, theaterList);
   }).then(function(sodaResponse) {
   	status = {count:sodaResponse.json.items.length};
-  	return movieAPI.dropScreeningCollection(sessionState).catch(function(e) {
-  		if (e.details.statusCode !== 404) {
-  			throw e;
-  		}
-  	})
+  	return movieAPI.dropScreeningCollection(sessionState)
  	}).then(function (sodaResponse) {
     response.json(status)
     response.end('')
@@ -222,14 +219,20 @@ function loadPosters(sessionState, response, next) {
 }
 
 function loadStatus(sessionState,response,next) {
+	
+	console.log('externalInterfaces.loadStatus()');	
 	var status = {
-		googleKey      : cfg.dataSources.google.apiKey
-	, tmdbKey        : cfg.dataSources.tmdb.apiKey
-	, movieCount     : 0
-	, theaterCount   : 0
-	, screeningCount : 0
-	, posterCount    : 0 
+		googleKey         : cfg.dataSources.google.apiKey
+	, tmdbKey           : cfg.dataSources.tmdb.apiKey
+	, supportedFeatures : movieAPI.getDetectedFeatures()
+	, geocodingService  : cfg.dataSources.geocodingService
+	, mappingService    : cfg.dataSources.mappingService
+	, movieCount        : 0
+	, theaterCount      : 0
+	, screeningCount    : 0
+	, posterCount       : 0 
 	}
+		
 	return movieAPI.getMovies(disableSodaLogging,1,undefined,true).then(function(sodaResponse){
 	   status.movieCount=sodaResponse.json.totalResults;
 	}).catch(function(e) {
@@ -283,7 +286,7 @@ function loadStatus(sessionState,response,next) {
 		 	 	 throw e;
 		 	 }
 		 	 else {
-		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
+		 	 	 if (e.json['o:errorCode'] === 'SQL-00942') {
 		 	 	 	 throw e;
 		 	 	 }
 		   }
@@ -307,10 +310,8 @@ function doGeocoding(address,benchmark) {
   , uri     : cfg.dataSources.usCensus.protocol + '://' 
             + cfg.dataSources.usCensus.hostname + ':' 
             + cfg.dataSources.usCensus.port 
-            + cfg.dataSources.usCensus.path 
-            + '?' + 'format=' + 'json' 
-            + '&' + 'benchmark=' + benchmark 
-            + '&' + 'address=' + encodeURIComponent(address)
+            + cfg.dataSources.usCensus.path
+  , qs      : { format : "json", benchmark : benchmark, adress : address}
   , json    : true
   , time    : true
   };
@@ -418,30 +419,45 @@ function geocodeAddressGoogle(address) {
 function geocodeTheater(theater) {
 	
 	var moduleId = 'geocodeTheater(' + theater.id + ',' + theater.name + ')'
+
+	// If $near is not supported by SODA then geocoding is irrelevant.
 	
+  if (movieAPI.getDetectedFeatures().$near == false) {
+    theater.location.geoCoding = {}
+    Promise.resolve(theater);
+  }
+
 	var address = theater.location.street + " " + theater.location.city + " " + theater.location.state + " " + theater.location.zipCode;
 	// writeLogEntry(moduleId,'Address = "' + address + '".');
-	
-	if (cfg.dataSources.geoCoder === "usCensus") {
+  
+	switch (cfg.dataSources.geocodingService) {
+	  case "usCensus" :
       return geocodeAddress(address,'Public_AR_Census2010',0).then(function(geoCoding){
-  	  theater.location.geoCoding = geoCoding
-  	  return theater;
-    }).catch(function(e) {
-  	  writeLogEntry(moduleId,'Unable to get location for = "' + address + '".');
-  	  theater.location.geoCoding = {}
-  	  return theater;
-    });
-  }
-  else {
-  	return geocodeAddressGoogle(address).then(function(geoCoding) {
-  	  theater.location.geoCoding = geoCoding
-  	  return theater;
-    }).catch(function(e) {
-      console.log(JSON.stringify(e));
-  	  writeLogEntry(moduleId,'Unable to get location for = "' + address + '".');
-  	  theater.location.geoCoding = {}
-  	  return theater;
-    });
+    	  theater.location.geoCoding = geoCoding
+    	  return theater;
+      }).catch(function(e) {
+  	    writeLogEntry(moduleId,'Unable to get location for = "' + address + '".');
+  	    theater.location.geoCoding = {}
+  	    return theater;
+      });
+      break;
+	  case "google" :
+    	return geocodeAddressGoogle(address).then(function(geoCoding) {
+    	  theater.location.geoCoding = geoCoding
+  	    return theater;
+      }).catch(function(e) {
+        console.log(JSON.stringify(e));
+  	    writeLogEntry(moduleId,'Unable to get location for = "' + address + '".');
+  	    theater.location.geoCoding = {}
+  	    return theater;
+      });
+      break;
+    case "oracle" :
+      // TODO : Add support for Oracle Geocoding Service
+      // break;
+    default :
+	    theater.location.geoCoding = {}
+	    Promise.resolve(theater);
   }
 }
     
@@ -481,7 +497,7 @@ function parseAddress(address) {
     if (street !== undefined) {      			
       location = {
        	street      : street,
-  	    city        : parsedAddress.city.toUpperCase(), // Match the US Census Geocoder's behavoir
+  	    city        : parsedAddress.city.toUpperCase(), // Match the US Census geocoding service's behavoir
   	    zipCode     : parsedAddress.zip,
   	    state       : parsedAddress.state,
   	    phoneNumber : null,
@@ -849,17 +865,9 @@ function getMoviesFromTMDB(sessionState,response) {
           response.write('"count":' + sodaResponse.json.items.length);
           response.write('}');
           response.end();
-          return movieAPI.dropPosterCollection(sessionState).catch(function(e) {
-     	  		if (e.details.statusCode !== 404) {
-  			      throw e;
-  		      }
-          })
+          return movieAPI.dropPosterCollection(sessionState)
         }).then(function() {
-          return movieAPI.dropScreeningCollection(sessionState).catch(function(e) {
-     	  		if (e.details.statusCode !== 404) {
-  			      throw e;
-  		      }
-          });
+          return movieAPI.dropScreeningCollection(sessionState)
         })
       }
     }).catch(function(e){
@@ -1043,7 +1051,7 @@ function generateScreeningsForTheater(sessionState,engagementStartDate,engagemen
 function generateScreenings(sessionState,engagementStartDate,engagementEndDate,theaters,movies,updatedMovieList) {
 
   var moduleId = 'generateScreenings()'; 
-  writeLogEntry(moduleId);
+  //writeLogEntry(moduleId);
 
   // writelogEntry(moduleId,'engagementStartDate =' + engagementStartDate);
   // writeLogEntry(moduleId,'engagementEndDate = ' + engagementEndDate);
@@ -1060,7 +1068,7 @@ function generateScreenings(sessionState,engagementStartDate,engagementEndDate,t
 
 function resetMovieInTheatersFlag(movieItem,state,updatedMovieList) {
 	
-	// reset the inTheaters flag and add to the list of movies that need updating.
+	// Reset the inTheaters flag and add to the list of movies that need updating.
 	
 	// writeLogEntry('resetMovieInTheatersFlag(' + movieItem.value.id + ',' + state + ')');
 	if (movieItem.value.inTheaters != state) {
@@ -1107,7 +1115,6 @@ function createScreenings(sessionState) {
   	  	resetMovieInTheatersFlag(movieItem,false,updatedMovieList);
   	  }
   	);
-  	writeLogEntry(moduleId,'Reset List = ' + updatedMovieList.length);
   	return movieAPI.recreateScreeningCollection(sessionState)
   }).then(function() {
     return generateScreenings(sessionState,engagementStartDate,engagementEndDate,theaterList,movieList,updatedMovieList)
@@ -1121,7 +1128,6 @@ function createScreenings(sessionState) {
   	  0
   	);
   }).then(function(e) {
-     writeLogEntry(moduleId,'Reset and Update list = ' + updatedMovieList.length);
   	 return Promise.all(updatedMovieList.map(function(movieItem) {
   	 	 return movieAPI.updateMovie(sessionState, movieItem.id, movieItem.value);
   	 }))
@@ -1255,11 +1261,11 @@ function getPostersFromTMDB(sessionState,response) {
   });
 }	   
 
-function updateKeys(sessionState, response, next, apiKeys) {
+function updateDataSources(sessionState, response, next, updatedValues) {
 	
-	console.log(JSON.stringify(apiKeys));
+	console.log('externalInterfaces.updateDataSources() : ' + JSON.stringify(updatedValues));
 	try {
-		cfg.updateKeys(apiKeys.google.apiKey,apiKeys.tmdb.apiKey);
+		cfg.updateDataSources(updatedValues);
 	  response.json({status : "success" })
 	  response.end();
 	}

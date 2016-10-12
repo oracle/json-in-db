@@ -54,9 +54,9 @@ function initApp() {
 function handleError(err, req, res, next) {
 	  console.error('MovieTicketing : Operation Failed:');
     console.error( err.stack ? err.stack : err);
-    console.log(err);
     if ((err instanceof sodaRest.SodaError) || (err instanceof externalInterfaces.ExternalError)) {
-      console.error(JSON.stringify(err.details))
+      console.error(JSON.stringify(err));
+      // console.error(JSON.stringify(err.details))
     } 
     res.status(500).send({message: 'An error has occurred, please contact support if the error persists'});
 }

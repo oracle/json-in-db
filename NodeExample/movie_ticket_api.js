@@ -71,6 +71,7 @@ module.exports.getLogRecordByOperationId   = getLogRecordByOperationId
 module.exports.initializeSodaLogging       = initializeSodaLogging;
 module.exports.logError                    = logError;
 module.exports.writeLogEntry               = writeLogEntry;
+module.exports.getDetectedFeatures         = getDetectedFeatures
 
 initialize()
 
@@ -78,44 +79,43 @@ initialize()
 
 function createTheaterCollection(sessionState) {
 	
-	return sodaRest.createCollectionWithIndexes(sessionState, cfg.config, 'Theater',collectionMetadata.Theater);
+	return sodaRest.createCollectionWithIndexes(sessionState, 'Theater');
 
 }
 
 function dropTheaterCollection(sessionState) {
 	
-	return sodaRest.dropCollection(sessionState, cfg.config, 'Theater');
+	return sodaRest.dropCollectionCatch404(sessionState, 'Theater');
 
 }
 
 function recreateTheaterCollection(sessionState) {
 	
-	return sodaRest.recreateCollection(sessionState, cfg.config, 'Theater',collectionMetadata.Theater);
+	return sodaRest.recreateCollection(sessionState, 'Theater');
 
 }
 function insertTheaters(sessionState, theaterList) {
 	
-	return sodaRest.bulkInsert(sessionState, cfg.config, 'Theater',theaterList);
+	return sodaRest.bulkInsert(sessionState, 'Theater',theaterList);
 
 }
 
 function getTheaters(sessionState, limit, fields, total) {
   
-   return sodaRest.getCollection(sessionState, cfg.config, 'Theater', limit, fields, total)
+   return sodaRest.getCollection(sessionState, 'Theater', limit, fields, total)
      
 }
 
 function getTheater(sessionState, key, eTag) {
 	
-	return sodaRest.getJSON(sessionState, cfg.config, 'Theater', key, eTag);
+	return sodaRest.getJSON(sessionState, 'Theater', key, eTag);
 
 }
 
 function getTheaterById(sessionState, id) {
 
-  console.log('getTheaterById(' + id + ')');
   var qbe = {'id': id};
-  return sodaRest.queryByExample(sessionState, cfg.config, 'Theater',qbe).then(
+  return sodaRest.queryByExample(sessionState, 'Theater',qbe).then(
     function(sodaResponse) {
     	sodaResponse.json = sodaResponse.json[0]
     	return sodaResponse;
@@ -125,7 +125,7 @@ function getTheaterById(sessionState, id) {
 
 function queryTheaters(sessionState, qbe, limit, fields, total) {
 	
-	return sodaRest.queryByExample(sessionState, cfg.config, 'Theater',qbe, limit, fields, total);
+	return sodaRest.queryByExample(sessionState, 'Theater',qbe, limit, fields, total);
 
 }
 
@@ -133,51 +133,50 @@ function queryTheaters(sessionState, qbe, limit, fields, total) {
 
 function createMovieCollection(sessionState) {
 	
-	return sodaRest.createCollectionWithIndexes(sessionState, cfg.config, 'Movie',collectionMetadata.Movie);
+	return sodaRest.createCollectionWithIndexes(sessionState, 'Movie');
 
 }
 
 function dropMovieCollection(sessionState) {
 	
-	return sodaRest.dropCollection(sessionState, cfg.config, 'Movie');
+	return sodaRest.dropCollectionCatch404(sessionState, 'Movie');
 
 }
 
 function recreateMovieCollection(sessionState) {
 	
-	return sodaRest.recreateCollection(sessionState, cfg.config, 'Movie',collectionMetadata.Movie);
+	return sodaRest.recreateCollection(sessionState, 'Movie');
 
 }
 
 function insertMovies(sessionState, movieList) {
 	
-	return sodaRest.bulkInsert(sessionState, cfg.config, 'Movie',movieList);
+	return sodaRest.bulkInsert(sessionState, 'Movie',movieList);
 
 }
 
 function getMovies(sessionState,  limit, fields, total) {
   
-   return sodaRest.getCollection(sessionState, cfg.config, 'Movie', limit, fields, total)
+   return sodaRest.getCollection(sessionState, 'Movie', limit, fields, total)
      
 }
 
 function getMovie(sessionState, key, eTag) {
 	
-	return sodaRest.getJSON(sessionState, cfg.config, 'Movie', key, eTag);
+	return sodaRest.getJSON(sessionState, 'Movie', key, eTag);
 
 }
 
 function updateMovie(sessionState, key, movie, eTag) {
 	
-	return sodaRest.putJSON(sessionState, cfg.config, 'Movie', key, movie, eTag);
+	return sodaRest.putJSON(sessionState, 'Movie', key, movie, eTag);
 
 }
 
 function getMovieById(sessionState,id) {
 
-  console.log('getMovieById(' + id + ')');
   var qbe = {'id': id};
-  return sodaRest.queryByExample(sessionState, cfg.config, 'Movie', qbe).then(
+  return sodaRest.queryByExample(sessionState, 'Movie', qbe).then(
     function(sodaResponse) {
     	sodaResponse.json = sodaResponse.json[0]
     	return sodaResponse;
@@ -187,14 +186,13 @@ function getMovieById(sessionState,id) {
 
 function moviesByReleaseDateService(sessionState) {
 
-  console.log('moviesByReleaseDateService()');
   var qbe = {"$query" : {}, $orderby :{"releaseDate" :-1}};
-  return sodaRest.queryByExample(sessionState, cfg.config, 'Movie', qbe)
+  return sodaRest.queryByExample(sessionState, 'Movie', qbe)
 }
 
 function queryMovies(sessionState, qbe, limit, fields, total) {
 	
-	return sodaRest.queryByExample(sessionState, cfg.config, 'Movie',qbe, limit, fields, total);
+	return sodaRest.queryByExample(sessionState, 'Movie',qbe, limit, fields, total);
 
 }
 
@@ -202,49 +200,49 @@ function queryMovies(sessionState, qbe, limit, fields, total) {
 
 function createScreeningCollection(sessionState) {
 	
-	return sodaRest.createCollectionWithIndexes(sessionState, cfg.config, 'Screening',collectionMetadata.Screening);
+	return sodaRest.createCollectionWithIndexes(sessionState, 'Screening');
 
 }
 
 function dropScreeningCollection(sessionState) {
 	
-	return sodaRest.dropCollection(sessionState, cfg.config, 'Screening');
+	return sodaRest.dropCollectionCatch404(sessionState, 'Screening');
 
 }
 
 function recreateScreeningCollection(sessionState) {
 	
-	return sodaRest.recreateCollection(sessionState, cfg.config, 'Screening',collectionMetadata.Screening);
+	return sodaRest.recreateCollection(sessionState, 'Screening');
 
 }
 
 function insertScreenings(sessionState, screeningList) {
 	
-	return sodaRest.bulkInsert(sessionState, cfg.config, 'Screening',screeningList);
+	return sodaRest.bulkInsert(sessionState, 'Screening',screeningList);
 
 }
 
 function getScreenings(sessionState,  limit, fields, total) {
   
-   return sodaRest.getCollection(sessionState, cfg.config, 'Screening', limit, fields, total)
+   return sodaRest.getCollection(sessionState, 'Screening', limit, fields, total)
      
 }
 
 function getScreening(sessionState, key, eTag) {
 	
-	return sodaRest.getJSON(sessionState, cfg.config, 'Screening', key, eTag);
+	return sodaRest.getJSON(sessionState, 'Screening', key, eTag);
 
 }
 
 function queryScreenings(sessionState, qbe, limit, fields, total) {
 	
-	return sodaRest.queryByExample(sessionState, cfg.config, 'Screening',qbe, limit, fields, total);
+	return sodaRest.queryByExample(sessionState, 'Screening',qbe, limit, fields, total);
 
 }
 
 function updateScreening(sessionState, key,screening,eTag) {
 	
-	return sodaRest.putJSON(sessionState, cfg.config, 'Screening',key,screening,eTag);
+	return sodaRest.putJSON(sessionState, 'Screening',key,screening,eTag);
 
 }
 
@@ -252,43 +250,43 @@ function updateScreening(sessionState, key,screening,eTag) {
 
 function createTicketSaleCollection(sessionState) {
 	
-	return sodaRest.createCollectionWithIndexes(sessionState, cfg.config, 'TicketSale', collectionMetadata.TicketSale);
+	return sodaRest.createCollectionWithIndexes(sessionState, 'TicketSale');
 
 }
 
 function dropTicketSaleCollection(sessionState) {
 	
-	return sodaRest.dropCollection(sessionState, cfg.config, 'TicketSale');
+	return sodaRest.dropCollectionCatch404(sessionState, 'TicketSale');
 
 }
 
 function recreateTicketSaleCollection(sessionState) {
 	
-	return sodaRest.recreateCollection(sessionState, cfg.config, 'TicketSale', collectionMetadata.TicketSale);
+	return sodaRest.recreateCollection(sessionState, 'TicketSale');
 
 }
 
 function insertTicketSales(sessionState, ticketSaleList) {
 	
-	return sodaRest.bulkInsert(sessionState, cfg.config, 'TicketSale', ticketSaleList);
+	return sodaRest.bulkInsert(sessionState, 'TicketSale', ticketSaleList);
 
 }
 
 function insertTicketSale(sessionState, ticketSale) {
 	
-	return sodaRest.postJSON(sessionState, cfg.config, 'TicketSale', ticketSale);
+	return sodaRest.postJSONCatch404(sessionState, 'TicketSale', ticketSale);
 
 }
 
 function updateTicketSale(sessionState, key,ticketSale,eTag) {
 	
-	return sodaRest.putJSON(sessionState, cfg.config, 'TicketSale', key, ticketSale,eTag);
+	return sodaRest.putJSON(sessionState, 'TicketSale', key, ticketSale,eTag);
 
 }
 
 function queryTicketSales(sessionState, qbe, limit, fields, total) {
 	
-	return sodaRest.queryByExample(sessionState, cfg.config, 'TicketSale', qbe, limit, fields, total);
+	return sodaRest.queryByExample(sessionState, 'TicketSale', qbe, limit, fields, total);
 
 }
 
@@ -297,43 +295,43 @@ function queryTicketSales(sessionState, qbe, limit, fields, total) {
 
 function createPosterCollection(sessionState) {
 	
-	return sodaRest.createCollectionWithIndexes(sessionState, cfg.config, 'Poster', collectionMetadata.Poster);
+	return sodaRest.createCollectionWithIndexes(sessionState, 'Poster');
 
 }
 
 function dropPosterCollection(sessionState) {
 	
-	return sodaRest.dropCollection(sessionState, cfg.config, 'Poster');
+	return sodaRest.dropCollectionCatch404(sessionState, 'Poster');
 
 }
 
 function recreatePosterCollection(sessionState) {
 	
-	return sodaRest.recreateCollection(sessionState, cfg.config, 'Poster', collectionMetadata.Poster);
+	return sodaRest.recreateCollection(sessionState, 'Poster');
 
 }
 
 function insertPoster(sessionState, poster) {
 	
-	return sodaRest.postDocument(sessionState, cfg.config, 'Poster',poster,'image/jpeg');
+	return sodaRest.postDocument(sessionState, 'Poster',poster,'image/jpeg');
 
 }
 
 function getPosters(sessionState, limit, fields, total) {
   
-   return sodaRest.getCollection(sessionState, cfg.config, 'Poster', limit, fields, total)
+   return sodaRest.getCollection(sessionState, 'Poster', limit, fields, total)
      
 }
 
 function getPoster(sessionState, key) {
 	
-	return sodaRest.getBinaryDocument(sessionState, cfg.config, 'Poster',key);
+	return sodaRest.getBinaryDocument(sessionState, 'Poster',key);
 
 }
 
 function createLogRecordCollection() {
 	
-	return sodaRest.createCollectionWithIndexes(sodaLoggingDisabled, cfg.config, logCollectionName, collectionMetadata.MovieTicketLog);
+	return sodaRest.createCollectionWithIndexes(sodaLoggingDisabled, logCollectionName);
 
 }
 
@@ -347,7 +345,7 @@ function initializeSodaLogging(sessionState) {
 
 function writeLogEntry(logEntry) {
 	 
-	 sodaRest.postJSON(sodaLoggingDisabled, cfg.config, logCollectionName, logEntry);
+	 return sodaRest.postJSONCatch404(sodaLoggingDisabled, logCollectionName, logEntry);
 	 
 }
 
@@ -361,7 +359,7 @@ function logError(error, body) {
 function getLogRecordByOperationId(id) {
 
   var qbe = {'operationId': id, '$orderby' : {'startTime':1}};
-  return sodaRest.queryByExample(sodaLoggingDisabled, cfg.config, logCollectionName, qbe).then(
+  return sodaRest.queryByExample(sodaLoggingDisabled, logCollectionName, qbe).then(
     function(sodaResponse) {
     	return sodaResponse;
     }
@@ -381,6 +379,12 @@ function createEmptyCollections() {
 
 function initialize() {
 	
-	sodaRest.featureDetection(cfg.config);
+ 	sodaRest.initialize(cfg.config,collectionMetadata);
   createEmptyCollections();	
+}
+
+function getDetectedFeatures() {
+	
+	return sodaRest.getDetectedFeatures();
+
 }

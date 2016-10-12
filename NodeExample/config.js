@@ -20,13 +20,28 @@ var config = JSON.parse(configData);
 var dataSourceData = fs.readFileSync(__dirname + '/dataSources.json');
 var dataSources = JSON.parse(dataSourceData);
 
-module.exports.config      = config;
-module.exports.dataSources = dataSources;
-module.exports.updateKeys  = updateKeys;
+module.exports.config            = config;
+module.exports.dataSources       = dataSources;
+module.exports.updateDataSources = updateDataSources;
 
-function updateKeys(googleKey,tmdbKey) {
-	dataSources.tmdb.apiKey = tmdbKey;
-	dataSources.google.apiKey = googleKey;
+function updateDataSources(updates) {
+	
+	if (updates.tmdb) {
+		dataSources.tmdb.apiKey      = updates.tmdb.apiKey;
+	}
+	
+	if (updates.google) {
+		dataSources.google.apiKey    = updates.google.apiKey;
+	}
+	
+	if (updates.geocodingService) {
+	  dataSources.geocodingService = updates.geocodingService;
+	}
+	
+	if (updates.mappingService) {
+	  dataSources.mappingService   = updates.mappingService
+	}
+	
   fs.writeFileSync('dataSources.json',JSON.stringify(dataSources,null,2));
 }
 

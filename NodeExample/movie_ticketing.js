@@ -69,6 +69,7 @@ function generateGUID(){
 var sodaLoggingDisabled = { sodaLoggingEnabled : false };
 
 function reportStatusCode(response, e, statusCode) {
+	
   	if ((e.statusCode) && (e.statusCode === statusCode)) {
   		response.status(e.statusCode);
   		response.end();
@@ -94,7 +95,7 @@ function theatersService(sessionState, response, next) {
 
 function theaterByIdService(sessionState, response, next, id) {
 
-  console.log('theaterService('+ id + ')');
+  console.log('movieTicketing.theaterByIdService('+ id + ')');
 
   movieAPI.getTheaterById(sessionState, id).then(function (sodaResponse) {
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
@@ -108,7 +109,7 @@ function theaterByIdService(sessionState, response, next, id) {
 
 function searchTheatersService(sessionState, response, next, qbe) {
 
-  console.log('searchTheaterService(' + JSON.stringify(qbe) + ')');
+  console.log('movieTicketing.searchTheaterService(' + JSON.stringify(qbe) + ')');
 
   movieAPI.queryTheaters(sessionState, qbe).then(function (sodaResponse) {
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
@@ -135,7 +136,7 @@ function locateTheatersService(sessionState, response, next, lat, long, distance
     }
   };
 
-  console.log('locateTheatersService(' + JSON.stringify(qbe) + ')');
+  console.log('movieTicketing.locateTheatersService(' + JSON.stringify(qbe) + ')');
 
   movieAPI.queryTheaters(sessionState, qbe).then(function (sodaResponse) {
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
@@ -196,7 +197,7 @@ function moviesByReleaseDateService(sessionState, response, next) {
 
 function movieByIdService(sessionState, response, next, id) {
 
-  console.log('movieTicketing.movieService(' + id + ')');                                    
+  console.log('movieTicketing.movieByIdService(' + id + ')');                                    
 
   movieAPI.getMovieById(sessionState, id).then(function (sodaResponse) {                                           
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);

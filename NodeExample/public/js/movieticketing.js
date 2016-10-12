@@ -5,14 +5,14 @@ function dateWithTZOffset(date) {
      var norm = Math.abs(Math.floor(num));
      return (norm < 10 ? '0' : '') + norm;
    };
- 
-   return date.getFullYear() 
+
+   return date.getFullYear()
        + '-' + pad(date.getMonth()+1)
        + '-' + pad(date.getDate())
        + 'T' + pad(date.getHours())
-       + ':' + pad(date.getMinutes()) 
-       + ':' + pad(date.getSeconds()) 
-       + dif + pad(tzo / 60) 
+       + ':' + pad(date.getMinutes())
+       + ':' + pad(date.getSeconds())
+       + dif + pad(tzo / 60)
        + ':' + pad(tzo % 60);
 }
 
@@ -37,10 +37,10 @@ function loadTestData(URL, button) {
   	button.getElementsByTagName('span')[0].classList.add('spinning')
   	button.classList.add('disabled')
   }
-  
+
   var status = document.getElementById('status' + button.id.substr(3))
   status.value = 'Working';
-  
+
  	var callback = function(XHR,URL,button) {
   	var status = document.getElementById('status' + button.id.substr(3))
   	button.getElementsByTagName('span')[0].classList.remove('spinning')
@@ -52,15 +52,15 @@ function loadTestData(URL, button) {
     else {
     	status.value = 'Failed: Status = ' + XHR.status + ' (' + XHR.statusText + ').';
     }
-  } 
+  }
 
   XHR = new XMLHttpRequest()
   XHR.open('GET',URL,true)
   XHR.setRequestHeader('Pragma','no-cache');
-  XHR.onreadystatechange = function() { 
-    if (XHR.readyState==4) { 
+  XHR.onreadystatechange = function() {
+    if (XHR.readyState==4) {
       callback(XHR,URL,button);
-    } 
+    }
   };
   XHR.send()
 
@@ -71,19 +71,19 @@ var app = angular.module('movieTicketing', ['ngCookies']);
 app.factory('bookingService', function($http) {
 
 	var factory = {};
-	
+
 	factory.screening = {};
 	factory.screeningLogRecord = null;
 	factory.id = null;
-	
+
 	factory.getBookingInfo = function (id) {
- 
+
      factory.id = id;
-     
+
 	 	 showBookingForm();
 
 	 	 var path = '/movieticket/screenings/' + id
-    
+
      $http.get(path).success(function(data,status, headers) {
        factory.screening = data;
    	   var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
@@ -93,10 +93,10 @@ app.factory('bookingService', function($http) {
        });
      });
   };
-  
+
   factory.bookingLogRecord = null;
   factory.bookingLogDate = new Date()
-  
+
   factory.bookTickets = function (adult,senior,child) {
   	var totalTickets = 0;
 
@@ -128,7 +128,7 @@ app.factory('bookingService', function($http) {
     	    factory.bookingLogDate = new Date();
     	    // console.log(JSON.stringify(factory.bookTicketsLogRecord));
        });
-  	  })	
+  	  })
     }
   }
   return factory;
@@ -137,117 +137,75 @@ app.factory('bookingService', function($http) {
 app.controller('bookingCtrl',function($scope, $http, bookingService) {
 
   $scope.bookingService = bookingService;
-    				    				
+
 });
 
-app.controller('movieTheaterStatusCtrl',function($scope, $http) {
+app.factory('appConfigService', function($http, $window) {
 
-	$scope.status = {}
-	$scope.googleKey = ""
-	$scope.tmdbKey = ""
+	var factory = {};
 
-	$scope.openLinkInWindow = function(link,target) {
+	factory.status = {}
+	
+	factory.applicationReady = false;
+
+	factory.openLinkInWindow = function(link,target) {
 		window.open(link,target)
   }
-   
 
-  $http({
-    method : 'GET',
-    url    : '/movieticket/config/status/',
-  }).success(function(data, status, headers) {
-  	var configComplete = true;
- 	  $scope.status = data;
-
- 	  if ($scope.status.googleKey !== 'YOUR_GOOGLE_KEY_GOES_HERE') {
- 	  	$scope.googleKey = $scope.status.googleKey;
- 	  }
- 	  else {
- 	  	configComplete = false;
- 	  }
-
- 	  if ($scope.status.tmdbKey !== 'YOUR_TMDB_KEY_GOES_HERE') {
- 	  	$scope.tmdbKey = $scope.status.tmdbKey;
- 	  }
- 	  else {
- 	  	configComplete = false;
- 	  }
- 	  
- 	  if (configComplete) {
- 	  	configComplete = $scope.showApplication();
- 	  }
-
-  });
-
-  $scope.showApplication = function() {
-  	
-  	configComplete = true;
-	  if ($scope.status.movieCount === 0) {
- 	  	configComplete = false;
- 	  }
-
- 	  if ($scope.status.theaterCount === 0) {
- 	  	configComplete = false;
- 	  }
-
- 	  if ($scope.status.screeningCount === 0) {
- 	  	configComplete = false;
- 	  }
-
-	  if ($scope.status.posterCount === 0) {
- 	  	configComplete = false;
- 	  }
- 	  
- 	  if (configComplete) {
- 	  	showApplicationTabs();
- 	  }
- 	  else{
- 	  	showConfigurationTab();
- 	  }  	
-  }
+  factory.isApplicationReady = function() {
   
-    				    				
-  $scope.updateKeys = function (googleKey, tmdbKey) {
-  	
-      var apiKeys = {
-        google    : {
-          apiKey  : googleKey
-        }
-      , tmdb      : {
-      	  apiKey  : tmdbKey
-      	}
-      }
-
-      $http.post('/movieticket/config/updateKeys', apiKeys).success(function (data, status, headers) {
- 				initGoogleMaps(googleKey);
-      }).error(function (data, status, headers) {
-        showErrorMessage('Error saving keys');
-      });
-  };
+  	var ready = (
+		   (factory.status.movieCount > 0 )
+		   && 
+		   (factory.status.theaterCount > 0)
+ 	     && 
+ 	     (factory.status.screeningCount > 0) 
+			 && 
+			 (factory.status.posterCount > 0)
+		);
+		
+		if (ready) {
+		  if (factory.status.mappingService === 'google') {
+			  ready = factory.status.geocgoogleKey !== 'YOUR_GOOGLE_KEY_GOES_HERE'
+		  }
+		  if (!ready) {
+	    	showErrorMessage('A valid Google API key is required to use Google mapping services');
+		  }
+	  }
+	  
+	  return ready;
+	}
   
-  $scope.resetTheaters = function (theaterCount) {
-  	$scope.status.theaterCount = theaterCount;
-  	$scope.status.screeningCount = 0;
-  	$scope.showApplication();
-  }
-  
-  $scope.resetMovies = function (movieCount) {
-  	$scope.status.movieCount = movieCount;
-  	$scope.status.screeningCount = 0;
-  	$scope.status.posterCount = 0;
-  	$scope.showApplication();
-  }
-  				    				
-  $scope.resetPosters = function (posterCount) {
-  	$scope.status.posterCount = posterCount;
-  	$scope.showApplication();
+  factory.updateTheaterCount = function (theaterCount) {
+  	factory.status.theaterCount = theaterCount;
+  	factory.status.screeningCount = 0;
+  	// Cannot run Application at this point
   }
 
-  $scope.resetScreenings = function (screeningCount) {
-  	$scope.status.screeningCount = screeningCount;
-  	$scope.showApplication();
+  factory.updateMovieCount = function (movieCount) {
+  	factory.status.movieCount = movieCount;
+  	factory.status.screeningCount = 0;
+  	factory.status.posterCount = 0;
+  	// Cannot run Application at this point
   }
-  
-  $scope.loadSampleData = function(url,button,callback,target) {
+
+  factory.updatePosterCount = function (posterCount) {
+  	factory.status.posterCount = posterCount;
+  	// If all keys and data are now present reload the application - This will show the application tabs with the current data.
+  	if (factory.isApplicationReady()) {
+  		 $window.location.reload();
+    }
+  }
+
+  factory.updateScreeningCount = function (screeningCount) {
+  	factory.status.screeningCount = screeningCount;
+  	// If all keys and data are now present reload the application - This will show the application tabs with the current data.
+  	if (factory.isApplicationReady()) {
+  		 $window.location.reload();
+    }
+  }
+
+  factory.loadSampleData = function(url,button,callback,target) {
 
     if (button.classList.contains('disabled')) {
     	return
@@ -256,10 +214,10 @@ app.controller('movieTheaterStatusCtrl',function($scope, $http) {
   	  button.getElementsByTagName('span')[0].classList.add('spinning')
   	  button.classList.add('disabled')
     }
-  
+
     var statusWindow = document.getElementById('status' + button.id.substr(3))
     statusWindow.value = 'Working';
-  
+
     $http.get(url).success(function(data, status, headers) {
  	  	button.getElementsByTagName('span')[0].classList.remove('spinning')
       button.classList.remove('disabled');
@@ -270,36 +228,164 @@ app.controller('movieTheaterStatusCtrl',function($scope, $http) {
     })
   }
 
-  $scope.loadTheaters = function (event) {
-  
-  	$scope.loadSampleData('/movieticket/config/loadtheaters',event.target,$scope.resetTheaters,'Theaters');
+  factory.loadTheaters = function (event) {
+
+  	factory.loadSampleData('/movieticket/config/loadtheaters',event.target,factory.updateTheaterCount,'Theaters');
 
   }
 
-  $scope.loadMovies = function (event) {
-  
-  	$scope.loadSampleData('/movieticket/config/loadmovies',event.target,$scope.resetMovies,'Movies');
- 
+  factory.loadMovies = function (event) {
+
+  	factory.loadSampleData('/movieticket/config/loadmovies',event.target,factory.updateMovieCount,'Movies');
+
   }
 
-  $scope.loadPosters = function (event) {
-  
-  	$scope.loadSampleData('/movieticket/config/loadposters',event.target,$scope.resetPosters,'Posters');
- 
+  factory.loadPosters = function (event) {
+
+  	factory.loadSampleData('/movieticket/config/loadposters',event.target,factory.updatePosterCount,'Posters');
+
   }
 
-  $scope.generateScreenings = function (event) {
-  
-  	$scope.loadSampleData('/movieticket/config/loadscreenings',event.target,$scope.resetScreenings,'Screenings');
- 
+  factory.generateScreenings = function (event) {
+
+  	factory.loadSampleData('/movieticket/config/loadscreenings',event.target,factory.updateScreeningCount,'Screenings');
+
   }
+
+	return factory;
 
 });
 
+
+/* 
+**
+** Geocoding is only enabled when $near operator is supported. If $near is not a supported feature then there is no point in geocoding the Theaters.
+**
+** Mapping Service is enabled when $near operator is supported and Geocoding Service is not 'none'
+**
+** Google Key is enabled when $near operator is supported and Geocoding is 'google' or Geocoding is enabled and Mapping is 'google'.
+**
+** Do not update Geocoding Service, Mapping Service or Google key unless they are enabled.
+**
+**
+*/
+
+app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
+	
+	$scope.appConfigService = appConfigService;
+
+	/* 
+	**
+	**
+	** Use an object to avoid issues with referencing scope variables from an ng-if, due to ng-if generating it's own scope.
+	**
+	*/
+	
+	$scope.formState = {
+		googleKey        : ""
+	, geocodingService : ""
+	, mappingService   : ""
+	, tmdbKey          : ""
+  }
+
+  $http({
+    method : 'GET',
+    url    : '/movieticket/config/status/',
+  }).success(function(data, status, headers) {  	
+  	console.log('Setting status');
+ 	  $scope.appConfigService.status = data
+
+ 	  if (data.googleKey !== 'YOUR_GOOGLE_KEY_GOES_HERE') {
+ 	  	$scope.formState.googleKey = data.googleKey;
+	    initGoogleMaps(data.googleKey);
+ 	  }
+ 	  else {
+ 	    $('#tabset_MovieTickets a[href="#tab_LoadTestData"]').tab('show');
+    }
+
+ 	  if (data.tmdbKey !== 'YOUR_TMDB_KEY_GOES_HERE') {
+ 	  	$scope.formState.tmdbKey = data.tmdbKey;
+ 	  }
+ 	  
+ 	  $scope.formState.mappingService = (data.mappingService ? data.mappingService : "none" );
+ 	  $scope.formState.geocodingService = (data.geocodingService ? data.geocodingService : "none" );
+ 	  
+ 	  if ($scope.appConfigService.isApplicationReady()) {
+ 	  	$scope.appConfigService.applicationReady = true;
+ 	  	showApplicationTabs();
+ 	 	} 
+ 	 	else {
+ 	  	showConfigurationTab();
+    } 	 		
+  });
+
+  $scope.updateDataSources = function (googleKey, tmdbKey, geocodingSvc, mappingSvc) {
+  
+  		/*
+  		**
+  		** Update Rules.
+  		**
+  		** Always update TMDb Key.
+  		**
+  		** Do not update Google Key, Geocoding Service or Mapping Service unless the $near operator is supported
+  		**
+  		** When the $hear operator is supported
+  		**
+  		**   Always update Geocoding Service.
+  		**
+  		** 	 Only update Google Key when a Google Services is selected.
+  		**
+  		**   Only update Mapping Service when Geocoding Service is not 'none'
+  		**
+  		*/
+  		
+  		console.log(googleKey + "," + tmdbKey + "," + geocodingSvc + "," + mappingSvc);
+  		  
+      var updates = {
+        tmdb      : {
+      	  apiKey  : tmdbKey
+      	}
+		  }
+      
+      if ($scope.appConfigService.status.supportedFeatures.$near) {
+
+       	updates.geocodingService = geocodingSvc;
+       	
+       	if ((geocodingSvc == 'google') || ((geocodingSvc !== 'none')  && (mappingSvc === 'google'))) {
+      	  updates.google = {
+      	  	apiKey  : googleKey
+          }
+        }
+      	
+      	if (geocodingSvc !== 'none') {
+				  updates.mappingService = mappingSvc;
+		    }
+      }
+
+      $http.post('/movieticket/config/updateDataSources', updates).success(function (data, status, headers) {
+      	// Saving the Keys enables the Load Theaters and Load Movies Buttons.
+      	$scope.appConfigService.status.googleKey = googleKey;
+      	$scope.appConfigService.status.tmdbKey = tmdbKey;
+      	$scope.appConfigService.status.geocodingService = geocodingSvc;
+      	$scope.appConfigService.status.mappingService = mappingSvc;
+ 				initGoogleMaps(googleKey);
+				$scope.config.$setPristine()
+      	// If all data is available switch to Application Screen.
+		 	  if ($scope.appConfigService.isApplicationReady()) {
+		 	  	$scope.appConfigService.applicationReady = true;
+ 	  			showApplicationTabs();
+ 	  		} 				
+      }).error(function (data, status, headers) {
+        showErrorMessage('Error saving keys');
+      });
+  };
+  
+});
+
 app.factory('theaterService', function($http) {
-	
+
 	var factory = {};
-	
+
 	factory.theaters = [];
   factory.position = null;
   factory.theaterMap = null;
@@ -309,23 +395,23 @@ app.factory('theaterService', function($http) {
   factory.searchTheaters = function(name,city,zipCode) {
 
 		 var qbe = {}
-		 
+
 		 if (name) {
 		 	 qbe.name = { '$contains' : name };
 		 }
-		 
+
 		 if (city) {
 		   qbe['location.city'] = city.toUpperCase();
 		 }
-		 
+
  		 if (zipCode) {
 		   qbe['location.zipCode'] = zipCode;
 		 }
-  	   	 
+
   	 var path = '/movieticket/theaters/search/qbe';
 
      $http.post(path,qbe).success(function(data, status, headers) {
-       factory.theaters = data;     
+       factory.theaters = data;
     	 var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
        $http.get(path).success(function(data, status, headers) {
     	   factory.logRecord = data
@@ -333,10 +419,10 @@ app.factory('theaterService', function($http) {
        });
      });
 	}
-  
+
 	factory.moviesByTheater = [];
 	factory.mbtLogRecord = null;
-	
+
   factory.addMarkersToMap = function(data) {
 	  for (var i=0; i < data.length; i++) {
   	  var marker = new google.maps.Marker({
@@ -353,13 +439,13 @@ app.factory('theaterService', function($http) {
       });
     }
   }
-	
+
 	factory.getTheatersByLocation = function ()  {
-		
+
 		factory.theaterMap = showLocationOnMap(factory.position);
 
     var path = '/movieticket/theaters/latitude/' + factory.position.coords.latitude + '/longitude/' + factory.position.coords.longitude + '/distance/5';
-    
+
     $http.get(path).success(function(data, status, headers) {
   	  if (data.length > 0) {
   	  	factory.addMarkersToMap(data);
@@ -375,7 +461,6 @@ app.factory('theaterService', function($http) {
 					factory.position = {
 					  "coords" : data
 					}
-    	  	console.log('theaterService: getTheaterCenter() returned: ' + JSON.stringify(factory.position.coords.latitude + ',' + factory.position.coords.longitude));
     	  	factory.theaterMap = showLocationOnMap(factory.position);
 			    var path = '/movieticket/theaters/latitude/' + factory.position.coords.latitude + '/longitude/' + factory.position.coords.longitude + '/distance/5';
 	        $http.get(path).success(function(data, status, headers) {
@@ -387,23 +472,23 @@ app.factory('theaterService', function($http) {
         	    });
           	}
           	else {
-        	  	console.log('theaterService: getTheatersByLocation(): Unable to find nearby theaters');
+        	  	console.log('theaterService: getTheatersByLocation(): No theaters within 5 Miles of (' + factory.position.coords.latitude + ',' + factory.position.coords.longitude + ')');
         	  }
 	  	    })
     		});
   	  }
     })
   }
-	
+
 	factory.getMoviesByTheater = function (theaterId) {
    	 var date = new Date($('#datePicker').datepicker('getUTCDate'));
    	 if (date == 'Invalid Date') {
    	 	 showErrorMessage('Please select date');
    	 	 return;
    	 }
-	 	 
+
 	 	 showMoviesByTheater();
-	 	 
+
 	 	 var path = '/movieticket/theaters/' + theaterId + '/movies/' + dateWithTZOffset(date);
      $http.get(path).success(function(data, status, headers) {
      	 factory.moviesByTheater = data;
@@ -414,7 +499,7 @@ app.factory('theaterService', function($http) {
        });
      });
   };
-  
+
   factory.showNextLogEntry = function() {
   	factory.logRecordIndex++;
   };
@@ -422,11 +507,11 @@ app.factory('theaterService', function($http) {
   factory.showPrevLogEntry = function() {
   	factory.logRecordIndex--;
   };
-  
+
   factory.getQueryString = function(qs) {
   	return getQueryString(qs);
   }
-  				    				  
+
   factory.isObject = function (obj) {
   	return angular.isObject(obj);
   }
@@ -435,51 +520,41 @@ app.factory('theaterService', function($http) {
 });
 
 
-app.controller('theatersCtrl',function($scope, $http, $cookies, theaterService) {
+app.controller('theatersCtrl',function($scope, $http, $cookies, theaterService, appConfigService) {
 
   $cookies.put('movieTicketGUID', GUID)
 
   $scope.theaterService = theaterService;
-  
+  $scope.appConfigService = appConfigService
+
   function getTheaterCenter() {
 		var path = '/movieticket/theaters/geoCoding/center';
 		$http.get(path).success(function(data, status, headers) {
 			$scope.theaterService.position = {
 				"coords" : data
-			}	
-    	console.log('theatersCtrl: getTheaterCenter() returned: ' + JSON.stringify($scope.theaterService.position.coords.latitude + ',' + $scope.theaterService.position.coords.longitude));
+			}
+    	console.log('theatersCtrl: getTheaterCenter() returned: ' + $scope.theaterService.position.coords.latitude + ',' + $scope.theaterService.position.coords.longitude);
   	})
-	}  	
+	}
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function(position){
     	if (position.coords.latitude) {
         $scope.$apply(function(){
           $scope.theaterService.position = position;
-      	  console.log('theatersCtrl: navigator.geolocation.getCurrentPosition() returned: ' + JSON.stringify($scope.theaterService.position.coords.latitude + ',' + $scope.theaterService.position.coords.longitude));
+      	  console.log('theatersCtrl: navigator.geolocation.getCurrentPosition() returned: ' + $scope.theaterService.position.coords.latitude + ',' + $scope.theaterService.position.coords.longitude);
         });
       }
       else {
       	console.log('theatersCtrl: navigator.geolocation.getCurrentPosition() failed to obtain current position');
-   			getTheaterCenter();   	
+   			getTheaterCenter();
       }
     });
 	}
 	else {
    	console.log('theatersCtrl: navigator.geolocation unavaiable');
-		getTheaterCenter();   			
+		getTheaterCenter();
 	}
-	
-	var path = '/movieticket/config/googleConfiguration'
-  $http.get(path).success(function(data, status, headers) {
-  	if (data.apiKey === 'YOUR_GOOGLE_KEY_GOES_HERE') {
-      $('#tabset_MovieTickets a[href="#tab_LoadTestData"]').tab('show');
-  		showErrorMessage('Please update dataSources.json with a valid Google API key and restart the Node.');	
-  	}
-  	else {
-  	  initGoogleMaps(data.apiKey);
-  	}
-  })
 
   $http({
     method: 'GET',
@@ -492,13 +567,13 @@ app.controller('theatersCtrl',function($scope, $http, $cookies, theaterService) 
     	 // console.log(JSON.stringify($scope.theaterService.logRecord));
     });
   });
-      				
+
 });
 
 app.controller('searchTheatersCtrl',function($scope, $http, theaterService) {
 
   $scope.theaterService = theaterService;
-  		    				
+
 });
 
 app.controller('moviesByTheaterCtrl',function($scope, $http, theaterService, bookingService) {
@@ -507,7 +582,7 @@ app.controller('moviesByTheaterCtrl',function($scope, $http, theaterService, boo
   $scope.now = dateWithTZOffset($scope.now);
   $scope.theaterService = theaterService;
   $scope.bookingService = bookingService;
-  
+
   $scope.$watch(
     'bookingService.bookingLogDate',
     function updateLogRecord(newValue, oldValue) {
@@ -516,21 +591,21 @@ app.controller('moviesByTheaterCtrl',function($scope, $http, theaterService, boo
       }
     }
   );
-  				    				
+
 });
 
 app.factory('movieService', function($http, $cookies) {
 
 	var factory = {};
-	
+
 	factory.movies = [];
   factory.logRecordIndex = 0;
 	factory.logRecord = null;
-  
+
   factory.searchMovies = function(where, what) {
 
  		// alert('movieService.searchMovies(' + where + ',' + what + ')');
- 		
+
  		if (!(where) || !(what)) {
  			showErrorMessage('Enter Search Criteria!');
  		  return;
@@ -538,7 +613,7 @@ app.factory('movieService', function($http, $cookies) {
 
     var qbe = {};
  		var searchValue = { '$contains' : what };
-  	   	 
+
   	if (where == 'Title') {
   	  qbe = { title : searchValue }
   	}
@@ -546,16 +621,16 @@ app.factory('movieService', function($http, $cookies) {
   	  qbe = { plot : searchValue }
   	}
   	else if (where == 'CastAndCrew') {
-  		 qbe = {'$or' : [{'castMember.*' : searchValue}, { 'crewMember.*' : searchValue}]} 
+  		 qbe = {'$or' : [{'castMember.*' : searchValue}, { 'crewMember.*' : searchValue}]}
   	}
   	else if (where == 'Anywhere') {
-  		 qbe = {'$or' : [{title : searchValue}, {outline : searchValue },{'castMember.*' : searchValue}, { 'crewMember.*' : searchValue}]} 
+  		 qbe = {'$or' : [{title : searchValue}, {outline : searchValue },{'castMember.*' : searchValue}, { 'crewMember.*' : searchValue}]}
   	}
-  	
+
   	var path = '/movieticket/movies/search/qbe';
 
     $http.post(path,qbe).success(function(data, status, headers) {
-      factory.movies = data;    
+      factory.movies = data;
     	 var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
        $http.get(path).success(function(data, status, headers) {
     	   factory.logRecord = data
@@ -563,19 +638,19 @@ app.factory('movieService', function($http, $cookies) {
        });
     });
 	}
-  
+
 	factory.theatersByMovie = [];
 	factory.tbmLogRecord = null;
-	
+
 	factory.getTheatersByMovie = function (movieId) {
    	 var date = new Date($('#datePicker').datepicker('getUTCDate'));
    	 if (date == 'Invalid Date') {
    	 	 showErrorMessage('Please select date');
    	 	 return;
    	 }
-	 	 
+
 	 	 showTheatersByMovie();
-	 	 
+
 	 	 var path = '/movieticket/movies/' + movieId + '/theaters/' + dateWithTZOffset(date);
      $http.get(path).success(function(data,status,headers) {
        factory.theatersByMovie = data;
@@ -586,7 +661,7 @@ app.factory('movieService', function($http, $cookies) {
        });
      });
   };
-  
+
   factory.showNextLogEntry = function() {
   	factory.logRecordIndex++;
   };
@@ -609,7 +684,7 @@ app.factory('movieService', function($http, $cookies) {
 app.controller('moviesCtrl',function($scope, $http,  $cookies, movieService) {
 
   $scope.movieService = movieService;
-  
+
   $cookies.put('movieTicketGUID', GUID)
 
   $http({
@@ -623,13 +698,13 @@ app.controller('moviesCtrl',function($scope, $http,  $cookies, movieService) {
     	 // console.log(JSON.stringify($scope.movieService.logRecord));
     });
   });
-    				    				
+
 });
 
 app.controller('searchMoviesCtrl',function($scope, $http, movieService) {
 
   $scope.movieService = movieService;
-    		    				
+
 });
 
 app.controller('theaterByMovieCtrl',function($scope, $http, movieService, bookingService) {
@@ -638,7 +713,7 @@ app.controller('theaterByMovieCtrl',function($scope, $http, movieService, bookin
   $scope.now = dateWithTZOffset($scope.now);
   $scope.movieService = movieService;
   $scope.bookingService = bookingService;
-  
+
   $scope.$watch(
     'bookingService.bookingLogDate',
     function updateLogRecord(newValue, oldValue) {
@@ -649,47 +724,47 @@ app.controller('theaterByMovieCtrl',function($scope, $http, movieService, bookin
   );
 
 });
-  
+
 function formLoad() {
-	
+
 	$('#datePicker').datepicker();
 	$('#datePicker').datepicker('update', new Date());
 	$('#tabset_MovieTickets').on(
-	  'shown.bs.tab', 
+	  'shown.bs.tab',
 	  function (e) {
 	  	var tabTarget = e.target.href.substring(e.target.href.indexOf('#')+1);
 	  	if ((tabTarget == 'tab_TheaterList') || (tabTarget == 'tab_MovieList') || (tabTarget == 'tab_LoadTestData')) {
 	  		hideDetailTabs()
-	    }	
+	    }
   })
 
 }
 
 function showMoviesByTheater() {
-  
+
 	$('#tabset_MovieTickets a[href="#tab_MoviesByTheater"]').show();
 	$('#tabset_MovieTickets a[href="#tab_MoviesByTheater"]').tab('show');
   $('#tabset_MovieTickets a[href="#tab_TheatersByMovie"]').hide();
   // $('#dialog_PurchaseTickets').modal('hide');
-  
+
 }
 
 function showTheatersByMovie() {
-	
+
 	$('#tabset_MovieTickets a[href="#tab_MoviesByTheater"]').hide();
   $('#tabset_MovieTickets a[href="#tab_TheatersByMovie"]').show();
   $('#tabset_MovieTickets a[href="#tab_TheatersByMovie"]').tab('show');
   // $('#dialog_PurchaseTickets').modal('hide');
-  
+
 }
 
 function showBookingForm() {
-	
+
 	$('#adultTickets').val("");
   $('#seniorTickets').val("");
   $('#childTickets').val("");
   $('#dialog_PurchaseTickets').modal('show');
-  
+
 }
 
 function showConfigurationTab() {
@@ -710,7 +785,7 @@ function showApplicationTabs() {
 }
 
 function hideBookingForm() {
-	
+
   $('#dialog_PurchaseTickets').modal('hide');
 
 }
@@ -720,30 +795,30 @@ function hideDetailTabs() {
 	$('#tabset_MovieTickets a[href="#tab_MoviesByTheater"]').hide();
   $('#tabset_MovieTickets a[href="#tab_TheatersByMovie"]').hide();
   // $('#dialog_PurchaseTickets').modal('hide');
-    
+
 }
-	
+
 function showTheaterSearch() {
-	
+
   $('#dialog_SearchTheaters').modal('show');
 
 }
 
 function showMovieSearch() {
-	
+
   $('#dialog_SearchMovies').modal('show');
 
 }
 
 function showSuccessMessage(message) {
-	
+
 	document.getElementById('content_SuccessMessage').textContent = message
   $('#dialog_SuccessMessage').modal('show');
 
 }
 
 function showErrorMessage(message) {
-	
+
 	document.getElementById('content_ErrorMessage').textContent = message
   $('#dialog_ErrorMessage').modal('show');
 
@@ -761,79 +836,79 @@ function initGoogleMaps(apikey) {
 }
 
 function googleMapsReady() {
-	
+
 	alert('Google maps loaded');
 
 }
 
 function showCurrentPosition() {
-	
+
 	navigator.geolocation.getCurrentPosition(showLocationOnMap,geoLocationError);
- 
+
 }
 
 function showLocationOnMap(position) {
-	
+
 	if (position.coords === undefined) {
 	  showErrorMessage('Sorry current position not yet available. Please try again in 30 seconds');
 	  return null;
 	}
-	
+
   $('#dialog_locateTheaters').modal('show');
-  
+
   var theaterMap = new google.maps.Map(
-                  document.getElementById('map'), 
+                  document.getElementById('map'),
                   {
                     center: {
-                             	lat: position.coords.latitude , 
+                             	lat: position.coords.latitude ,
                              	lng: position.coords.longitude
                             },
           					zoom: 10
         					});
-        					
+
 	$("#dialog_locateTheaters").on("shown.bs.modal", function () {
 		map
     google.maps.event.trigger(theaterMap, "resize");
     var myLatlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
 		theaterMap.panTo(myLatlng);
-  });        					
+  });
 
   var marker = new google.maps.Marker({
     position: {lat: position.coords.latitude , lng: position.coords.longitude},
     map: theaterMap,
     title: 'Your Location'
   });
-  
+
   return theaterMap;
-  
+
 }
 
 function geoLocationError(e) {
-	switch(error.code)  
-        {  
-            case error.PERMISSION_DENIED: console.log("geoLocationError(): User did not share geolocation data");  
-            break;  
-            case error.POSITION_UNAVAILABLE: console.log("geoLocationError(): Could not detect current position");  
-            break;  
-            case error.TIMEOUT: console.log("geoLocationError(): Timeout while retrieving position");  
-            break;  
-            default: console.log("geoLocationError(): Unknown Error");  
-            break;  
-        }  
+	switch(error.code)
+        {
+            case error.PERMISSION_DENIED: console.log("geoLocationError(): User did not share geolocation data");
+            break;
+            case error.POSITION_UNAVAILABLE: console.log("geoLocationError(): Could not detect current position");
+            break;
+            case error.TIMEOUT: console.log("geoLocationError(): Timeout while retrieving position");
+            break;
+            default: console.log("geoLocationError(): Unknown Error");
+            break;
+        }
 }
 
 function getQueryString(qs) {
 	var queryString = "";
 	if (typeof qs === 'object') {
 	  Object.keys(qs).forEach(function(key,index) {
-		  queryString += encodeURIComponent(key) + "=" + encodeURIComponent(qs[key]) + "&"  
+		  queryString += encodeURIComponent(key) + "=" + encodeURIComponent(qs[key]) + "&"
     })
   }
-  
+
   if (queryString.length > 0) {
     queryString = "?" + queryString.substring(0,queryString.length-1);
   }
-  
+
   return queryString
-		
+
 }

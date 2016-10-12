@@ -100,8 +100,8 @@ function getRouter() {
     router.route('/config/status')
         .get(getMovieTicketingStatus);
 
-    router.route('/config/updateKeys')
-        .post(postUpdateKeys);
+    router.route('/config/updateDataSources')
+        .post(postUpdateDataSources);
 
     router.route('/movieticketlog/operationId/:id')
         .get(getLogRecordsByOperation);
@@ -207,6 +207,6 @@ function getMovieTicketingStatus(req, res, next) {
   externalInterfaces.loadStatus(req.session, res, next);
 }
 
-function postUpdateKeys(req, res, next) {
-	externalInterfaces.updateKeys(req.session, res, next, req.body)
+function postUpdateDataSources(req, res, next) {
+	externalInterfaces.updateDataSources(req.session, res, next, req.body)
 }

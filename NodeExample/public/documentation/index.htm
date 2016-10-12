@@ -203,31 +203,30 @@
 <p>The theatersService method uses SODA for REST's  "List Collection" micro-service to get the list of theaters. It invokes the function getTheaters provided by the movie_ticket_api.js module and returns the resulting JSON as the repsonse. It also adds an X-SODA-LOG-TOKEN header to the response that provides the client application with a unique identifier that can be used to retrieve the log records associated with the operation. The getTheaters method is a very thin veneer over the generic getColleciton method provided by the module soda-rest.js. The code for both functions is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function getTheaters(sessionState, limit,fields) {
   
-   return sodaRest.getCollection(sessionState, cfg.config, 'Theater',limit,fields)
+   return sodaRest.getCollection(sessionState, 'Theater',limit,fields)
      
 }
 
-function getCollection(sessionState, cfg, collectionName,limit,fields) {
+function getCollection(sessionState, collectionName,limit,fields) {
 
   var moduleId = 'getCollection("' + collectionName + '")';
   
   var requestOptions = {
     method  : 'GET'
-  , uri     : getDocumentStoreURI(cfg,collectionName)
+  , uri     : getDocumentStoreURI(collectionName)
   , qs      : addLimitAndFields({},limit,fields)
   , headers : setHeaders()
   , time    : true
   , json    : true
   };
 
-  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+  return generateRequest(moduleId, sessionState, requestOptions);
 
 }
 </code></pre></div>
 <p>The getCollection() method lists the content of the specified collection. The method takes the following parameters:</p>
 <ul>
   <li><strong>sessionState: </strong>Provides session state, in this case primarily used to manage logging of the SODA for REST operations.</li>
-  <li><strong>cfg: </strong>Provides the connection information needed to invoke the rest service.</li>
 <li><strong>collectionName: </strong>The name of the collection</li>
 <li><strong>limit: </strong>Provides control over the number of documents retuned by the operation. The default is 100 documents</li>
 <li><strong>fields: </strong>Provides control over whether to return just metadata, just content or both. The default is metadata and content.</li>
@@ -238,11 +237,11 @@ function getCollection(sessionState, cfg, collectionName,limit,fields) {
    <li>Construct a Promise that uses the request.js moodule to execute the getCollection() operaiton </li>
 </ul>
 <p>All of the methods exposed by the soda-rest.js module follow a similar design pattern. They construct an options object that specifies the operation to be performed and then use the function generateRequest() to generate a JavaScript promise that invokes the request.js module to perform the required operation. The Promise is then returned to the calling function. The code to generate the promise is shown below:</p>
-<div style="padding-left: 50px;"><pre><code class="javascript">function generateRequest(moduleId, sessionState, cfg, requestOptions) {
+<div style="padding-left: 50px;"><pre><code class="javascript">function generateRequest(moduleId, sessionState, requestOptions) {
   
   return new Promise(function(resolve, reject) {
 	// console.log('Execute Promise: ' + moduleId);
-    var logRequest = createLogRequest(sessionState, cfg, requestOptions)
+    var logRequest = createLogRequest(sessionState, requestOptions)
     request(requestOptions, function(error, response, body) {
       if (error) {
         reject(getSodaError(moduleId,requestOptions,err));
@@ -250,7 +249,7 @@ function getCollection(sessionState, cfg, collectionName,limit,fields) {
       else {
         processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
       }
-    }).auth(cfg.username, cfg.password, true);
+    }).auth(getConnectionProperties().username, getConnectionProperties().password, true);
   });
 }
 </code></pre></div>
@@ -362,24 +361,24 @@ function getCollection(sessionState, cfg, collectionName,limit,fields) {
 <p>The getMoviesByTheaterAndDate method uses SODA for REST's "QueryByExample" micro-service to locate the required screening documents. It then uses the queryScreenings function provided by the movie_ticket_api.js module to execute the QBE and fetch the required screening documents from the document store. These documents are then passed to the processScreeningsByTheaterAndDate() function in order to generate the required summary. The processScreeningsByTheaterAndDate function uses a second QBE to fetch information about each of movies being shown. The queryScreenings method is a very thin veneer over the generic queryByExample method provided by the module soda-rest.js. The code for both functions is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function queryScreenings(sessionState, qbe,limit,fields) {
 	
-  return sodaRest.queryByExample(sessionState, cfg.config, 'Screening',qbe,limit,fields);
+  return sodaRest.queryByExample(sessionState, 'Screening',qbe,limit,fields);
 
 }
 
-function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
+function queryByExample(sessionState, collectionName, qbe, limit, fields) {
 
   var moduleId = 'queryByExample("' + collectionName + '",' + JSON.stringify(qbe) + ')'; 
   console.log(moduleId);
    
   var requestOptions = {
     method  : 'POST'
-  , uri     : getDocumentStoreURI(cfg,collectionName)
+  , uri     : getDocumentStoreURI(collectionName)
   , qs      : addLimitAndFields({action : "query"},limit,fields)
   , json    : qbe
   , time    : true
   };
   
-  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+  return generateRequest(moduleId, sessionState, requestOptions);
 }
 </code></pre></div>
 <p>A queryByExample is executed by performing a POST operation on the specified collection, specifying the query string 'action=query'. The QBE specification is supplied as the body of the POST. The function returns a Promise that, on execution, returns the result of evaluating the Query-By-Example operation. The actual application logic is similar to the logic for the getCollection function, with the exception that this function performs a POST rather than a GET and the QBE specification is supplied as the body of the POST.</p>
@@ -501,28 +500,28 @@ function queryByExample(sessionState, cfg, collectionName, qbe, limit, fields) {
 <p>The bookTickets method uses SODA for REST's "UpdateDocument" micro-service to update the screening document. The update of the screening document is handled by the call to the function updateScreening provided by the movie_ticket_api.js module, which in turn calls the putJSON and putDocument functions provided by the soda-rest.js module. The updateScreening and putJSON functions are simply thin veneers over the putDocument function. The putDocument function performs the REST operation that updates the document. The code for these functions is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function updateScreening(sessionState, key,screening,eTag) {
 	
-  return sodaRest.putJSON(sessionState, cfg.config, 'Screening',key,screening,eTag);
+  return sodaRest.putJSON(sessionState, 'Screening',key,screening,eTag);
 
 }
 
-function putJSON(sessionState, cfg, collectionName,key,json,eTag) {
+function putJSON(sessionState, collectionName,key,json,eTag) {
 
   // console.log('putJSON(' + collectionName + ',' + key + ')');
 
   var serializedJSON = JSON.stringify(json);
   // console.log(serializedJSON);
    
-  return putDocument(sessionState, cfg, collectionName,key,serializedJSON,'application/json',eTag);
+  return putDocument(sessionState, collectionName,key,serializedJSON,'application/json',eTag);
    
 }
 
-function putDocument(sessionState, cfg, collectionName, key, document, contentType, eTag) {
+function putDocument(sessionState, collectionName, key, document, contentType, eTag) {
 
   var moduleId = 'putDocument(' + collectionName + '","' + key + '","' + contentType + '")';
 
   var requestOptions = {
     method  : 'PUT'
-  , uri     : getDocumentStoreURI(cfg,collectionName) + '/' + key
+  , uri     : getDocumentStoreURI(collectionName) + '/' + key
   , headers : setHeaders(contentType , eTag)
   , time    : true
   };
@@ -534,7 +533,7 @@ function putDocument(sessionState, cfg, collectionName, key, document, contentTy
     requestOptions.body = document
   }
 
-  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+  return generateRequest(moduleId, sessionState, requestOptions);
 }
 </code></pre></div>
 <p>An "Update Document" operation is executed by performing a PUT on the target document. The document is identified using its internal key. The new content for the document is supplied as the body of the PUT. The putDocument function returns a Promise that, on execution, returns the result of update operation. The actual application logic is similar to the logic for the getCollection function, with the exception that this function performs a PUT rather than a GET and the uddated document is supplied as the body of the POST</p>
@@ -544,28 +543,28 @@ function putDocument(sessionState, cfg, collectionName, key, document, contentTy
 <p>The bookTickets method uses SODA for REST's  "InsertDocument" micro-service to create the ticketSale document. The creation of the new document is handled by the call to the function insertTicketSale provided by the movie_ticket_api.js module, which in turn calls the postJSON and postDocument functions provided by the soda-rest.js module. The insertTicketSale and postJSON functions are simply thin veneers over the postDocument function. The postDocument function performs the REST operation that inserts the document. The code for these functions is shown below:</p>
 <div style="padding-left: 50px;"><pre><code class="javascript">function insertTicketSale(sessionState, ticketSale) {
 	
-  return sodaRest.postJSON(sessionState, cfg.config, 'TicketSale',ticketSale);
+  return sodaRest.postJSON(sessionState, 'TicketSale',ticketSale);
 
 }
 
-function postJSON(sessionState, cfg, collectionName,json) {
+function postJSON(sessionState, collectionName,json) {
 
   // console.log('postJSON(' + collectionName + ')');
 
   var serializedJSON = JSON.stringify(json);
   // console.log(serializedJSON);
    
-  return postDocument(sessionState, cfg, collectionName,serializedJSON,'application/json');
+  return postDocument(sessionState, collectionName,serializedJSON,'application/json');
    
 }
 
-function postDocument(sessionState, cfg, collectionName, document, contentType) {
+function postDocument(sessionState, collectionName, document, contentType) {
 
   var moduleId = 'postDocument("' + collectionName + '","' + contentType + '")';
 
   var requestOptions = {
     method  : 'POST'
-  , uri     : getDocumentStoreURI(cfg,collectionName)
+  , uri     : getDocumentStoreURI(collectionName)
   , headers : setHeaders(contentType , undefined)
   , time    : true
   };
@@ -577,7 +576,7 @@ function postDocument(sessionState, cfg, collectionName, document, contentType) 
     requestOptions.body = document
   }
 
-  return generateRequest(moduleId, sessionState, cfg, requestOptions);
+  return generateRequest(moduleId, sessionState, requestOptions);
 }
 </code></pre></div>
 <p> 
@@ -585,8 +584,16 @@ An "Insert Document" operation is executed by performing a POST on the target co
 <h1>Installation and Configuration</h1>
 <p>These instructions assume you already have access to an Oracle Database 12.1.0.2.0 instance with Bundle Patch 13 installed. If you do not have this available you can start by downloading the latest version of the <a href="http://www.oracle.com/technetwork/database/enterprise-edition/databaseappdev-vm-161299.html">Oracle Developer Days VM </a> from the Oracle Technology Network. Although this VM comes with a version of Oracle Rest Data Services installed, you will need to update it from 3.0.4 to 3.0.5 by following step 1 of the instructions below </p>
     <br>
-        <p>The MovieTicketing demonstration works with sample data downloaded from publically available websites. The THEATER collection is populated with data obtained from an RSS feed supplied by Fandango.com. This data is enriched with geocoding obtained from a geocoding service provided by Google. The Movie and Poster collections are populated using data obtained from the website themoviedatabase.org  (TMDb). In order to use data from TMDb and Google you must register with those site and obtain an API key.</p>
-<h2>1. Install and Configure Node.js</h2>
+        <p>The MovieTicketing demonstration works with sample data downloaded from publically available websites. The THEATER collection is populated with data obtained from an RSS feed published by Fandango.com. Optionally, this data can be enriched with location information obtained from a geocoding service, such as the one provided by Google. The Movie and Poster collections are populated using data obtained from the website themoviedatabase.org  (TMDb). In order to obtain data from TMDb and Google you must register with those sites and obtain an API key.</p>
+<h2>1. Obtain API keys for TMDb and Google.</h2>
+<ol>
+    <li>Register for a Google Geocoding API key by following the instructions found <a href="https://developers.google.com/maps/documentation/javascript/get-api-key">here</a>.</li>
+    <li>Make a note of your Google API key.</li>
+    <li>Register for a themoviedatabase.org (TMDb) account by following the instructiosn found <a href="https://www.themoviedb.org/account/signup?language=en">here</a>.</li>
+    <li>Sign in to your account, click the API link in their left hand menu and follow the instructions to request an API key.</li>
+    <li>Make a note of your TMDb API key.</li>
+</ol>
+<h2>2. Install and Configure Node.js</h2>
 <ol>
     <li>Download <a href="https://nodejs.org/en/download/">Node.js</a> from nodejs.org<br><br></li>
     <li>Install Node.js<br><br>
@@ -632,7 +639,7 @@ An "Insert Document" operation is executed by performing a POST on the target co
         <p>At this point the Node.js server has been installed and the application has been downloaded and is ready to run</p>
     </li>
 </ol>
-<h2>2. Install, configure and start Oracle Rest Data Services (ORDS)</h2>
+<h2>3. Install, configure and start Oracle Rest Data Services (ORDS)</h2>
 <ol>
     <li>Download the latest version of <a href="http://www.oracle.com/technetwork/developer-tools/rest-data-services/downloads/index.html">ORDS</a> from the Oracle Technology Network website<br><br></li>
     <li>Install ORDS<br><br>
@@ -726,7 +733,7 @@ An "Insert Document" operation is executed by performing a POST on the target co
         <p>At this point the ORDS server is running and ready to service SODA for REST operations</p>
      </li>
 </ol>
-<h2>3. Create the Database Schema that will manage the MovieTickets document collections</h2>
+<h2>4. Create the Database Schema that will manage the MovieTickets document collections</h2>
 <ol>
     <li>Connect to the database and execute the following commands<br><br>
         <pre><code>
@@ -761,12 +768,6 @@ An "Insert Document" operation is executed by performing a POST on the target co
         <p>The SODA_APP role is required to use Oracle Document Collections. The call to ORDS.enable_schema() is required to allow the schema to be accessed via ORDS. Both steps are required to use SODA for REST.</p>
      </li>
 </ol>
-<h2>4.Register for an account with themoviedatabase.org (TMDb)</h2>
-<ol>
-    <li>Register for a TMDb account by clicking <a href="https://www.themoviedb.org/account/signup?language=en">here</a>.</li>
-    <li>Sign in to your account, click the API link in their left hand menu and follow the instructions to request an API key.</li>
-    <li>Make a note of your API key.</li>
-</ol>
 <h2>5. Update configuration files.</h2>
 <ol>
      <li>config.json<br><br>
@@ -778,9 +779,9 @@ An "Insert Document" operation is executed by performing a POST on the target co
          <p>The file is located in the folder NodeExample/node_modules/oracle-movie-ticket-sample The keys in this file are self explanatory</p>
          <ul>
             <li><strong>hostname: </strong>The name or ipaddress of the machine hosting the ORDS instance</li>    
-            <li><strong>port: </strong>The Port number the ORDS instance in listening on. This was specified the first time the ORDS instance was started (See step 2.4).</li>
+            <li><strong>port: </strong>The Port number the ORDS instance in listening on. This was specified the first time the ORDS instance was started (See step 3.4).</li>
             <li><strong>path: </strong>The endpoint that provides access to the Movie Ticketing document store. The second component of this path is the database schema name (See step 3.1). The schema name is entered lowercase.</li>
-            <li><strong>username & password </strong>The user name and password used to authenticate with the ORDS server. Note this is the ORDS username and password from step 2.3, not the database schema name and password from step 3.1.<br><br></li>
+            <li><strong>username & password </strong>The user name and password used to authenticate with the ORDS server. Note this is the ORDS username and password from step 3.3, not the database schema name and password from step 4.1.<br><br></li>
          </ul>
      </li>
      <li>dataSources.json<br><br>
@@ -795,13 +796,12 @@ An "Insert Document" operation is executed by performing a POST on the target co
             <li><strong>useProxy: </strong>Set to true if you need to use a proxy server to access external web sites.</li>    
             <li><strong>proxy.hostname: </strong>If a proxy server is required enter the hostname or ipaddress of the proxy server</li>
             <li><strong>proxy.port: </strong>If a proxy server is required enter the port number used to communicate with the proxy server</li>
-            <li><strong>tmdb.apiKey: </strong>The API key for use with TMDb (See step 4).</li>
             <li><strong>tmdb.searchCriteria:</strong>The application loads a small subset of the movies available on TMDb. Movies are selected based on a number of criteria, including release date and rating. To change which the movies selected update these fields before loading movie information.</li>
             <li><strong>fandango.searchCriteria.zipCode: </strong>The zip code to use when obtaining a list of nearby theaters from Fandango</li>
         </ul>   
     </li>
 </ol>
-<h2>6. Start the application</h2>
+<h2>6. Start the application servers</h2>
 <ol>
     <li>Start Node.js server.<br><br>
         <p>The following commands will work on Enterprise Linux, assuming you followed the steps outlined above.</p>
@@ -813,39 +813,51 @@ An "Insert Document" operation is executed by performing a POST on the target co
         </code></pre>
         <p>And the system should respond with something similar to this</p>
         <pre><code>
-            MovieTicket Webserver listening on localhost:3000
-            Full Text Search Supported: false
-            Spatial Indexing Supported: false
+            2016-10-12T13:34:52.819Z: MovieTicket Webserver listening on localhost:3000
+            2016-10-12T13:34:53.235Z: $contains operator supported:  true
+            2016-10-12T13:34:53.235Z: $near operatator   supported:  true
         </code></pre>
       </li>
 </ol>
-<h2>7. Access the application and load the test data</h2>
-<p>The application is configured to run on port 3000</p>
+<h2>7. Launch the application using a Browser.</h2>
+<p></p>
 <ol>
-    <li>Open a browser and navigate to the application start page. You should see something similar to this:
+    <li>Navigate to the application start page. The application is configured to run on Port 3000.
         <br><br>
+        <p>The first time you run the application you should see a page like this:</p>
         <img src="FirstStart.png" alt="First Time" style="width: 400px; height:  auto">
         <br><br>       
+        <p>This page is used configure the application and obtain the data required to run the application.</p>
     </li>
-    <li>Click the "Load Test Data" tab. You should see the following:
-        <br><br>
-        <img src="LoadTestData.png" alt="First Time" style="width: 400px; height:  auto">
+    <li>Configure Application
+       <br><br>
+       <p>Movie Information is loaded using services provided by the website themoviedb.org. Theater information is obtained using an RSS feed published by Fandango.com.</p>
+       <p>If the target document store supports Oracle Location services and the version of Query-By-Example included with SODA supports the  $near operator you are given option of geocoding the Theater information. Currently, only the US Government Census Bureau's Geocoding service and Google's Geocoding service are supported. If Geocoding is enabled you are given the option viewing theater locality graphically using a Mapping service. Currently only Google's Mapping service is supported. </p>
+        <img src="EnterKeys.png" alt="Load Theaters and Movies" style="width: 400px; height:  auto">
         <br><br>       
-    </li>
-    <li>Click the "Load Theaters" button to download theater information from Fandango.</li>
-    <li>Click the "Load Movies" button to download movie information from TMDb. This operation may take a while to complete due to throughput restrictions imposed by the TMDb website. </li>
-    <li>Click the "Load Posters" button to download movie posters from TMDb. This operation is also subject to the throughput restrictions imposed by the TMDb website. </li>
-    <li>Click the "Generate Screenings" button to generate 2 weeks' worth of screenings for the current set of theaters and movies. 
+        <p>If you want to make use of Geocoding and Mapping please select the required services using the provided menus. In order to load Movie Information a valid key for the TMDb API must be provided using the box marked TMDb API Key. In order to use Google services a valid key for relevant Google APIs must be provided using the box marked Google API. If you have not yet obtained the necessary API keys you can use the 'Get Key' buttons associated with each box to open the appropriate website used to request the necessary keys. Once your selections are made and the required keys have been entered click 'SAVE' to update dataSources.json. </p>
+    </li>           
+    <li>Load Theaters and Movies
+        <br><br>
+        <p>Successfully saving the configuration will enable the loading of Theaters and Movies.</p>
+        <img src="LoadTestData.png" alt="Load Theaters and Movies" style="width: 400px; height:  auto">
+        <br><br>       
+        <p>Click the "Load" button associated with the Theaters collection to download theater information from Fandango. Click the "Load" button associated with the Movies collection to download movie information from TMDb. This operation may take a while to complete due to throughput restrictions imposed by the TMDb website. While the load operations are in progress the 'refresh' icon will rotate and the status box associated with target will display 'Working'. Once the load operations are completed the status box will be updated with the number of documents loaded. 
      </li>
-</ol>
-<p>Once all four operations have completed successfully the "Load Test Data" tab should look something like this:</p>
-<dl>
-    <dt><dd>
+    <li>Load Posters and Screenings 
+        <br><br>
+        <p>Successfully completing the "Load Movies" operation will enable the loading of Posters. Successfully completing the "Load Movies" and "Load Theaters" operations will enabled the generation of screenings.</p>
+        <img src="LoadPostersScreenings.png" alt="Load Posters and Screenings" style="width: 400px; height:  auto">
+        <br><br>       
+        <p>Click the "Load" button associated with the Posters collection to download movie posters from TMDb. This operation is also subject to the throughput restrictions imposed by the TMDb website. Click the "Load" button associated with the Screenings collection to generate 2 weeks' worth of screenings from the current set of theaters and movies. While the load and generate operations are is in progress the 'refresh' icon will rotate and the status box associated with target will display 'Working'. Once the load and gemerate operations are completed the status box will be updated with the number of documents loaded.</p>
+        <p>The data loading process only needs to be completed once, since once data loading is completed all of the information needed to run the application is stored as JSON documents in the Oracle document store. If any of the steps fail, simply click the associated button to try the step again. Note you must successfully complete "Load Movies" before attempting to run "Load Posters", and you must successfully complete "Load Theaters" and "Load Movies" before attempting to run "Generate Screenings". If you re-run either "Load Theaters" or "Load Movies" you must re-run "Generate Screenings before attempting to use the movie ticketing application. If you re-run "Load Movies" you must also re-run "Load Posters" to repopulate the Posters collection.</p>
+
+    <li>Run the Application
+        <br><br>
+        <p>Once the Posters have been loaded and the Screenings generated the application will automatically reload itself and the "List Theaters" and "List Movies" tabs will be displayed. The applicaiton is now ready for use.</p>
         <img src="TestData-Completed.png" alt="Completed" style="width: 400px; height:  auto">
-    </dd></dt>
-</dl>
-<p>The data loading process only needs to be completed once, since once data loading is completed all of the information needed to run the application is stored as JSON documents in the Oracle document store. If any of the steps fail, simply click the associated button to try the step again. Note you must successfully complete "Load Movies" before attempting to run "Load Posters", and you must successfully complete "Load Theaters" and "Load Movies" before attempting to run "Generate Screenings". If you re-run either "Load Theaters" or "Load Movies" you must re-run "Generate Screenings before attempting to use the movie ticketing application. If you re-run "Load Movies" you must also re-run "Load Posters" to repopulate the Posters collection.</p>
-<p>Once the data loading process has been successfully completed you can simply refresh the page to start using the Application.</p>
+    </li>
+</ol>
 <script type="text/javascript" lang="javascript" src="jsonViewer.js"></script>
 <script type="text/javascript" lang="javascript" src="sampleDocuments.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>

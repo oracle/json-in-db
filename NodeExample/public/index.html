@@ -63,37 +63,37 @@ body {
 
 	</head>
 	<body onload="formLoad()">
-        <div class="page-header">
-            <span>
-			    <span style="vertical-align:middle; display: inline-block">
-			        <img class="h3" src="OracleLogo.png" style="height:2em;margin-right:1em;" alt="OracleLogo">
-			    </span>
-			    <span style="vertical-align:middle; display: inline-block">
-			        <h3>Movie<br>Ticketing</h3>
-			    </span>
-            </span>
-            <!-- Nav tabs -->
-		    <span style="vertical-align:bottom; display: inline-block">
-			    <ul class="nav nav-tabs" role="tablist" id="tabset_MovieTickets">
-  				    <li><a href="#tab_TheaterList"     role="tab" data-toggle="tab">List Theaters</a></li>
-  				    <li><a href="#tab_MovieList"       role="tab" data-toggle="tab">List Movies</a></li>
-  				    <li><a style="display: none;" href="#tab_MoviesByTheater" role="tab" data-toggle="tab">Movies By Theater</a></li>
-  				    <li><a style="display: none;" href="#tab_TheatersByMovie" role="tab" data-toggle="tab">Theater By Movies</a></li>
-  				    <li><a href="#tab_LoadTestData"    role="tab" data-toggle="tab">Load Test Data</a></li>
-			    </ul>
-  	        </span>
-    	    <span class="pull-right" style="vertical-align:bottom; display: inline-block">
-                <span class="pull-right"><a href="/documentation/index.htm" target="_movieTicketDocumentation">documentation</a></span>
-                <br>
-                <br>
-                <span class="date form-inline" >
- 	     	        <label for="date" class="control-label">Date</label>
-	  	            <div class="input-group input-append date" id="datePicker">
-      	  		        <input id="date" type="text" size="10" class="form-control" name="date" />
-    	   	            <span class="input-group-addon add-on"><span class="glyphicon glyphicon-calendar"></span></span>
-      	            </div>
-                </span>
-            </span>
+    <div class="page-header">
+      <span>
+  	 	  <span style="vertical-align:middle; display: inline-block">
+      		<img class="h3" src="OracleLogo.png" style="height:2em;margin-right:1em;" alt="OracleLogo">
+   	  	</span>
+   	  	<span style="vertical-align:middle; display: inline-block">
+         	<h3>Movie<br>Ticketing</h3>
+     		</span>
+      	</span>
+      	<!-- Nav tabs -->
+	    	<span style="vertical-align:bottom; display: inline-block">
+	    	<ul class="nav nav-tabs" role="tablist" id="tabset_MovieTickets">
+				  <li><a href="#tab_TheaterList"     role="tab" data-toggle="tab">List Theaters</a></li>
+				  <li><a href="#tab_MovieList"       role="tab" data-toggle="tab">List Movies</a></li>
+				  <li><a style="display: none;" href="#tab_MoviesByTheater" role="tab" data-toggle="tab">Movies By Theater</a></li>
+				  <li><a style="display: none;" href="#tab_TheatersByMovie" role="tab" data-toggle="tab">Theater By Movies</a></li>
+				  <li><a href="#tab_LoadTestData"    role="tab" data-toggle="tab">Load Test Data</a></li>
+	    	</ul>
+	    </span>
+  	  <span class="pull-right" style="vertical-align:bottom; display: inline-block">
+        <span class="pull-right"><a href="/documentation/index.htm" target="_movieTicketDocumentation">documentation</a></span>
+        <br>
+        <br>
+        <span class="date form-inline">
+   	      <label for="date" class="control-label">Date</label>
+          <div class="input-group input-append date" id="datePicker">
+            <input id="date" type="text" size="10" class="form-control" name="date" />
+  	 	      <span class="input-group-addon add-on"><span class="glyphicon glyphicon-calendar"></span></span>
+    	    </div>
+        </span>
+      </span>
 		</div>
 			
 		<!-- Tab panes -->
@@ -103,14 +103,14 @@ body {
 				<div id="TheaterList" class="panel panel-default" ng-controller="theatersCtrl">
       		<div class="panel-heading">
      				<h3 class="panel-title" style="line-height:35px;">Theater Information
-	   				<span class="pull-right">
-   						<button class="btn btn-success btn-med" id="btn_LocationSearch" type="button" ng-click="theaterService.getTheatersByLocation()">
-					 			<span class="glyphicon glyphicon-map-marker"></span>
-							</button>
-	  					<button class="btn btn-success btn-med" id="btn_TheaterSearch" type="button" onclick="showTheaterSearch()">
-						 		<span class="glyphicon glyphicon-search"></span>
-							</button>
-					  </span>
+	   					<span class="pull-right">
+   							<button ng-hide="((!appConfigService.status.supportedFeatures.$near) || (appConfigService.status.mappingService === 'none') || ((appConfigService.status.mappingService === 'google') && (appConfigService.status.googleKey === 'YOUR_GOOGLE_KEY_GOES_HERE')) || ((theaterService.position.coords.latitude === 0.0) && (theaterService.position.coords.longitude === 0.0)))" class="btn btn-success btn-med" id="btn_LocationSearch" type="button" ng-click="theaterService.getTheatersByLocation()">
+						 			<span class="glyphicon glyphicon-map-marker"></span>
+								</button>
+	  						<button class="btn btn-success btn-med" id="btn_TheaterSearch" type="button" onclick="showTheaterSearch()">
+							 		<span class="glyphicon glyphicon-search"></span>
+								</button>
+					  	</span>
 						</h3>
       		</div>
       		<div class="panel-body" style="height:65vh; overflow: auto;">
@@ -142,7 +142,7 @@ body {
  			      		<tr>
 			      			<td style="padding-right:1em; width:100px; vertical-align:top;">
 			      				<div class="btn-group" role="group">
-  							    	<button type="button" class="btn btn-default btn-med" ng-disabled="true" >
+  							    	<button type="button" class="btn btn-default btn-med" ng-disabled="true">
   								    	<span class="glyphicon glyphicon-arrow-up"></span>
   							    	</button>
   							    	<button type="button" class="btn btn-default btn-med" ng-disabled="true">
@@ -178,13 +178,13 @@ body {
 	  	<div class="tab-pane" id="tab_MovieList">
       	<div id="MovieList" class="panel panel-default" ng-controller="moviesCtrl">
       		<div class="panel-heading">
-      			<h4 class="panel-title" style="line-height:35px;">Movie Information
+      			<h3 class="panel-title" style="line-height:35px;">Movie Information
   	   				<span class="pull-right">
     						<button class="btn btn-success btn-med" id="btn_MovieSearch" type="button" onclick="showMovieSearch()">
 						 			<span class="glyphicon glyphicon-search"></span>
 								</button>
 							</span>
-						</h4>
+						</h3>
       		</div>
       		<div class="panel-body" style="height:65vh; overflow: auto;" >
       			<table class="table">
@@ -263,7 +263,7 @@ body {
 	  	<div class="tab-pane" id="tab_MoviesByTheater">
       	<div id="MovieList" class="panel panel-default" ng-controller="moviesByTheaterCtrl">
       		<div class="panel-heading">
-      			<h4 class="panel-title">Movies and Showtimes for {{theaterService.moviesByTheater.theater.name}} {{theaterService.moviesByTheater.theater.location.street}} {{theaterService.moviesByTheater.theater.location.city}} {{theaterService.moviesByTheater.theater.location.state}} {{theaterService.moviesByTheater.theater.location.zipCode}}</h4>
+      			<h3 class="panel-title">Movies and Showtimes for {{theaterService.moviesByTheater.theater.name}} {{theaterService.moviesByTheater.theater.location.street}} {{theaterService.moviesByTheater.theater.location.city}} {{theaterService.moviesByTheater.theater.location.state}} {{theaterService.moviesByTheater.theater.location.zipCode}}</h3>
       		</div>
       		<div class="panel-body" style="height:65vh; overflow: auto;">
       			<table class="table">
@@ -362,7 +362,7 @@ body {
 	  	<div class="tab-pane" id="tab_TheatersByMovie">
       	<div id="MovieList" class="panel panel-default" ng-controller="theaterByMovieCtrl">
       		<div class="panel-heading" style="line-height:35px;">
-      			<h4>Theaters and Showtimes for:{{movieService.theatersByMovie.movie.title}}</h4>
+      			<h3 class="panel-title">Theaters and Showtimes for:{{movieService.theatersByMovie.movie.title}}</h3>
       		</div>
       		<div Class="panel-body" style="height:65vh; overflow: auto;">
       			<table class="table">
@@ -436,7 +436,7 @@ body {
      				</table>
       		</div>
 					<div>
-						<br>
+					<br>
 					</div>
 		      <div class="container row" id="log_TheatersByMovie" ng-repeat="l in movieService.tbmLogRecord" ng-show="movieService.logRecordIndex == $index" ng-init="movieService.logRecordIndex = 0">
 		      	<table>
@@ -476,107 +476,139 @@ body {
 	      	</div>
       	</div>
       </div>
-      
-			<div class="tab-pane" id="tab_LoadTestData">
-      	<div id="LoadTestData" class="panel panel-default" ng-controller="movieTheaterStatusCtrl">
-     			<div class="panel-heading">
-     				<h4 class="panel-title" style="line-height:35px;">Movie Ticket Application Status</h4>
-     			</div>
-      		<div class="panel-body" style="height:65vh; overflow: auto;">
-      			<table class="table">
-      				<tbody>
-      					<tr>
-      						<td>
-          					<form name="apiKeys" ng-submit="updateKeys(googleKey,tmdbKey)" class="form-horizontal">
-            					<div class="form-group well well-sm">
-           							<span class="input-group-addon label label-default">Google API Key</span><span>  A valid Google API key is required to enable geo-coding of Theaters</span>
-           							<br><br>
-            						<div class="input-group col-sm-12">
-      								  	<input id="googleKey" name="googleKey" ng-model="googleKey" type="text" class="form-control col-md-10" placeholder="Google API Key" required>
-  	    								  <span ng-show="!googleKey.length" class="input-group-btn">
-	      								  	<button type="button" class="btn btn-default btn-success" ng-click="openLinkInWindow('https://developers.google.com/maps/documentation/javascript/get-api-key','getkey')">Get Key</button>
-      										</span>
-      					  		  	<span ng-show="apiKeys.googleKey.$dirty && apiKeys.googleKey.$valid" class="input-group-btn">
-         								  	<button class="btn btn-default btn-success" type="submit">Save</button>
-      										</span>
-      									</div>
+     
+			<div class="tab-pane" id="tab_LoadTestData" ng-controller="appConfigCtrl">
+      		<div id="LoadTestData" class="panel panel-default" >
+       			<div class="panel-heading">
+      				<h3 class="panel-title" style="line-height:35px;">Movie Ticket Application Status</h3>
+       			</div>
+   	
+         		<div class="panel-body form-horizontal" style="height:65vh; overflow: auto;">
+         			<table class="table">
+         				<tbody>
+         					<tr>
+         						<td>
+         
+											<form name="config" ng-submit="updateDataSources(formState.googleKey,formState.tmdbKey,formState.geocodingService,formState.mappingService)" >
+               					<div class="form-group well well-sm">      						
+               						<div class="form-inline">
+   	           							<span class="label label-default">Application Settings</span>
+						      					<span class="pull-right">
+									  		  		<span ng-show="((config.$dirty) && (config.googleKey.$valid) && (config.tmdbKey.$valid))">
+													  		<button class="btn btn-default btn-success" type="submit">Save</button>
+															</span>
+														</span>
+
+   	           							<span ng-if="appConfigService.status.supportedFeatures.$near">
+    	 	       									<label for="geocodingService">Geocoding Service:</label>
+      	 	     									<select class="form-control" id="geocodingService" ng-model="formState.geocodingService">
+   	 														<option value="google">Google</option>
+   															<option value="usCensus">US Census</option>
+    														<option value="oracle" disabled>Oracle</option>
+   													    <option value="none">None</option>
+   														</select>
+   														<span ng-show="(formState.geocodingService !== 'none')">
+     	 	      	 							  <label for="mappingService">Mapping Service:</label>
+       	 	     								  <select class="form-control" id="mappingService" ng-model="formState.mappingService">
+      													  <option value="google">Google</option>
+      													  <option value="oracle" disabled>Oracle</option>
+   													      <option value="none">None</option>
+    													  </select>
+    													</span>
+   													
+   		           							<div ng-show="((formState.geocodingService === 'google') || ((formState.geocodingService !== 'none') && (formState.mappingService === 'google')))"> 
+    					       						<br><br>
+   		  	         							<span class="input-group-addon label label-default">Google API Key</span><span>  Enter a valid API key to use Google Services</span>
+    					       							<br><br>
+        					    						<div class="input-group col-sm-12">
+      													  	<input id="googleKey" name="googleKey" ng-model="formState.googleKey" type="text" class="form-control col-sm-10" placeholder="Google API Key" ng-required="((formState.geocodingService === 'google') || ((formState.geocodingService !== 'none') && (formState.mappingService === 'google')))">
+       														  <span ng-show="!formState.googleKey.length" class="input-group-btn" style="width:1%">
+       														  	<button type="button" class="btn btn-default btn-success" ng-click="appConfigService.openLinkInWindow('https://developers.google.com/maps/documentation/javascript/get-api-key','getkey')">Get Key</button>
+      															</span>
+      														</div>
+             									</div>
+   	         								</span>
+   
+    		         						<br><br>
+         									</div>
+         									
+          	  						<div class="input-group col-sm-12">
+ 	          	 							<span class="label label-default">TMDB API Key</span><span>  A valid TMBD key is required to enable loading of Movies</span>
+ 		         								<br><br>
+     	        							<div class="input-group col-sm-12">
+ 	    	  										<input id="tmdbKey" name="tmdbKey" ng-model="formState.tmdbKey" style="width:100%;" type="text" class="form-control" placeholder="TMDB API Key" required>
+   		  										  <span ng-show="!formState.tmdbKey.length" class="input-group-btn">
+       													<button type="button" class="btn btn-default btn-success" ng-click="appConfigService.openLinkInWindow('https://www.themoviedb.org/account/signup','getkey')">Get Key</button>
+       												</span>
+	           								</div>
+           								</div>
+          								      									
+          							</div>
+								  		</form>
+
+             					<div class="form-group well well-sm">
+             						<div class="form-inline">
+ 	           							<span class="label label-default">Theater Collection</span>
+   	         							<br><br>
+   	         						</div>
+ 	           						<div class="input-group col-sm-12">
+    	      							<input id="status_LoadTheaters" class="form-control" type="text" disabled value="{{(appConfigService.status.theaterCount === 0) ? 'Pending' : 'Documents: ' + appConfigService.status.theaterCount}}">
+      	 						  		<span ng-show="config.$pristine" class="input-group-btn">
+      			      					<button id="btn_LoadTheaters" type="button" class="btn btn-default btn-success has-spinner" ng-click="appConfigService.loadTheaters($event)">Load  
+      			      						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+      	  		 							</button>
+       										</span>
+      									</div>        										
       								</div>
-      
-            					<div class="form-group well well-sm">
-           							<span class="label label-default">TMDB API Key</span><span>  A valid TMBD key is required to enable loading of Movies</span>
-           							<br><br>
-            						<div class="input-group col-sm-12">
-	      									<input id="tmdbKey" name="tmdbKey" ng-model="tmdbKey" style="width:100%;" type="text" class="form-control" placeholder="TMDB API Key" required>
-  		  								  <span ng-show="!tmdbKey.length" class="input-group-btn">
-      											<button type="button" class="btn btn-default btn-success" ng-click="openLinkInWindow('https://www.themoviedb.org/account/signup','getkey')">Get Key</button>
-      										</span>
-      							  		<span ng-show="apiKeys.tmdbKey.$dirty && apiKeys.tmdbKey.$valid" class="input-group-btn">
-       	  	 								<button  class="btn btn-default btn-success" type="submit">Save</button>
-       										</span>
-            						</div>
-      								</div>
-      
-            					<div class="form-group well well-sm">
-           							<span class="label label-default">Theater Collection</span>
-           							<br><br>
-            						<div class="input-group col-sm-12">
-          								<input id="status_LoadTheaters" class="form-control" type="text" disabled value="{{(status.theaterCount === 0) ? 'Pending' : 'Documents: ' + status.theaterCount}}">
-       						  			<span ng-show="apiKeys.googleKey.$valid" class="input-group-btn">
-      		      						<button id="btn_LoadTheaters" type="button" class="btn btn-default btn-success has-spinner" ng-click="loadTheaters($event)">Load  
-      		      							<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
-      	  	 								</button>
-       										</span>
-       									</div>
-       								</div>
-      
-            					<div class="form-group well well-sm">
-           							<span class="label label-default">Movie Collection</span>
-           							<br><br>
-            						<div class="input-group col-sm-12">
-          								<input id="status_LoadMovies" class="form-control" type="text" disabled value="{{(status.movieCount === 0) ? 'Pending' : 'Documents: ' + status.movieCount}}">
-       						  			<span ng-show="apiKeys.tmdbKey.$valid" class="input-group-btn">
-      		      						<button id="btn_LoadMovies" type="button" class="btn btn-default btn-success has-spinner" ng-click="loadMovies($event)">Load  
-      		      							<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
-      	  	 								</button>
-       										</span>
-       									</div>
-       								</div>
-      
-            					<div class="form-group well well-sm">
+       
+             					<div class="form-group well well-sm">
+             						<div class="form-inline">
+ 	           							<span class="label label-default">Movie Collection</span>
+   	         							<br><br>
+   	         						</div>
+             						<div class="input-group col-sm-12">
+           								<input id="status_LoadMovies" class="form-control" type="text" disabled value="{{(appConfigService.status.movieCount === 0) ? 'Pending' : 'Documents: ' + appConfigService.status.movieCount}}">
+        						  		<span ng-show="((config.$pristine) && (config.tmdbKey.$valid))" class="input-group-btn">
+       		      						<button id="btn_LoadMovies" type="button" class="btn btn-default btn-success has-spinner" ng-click="appConfigService.loadMovies($event)">Load  
+       		      							<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+       	  	 								</button>
+        									</span>
+        								</div>
+        							</div>
+       
+             					<div class="form-group well well-sm">
            							<span class="label label-default">Poster Collection</span>
            							<br><br>
-            						<div class="input-group col-sm-12">
-          								<input id="status_LoadPosters" class="form-control" type="text" disabled value="{{(status.posterCount === 0) ? 'Pending' : 'Documents: ' + status.posterCount}}">
-       						  			<span ng-show="(status.movieCount > 0)" class="input-group-btn">
-      		      						<button id="btn_LoadPosters" type="button" class="btn btn-default btn-success has-spinner" ng-click="loadPosters($event)">Load  
-      		      							<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
-      	  	 								</button>
-       										</span>
-       									</div>
-       								</div>
-      
-            					<div class="form-group well well-sm">
-           							<span class="label label-default">Screening Collection</span>
-           							<br><br>
-            						<div class="input-group col-sm-12">
-          								<input id="status_GenerateScreenings" class="form-control" type="text" disabled value="{{(status.screeningCount === 0) ? 'Pending' : 'Documents: ' + status.screeningCount}}">
-       						  			<span ng-show="((status.movieCount > 0) && (status.theaterCount > 0))" class="input-group-btn">
-      		      						<button id="btn_GenerateScreenings" type="button" class="btn btn-default btn-success has-spinner" ng-click="generateScreenings($event)">Load  
-      		      							<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
-      	  	 								</button>
-       										</span>
-       									</div>
-       								</div>
-      
-         						</form>
-            			</td>
-            		</tr>
-      				</tbody>
-      			</table>
-      		</div>
+             						<div class="input-group col-sm-12">
+           								<input id="status_LoadPosters" class="form-control" type="text" disabled value="{{(appConfigService.status.posterCount === 0) ? 'Pending' : 'Documents: ' + appConfigService.status.posterCount}}">
+        						  		<span ng-show="((config.$pristine) && (config.tmdbKey.$valid) && (appConfigService.status.movieCount > 0))" class="input-group-btn">
+	       		      					<button id="btn_LoadPosters" type="button" class="btn btn-default btn-success has-spinner" ng-click="appConfigService.loadPosters($event)">Load  
+  	     		      						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+    	   	  	 							</button>
+        									</span>
+        								</div>
+        							</div>
+       
+             					<div class="form-group well well-sm">
+            						<span class="label label-default">Screening Collection</span>
+            						<br><br>
+             						<div class="input-group col-sm-12">
+           								<input id="status_GenerateScreenings" class="form-control" type="text" disabled value="{{(appConfigService.status.screeningCount === 0) ? 'Pending' : 'Documents: ' + appConfigService.status.screeningCount}}">
+        						  		<span ng-show="((appConfigService.status.movieCount > 0) && (appConfigService.status.theaterCount > 0))" class="input-group-btn">
+	       		      					<button id="btn_GenerateScreenings" type="button" class="btn btn-default btn-success has-spinner" ng-click="appConfigService.generateScreenings($event)">Load  
+  	     		      						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+    	   	  	 							</button>
+        									</span>
+        								</div>
+        							</div>
+       	
+            				</td>
+            			</tr>
+      					</tbody>
+      				</table>
+      			</div>
+   		   	</div>
       	</div>
-      </div>
-      
     </div>
 
     <div class="modal fade" id="dialog_PurchaseTickets" tabindex="-1" role="dialog" aria-labelledby="title_BookTickets" aria-hidden="true">

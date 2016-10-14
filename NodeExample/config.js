@@ -42,6 +42,6 @@ function updateDataSources(updates) {
 	  dataSources.mappingService   = updates.mappingService
 	}
 	
-  fs.writeFileSync('dataSources.json',JSON.stringify(dataSources,null,2));
+  fs.writeFileSync(__dirname + 'dataSources.json',JSON.stringify(dataSources,null,2));
 }
 

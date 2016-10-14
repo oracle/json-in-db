@@ -27,8 +27,6 @@ module.exports.loadTheaters      = loadTheaters;
 module.exports.loadMovies        = loadMovies;
 module.exports.loadScreenings    = loadScreenings;
 module.exports.loadPosters       = loadPosters;
-module.exports.loadStatus        = loadStatus;
-module.exports.updateDataSources = updateDataSources;
 
 function writeLogEntry(module,message) {
 	module = ( message === undefined) ? module : module + ": " + message
@@ -48,8 +46,8 @@ ExternalError.prototype.constructor = ExternalError;
 // var engagementStartDate = new Date(cfg.dataSources.engagementStartDate)
 // var engagementEndDate = new Date(cfg.dataSources.engagementEndDate)
 
-var disableSodaLogging = { sodaLoggingEnabled : false };
-var sodaLoggingState    = disableSodaLogging;
+var sodaLoggingDisabled = { sodaLoggingEnabled : false };
+var sodaLoggingState    = sodaLoggingDisabled;
 
 function dateWithTZOffset(date) {
   var tzo = -date.getTimezoneOffset()
@@ -218,89 +216,6 @@ function loadPosters(sessionState, response, next) {
 
 }
 
-function loadStatus(sessionState,response,next) {
-	
-	console.log('externalInterfaces.loadStatus()');	
-	var status = {
-		googleKey         : cfg.dataSources.google.apiKey
-	, tmdbKey           : cfg.dataSources.tmdb.apiKey
-	, supportedFeatures : movieAPI.getDetectedFeatures()
-	, geocodingService  : cfg.dataSources.geocodingService
-	, mappingService    : cfg.dataSources.mappingService
-	, movieCount        : 0
-	, theaterCount      : 0
-	, screeningCount    : 0
-	, posterCount       : 0 
-	}
-		
-	return movieAPI.getMovies(disableSodaLogging,1,undefined,true).then(function(sodaResponse){
-	   status.movieCount=sodaResponse.json.totalResults;
-	}).catch(function(e) {
-		 if (e.details.statusCode !== 404) {
-		 	 if (e.details.statusCode !== 400) {
-		 	 	 throw e;
-		 	 }
-		 	 else {
-		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
-		 	 	 	 throw e;
-		 	 	 }
-		   }
-		 }
-  }).then(function() {		 	 
-	   return movieAPI.getTheaters(disableSodaLogging,1,undefined,true)
-	}).then(function(sodaResponse){
-	   status.theaterCount=sodaResponse.json.totalResults;
-	}).catch(function(e) {
-		 if (e.details.statusCode !== 404) {
-		 	 if (e.details.statusCode !== 400) {
-		 	 	 throw e;
-		 	 }
-		 	 else {
-		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
-		 	 	 	 throw e;
-		 	 	 }
-		   }
-		 }
-  }).then(function() {		 	 
-	   return movieAPI.getScreenings(disableSodaLogging,1,undefined,true)
-	}).then(function(sodaResponse){
-	   status.screeningCount=sodaResponse.json.totalResults;
-	}).catch(function(e) {
-		 if (e.details.statusCode !== 404) {
-		 	 if (e.details.statusCode !== 400) {
-		 	 	 throw e;
-		 	 }
-		 	 else {
-		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
-		 	 	 	 throw e;
-		 	 	 }
-		   }
-		 }
-  }).then(function() {		 	 
-	   return movieAPI.getPosters(disableSodaLogging,1,undefined,true)
-	}).then(function(sodaResponse){
-	   status.posterCount=sodaResponse.json.totalResults;
-	}).catch(function(e) {
-		 if (e.details.statusCode !== 404) {
-		 	 if (e.details.statusCode !== 400) {
-		 	 	 throw e;
-		 	 }
-		 	 else {
-		 	 	 if (e.json['o:errorCode'] === 'SQL-00942') {
-		 	 	 	 throw e;
-		 	 	 }
-		   }
-		 }
-  }).then(function() {		 	 
-	   response.json(status);
-	   response.end();
-  }).catch(function(e){
-  	writeLogEntry('loadStatus(): Broken Promise.');
-    next(e);
-  });
-
-}	   
-	   
 function doGeocoding(address,benchmark) {
 
   var moduleId = 'geocodeAddress("' + address + '",' + benchmark + ')';
@@ -422,9 +337,11 @@ function geocodeTheater(theater) {
 
 	// If $near is not supported by SODA then geocoding is irrelevant.
 	
-  if (movieAPI.getDetectedFeatures().$near == false) {
+	
+  if (!movieAPI.getDetectedFeatures().$near) {
     theater.location.geoCoding = {}
-    Promise.resolve(theater);
+    // Promise.resolve(theater);
+    return theater;
   }
 
 	var address = theater.location.street + " " + theater.location.city + " " + theater.location.state + " " + theater.location.zipCode;
@@ -436,7 +353,7 @@ function geocodeTheater(theater) {
     	  theater.location.geoCoding = geoCoding
     	  return theater;
       }).catch(function(e) {
-  	    writeLogEntry(moduleId,'Unable to get location for = "' + address + '".');
+  	    writeLogEntry(moduleId,'Unable to get location for = "' + address + '" [USCensus].');
   	    theater.location.geoCoding = {}
   	    return theater;
       });
@@ -447,13 +364,14 @@ function geocodeTheater(theater) {
   	    return theater;
       }).catch(function(e) {
         console.log(JSON.stringify(e));
-  	    writeLogEntry(moduleId,'Unable to get location for = "' + address + '".');
+  	    writeLogEntry(moduleId,'Unable to get location for = "' + address + '". [Google]');
   	    theater.location.geoCoding = {}
   	    return theater;
       });
       break;
     case "oracle" :
       // TODO : Add support for Oracle Geocoding Service
+	    writeLogEntry(moduleId,'Unable to get location for = "' + address + '". [Oracle]');
       // break;
     default :
 	    theater.location.geoCoding = {}
@@ -1261,15 +1179,3 @@ function getPostersFromTMDB(sessionState,response) {
   });
 }	   
 
-function updateDataSources(sessionState, response, next, updatedValues) {
-	
-	console.log('externalInterfaces.updateDataSources() : ' + JSON.stringify(updatedValues));
-	try {
-		cfg.updateDataSources(updatedValues);
-	  response.json({status : "success" })
-	  response.end();
-	}
-	catch (e) {
-		next(e);
-	}
-}

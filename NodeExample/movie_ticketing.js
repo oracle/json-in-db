@@ -32,11 +32,11 @@ module.exports.screeningService              = screeningService
 module.exports.bookTicketService             = bookTicketService;
 module.exports.posterService                 = posterService;
 module.exports.logRecordsByOperationService  = logRecordsByOperationService
+module.exports.applicationStatusService      = applicationStatusService
+module.exports.updateDataSourcesService      = updateDataSourcesService
                                              
 module.exports.initializeSodaLogging         = initializeSodaLogging;
 module.exports.setSessionState               = setSessionState;
-module.exports.getGoogleConfiguration        = getGoogleConfiguration;
-module.exports.getTheaterCenter              = getTheaterCenter;
 
 function dateWithTZOffset(date) {
   var tzo = -date.getTimezoneOffset()
@@ -251,6 +251,186 @@ function moviesInTheatersService(sessionState, response, next) {
   });
 } 
   
+function bookTicketService(sessionState, response, next, bookingRequest) {
+
+  // console.log('movieTicketing.bookTicketService(' + JSON.stringify(bookingRequest) +')');
+
+  bookTickets(sessionState, bookingRequest).then(function (bookingStatus) {
+    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
+    response.json(bookingStatus);
+    response.end();
+  }).catch(function(err) {
+    next(err);
+  });
+ 
+}
+
+function screeningService(sessionState, response, next, key) {
+
+  // console.log('screeningService(' + key + ')');
+
+  movieAPI.getScreening(sessionState, key).then(function(sodaResponse) {
+    // console.log(JSON.stringify(sodaResponse));
+    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
+    response.json(sodaResponse.json);
+    response.end();
+  }).catch(function(e) {
+    next(e);
+  })
+}
+
+function applicationStatusService(sessionState,response,next) {
+	
+  console.log('movieTicketing.applicationStatusService()');
+
+	var status = {
+		googleKey         : cfg.dataSources.google.apiKey
+	, tmdbKey           : cfg.dataSources.tmdb.apiKey
+	, supportedFeatures : movieAPI.getDetectedFeatures()
+	, geocodingService  : cfg.dataSources.geocodingService
+	, mappingService    : cfg.dataSources.mappingService
+	, movieCount        : 0
+	, theaterCount      : 0
+	, screeningCount    : 0
+	, posterCount       : 0 
+	, currentPosition   : {
+		  coords          : {
+		    latitude      : 0.0
+		  , longitude     : 0.0
+		  }
+		}
+	}
+		
+	return movieAPI.getMovies(sodaLoggingDisabled,1,undefined,true).then(function(sodaResponse){
+	   status.movieCount=sodaResponse.json.totalResults;
+	}).catch(function(e) {
+		 if (e.details.statusCode !== 404) {
+		 	 if (e.details.statusCode !== 400) {
+		 	 	 throw e;
+		 	 }
+		 	 else {
+		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
+		 	 	 	 throw e;
+		 	 	 }
+		   }
+		 }
+  }).then(function() {		 	 
+	   return movieAPI.getTheaters(sodaLoggingDisabled,1,undefined,true)
+	}).then(function(sodaResponse){
+	   status.theaterCount=sodaResponse.json.totalResults;
+	}).catch(function(e) {
+		 if (e.details.statusCode !== 404) {
+		 	 if (e.details.statusCode !== 400) {
+		 	 	 throw e;
+		 	 }
+		 	 else {
+		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
+		 	 	 	 throw e;
+		 	 	 }
+		   }
+		 }
+  }).then(function() {		 	 
+	   return movieAPI.getScreenings(sodaLoggingDisabled,1,undefined,true)
+	}).then(function(sodaResponse){
+	   status.screeningCount=sodaResponse.json.totalResults;
+	}).catch(function(e) {
+		 if (e.details.statusCode !== 404) {
+		 	 if (e.details.statusCode !== 400) {
+		 	 	 throw e;
+		 	 }
+		 	 else {
+		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
+		 	 	 	 throw e;
+		 	 	 }
+		   }
+		 }
+  }).then(function() {		 	 
+	   return movieAPI.getPosters(sodaLoggingDisabled,1,undefined,true)
+	}).then(function(sodaResponse){
+	   status.posterCount=sodaResponse.json.totalResults;
+	}).catch(function(e) {
+		 if (e.details.statusCode !== 404) {
+		 	 if (e.details.statusCode !== 400) {
+		 	 	 throw e;
+		 	 }
+		 	 else {
+		 	 	 if (e.json['o:errorCode'] === 'SQL-00942') {
+		 	 	 	 throw e;
+		 	 	 }
+		   }
+		 }
+  }).then(function() {		 	 
+	   return getTheaterCentroid(sodaLoggingDisabled)
+	}).then(function(centroid){
+     // console.log('movieTicketing.applicationStatusService(): Centroid = ' + JSON.stringify(centroid));
+	   status.currentPosition = centroid
+  }).then(function() {		 	 
+	   response.json(status);
+	   response.end();
+  }).catch(function(e){
+  	writeLogEntry('movieTicketing.applicationStatusService(): Broken Promise.');
+    next(e);
+  });
+
+}	   
+
+function updateDataSourcesService(sessionState, response, next, updatedValues) {
+	
+	console.log('movieTicketing.updateDataSourceService() : ' + JSON.stringify(updatedValues));
+	try {
+		cfg.updateDataSources(updatedValues);
+	  response.json({status : "success" })
+	  response.end();
+	}
+	catch (e) {
+		next(e);
+	}
+}
+	   
+function getTheaterCentroid(sessionState) {
+	
+  return movieAPI.getTheaters(sessionState).then(function (sodaResponse) {
+  	var boundsBox = {
+  		latitude  : [ 360, -360 ],
+  		longitude : [ 360, -360 ]
+  	}
+  	
+  	for (var i=0; i < sodaResponse.json.items.length; i++) {
+  	  if (sodaResponse.json.items[i].value.location.geoCoding.coordinates) {
+  	  	var latitude = sodaResponse.json.items[i].value.location.geoCoding.coordinates[0]
+  	  	var longitude = sodaResponse.json.items[i].value.location.geoCoding.coordinates[1]
+	  	  if (latitude < boundsBox.latitude[0]) {
+  		  	boundsBox.latitude[0] = latitude;
+  		  }
+  	 	 	if (latitude > boundsBox.latitude[1]) {
+  	  		boundsBox.latitude[1] = latitude;
+  	  	}
+
+	  	  if (longitude < boundsBox.longitude[0]) {
+  		  	boundsBox.longitude[0] = longitude;
+  		  }
+  		  
+  	 	 	if (longitude > boundsBox.longitude[1]) {
+  	  		boundsBox.longitude[1] = longitude;
+  	  	}
+  	  }
+  	}	
+    
+    var centroid = {
+    	coords       : {
+  		  latitude   : ((boundsBox.latitude[0] + boundsBox.latitude[1])/2)
+  	  , longitude  : ((boundsBox.longitude[0] + boundsBox.longitude[1])/2)
+  	  }
+  	}
+  	  	
+    // console.log('getTheaterCentroid(): Centroid = ' + JSON.stringify(centroid));
+
+  	return centroid;
+  
+  });
+  	
+}
+
 function bookTickets(sessionState, bookingRequest) {
 
   // console.log('movieTicketing.bookTickets(' + JSON.stringify(bookingRequest) +')');
@@ -303,20 +483,6 @@ function bookTickets(sessionState, bookingRequest) {
   }).catch(function (err) {
    	throw err;     
   })
-}
-
-function bookTicketService(sessionState, response, next, bookingRequest) {
-
-  // console.log('movieTicketing.bookTicketService(' + JSON.stringify(bookingRequest) +')');
-
-  bookTickets(sessionState, bookingRequest).then(function (bookingStatus) {
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(bookingStatus);
-    response.end();
-  }).catch(function(err) {
-    next(err);
-  });
- 
 }
 
 function processScreeningsByTheaterAndDate(sessionState,sodaResponse) {
@@ -552,20 +718,6 @@ function getTheatersByMovieAndDate(sessionState,movie, date) {
   })
 }
 
-function screeningService(sessionState, response, next, key) {
-
-  // console.log('screeningService(' + key + ')');
-
-  movieAPI.getScreening(sessionState, key).then(function(sodaResponse) {
-    // console.log(JSON.stringify(sodaResponse));
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json);
-    response.end();
-  }).catch(function(e) {
-    next(e);
-  })
-}
-
 function makeTicketSale(bookingRequest, screening) {
 
   delete(bookingRequest.key);
@@ -631,44 +783,3 @@ function logRecordsByOperationService(sessionState, response, next, id) {
   });
 }                                                                                                                                    
 
-function getGoogleConfiguration(sessionState, response, next) {
-
-  response.json(cfg.dataSources.google);                                      
-  response.end();                                            
-
-}
-
-function getTheaterCenter(sessionState, response, next) {
-	
-  movieAPI.getTheaters(sessionState).then(function (sodaResponse) {
-  	var boundsBox = {
-  		latitude  : [ 360, -360 ],
-  		longitude : [ 360, -360 ]
-  	}
-  	
-  	for (var i=0; i < sodaResponse.json.items.length; i++) {
-  	  if (sodaResponse.json.items[i].value.location.geoCoding.coordinates) {
-  	  	var latitude = sodaResponse.json.items[i].value.location.geoCoding.coordinates[0]
-  	  	var longitude = sodaResponse.json.items[i].value.location.geoCoding.coordinates[1]
-	  	  if (latitude < boundsBox.latitude[0]) {
-  		  	boundsBox.latitude[0] = latitude;
-  		  }
-  	 	 	if (latitude > boundsBox.latitude[1]) {
-  	  		boundsBox.latitude[1] = latitude;
-  	  	}
-
-	  	  if (longitude < boundsBox.longitude[0]) {
-  		  	boundsBox.longitude[0] = longitude;
-  		  }
-  	 	 	if (longitude > boundsBox.longitude[1]) {
-  	  		boundsBox.longitude[1] = longitude;
-  	  	}
-  	  }
-  	}	
-    response.json({latitude : ((boundsBox.latitude[0] + boundsBox.latitude[1])/2),longitude : ((boundsBox.longitude[0] + boundsBox.longitude[1])/2)});
-    response.end();
-  }).catch(function(e){
-    next(e);
-  });
-  	
-}

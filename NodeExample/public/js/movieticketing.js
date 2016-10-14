@@ -290,9 +290,31 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
 
   $http({
     method : 'GET',
-    url    : '/movieticket/config/status/',
+    url    : '/movieticket/application/status/',
   }).success(function(data, status, headers) {  	
-  	console.log('Setting status');
+
+		console.log(JSON.stringify(data));
+
+    if ((data.currentPosition.coords.latitude !== 0) || (data.currentPosition.coords.longitude !== 0)) {
+    	
+    	// Current Position initially defined as center of theaters. If browser location services are enabled reset to actual location.
+    	 
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position){
+      	  if (position.coords.latitude) {
+      	    data.simulatedPosition =  {
+      	    	coords      : {
+      	    		latitude  : data.currentPosition.coords.latitude
+      	    	, longitude : data.currentPosition.coords.longitude
+      	      }
+      	    }
+      	  	data.currentPosition.coords.latitude = position.coords.latitude;
+      	  	data.currentPosition.coords.longitude = position.coords.longitude;
+          }
+        });
+	    }
+	  }
+
  	  $scope.appConfigService.status = data
 
  	  if (data.googleKey !== 'YOUR_GOOGLE_KEY_GOES_HERE') {
@@ -312,10 +334,10 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
  	  
  	  if ($scope.appConfigService.isApplicationReady()) {
  	  	$scope.appConfigService.applicationReady = true;
- 	  	showApplicationTabs();
+ 	  	enableApplication();
  	 	} 
  	 	else {
- 	  	showConfigurationTab();
+ 	  	enableConfiguration();
     } 	 		
   });
 
@@ -339,8 +361,6 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
   		**
   		*/
   		
-  		console.log(googleKey + "," + tmdbKey + "," + geocodingSvc + "," + mappingSvc);
-  		  
       var updates = {
         tmdb      : {
       	  apiKey  : tmdbKey
@@ -362,7 +382,7 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
 		    }
       }
 
-      $http.post('/movieticket/config/updateDataSources', updates).success(function (data, status, headers) {
+      $http.post('/movieticket/application/dataSources', updates).success(function (data, status, headers) {
       	// Saving the Keys enables the Load Theaters and Load Movies Buttons.
       	$scope.appConfigService.status.googleKey = googleKey;
       	$scope.appConfigService.status.tmdbKey = tmdbKey;
@@ -373,7 +393,7 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
       	// If all data is available switch to Application Screen.
 		 	  if ($scope.appConfigService.isApplicationReady()) {
 		 	  	$scope.appConfigService.applicationReady = true;
- 	  			showApplicationTabs();
+ 	  			showApplication();
  	  		} 				
       }).error(function (data, status, headers) {
         showErrorMessage('Error saving keys');
@@ -382,12 +402,11 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
   
 });
 
-app.factory('theaterService', function($http) {
+app.factory('theaterService', function($http, appConfigService) {
 
 	var factory = {};
 
 	factory.theaters = [];
-  factory.position = null;
   factory.theaterMap = null;
 	factory.logRecordIndex = 0;
 	factory.logRecord = null;
@@ -397,8 +416,13 @@ app.factory('theaterService', function($http) {
 		 var qbe = {}
 
 		 if (name) {
-		 	 qbe.name = { '$contains' : name };
-		 }
+   		 if (appConfigService.status.supportedFeatures.$contains) {
+ 		     qbe.name = { '$contains' : name };
+ 		   }
+       else {
+      	 qbe.name = { '$regex' : '.*' + name + '.*'};
+       }
+     }
 
 		 if (city) {
 		   qbe['location.city'] = city.toUpperCase();
@@ -439,12 +463,14 @@ app.factory('theaterService', function($http) {
       });
     }
   }
+  
+	factory.showNearbyTheaters = function (status)  {
 
-	factory.getTheatersByLocation = function ()  {
+		var maplocation = status.currentPosition;
 
-		factory.theaterMap = showLocationOnMap(factory.position);
+		factory.theaterMap = showLocationOnMap(maplocation);
 
-    var path = '/movieticket/theaters/latitude/' + factory.position.coords.latitude + '/longitude/' + factory.position.coords.longitude + '/distance/5';
+    var path = '/movieticket/theaters/latitude/' + maplocation.coords.latitude + '/longitude/' + maplocation.coords.longitude + '/distance/5';
 
     $http.get(path).success(function(data, status, headers) {
   	  if (data.length > 0) {
@@ -455,29 +481,23 @@ app.factory('theaterService', function($http) {
         });
       }
       else {
-     		console.log('theaterService: getTheatersByLocation(): No Theaters near current location.');
-				var path = '/movieticket/theaters/geoCoding/center';
-				$http.get(path).success(function(data, status, headers) {
-					factory.position = {
-					  "coords" : data
-					}
-    	  	factory.theaterMap = showLocationOnMap(factory.position);
-			    var path = '/movieticket/theaters/latitude/' + factory.position.coords.latitude + '/longitude/' + factory.position.coords.longitude + '/distance/5';
-	        $http.get(path).success(function(data, status, headers) {
-		    	  if (data.length > 0) {
-  			    	factory.addMarkersToMap(data);
-     	 		  	var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
-        		  $http.get(path).success(function(data, status, headers) {
-              	factory.logRecord = data
-        	    });
-          	}
-          	else {
-        	  	console.log('theaterService: getTheatersByLocation(): No theaters within 5 Miles of (' + factory.position.coords.latitude + ',' + factory.position.coords.longitude + ')');
-        	  }
-	  	    })
-    		});
-  	  }
-    })
+     		console.log('theaterService: showNearbyTheaters():  No theaters found within 5 Miles of actual location [' + maplocation.coords.latitude + ',' + maplocation.coords.longitude + '].');
+     		mapLocation = status.simulatedPosition;
+			  var path = '/movieticket/theaters/latitude/' + maplocation.coords.latitude + '/longitude/' + maplocation.coords.longitude + '/distance/5';
+	      $http.get(path).success(function(data, status, headers) {
+		  	  if (data.length > 0) {
+  			   	factory.addMarkersToMap(data);
+     	 	  	var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
+        	  $http.get(path).success(function(data, status, headers) {
+             	factory.logRecord = data
+            });
+         	}
+         	else {
+						console.log('theaterService: showNearbyTheaters():  No theaters found within 5 Miles of simulated location [' + maplocation.coords.latitude + ',' + maplocation.coords.longitude + '].');
+          }
+	  	  });
+	  	}
+   	});
   }
 
 	factory.getMoviesByTheater = function (theaterId) {
@@ -527,35 +547,8 @@ app.controller('theatersCtrl',function($scope, $http, $cookies, theaterService, 
   $scope.theaterService = theaterService;
   $scope.appConfigService = appConfigService
 
-  function getTheaterCenter() {
-		var path = '/movieticket/theaters/geoCoding/center';
-		$http.get(path).success(function(data, status, headers) {
-			$scope.theaterService.position = {
-				"coords" : data
-			}
-    	console.log('theatersCtrl: getTheaterCenter() returned: ' + $scope.theaterService.position.coords.latitude + ',' + $scope.theaterService.position.coords.longitude);
-  	})
-	}
-
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function(position){
-    	if (position.coords.latitude) {
-        $scope.$apply(function(){
-          $scope.theaterService.position = position;
-      	  console.log('theatersCtrl: navigator.geolocation.getCurrentPosition() returned: ' + $scope.theaterService.position.coords.latitude + ',' + $scope.theaterService.position.coords.longitude);
-        });
-      }
-      else {
-      	console.log('theatersCtrl: navigator.geolocation.getCurrentPosition() failed to obtain current position');
-   			getTheaterCenter();
-      }
-    });
-	}
-	else {
-   	console.log('theatersCtrl: navigator.geolocation unavaiable');
-		getTheaterCenter();
-	}
-
+  // if (appConfigService.status.supportedFeatures.$near) {
+  
   $http({
     method: 'GET',
     url: '/movieticket/theaters/',
@@ -594,7 +587,7 @@ app.controller('moviesByTheaterCtrl',function($scope, $http, theaterService, boo
 
 });
 
-app.factory('movieService', function($http, $cookies) {
+app.factory('movieService', function($http, $cookies, appConfigService) {
 
 	var factory = {};
 
@@ -612,8 +605,15 @@ app.factory('movieService', function($http, $cookies) {
  		}
 
     var qbe = {};
- 		var searchValue = { '$contains' : what };
+    var searchValue = {}
 
+    if (appConfigService.status.supportedFeatures.$contains) {
+ 		  searchValue = { '$contains' : what };
+    }
+    else {
+    	searchValue = { '$regex' : '.*' + what + '.*' };
+    }
+    
   	if (where == 'Title') {
   	  qbe = { title : searchValue }
   	}
@@ -729,6 +729,7 @@ function formLoad() {
 
 	$('#datePicker').datepicker();
 	$('#datePicker').datepicker('update', new Date());
+	/*
 	$('#tabset_MovieTickets').on(
 	  'shown.bs.tab',
 	  function (e) {
@@ -737,7 +738,7 @@ function formLoad() {
 	  		hideDetailTabs()
 	    }
   })
-
+  */
 }
 
 function showMoviesByTheater() {
@@ -767,20 +768,27 @@ function showBookingForm() {
 
 }
 
-function showConfigurationTab() {
+function enableConfiguration() {
 
 	$('#tabset_MovieTickets a[href="#tab_TheaterList"]').hide();
   $('#tabset_MovieTickets a[href="#tab_MovieList"]').hide();
+  $('#tabset_MovieTickets a[href="#tab_LoadTestData"]').show();
+	$('#tabset_MovieTickets a[href="#tab_MoviesByTheater"]').hide();
+  $('#tabset_MovieTickets a[href="#tab_TheatersByMovie"]').hide();
+
   $('#tabset_MovieTickets a[href="#tab_LoadTestData"]').tab('show');
 
 }
 
-function showApplicationTabs() {
+function enableApplication() {
 
 	$('#tabset_MovieTickets a[href="#tab_TheaterList"]').show();
-  $('#tabset_MovieTickets a[href="#tab_TheaterList"]').tab('show');
   $('#tabset_MovieTickets a[href="#tab_MovieList"]').show();
   $('#tabset_MovieTickets a[href="#tab_LoadTestData"]').show();
+	$('#tabset_MovieTickets a[href="#tab_MoviesByTheater"]').hide();
+  $('#tabset_MovieTickets a[href="#tab_TheatersByMovie"]').hide();
+
+  $('#tabset_MovieTickets a[href="#tab_TheaterList"]').tab('show');
 
 }
 
@@ -792,8 +800,6 @@ function hideBookingForm() {
 
 function hideDetailTabs() {
 
-	$('#tabset_MovieTickets a[href="#tab_MoviesByTheater"]').hide();
-  $('#tabset_MovieTickets a[href="#tab_TheatersByMovie"]').hide();
   // $('#dialog_PurchaseTickets').modal('hide');
 
 }
@@ -837,7 +843,7 @@ function initGoogleMaps(apikey) {
 
 function googleMapsReady() {
 
-	alert('Google maps loaded');
+	console.log('Google maps loaded');
 
 }
 

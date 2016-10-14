@@ -37,9 +37,6 @@ function getRouter() {
   		next();
 		});
 
-    router.route('/theaters/geoCoding/center')
-        .get(getTheaterCenter);
-
     router.route('/theaters')
         .get(getTheaters);
 
@@ -94,14 +91,11 @@ function getRouter() {
     router.route('/config/loadPosters')
         .get(getLoadPosters);
 
-    router.route('/config/googleConfiguration')
-        .get(getGoogleConfiguration);
+    router.route('/application/status')
+        .get(getApplicationStatus);
 
-    router.route('/config/status')
-        .get(getMovieTicketingStatus);
-
-    router.route('/config/updateDataSources')
-        .post(postUpdateDataSources);
+    router.route('/application/dataSources')
+        .post(postDataSources);
 
     router.route('/movieticketlog/operationId/:id')
         .get(getLogRecordsByOperation);
@@ -195,18 +189,10 @@ function getLogRecordsByOperation(req, res, next) {
   movieTicketing.logRecordsByOperationService(req.session, res, next, req.params.id);
 }
 
-function getTheaterCenter(req, res, next) {
-  movieTicketing.getTheaterCenter(req.session, res, next);
+function getApplicationStatus(req, res, next) {
+  movieTicketing.applicationStatusService(req.session, res, next);
 }
 
-function getGoogleConfiguration(req, res, next) {
-  movieTicketing.getGoogleConfiguration(req.session, res, next);
-}
-
-function getMovieTicketingStatus(req, res, next) {
-  externalInterfaces.loadStatus(req.session, res, next);
-}
-
-function postUpdateDataSources(req, res, next) {
-	externalInterfaces.updateDataSources(req.session, res, next, req.body)
+function postDataSources(req, res, next) {
+	movieTicketing.updateDataSourcesService(req.session, res, next, req.body)
 }

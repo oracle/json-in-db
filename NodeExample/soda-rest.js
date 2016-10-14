@@ -678,7 +678,8 @@ function getDetectedFeatures() {
 	
 	return {
 		$contains : $containsSupported
-	, $near     : $nearSupported
+	  , $near     : $nearSupported
+	  // , $near     : false
   }
 
 }

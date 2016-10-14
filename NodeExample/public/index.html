@@ -99,12 +99,12 @@ body {
 		<!-- Tab panes -->
 		<div class="tab-content container">
 			
-  		<div class="tab-pane active" id="tab_TheaterList">
+  		<div class="tab-pane" id="tab_TheaterList">
 				<div id="TheaterList" class="panel panel-default" ng-controller="theatersCtrl">
       		<div class="panel-heading">
      				<h3 class="panel-title" style="line-height:35px;">Theater Information
 	   					<span class="pull-right">
-   							<button ng-hide="((!appConfigService.status.supportedFeatures.$near) || (appConfigService.status.mappingService === 'none') || ((appConfigService.status.mappingService === 'google') && (appConfigService.status.googleKey === 'YOUR_GOOGLE_KEY_GOES_HERE')) || ((theaterService.position.coords.latitude === 0.0) && (theaterService.position.coords.longitude === 0.0)))" class="btn btn-success btn-med" id="btn_LocationSearch" type="button" ng-click="theaterService.getTheatersByLocation()">
+   							<button ng-hide="((!appConfigService.status.supportedFeatures.$near) || (appConfigService.status.mappingService === 'none') || ((appConfigService.status.mappingService === 'google') && (appConfigService.status.googleKey === 'YOUR_GOOGLE_KEY_GOES_HERE')) || ((appConfigService.status.currentPosition.coords.latitude === 0.0) && (appConfigService.status.currentPosition.coords.longitude === 0.0)))" class="btn btn-success btn-med" id="btn_LocationSearch" type="button" ng-click="theaterService.showNearbyTheaters(appConfigService.status)">
 						 			<span class="glyphicon glyphicon-map-marker"></span>
 								</button>
 	  						<button class="btn btn-success btn-med" id="btn_TheaterSearch" type="button" onclick="showTheaterSearch()">
@@ -477,7 +477,7 @@ body {
       	</div>
       </div>
      
-			<div class="tab-pane" id="tab_LoadTestData" ng-controller="appConfigCtrl">
+			<div class="tab-pane active" id="tab_LoadTestData" ng-controller="appConfigCtrl">
       		<div id="LoadTestData" class="panel panel-default" >
        			<div class="panel-heading">
       				<h3 class="panel-title" style="line-height:35px;">Movie Ticket Application Status</h3>
@@ -494,7 +494,7 @@ body {
                						<div class="form-inline">
    	           							<span class="label label-default">Application Settings</span>
 						      					<span class="pull-right">
-									  		  		<span ng-show="((config.$dirty) && (config.googleKey.$valid) && (config.tmdbKey.$valid))">
+									  		  		<span ng-show="((config.$dirty) && ((config.googleKey && config.googleKey.$valid) || (!config.googleKey)) && (config.tmdbKey.$valid))">
 													  		<button class="btn btn-default btn-success" type="submit">Save</button>
 															</span>
 														</span>

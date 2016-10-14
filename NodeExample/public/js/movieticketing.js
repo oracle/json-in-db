@@ -293,7 +293,7 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
     url    : '/movieticket/application/status/',
   }).success(function(data, status, headers) {  	
 
-		console.log(JSON.stringify(data));
+		// console.log(JSON.stringify(data));
 
     if ((data.currentPosition.coords.latitude !== 0) || (data.currentPosition.coords.longitude !== 0)) {
     	
@@ -393,7 +393,7 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
       	// If all data is available switch to Application Screen.
 		 	  if ($scope.appConfigService.isApplicationReady()) {
 		 	  	$scope.appConfigService.applicationReady = true;
- 	  			showApplication();
+ 	  			enableApplication();
  	  		} 				
       }).error(function (data, status, headers) {
         showErrorMessage('Error saving keys');

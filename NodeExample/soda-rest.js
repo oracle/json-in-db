@@ -54,7 +54,12 @@ function initialize(connectionProps, collectionProps) {
 	connectionProperties = connectionProps;
 	collectionProperties = collectionProps;
 	
-	documentStoreRoot = "http://" + connectionProperties.hostname + ":" + connectionProperties.port + connectionProperties.path + "/" 
+	if (connectionProperties.port === null) {
+	  documentStoreRoot = connectionProperties.protocol + "://" + connectionProperties.hostname + connectionProperties.path + "/" 
+  }
+  else {
+	  documentStoreRoot = connectionProperties.protocol + "://" + connectionProperties.hostname + ":" + connectionProperties.port + connectionProperties.path + "/" 
+  }  
 	featureDetection();
 	
 }
@@ -281,8 +286,11 @@ function generateRequest(moduleId, sessionState, requestOptions) {
 		requestOptions.proxy = 'http://' + getConnectionProperties().proxy.hostname + ':' + getConnectionProperties().proxy.port
 	}
   
+  var e = new Error()
+  requestOptions.stack = e.stack;
+  
   return new Promise(function(resolve, reject) {
-	  // console.log('Execute Promise: ' + moduleId);
+		// console.log('Execute Promise: generateRequest("' + moduleId + '"): Method = "' + requestOptions.method + '". URI = "' + requestOptions.uri + '".');
  	  var logRequest = createLogRequest(moduleId, sessionState, requestOptions)
     request(requestOptions, function(error, response, body) {
  	  	if (error) {

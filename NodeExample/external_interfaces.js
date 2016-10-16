@@ -340,7 +340,7 @@ function geocodeTheater(theater) {
 	
   if (!movieAPI.getDetectedFeatures().$near) {
     theater.location.geoCoding = {}
-    // Promise.resolve(theater);
+    // return Promise.resolve(theater);
     return theater;
   }
 
@@ -375,7 +375,8 @@ function geocodeTheater(theater) {
       // break;
     default :
 	    theater.location.geoCoding = {}
-	    Promise.resolve(theater);
+	    // return Promise.resolve(theater);
+      return theater;
   }
 }
     

@@ -1,4 +1,5 @@
 {
+  "protocol": "http",
   "hostname": "localhost",
   "port": 8080,
   "path": "/ords/movies/soda/latest",

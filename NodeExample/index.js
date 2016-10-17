@@ -25,7 +25,15 @@ var sodaRest = require('./soda-rest.js');
 var externalInterfaces = require('./external_interfaces.js');
 
 var app;
+
+function writeLogEntry(module,message) {
+	module = ( message === undefined) ? module : module + ": " + message
+  console.log(new Date().toISOString() + ": index." + module);
+}
+
 function initApp() {
+
+  var moduleId = 'initApp()';
 
 	var port = process.env.PORT || 3000;
   app = express();
@@ -47,7 +55,7 @@ function initApp() {
   app.use(handleError);
 
   httpServer.listen(port, function() {
-      console.log(new Date().toISOString() + ': MovieTicket Webserver listening on localhost:' + port);
+      writeLogEntry(moduleId,'Listening on localhost:' + port);
   });
 }
 

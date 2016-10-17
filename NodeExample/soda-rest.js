@@ -41,6 +41,7 @@ module.exports.getDetectedFeatures         = getDetectedFeatures
 
 module.exports.initialize                  = initialize
 
+var textIndexSupported        = true;
 var $containsSupported        = true;
 var $nearSupported            = true;
 var nullOnEmptySupported      = true;
@@ -49,8 +50,15 @@ var collectionProperties = {}
 var connectionProperties = {}
 var documentStoreRoot     = "";
 
+function writeLogEntry(module,message) {
+	module = ( message === undefined) ? module : module + ": " + message
+  console.log(new Date().toISOString() + ": sodaRest." + module);
+}
+
 function initialize(connectionProps, collectionProps) {
 	
+  var moduleId = 'initialize()'
+
 	connectionProperties = connectionProps;
 	collectionProperties = collectionProps;
 	
@@ -60,6 +68,8 @@ function initialize(connectionProps, collectionProps) {
   else {
 	  documentStoreRoot = connectionProperties.protocol + "://" + connectionProperties.hostname + ":" + connectionProperties.port + connectionProperties.path + "/" 
   }  
+	writeLogEntry(moduleId,'Document Store URI = "' + documentStoreRoot + '".');
+	
 	featureDetection();
 	
 }
@@ -328,6 +338,12 @@ function createIndex(sessionState, collectionName, indexProperties) {
     return new Promise(function(resolve, reject) {resolve()});
   }
 
+  // Skip Text Indexes in environments where text index syntax is not supported
+
+  if ((indexProperties.language) && !textIndexSupported) {
+    console.log(moduleId + 'Skipped creation of unsupported text index' || indexProperties.name);
+    return new Promise(function(resolve, reject) {resolve()});
+  }
 	// Remove the Singleton Key from the index definition if we are in a Pre 12.2 database
 
   if ((!nullOnEmptySupported) && (indexProperties.fields !== undefined) && (!indexProperties.scalarRequired))  {
@@ -592,7 +608,7 @@ function generateRandomName(){
         d = Math.floor(d/16);
         return (c=='x' ? r : (r&0x3|0x8)).toString(16);
     });
-    return uuid;
+    return uuid.toUpperCase();
 }
 
 function featureDetection() {
@@ -601,7 +617,9 @@ function featureDetection() {
   ** Test for $CONTAINS support
   */ 
   
-  var collectionName = 'TMP-' + generateRandomName();
+  var moduleId = 'feaureDetection()'
+  
+  var collectionName = 'TMP_' + generateRandomName();
   
   return createCollection(disableSodaLogging, collectionName).then(function(){
     var qbe = {id : {"$contains" : 'XXX'}}
@@ -648,12 +666,12 @@ function featureDetection() {
       	*/
       	
       	var indexDef = {
-      		name       : "TEST_IDX"
-  			, unique     : true
-  			, fields     : [{
-  				  path     : "id"
-  			,	  datatype : "number"
-  			,   order    : "asc"
+      		name         : "TEST_IDX"
+  			, unique       : true
+  			, fields       : [{
+  				  path       : "id"
+  			    , datatype : "number"
+  			    , order    : "asc"
   			  }]
   		  }
         return createIndex(disableSodaLogging, collectionName, indexDef).catch(function(sodaError){
@@ -663,15 +681,38 @@ function featureDetection() {
                nullOnEmptySupported = false;
             }
           }
+  		  }).then(function() {
+
+  		  	/*
+  		  	** Create Text Index with language specification (12.2 Format with langauge and dataguide)
+  		  	**
+  		  	** ToDo : Can we use alternative index properties if we encounter "DRG-10700: preference does not exist: CTXSYS.JSONREST_ENGLISH_LEXER"
+  		    **
+  		  	*/ 
+
+        	var indexDef = {
+        		name      : "FULLTEXT_INDEX"
+ 		  		, dataguide : "text_value"
+  			  , language  : "english"
+  			  }
+	        return createIndex(disableSodaLogging, collectionName, indexDef).catch(function(sodaError){
+  	        if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 500)) {
+    	        var sodaErrorDetails = sodaError.details.json;
+      	      if (sodaErrorDetails['o:errorCode'] === 'SQL-29855') {
+        	       textIndexSupported = false;
+          	  }
+          	}
+  		  	})
   		  })
   		})  
     })
   }).then(function() {
   	return dropCollection(disableSodaLogging, collectionName)
   }).then(function() {
-    console.log(new Date().toISOString() + ': $contains operator supported:  ' + $containsSupported);
-    console.log(new Date().toISOString() + ': $near operatator   supported:  ' + $nearSupported);
-    // console.log(new Date().toISOString() + ': "NULL ON EMPTY"    supported:  ' + nullOnEmptySupported);
+    writeLogEntry(moduleId,'$contains operator supported:  ' + $containsSupported);
+    writeLogEntry(moduleId,'$near operatator   supported:  ' + $nearSupported);
+		writeLogEntry(moduleId,'Text Index         supported:  ' + textIndexSupported);
+        // writeLogEntry(moduleId,'"NULL ON EMPTY"    supported:  ' + nullOnEmptySupported);
   }).catch(function(e) {
     console.error('Broken Promise : featureDetection().');
     console.error( err.stack ? err.stack : err);

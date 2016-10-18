@@ -53,7 +53,14 @@ function initApp() {
   app.use('/', serveStatic(__dirname + '/public'));
 
   app.use(handleError);
-
+	
+	app.use(function noCache(req, res, next) {
+    res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.header("Pragma", "no-cache");
+    res.header("Expires", 0);
+    next();
+    
+});
   httpServer.listen(port, function() {
       writeLogEntry(moduleId,'Listening on localhost:' + port);
   });

@@ -21,6 +21,7 @@ var xmlParser = require('xml2js').Parser();
 var movieAPI = require('./movie_ticket_api.js');
 var usAddressParser = require('parse-address');
 var googleMapsClient = require('@google/maps').createClient({key: cfg.dataSources.google.apiKey});
+var fs = require('fs');
 
 module.exports.ExternalError     = ExternalError;
 module.exports.loadTheaters      = loadTheaters;
@@ -159,6 +160,7 @@ function loadTheaters (sessionState, response, next) {
   
   getTheaterInformation().then(function(theaters) {
   	theaterList = theaters;
+		// fs.writeFileSync('theaterList.json',JSON.stringify(theaterList,null,2));
     return movieAPI.recreateTheaterCollection(sessionState)
   }).then(function() {
     return movieAPI.insertTheaters(sessionState, theaterList);
@@ -762,12 +764,14 @@ function getMoviesFromTMDB(sessionState,response) {
     return Promise.all(batch.map(createMovie)).then(function(){
     	
     	if (movies.length > 0) {
-  	    writeLogEntry(moduleId,'Movies remaining = ' + movies.length);
       	batchNo++;
   		  return waitAndRun(movies, getMovieDetails, 'getMovieDetails', 'createMovie', batchNo, batchSize, response);
   		}
 	 		else {
 		    writeLogEntry(moduleId, 'getMoviesFromTMDB operations complete. Movie Cache size = ' + movieCache.length); 
+
+      	// Uncomment to Log Data
+    		// fs.writeFileSync('movieCache.json',JSON.stringify(movieCache,null,2));
 		
         var status = {
           date   : dateWithTZOffset(new Date()),
@@ -777,11 +781,16 @@ function getMoviesFromTMDB(sessionState,response) {
         response.write(JSON.stringify(status))
         response.write(']');
  
+        return movieAPI.recreateLoadIndexMovies(sessionState,movieCache).then(function() {
+          response.write(',');
+          response.write('"count":' + movieCache.length);
+       	/*
         return movieAPI.recreateMovieCollection(sessionState).then(function() {
-          return movieAPI.insertMovies(sessionState, movieCache);
+          return movieAPI.insertMovies(sessionState, movieCache);        
         }).then(function(sodaResponse) {
           response.write(',');
           response.write('"count":' + sodaResponse.json.items.length);
+        */
           response.write('}');
           response.end();
           return movieAPI.dropPosterCollection(sessionState)

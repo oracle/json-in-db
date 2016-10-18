@@ -26,6 +26,7 @@ var sodaLoggingDisabled   = { sodaLoggingEnabled : false };
 module.exports.createTheaterCollection     = createTheaterCollection;
 module.exports.dropTheaterCollection       = dropTheaterCollection;
 module.exports.recreateTheaterCollection   = recreateTheaterCollection;
+module.exports.recreateLoadIndexTheaters   = recreateLoadIndexTheaters;
 module.exports.insertTheaters              = insertTheaters
 module.exports.getTheaters                 = getTheaters;
 module.exports.getTheater                  = getTheater;
@@ -35,6 +36,7 @@ module.exports.queryTheaters               = queryTheaters
 module.exports.createMovieCollection       = createMovieCollection;
 module.exports.dropMovieCollection         = dropMovieCollection;
 module.exports.recreateMovieCollection     = recreateMovieCollection;
+module.exports.recreateLoadIndexMovies     = recreateLoadIndexMovies;
 module.exports.insertMovies                = insertMovies;
 module.exports.getMovies                   = getMovies;
 module.exports.moviesByReleaseDateService  = moviesByReleaseDateService;
@@ -387,4 +389,16 @@ function getDetectedFeatures() {
 	
 	return sodaRest.getDetectedFeatures();
 
+}
+
+function recreateLoadIndexMovies(sessionState, movieCache) {
+	
+	return sodaRest.recreateLoadIndex(sessionState, 'Movie', movieCache);
+	
+}
+
+function recreateLoadIndexTheaters(sessionState, theaterList) {
+	
+	return sodaRest.recreateLoadIndex(sessionState, 'Theater', theaterList);
+	
 }

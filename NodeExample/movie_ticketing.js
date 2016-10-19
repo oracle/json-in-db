@@ -119,7 +119,7 @@ function searchTheatersService(sessionState, response, next, qbe) {
   var moduleId = 'searchTheaterService(' + JSON.stringify(qbe) + ')';
   writeLogEntry(moduleId);
 
-  movieAPI.queryTheaters(sessionState, qbe).then(function (sodaResponse) {
+  movieAPI.queryTheaters(sessionState, qbe, 'unlimited').then(function (sodaResponse) {
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(sodaResponse.json.items);
     response.end();
@@ -147,7 +147,7 @@ function locateTheatersService(sessionState, response, next, lat, long, distance
   var moduleId = 'locateTheatersService(' + JSON.stringify(qbe) + ')';
   writeLogEntry(moduleId);
 
-  movieAPI.queryTheaters(sessionState, qbe).then(function (sodaResponse) {
+  movieAPI.queryTheaters(sessionState, qbe, 'unlimited').then(function (sodaResponse) {
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(sodaResponse.json.items);
     response.end();
@@ -226,7 +226,7 @@ function searchMoviesService(sessionState, response, next, qbe) {
   var moduleId = 'searchMoviesService(' + JSON.stringify(qbe) + ')';
   writeLogEntry(moduleId);
   
-  movieAPI.queryMovies(sessionState, qbe).then(function (sodaResponse) {
+  movieAPI.queryMovies(sessionState, qbe, 'unlimited').then(function (sodaResponse) {
     // writeLogEntry(moduleId,JSON.stringify(sodaResponse));
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(sodaResponse.json.items);
@@ -619,7 +619,7 @@ function getMoviesByTheaterAndDate(sessionState,theater, date) {
   
   var qbe = { theaterId : theater.id, startTime : { "$gte" : startDate, "$lt" : endDate }, "$orderby" : { screenId : 1, startTime : 2}};
 
-  return movieAPI.queryScreenings(sessionState, qbe).then(function(sodaResponse) {
+  return movieAPI.queryScreenings(sessionState, qbe, 'unlimited').then(function(sodaResponse) {
     return processScreeningsByTheaterAndDate(sessionState,sodaResponse)
   }).then(function(movies) {
     moviesByTheater.movies = movies;
@@ -630,7 +630,7 @@ function getMoviesByTheaterAndDate(sessionState,theater, date) {
 function processScreeningsByMovieAndDate(sessionState,sodaResponse) {
   
   var moduleId = 'processScreeningsByMovieAndDate(sodaResponse.json.items[' + sodaResponse.json.items.length + '])';
-  // writelogEntry(moduleId);
+  // writeLogEntry(moduleId);
   
   var theaters = [];
 
@@ -743,7 +743,7 @@ function getTheatersByMovieAndDate(sessionState,movie, date) {
 
   var qbe = { movieId : movie.id, startTime : { "$gte" : startDate, "$lt" : endDate } , "$orderby" : { screenId : 1, startTime : 2}};
 
-  return movieAPI.queryScreenings(sessionState, qbe).then(function(sodaResponse) {
+  return movieAPI.queryScreenings(sessionState, qbe, 'unlimited').then(function(sodaResponse) {
     return processScreeningsByMovieAndDate(sessionState,sodaResponse)
   }).then(function(theaters) {
     theatersByMovie.theaters = theaters;

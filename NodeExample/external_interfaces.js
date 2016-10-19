@@ -161,11 +161,9 @@ function loadTheaters (sessionState, response, next) {
   getTheaterInformation().then(function(theaters) {
   	theaterList = theaters;
 		// fs.writeFileSync('theaterList.json',JSON.stringify(theaterList,null,2));
-    return movieAPI.recreateTheaterCollection(sessionState)
-  }).then(function() {
-    return movieAPI.insertTheaters(sessionState, theaterList);
+    return movieAPI.recreateLoadIndexTheaters(sessionState,theaterList)
   }).then(function(sodaResponse) {
-  	status = {count:sodaResponse.json.items.length};
+  	status = { count : theaterList.length};
   	return movieAPI.dropScreeningCollection(sessionState)
  	}).then(function (sodaResponse) {
     response.json(status)
@@ -784,13 +782,6 @@ function getMoviesFromTMDB(sessionState,response) {
         return movieAPI.recreateLoadIndexMovies(sessionState,movieCache).then(function() {
           response.write(',');
           response.write('"count":' + movieCache.length);
-       	/*
-        return movieAPI.recreateMovieCollection(sessionState).then(function() {
-          return movieAPI.insertMovies(sessionState, movieCache);        
-        }).then(function(sodaResponse) {
-          response.write(',');
-          response.write('"count":' + sodaResponse.json.items.length);
-        */
           response.write('}');
           response.end();
           return movieAPI.dropPosterCollection(sessionState)
@@ -896,177 +887,7 @@ function getMoviesFromTMDB(sessionState,response) {
   });   
 
 }  
-   
-function generateShowsForScreen(engagementStartDate,engagementEndDate,screen,theaterId,movieId,runtime) {
-    
-  var moduleId = 'generateShowsForScreen(' + screen.id + ',' + movieId + ')';
-  var shows = []
-  
-  var screenId = screen.id
-  var startTime = getRandomBetweenValues(0,11) * 5;
-  var firstShowTime = [12,startTime]
-
-  // writeLogEntry(moduleId);
-  
-  // Generate Shows for Each Day of the Engagement.
-
-  var showTime = new Date()
-  var tomorrow = new Date()
-  showTime.setTime(engagementStartDate.getTime());
-  tomorrow.setTime(showTime.getTime() + (24*60*60*1000));
-  tomorrow.setHours(0);
-  tomorrow.setMinutes(0);
-  tomorrow.setSeconds(0);
-  
-  showTime.setHours(firstShowTime[0])
-  showTime.setMinutes(firstShowTime[1])
-  showTime.setSeconds(0)
-  
-  while (showTime < engagementEndDate) {
-    // writeLogEntry(moduleId,'showTime= ' + showTime);
-    var show = {
-      theaterId      : theaterId,
-      movieId        : movieId,
-      screenId       : screen.id,
-      startTime      : dateWithTZOffset(showTime),
-      seatsRemaining : screen.capacity,
-      ticketPricing  : screen.ticketPricing,
-      seatMap        : screen.seatMap
-    }
-    showTime.setTime(showTime.getTime() + ((runtime+30)*60*1000));
-    showTime.setMinutes(5 * Math.round(showTime.getMinutes()/5));
-    shows.push(show)
-    if (showTime.getTime() > tomorrow.getTime()) {
-      showTime.setTime(tomorrow.getTime());
-      showTime.setHours(firstShowTime[0])
-      showTime.setMinutes(firstShowTime[1])
-      showTime.setSeconds(0)
-      tomorrow.setTime(tomorrow.getTime() + (24*60*60*1000));
-    }
-  } 
-  return shows;
-}
-  
-function generateScreeningsForTheater(sessionState,engagementStartDate,engagementEndDate,theater,movies,updatedMovieList) {
-  
-  var moduleId = 'generateScreeningsForTheater(' + theater.id + ')';
-  var screeningList = []
-  
-  // writeLogEntry(moduleId);
-  
-  return Promise.all(
-    // Generate a Array of ShowTimes for each screen within the Theater.
-    theater.screens.map(function(screen) {
-      // Choose a random Movie for this screen
-      var movieIndex = getRandomBetweenValues(0,movies.length);
-      var movieItem = movies[movieIndex];
-      resetMovieInTheatersFlag(movieItem,true,updatedMovieList)
-      return (generateShowsForScreen(engagementStartDate,engagementEndDate,screen,theater.id,movieItem.value.id,movieItem.value.runtime))
-    })
-  ).then(function(screenings) {
-  	// Collapse the array of arrays into a single array
-  	screenings.forEach(function(screenings) {
-      screenings.forEach(function(screening) {
-        screeningList.push(screening);
-      })
-    })
-    // writeLogEntry(moduleId,'Batch Size=' + screeningList.length);
-    // Load the Batch of Screenings for the Theater.
-    return movieAPI.insertScreenings(sessionState, screeningList);
-  })
-}
-
-function generateScreenings(sessionState,engagementStartDate,engagementEndDate,theaters,movies,updatedMovieList) {
-
-  var moduleId = 'generateScreenings()'; 
-  //writeLogEntry(moduleId);
-
-  // writelogEntry(moduleId,'engagementStartDate =' + engagementStartDate);
-  // writeLogEntry(moduleId,'engagementEndDate = ' + engagementEndDate);
-  // writeLogEntry(moduleId,'engagementLimit = ' + engagementLimit);
-
-  return Promise.all(
-    theaters.map(
-      function(theater) {       
-        return generateScreeningsForTheater(sessionState,engagementStartDate,engagementEndDate,theater,movies,updatedMovieList);
-      }
-    )
-  )
-}
-
-function resetMovieInTheatersFlag(movieItem,state,updatedMovieList) {
-	
-	// Reset the inTheaters flag and add to the list of movies that need updating.
-	
-	// writeLogEntry('resetMovieInTheatersFlag(' + movieItem.value.id + ',' + state + ')');
-	if (movieItem.value.inTheaters != state) {
-    movieItem.value.inTheaters = state;
-    updatedMovieList.push(movieItem);
-  }
-}                      
-
-function createScreenings(sessionState) {
-
-  var moduleId = 'createScreenings()';
-
-	var engagementStartDate = new Date();
-	engagementStartDate.setDate(engagementStartDate.getDate() - engagementStartDate.getDay());
-  engagementStartDate.setHours(0)
-  engagementStartDate.setMinutes(0)
-  engagementStartDate.setSeconds(0)
-
-  var engagementEndDate = new Date();
-  engagementEndDate.setDate(engagementStartDate.getDate() + 14);
-  engagementEndDate.setHours(0)
-  engagementEndDate.setMinutes(0)
-  engagementEndDate.setSeconds(0)
-
-  // writeLogEntry(moduleId,'Date Range is ' + dateWithTZOffset(engagementStartDate)  + ' thru ' + dateWithTZOffset(engagementEndDate));
-
-  var theaterList = []
-  var movieList = []
-  var screeningCount = 0;
-  var updatedMovieList = [];
-  
-  return movieAPI.getTheaters(sessionState).then(function(sodaResponse) {
-    sodaResponse.json.items.forEach(
-      function(item) {
-        theaterList.push(item.value);
-      }
-    )
-  }).then(function() {
-    return movieAPI.getMovies(sessionState)
-  }).then(function(sodaResponse) {
-  	movieList = sodaResponse.json.items
-  	movieList.forEach(
-  	  function(movieItem) { 
-  	  	resetMovieInTheatersFlag(movieItem,false,updatedMovieList);
-  	  }
-  	);
-  	return movieAPI.recreateScreeningCollection(sessionState)
-  }).then(function() {
-    return generateScreenings(sessionState,engagementStartDate,engagementEndDate,theaterList,movieList,updatedMovieList)
-  }).then(function(sodaResponses) {
-  	// writeLogEntry(moduleId,JSON.stringify(sodaResponses))
-    screeningCount = sodaResponses.reduce(
-  	  function (runningTotal,sodaResponse) {
-  		  runningTotal = runningTotal + sodaResponse.json.items.length
-  	    return runningTotal
-  	  },
-  	  0
-  	);
-  }).then(function(e) {
-  	 return Promise.all(updatedMovieList.map(function(movieItem) {
-  	 	 return movieAPI.updateMovie(sessionState, movieItem.id, movieItem.value);
-  	 }))
-  }).then(function() {
-  	 return screeningCount;
-  }).catch(function(e) {
-      writeLogEntry(moduleId,'Broken Promise.');
-      throw e;
-  })     
-}
-
+     
 function getMoviePoster(movieId,posterURL) {
   
   var moduleId = 'getMoviePoster(' + movieId + ',"' + posterURL + '")';
@@ -1188,4 +1009,122 @@ function getPostersFromTMDB(sessionState,response) {
   	throw e;
   });
 }	   
+  
+function createScreenings(sessionState) {
 
+  var moduleId = 'createScreenings()';
+
+  var screenings  = []
+  var theaterList = []
+  var movieList   = []
+  
+	var engagementStartDate = new Date();
+	engagementStartDate.setDate(engagementStartDate.getDate() - engagementStartDate.getDay());
+  engagementStartDate.setHours(0)
+  engagementStartDate.setMinutes(0)
+  engagementStartDate.setSeconds(0)
+
+  var engagementEndDate = new Date();
+  engagementEndDate.setDate(engagementStartDate.getDate() + 14);
+  engagementEndDate.setHours(0)
+  engagementEndDate.setMinutes(0)
+  engagementEndDate.setSeconds(0)
+
+  // writeLogEntry(moduleId,'Date Range is ' + dateWithTZOffset(engagementStartDate)  + ' thru ' + dateWithTZOffset(engagementEndDate));
+
+  function generateShows(engagementStartDate, engagementEndDate, screen, theaterId, movieId, runtime) {
+      
+    var moduleId = 'generateShowsForScreen(' + screen.id + ',' + movieId + ')';
+    // writeLogEntry(moduleId);
+
+    var shows = []
+    
+    var screenId = screen.id
+    var startTime = getRandomBetweenValues(0,11) * 5;
+    var firstShowTime = [12,startTime]
+      
+    // Generate Shows for Each Day of the Engagement.
+  
+    var showTime = new Date()
+    var tomorrow = new Date()
+    showTime.setTime(engagementStartDate.getTime());
+    tomorrow.setTime(showTime.getTime() + (24*60*60*1000));
+    tomorrow.setHours(0);
+    tomorrow.setMinutes(0);
+    tomorrow.setSeconds(0);
+    
+    showTime.setHours(firstShowTime[0])
+    showTime.setMinutes(firstShowTime[1])
+    showTime.setSeconds(0)
+    
+    while (showTime < engagementEndDate) {
+      // writeLogEntry(moduleId,'showTime= ' + showTime);
+      var show = {
+        theaterId      : theaterId,
+        movieId        : movieId,
+        screenId       : screen.id,
+        startTime      : dateWithTZOffset(showTime),
+        seatsRemaining : screen.capacity,
+        ticketPricing  : screen.ticketPricing,
+        seatMap        : screen.seatMap
+      }
+      showTime.setTime(showTime.getTime() + ((runtime+30)*60*1000));
+      showTime.setMinutes(5 * Math.round(showTime.getMinutes()/5));
+      screenings.push(show)
+      if (showTime.getTime() > tomorrow.getTime()) {
+        showTime.setTime(tomorrow.getTime());
+        showTime.setHours(firstShowTime[0])
+        showTime.setMinutes(firstShowTime[1])
+        showTime.setSeconds(0)
+        tomorrow.setTime(tomorrow.getTime() + (24*60*60*1000));
+      }
+    } 
+  }
+  
+  function generateScreeningsForTheater(theater, engagementStartDate, engagementEndDate) {
+    
+    var moduleId = 'createScreenings().generateScreeningsForTheater(' + theater.id + ')';
+    // writeLogEntry(moduleId);
+
+    // For Each Screen in the Theater
+
+    theater.value.screens.forEach(function(screen,index) {
+      // Choose a random Movie for this screen
+    	var movieIndex = getRandomBetweenValues(0,movieList.length);
+      if (index < 5) {
+      	movieIndex = getRandomBetweenValues(0,5);
+      }	
+      var movieItem = movieList[movieIndex];
+      movieItem.value.inTheaters = true;
+      generateShows(engagementStartDate,engagementEndDate,screen,theater.value.id,movieItem.value.id,movieItem.value.runtime)
+    });
+   
+  }
+	       
+  return movieAPI.getTheaters(sessionState).then(function(sodaResponse) {
+  	theaterList = sodaResponse.json.items;
+  	// writeLogEntry(moduleId,'Theater count =  '  + theaterList.length);
+    var qbe = {"$query" : {}, $orderby :{"releaseDate" : -1}};
+	  return movieAPI.queryMovies(sessionState, qbe, 50)
+  }).then(function(sodaResponse) {
+  	movieList = sodaResponse.json.items;
+  	// writeLogEntry(moduleId,'Movie count =  '  + movieList.length);
+  	movieList.forEach(function(movie) {
+  		movie.value.inTheaters = false;
+  	});
+  	theaterList.forEach(function(theater) {
+  		generateScreeningsForTheater(theater,engagementStartDate,engagementEndDate)
+  	});
+  	// writeLogEntry(moduleId,'Screening count =  '  + screenings.length);
+    return movieAPI.recreateLoadIndexScreenings(sessionState,screenings)
+  }).then(function(e) {
+  	return Promise.all(movieList.map(function(movieItem) {
+  	 return movieAPI.updateMovie(sessionState, movieItem.id, movieItem.value);
+  	}))
+  }).then(function(sodaResponse) {
+  	return screenings.length;
+  }).catch(function(e) {
+    writeLogEntry(moduleId,'Broken Promise.');
+    throw e;
+  })     
+}

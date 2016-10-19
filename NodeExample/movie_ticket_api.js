@@ -23,57 +23,58 @@ var collectionMetadata    = JSON.parse(collectionDefinitions);
 var logCollectionName     = 'MovieTicketLog';
 var sodaLoggingDisabled   = { sodaLoggingEnabled : false };
 
-module.exports.createTheaterCollection     = createTheaterCollection;
-module.exports.dropTheaterCollection       = dropTheaterCollection;
-module.exports.recreateTheaterCollection   = recreateTheaterCollection;
-module.exports.recreateLoadIndexTheaters   = recreateLoadIndexTheaters;
-module.exports.insertTheaters              = insertTheaters
-module.exports.getTheaters                 = getTheaters;
-module.exports.getTheater                  = getTheater;
-module.exports.getTheaterById              = getTheaterById;
-module.exports.queryTheaters               = queryTheaters
+module.exports.createTheaterCollection       = createTheaterCollection;
+module.exports.dropTheaterCollection         = dropTheaterCollection;
+module.exports.recreateTheaterCollection     = recreateTheaterCollection;
+module.exports.recreateLoadIndexTheaters     = recreateLoadIndexTheaters;
+module.exports.insertTheaters                = insertTheaters
+module.exports.getTheaters                   = getTheaters;
+module.exports.getTheater                    = getTheater;
+module.exports.getTheaterById                = getTheaterById;
+module.exports.queryTheaters                 = queryTheaters
 
-module.exports.createMovieCollection       = createMovieCollection;
-module.exports.dropMovieCollection         = dropMovieCollection;
-module.exports.recreateMovieCollection     = recreateMovieCollection;
-module.exports.recreateLoadIndexMovies     = recreateLoadIndexMovies;
-module.exports.insertMovies                = insertMovies;
-module.exports.getMovies                   = getMovies;
-module.exports.moviesByReleaseDateService  = moviesByReleaseDateService;
-module.exports.getMovie                    = getMovie;
-module.exports.getMovieById                = getMovieById
-module.exports.updateMovie                 = updateMovie;
-module.exports.queryMovies                 = queryMovies
-
-module.exports.createScreeningCollection   = createScreeningCollection;
-module.exports.dropScreeningCollection     = dropScreeningCollection;
-module.exports.recreateScreeningCollection = recreateScreeningCollection;
-module.exports.insertScreenings            = insertScreenings;
-module.exports.getScreenings               = getScreenings;
-module.exports.getScreening                = getScreening;
-module.exports.queryScreenings             = queryScreenings;
-module.exports.updateScreening             = updateScreening;
-
-module.exports.createTicketSaleCollection  = createTicketSaleCollection;
-module.exports.dropTicketSaleCollection    = dropTicketSaleCollection;
-module.exports.insertTicketSales           = insertTicketSales;
-module.exports.insertTicketSale            = insertTicketSale;
-module.exports.queryTicketSales            = queryTicketSales;
-module.exports.updateTicketSale            = updateTicketSale;
-
-module.exports.createPosterCollection      = createPosterCollection;
-module.exports.dropPosterCollection        = dropPosterCollection;
-module.exports.recreatePosterCollection    = recreatePosterCollection;
-module.exports.insertPoster                = insertPoster;
-module.exports.getPosters                  = getPosters;
-module.exports.getPoster                   = getPoster;
-
-module.exports.getLogRecordByOperationId   = getLogRecordByOperationId
-
-module.exports.initializeSodaLogging       = initializeSodaLogging;
-module.exports.logError                    = logError;
-module.exports.writeLogEntry               = writeLogEntry;
-module.exports.getDetectedFeatures         = getDetectedFeatures
+module.exports.createMovieCollection         = createMovieCollection;
+module.exports.dropMovieCollection           = dropMovieCollection;
+module.exports.recreateMovieCollection       = recreateMovieCollection;
+module.exports.recreateLoadIndexMovies       = recreateLoadIndexMovies;
+module.exports.insertMovies                  = insertMovies;
+module.exports.getMovies                     = getMovies;
+module.exports.moviesByReleaseDateService    = moviesByReleaseDateService;
+module.exports.getMovie                      = getMovie;
+module.exports.getMovieById                  = getMovieById
+module.exports.updateMovie                   = updateMovie;
+module.exports.queryMovies                   = queryMovies
+                                             
+module.exports.createScreeningCollection     = createScreeningCollection;
+module.exports.dropScreeningCollection       = dropScreeningCollection;
+module.exports.recreateScreeningCollection   = recreateScreeningCollection;
+module.exports.recreateLoadIndexScreenings   = recreateLoadIndexScreenings;
+module.exports.insertScreenings              = insertScreenings;
+module.exports.getScreenings                 = getScreenings;
+module.exports.getScreening                  = getScreening;
+module.exports.queryScreenings               = queryScreenings;
+module.exports.updateScreening               = updateScreening;
+                                             
+module.exports.createTicketSaleCollection    = createTicketSaleCollection;
+module.exports.dropTicketSaleCollection      = dropTicketSaleCollection;
+module.exports.insertTicketSales             = insertTicketSales;
+module.exports.insertTicketSale              = insertTicketSale;
+module.exports.queryTicketSales              = queryTicketSales;
+module.exports.updateTicketSale              = updateTicketSale;
+                                             
+module.exports.createPosterCollection        = createPosterCollection;
+module.exports.dropPosterCollection          = dropPosterCollection;
+module.exports.recreatePosterCollection      = recreatePosterCollection;
+module.exports.insertPoster                  = insertPoster;
+module.exports.getPosters                    = getPosters;
+module.exports.getPoster                     = getPoster;
+                                             
+module.exports.getLogRecordByOperationId     = getLogRecordByOperationId
+                                             
+module.exports.initializeSodaLogging         = initializeSodaLogging;
+module.exports.logError                      = logError;
+module.exports.writeLogEntry                 = writeLogEntry;
+module.exports.getDetectedFeatures           = getDetectedFeatures
 
 initialize()
 
@@ -400,5 +401,11 @@ function recreateLoadIndexMovies(sessionState, movieCache) {
 function recreateLoadIndexTheaters(sessionState, theaterList) {
 	
 	return sodaRest.recreateLoadIndex(sessionState, 'Theater', theaterList);
+	
+}
+
+function recreateLoadIndexScreenings(sessionState, screenings) {
+	
+	return sodaRest.recreateLoadIndex(sessionState, 'Screening', screenings);
 	
 }

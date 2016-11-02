@@ -514,7 +514,7 @@ function bookTickets(sessionState, bookingRequest) {
 function processScreeningsByTheaterAndDate(sessionState,sodaResponse) {
   
   var moduleId = 'processScreeningsByTheaterAndDate(sodaResponse.json.items[' + sodaResponse.json.items.length + '])';
-  // writelogEntry(moduleId);
+  // writeLogEntry(moduleId);
   
   var movies = [];
   
@@ -583,15 +583,21 @@ function processScreeningsByTheaterAndDate(sessionState,sodaResponse) {
 
   // Transform the screenings into an array of Movies with the Screening information for each movie attached.
   
+ 
   sodaResponse.json.items.map(addScreeningDetails);
-  
-  return getMovieDetails(movies.map(getMovieIdList)).then(function(sodaResponse) {
-    sodaResponse.json.items.map(processMovie);
-    return movies
-  }).catch(function(e){
-    writeLogEntry(moduleId, 'Broken Promise');
-    throw e
-  })
+
+  if (movies.length > 0) {
+    return getMovieDetails(movies.map(getMovieIdList)).then(function(sodaResponse) {
+      sodaResponse.json.items.map(processMovie);
+      return movies
+    }).catch(function(e){
+      writeLogEntry(moduleId, 'Broken Promise');
+      throw e
+    })
+  }
+  else {
+    return movies  	
+  }
 }  
 
 function getMoviesByTheaterAndDate(sessionState,theater, date) {

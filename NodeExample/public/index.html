@@ -274,6 +274,9 @@ body {
       					</tr>
       				</thead>
       				<tbody>
+			      		<tr ng-if="theaterService.moviesByTheater.movies.length === 0">
+			      			<td><h4>Sorry this Theater has no movies scheduled on the choosen date.</h4></td>
+								</tr>
       					<tr ng-repeat="m in theaterService.moviesByTheater.movies">
       						<td>
       							<table class="table">
@@ -383,7 +386,7 @@ body {
         							  	<td>
   	 		      							<table class="table">
     	    						  			<tbody>
-											      		<tr ng-if="movieService.theatersByMovie.theaters.length == 0">
+											      		<tr ng-if="movieService.theatersByMovie.theaters.length === 0">
 											      			<td><h4>Sorry this movie is not playing in any nearby theaters on the choosen date.</h4></td>
       													</tr>
     	    						  				<tr class="voffset4" ng-repeat="t in movieService.theatersByMovie.theaters">

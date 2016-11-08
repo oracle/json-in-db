@@ -584,7 +584,7 @@ body {
            							<br><br>
              						<div class="input-group col-sm-12">
            								<input id="status_LoadPosters" class="form-control" type="text" disabled value="{{(appConfigService.status.posterCount === 0) ? 'Pending' : 'Documents: ' + appConfigService.status.posterCount}}">
-        						  		<span ng-show="((config.$pristine) && (config.tmdbKey.$valid) && (appConfigService.status.movieCount > 0))" class="input-group-btn">
+        						  		<span ng-show="((config.$pristine) && (config.tmdbKey.$valid) && (appConfigService.status.movieCount > 0) && (appConfigService.status.posterCount === 0))" class="input-group-btn">
 	       		      					<button id="btn_LoadPosters" type="button" class="btn btn-default btn-success has-spinner" ng-click="appConfigService.loadPosters($event)">Load  
   	     		      						<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
     	   	  	 							</button>

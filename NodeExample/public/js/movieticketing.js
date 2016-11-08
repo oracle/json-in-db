@@ -546,8 +546,6 @@ app.controller('theatersCtrl',function($scope, $http, $cookies, theaterService, 
 
   $scope.theaterService = theaterService;
   $scope.appConfigService = appConfigService
-
-  // if (appConfigService.status.supportedFeatures.$near) {
   
   $http({
     method: 'GET',

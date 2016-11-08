@@ -897,14 +897,9 @@ function getMoviePoster(movieId,posterURL) {
    	return Promise.resolve({body : null});
   }
 
-	var imageURL = url.parse(posterURL);
-
   var requestOptions = {
   	method    : 'GET'
-  , uri       : cfg.dataSources.tmdb.protocol + '://' 
-              + imageURL.hostname + ':' 
-              + imageURL.port 
-						  + imageURL.path 
+  , uri       : posterURL
 	, encoding  : null
   , time      : true
   };
@@ -1013,13 +1008,13 @@ function getPostersFromTMDB(sessionState,response) {
 function createScreenings(sessionState) {
 
   var moduleId = 'createScreenings()';
+  // writeLogEntry(moduleId);
 
   var screenings  = []
   var theaterList = []
   var movieList   = []
   
 	var engagementStartDate = new Date();
-	engagementStartDate.setDate(engagementStartDate.getDate() - engagementStartDate.getDay());
   engagementStartDate.setHours(0)
   engagementStartDate.setMinutes(0)
   engagementStartDate.setSeconds(0)
@@ -1030,11 +1025,11 @@ function createScreenings(sessionState) {
   engagementEndDate.setMinutes(0)
   engagementEndDate.setSeconds(0)
 
-  // writeLogEntry(moduleId,'Date Range is ' + dateWithTZOffset(engagementStartDate)  + ' thru ' + dateWithTZOffset(engagementEndDate));
+  writeLogEntry(moduleId,'Date Range is ' + dateWithTZOffset(engagementStartDate)  + ' thru ' + dateWithTZOffset(engagementEndDate));
 
   function generateShows(engagementStartDate, engagementEndDate, screen, theaterId, movieId, runtime) {
       
-    var moduleId = 'generateShowsForScreen(' + screen.id + ',' + movieId + ')';
+    var moduleId = 'generateShows(' + dateWithTZOffset(engagementStartDate)  + ',' + dateWithTZOffset(engagementEndDate) + ',' + screen.id + ',' + theaterId + ',' + movieId + ',' + runtime + ')';
     // writeLogEntry(moduleId);
 
     var shows = []
@@ -1047,8 +1042,8 @@ function createScreenings(sessionState) {
   
     var showTime = new Date()
     var tomorrow = new Date()
-    showTime.setTime(engagementStartDate.getTime());
-    tomorrow.setTime(showTime.getTime() + (24*60*60*1000));
+    showTime.setDate(engagementStartDate.getDate());
+    tomorrow.setDate(showTime.getDate() + 1);
     tomorrow.setHours(0);
     tomorrow.setMinutes(0);
     tomorrow.setSeconds(0);
@@ -1056,9 +1051,11 @@ function createScreenings(sessionState) {
     showTime.setHours(firstShowTime[0])
     showTime.setMinutes(firstShowTime[1])
     showTime.setSeconds(0)
+
+	  // writeLogEntry('--->','Show Time Range is ' + dateWithTZOffset(showTime)  + ' thru ' + dateWithTZOffset(tomorrow));
     
     while (showTime < engagementEndDate) {
-      // writeLogEntry(moduleId,'showTime= ' + showTime);
+      // writeLogEntry('--->','showTime= ' + showTime);
       var show = {
         theaterId      : theaterId,
         movieId        : movieId,
@@ -1068,15 +1065,16 @@ function createScreenings(sessionState) {
         ticketPricing  : screen.ticketPricing,
         seatMap        : screen.seatMap
       }
+      screenings.push(show)
+
       showTime.setTime(showTime.getTime() + ((runtime+30)*60*1000));
       showTime.setMinutes(5 * Math.round(showTime.getMinutes()/5));
-      screenings.push(show)
       if (showTime.getTime() > tomorrow.getTime()) {
         showTime.setTime(tomorrow.getTime());
         showTime.setHours(firstShowTime[0])
         showTime.setMinutes(firstShowTime[1])
         showTime.setSeconds(0)
-        tomorrow.setTime(tomorrow.getTime() + (24*60*60*1000));
+        tomorrow.setDate(tomorrow.getDate() + 1);
       }
     } 
   }

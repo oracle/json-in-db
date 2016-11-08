@@ -195,8 +195,9 @@ function loadScreenings (sessionState, response, next) {
   var sessionState = sodaLoggingState;
 
   writeLogEntry('loadScreenings()');
-  createScreenings(sessionState).then(function(total) {
-    response.json({count:total})
+  createScreenings(sessionState,response).then(function(total) {
+    response.write('"count" : ' + total)
+    response.write('}');
     response.end('')
   }).catch(function(e) {
     next(e)
@@ -1005,7 +1006,7 @@ function getPostersFromTMDB(sessionState,response) {
   });
 }	   
   
-function createScreenings(sessionState) {
+function createScreenings(sessionState,response) {
 
   var moduleId = 'createScreenings()';
   // writeLogEntry(moduleId);
@@ -1032,7 +1033,7 @@ function createScreenings(sessionState) {
     var moduleId = 'generateShows(' + dateWithTZOffset(engagementStartDate)  + ',' + dateWithTZOffset(engagementEndDate) + ',' + screen.id + ',' + theaterId + ',' + movieId + ',' + runtime + ')';
     // writeLogEntry(moduleId);
 
-    var shows = []
+    var showCount = 0;
     
     var screenId = screen.id
     var startTime = getRandomBetweenValues(0,11) * 5;
@@ -1066,6 +1067,7 @@ function createScreenings(sessionState) {
         seatMap        : screen.seatMap
       }
       screenings.push(show)
+      showCount++;
 
       showTime.setTime(showTime.getTime() + ((runtime+30)*60*1000));
       showTime.setMinutes(5 * Math.round(showTime.getMinutes()/5));
@@ -1077,13 +1079,16 @@ function createScreenings(sessionState) {
         tomorrow.setDate(tomorrow.getDate() + 1);
       }
     } 
+    
+    return showCount;
+    
   }
   
-  function generateScreeningsForTheater(theater, engagementStartDate, engagementEndDate) {
+  function generateScreeningsForTheater(theater, engagementStartDate, engagementEndDate, response) {
     
     var moduleId = 'createScreenings().generateScreeningsForTheater(' + theater.id + ')';
     // writeLogEntry(moduleId);
-
+ 
     // For Each Screen in the Theater
 
     theater.value.screens.forEach(function(screen,index) {
@@ -1094,26 +1099,40 @@ function createScreenings(sessionState) {
       }	
       var movieItem = movieList[movieIndex];
       movieItem.value.inTheaters = true;
-      generateShows(engagementStartDate,engagementEndDate,screen,theater.value.id,movieItem.value.id,movieItem.value.runtime)
+      var showCount = generateShows(engagementStartDate,engagementEndDate,screen,theater.value.id,movieItem.value.id,movieItem.value.runtime);
+      var status = {
+      	date       : new Date().toISOString()
+      , theater    : theater.id
+      , showCount  : showCount
+      }
+      response.write(JSON.stringify(status));
+      response.write(',');
     });
    
   }
 	       
   return movieAPI.getTheaters(sessionState).then(function(sodaResponse) {
   	theaterList = sodaResponse.json.items;
-  	// writeLogEntry(moduleId,'Theater count =  '  + theaterList.length);
+  	response.write('{"status":{');
+  	response.write('  "theaters" : ' + theaterList.length + ',');
     var qbe = {"$query" : {}, $orderby :{"releaseDate" : -1}};
 	  return movieAPI.queryMovies(sessionState, qbe, 50)
   }).then(function(sodaResponse) {
   	movieList = sodaResponse.json.items;
-  	// writeLogEntry(moduleId,'Movie count =  '  + movieList.length);
+  	response.write('  "movies" : ' + movieList.length + ',');
   	movieList.forEach(function(movie) {
   		movie.value.inTheaters = false;
   	});
+  	response.write('      "screenings" : [');
   	theaterList.forEach(function(theater) {
-  		generateScreeningsForTheater(theater,engagementStartDate,engagementEndDate)
+  		generateScreeningsForTheater(theater,engagementStartDate,engagementEndDate,response)
   	});
-  	// writeLogEntry(moduleId,'Screening count =  '  + screenings.length);
+    var status = {
+    	date       : new Date().toISOString()
+    , showCount  : screenings.length
+    }
+    response.write('        ' + JSON.stringify(status));
+  	response.write('      ]},');
     return movieAPI.recreateLoadIndexScreenings(sessionState,screenings)
   }).then(function(e) {
   	return Promise.all(movieList.map(function(movieItem) {

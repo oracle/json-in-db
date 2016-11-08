@@ -224,6 +224,9 @@ app.factory('appConfigService', function($http, $window) {
       statusWindow.value = 'Documents: ' + data.count;
     	callback(data.count);
     }).error(function(data, status, headers) {
+ 	  	button.getElementsByTagName('span')[0].classList.remove('spinning')
+      button.classList.remove('disabled');
+      statusWindow.value = 'Failed';
     	showErrorMessage('Error Loading ' + target);
     })
   }

@@ -13,6 +13,7 @@
  
 "use strict";
 
+const path = require('path');
 var http = require('http');
 var express = require('express');
 var cookieParser = require('cookie-parser');
@@ -48,7 +49,8 @@ function initApp() {
 
   app.use('/movieticket', routes.getRouter());
 
-  app.use('/frameworks', serveStatic(__dirname + '/node_modules'));  
+  // app.use('/frameworks', serveStatic(__dirname + '/node_modules'));  
+  app.use('/frameworks', serveStatic(__dirname.substring(0, __dirname.lastIndexOf(path.sep))));
 
   app.use('/', serveStatic(__dirname + '/public'));
 

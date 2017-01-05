@@ -84,11 +84,11 @@ app.factory('bookingService', function($http) {
 
 	 	 var path = '/movieticket/screenings/' + id
 
-     $http.get(path).success(function(data,status, headers) {
-       factory.screening = data;
-   	   var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
-       $http.get(path).success(function(data, status, headers) {
-    	   factory.screeningLogRecord = data
+     $http.get(path).then(function(response) {
+       factory.screening = response.data;
+   	   var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
+       $http.get(path).then(function(response) {
+    	   factory.screeningLogRecord = response.data
     	   // console.log(JSON.stringify(factory.screeningLogRecord));
        });
      });
@@ -114,17 +114,17 @@ app.factory('bookingService', function($http) {
   			child      : parseInt(child)
   		}
   	  var path = '/movieticket/bookTickets';
-  	  $http.post(path,transaction).success(function(data, status, headers) {
+  	  $http.post(path,transaction).then(function(response) {
   	  	hideBookingForm();
-  	  	if (data.status == "Booked") {
-  	  		showSuccessMessage(data.message);
+  	  	if (response.data.status == "Booked") {
+  	  		showSuccessMessage(response.data.message);
   	  	}
   	  	else {
-  	  	  showErrorMessage(data.message);
+  	  	  showErrorMessage(response.data.message);
   	  	}
-    	  var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
-        $http.get(path).success(function(data, status, headers) {
-    	    factory.bookingLogRecord = data
+    	  var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
+        $http.get(path).then(function(response) {
+    	    factory.bookingLogRecord = response.data
     	    factory.bookingLogDate = new Date();
     	    // console.log(JSON.stringify(factory.bookTicketsLogRecord));
        });
@@ -218,12 +218,12 @@ app.factory('appConfigService', function($http, $window) {
     var statusWindow = document.getElementById('status' + button.id.substr(3))
     statusWindow.value = 'Working';
 
-    $http.get(url).success(function(data, status, headers) {
+    $http.get(url).then(function(response) {
  	  	button.getElementsByTagName('span')[0].classList.remove('spinning')
       button.classList.remove('disabled');
-      statusWindow.value = 'Documents: ' + data.count;
-    	callback(data.count);
-    }).error(function(data, status, headers) {
+      statusWindow.value = 'Documents: ' + response.data.count;
+    	callback(response.data.count);
+    }).error(function(response) {
  	  	button.getElementsByTagName('span')[0].classList.remove('spinning')
       button.classList.remove('disabled');
       statusWindow.value = 'Failed';
@@ -294,46 +294,46 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
   $http({
     method : 'GET',
     url    : '/movieticket/application/status/',
-  }).success(function(data, status, headers) {  	
+  }).then(function(response) {  	
 
-		// console.log(JSON.stringify(data));
+		// console.log(JSON.stringify(response.data));
 
-    if ((data.currentPosition.coords.latitude !== 0) || (data.currentPosition.coords.longitude !== 0)) {
+    if ((response.data.currentPosition.coords.latitude !== 0) || (response.data.currentPosition.coords.longitude !== 0)) {
     	
     	// Current Position initially defined as center of theaters. If browser location services are enabled reset to actual location.
     	 
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position){
       	  if (position.coords.latitude) {
-      	    data.simulatedPosition =  {
+      	    response.data.simulatedPosition =  {
       	    	coords      : {
-      	    		latitude  : data.currentPosition.coords.latitude
-      	    	, longitude : data.currentPosition.coords.longitude
+      	    		latitude  : response.data.currentPosition.coords.latitude
+      	    	, longitude : response.data.currentPosition.coords.longitude
       	      }
       	    }
-      	  	data.currentPosition.coords.latitude = position.coords.latitude;
-      	  	data.currentPosition.coords.longitude = position.coords.longitude;
+      	  	response.data.currentPosition.coords.latitude = position.coords.latitude;
+      	  	response.data.currentPosition.coords.longitude = position.coords.longitude;
           }
         });
 	    }
 	  }
 
- 	  $scope.appConfigService.status = data
+ 	  $scope.appConfigService.status = response.data
 
- 	  if (data.googleKey !== 'YOUR_GOOGLE_KEY_GOES_HERE') {
- 	  	$scope.formState.googleKey = data.googleKey;
-	    initGoogleMaps(data.googleKey);
+ 	  if (response.data.googleKey !== 'YOUR_GOOGLE_KEY_GOES_HERE') {
+ 	  	$scope.formState.googleKey = response.data.googleKey;
+	    initGoogleMaps(response.data.googleKey);
  	  }
  	  else {
  	    $('#tabset_MovieTickets a[href="#tab_LoadTestData"]').tab('show');
     }
 
- 	  if (data.tmdbKey !== 'YOUR_TMDB_KEY_GOES_HERE') {
- 	  	$scope.formState.tmdbKey = data.tmdbKey;
+ 	  if (response.data.tmdbKey !== 'YOUR_TMDB_KEY_GOES_HERE') {
+ 	  	$scope.formState.tmdbKey = response.data.tmdbKey;
  	  }
  	  
- 	  $scope.formState.mappingService = (data.mappingService ? data.mappingService : "none" );
- 	  $scope.formState.geocodingService = (data.geocodingService ? data.geocodingService : "none" );
+ 	  $scope.formState.mappingService = (response.data.mappingService ? response.data.mappingService : "none" );
+ 	  $scope.formState.geocodingService = (response.data.geocodingService ? response.data.geocodingService : "none" );
  	  
  	  if ($scope.appConfigService.isApplicationReady()) {
  	  	$scope.appConfigService.applicationReady = true;
@@ -385,7 +385,7 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
 		    }
       }
 
-      $http.post('/movieticket/application/dataSources', updates).success(function (data, status, headers) {
+      $http.post('/movieticket/application/dataSources', updates).then(function (response) {
       	// Saving the Keys enables the Load Theaters and Load Movies Buttons.
       	$scope.appConfigService.status.googleKey = googleKey;
       	$scope.appConfigService.status.tmdbKey = tmdbKey;
@@ -398,7 +398,7 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
 		 	  	$scope.appConfigService.applicationReady = true;
  	  			enableApplication();
  	  		} 				
-      }).error(function (data, status, headers) {
+      }).error(function (response) {
         showErrorMessage('Error saving keys');
       });
   };
@@ -437,11 +437,11 @@ app.factory('theaterService', function($http, appConfigService) {
 
   	 var path = '/movieticket/theaters/search/qbe';
 
-     $http.post(path,qbe).success(function(data, status, headers) {
-       factory.theaters = data;
-    	 var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
-       $http.get(path).success(function(data, status, headers) {
-    	   factory.logRecord = data
+     $http.post(path,qbe).then(function(response) {
+       factory.theaters = response.data;
+    	 var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
+       $http.get(path).then(function(response) {
+    	   factory.logRecord = response.data
     	   // console.log(JSON.stringify(factory.logRecord));
        });
      });
@@ -475,24 +475,24 @@ app.factory('theaterService', function($http, appConfigService) {
 
     var path = '/movieticket/theaters/latitude/' + maplocation.coords.latitude + '/longitude/' + maplocation.coords.longitude + '/distance/5';
 
-    $http.get(path).success(function(data, status, headers) {
-  	  if (data.length > 0) {
-  	  	factory.addMarkersToMap(data);
-     	  var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
-        $http.get(path).success(function(data, status, headers) {
-          factory.logRecord = data
+    $http.get(path).then(function(response) {
+  	  if (response.data.length > 0) {
+  	  	factory.addMarkersToMap(response.data);
+     	  var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
+        $http.get(path).then(function(response) {
+          factory.logRecord = response.data
         });
       }
       else {
      		console.log('theaterService: showNearbyTheaters():  No theaters found within 5 Miles of actual location [' + maplocation.coords.latitude + ',' + maplocation.coords.longitude + '].');
      		mapLocation = status.simulatedPosition;
 			  var path = '/movieticket/theaters/latitude/' + maplocation.coords.latitude + '/longitude/' + maplocation.coords.longitude + '/distance/5';
-	      $http.get(path).success(function(data, status, headers) {
-		  	  if (data.length > 0) {
+	      $http.get(path).then(function(response) {
+		  	  if (response.data.length > 0) {
   			   	factory.addMarkersToMap(data);
-     	 	  	var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
-        	  $http.get(path).success(function(data, status, headers) {
-             	factory.logRecord = data
+     	 	  	var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
+        	  $http.get(path).then(function(response) {
+             	factory.logRecord = response.data
             });
          	}
          	else {
@@ -513,11 +513,11 @@ app.factory('theaterService', function($http, appConfigService) {
 	 	 showMoviesByTheater();
 
 	 	 var path = '/movieticket/theaters/' + theaterId + '/movies/' + dateWithTZOffset(date);
-     $http.get(path).success(function(data, status, headers) {
-     	 factory.moviesByTheater = data;
-    	 var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
-       $http.get(path).success(function(data, status, headers) {
-    	   factory.mbtLogRecord = data
+     $http.get(path).then(function(response) {
+     	 factory.moviesByTheater = response.data;
+    	 var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
+       $http.get(path).then(function(response) {
+    	   factory.mbtLogRecord = response.data
     	   // console.log(JSON.stringify(factory.mbtLogRecord));
        });
      });
@@ -553,11 +553,11 @@ app.controller('theatersCtrl',function($scope, $http, $cookies, theaterService, 
   $http({
     method: 'GET',
     url: '/movieticket/theaters/',
-  }).success(function(data, status, headers) {
- 	  $scope.theaterService.theaters = data;
-	  var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
-    $http.get(path).success(function(data, status, headers) {
-    	 $scope.theaterService.logRecord = data
+  }).then(function(response) {
+ 	  $scope.theaterService.theaters = response.data;
+	  var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
+    $http.get(path).then(function(response) {
+    	 $scope.theaterService.logRecord = response.data
     	 // console.log(JSON.stringify($scope.theaterService.logRecord));
     });
   });
@@ -630,11 +630,11 @@ app.factory('movieService', function($http, $cookies, appConfigService) {
 
   	var path = '/movieticket/movies/search/qbe';
 
-    $http.post(path,qbe).success(function(data, status, headers) {
-      factory.movies = data;
-    	 var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
-       $http.get(path).success(function(data, status, headers) {
-    	   factory.logRecord = data
+    $http.post(path,qbe).then(function(response) {
+      factory.movies = response.data;
+    	 var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
+       $http.get(path).then(function(response) {
+    	   factory.logRecord = response.data
     	   // console.log(JSON.stringify(factory.logRecord));
        });
     });
@@ -653,11 +653,11 @@ app.factory('movieService', function($http, $cookies, appConfigService) {
 	 	 showTheatersByMovie();
 
 	 	 var path = '/movieticket/movies/' + movieId + '/theaters/' + dateWithTZOffset(date);
-     $http.get(path).success(function(data,status,headers) {
-       factory.theatersByMovie = data;
-    	 var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
-       $http.get(path).success(function(data, status, headers) {
-    	   factory.tbmLogRecord = data
+     $http.get(path).then(function(response) {
+       factory.theatersByMovie = response.data;
+    	 var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
+       $http.get(path).then(function(response) {
+    	   factory.tbmLogRecord = response.data
     	   // console.log(JSON.stringify(factory.factory.tbmLogRecord));
        });
      });
@@ -691,11 +691,11 @@ app.controller('moviesCtrl',function($scope, $http,  $cookies, movieService) {
   $http({
     method : 'GET',
     url    : '/movieticket/movies/',
-  }).success(function(data, status, headers) {
- 	  $scope.movieService.movies = data;
-	  var path = '/movieticket/movieticketlog/operationId/'+ headers('X-SODA-LOG-TOKEN')
-    $http.get(path).success(function(data, status, headers) {
-    	 $scope.movieService.logRecord = data
+  }).then(function(response) {
+ 	  $scope.movieService.movies = response.data;
+	  var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
+    $http.get(path).then(function(response) {
+    	 $scope.movieService.logRecord = response.data
     	 // console.log(JSON.stringify($scope.movieService.logRecord));
     });
   });

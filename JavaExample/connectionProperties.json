@@ -1,1 +1,9 @@
+{
+  "hostname": "localhost",
+  "port": 1521,
+  "tnsEntry": null,
+  "oracleHome": null,
+  "serviceName": null,
+  "schema": null,
+  "password": null
 }

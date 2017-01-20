@@ -86,11 +86,18 @@ app.factory('bookingService', function($http) {
 
      $http.get(path).then(function(response) {
        factory.screening = response.data;
-   	   var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
-       $http.get(path).then(function(response) {
-    	   factory.screeningLogRecord = response.data
-    	   // console.log(JSON.stringify(factory.screeningLogRecord));
-       });
+   	   var logToken = response.headers('X-SODA-LOG-TOKEN')
+   	   if (logToken != null) {
+   	     var path = '/movieticket/movieticketlog/operationId/' + logToken;
+         $http.get(path).then(function(response) {
+    	     factory.screeningLogRecord = response.data
+    	     // console.log(JSON.stringify(factory.screeningLogRecord));
+         },function (response) {
+     			 showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+		     });
+		   }
+		 },function (response) {
+			 showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
      });
   };
 
@@ -122,13 +129,20 @@ app.factory('bookingService', function($http) {
   	  	else {
   	  	  showErrorMessage(response.data.message);
   	  	}
-    	  var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
-        $http.get(path).then(function(response) {
-    	    factory.bookingLogRecord = response.data
-    	    factory.bookingLogDate = new Date();
-    	    // console.log(JSON.stringify(factory.bookTicketsLogRecord));
-       });
-  	  })
+    	  var logToken = response.headers('X-SODA-LOG-TOKEN')
+   	    if (logToken != null) {
+   	      var path = '/movieticket/movieticketlog/operationId/' + logToken
+          $http.get(path).then(function(response) {
+      	    factory.bookingLogRecord = response.data
+      	    factory.bookingLogDate = new Date();
+      	    // console.log(JSON.stringify(factory.bookTicketsLogRecord));
+          },function (response) {
+     			  showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+		      });
+		    }
+		  },function (response) {
+  			showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+      });
     }
   }
   return factory;
@@ -205,7 +219,7 @@ app.factory('appConfigService', function($http, $window) {
     }
   }
 
-  factory.loadSampleData = function(url,button,callback,target) {
+  factory.loadSampleData = function(url,button,callback,target,timeout) {
 
     if (button.classList.contains('disabled')) {
     	return
@@ -218,40 +232,40 @@ app.factory('appConfigService', function($http, $window) {
     var statusWindow = document.getElementById('status' + button.id.substr(3))
     statusWindow.value = 'Working';
 
-    $http.get(url).then(function(response) {
+    $http.get(url,{ timeout : timeout}).then(function(response) {
  	  	button.getElementsByTagName('span')[0].classList.remove('spinning')
       button.classList.remove('disabled');
       statusWindow.value = 'Documents: ' + response.data.count;
     	callback(response.data.count);
-    }).error(function(response) {
+    },function(response) {
  	  	button.getElementsByTagName('span')[0].classList.remove('spinning')
       button.classList.remove('disabled');
-      statusWindow.value = 'Failed';
-    	showErrorMessage('Error Loading ' + target);
+      statusWindow.value = 'Failed. Status: ' + response.status;
+     	showErrorMessage("Error invoking service " + url + ". Status: " + response.status );
     })
   }
 
   factory.loadTheaters = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadtheaters',event.target,factory.updateTheaterCount,'Theaters');
+  	factory.loadSampleData('/movieticket/config/loadtheaters',event.target,factory.updateTheaterCount,'Theaters',120000);
 
   }
 
   factory.loadMovies = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadmovies',event.target,factory.updateMovieCount,'Movies');
+  	factory.loadSampleData('/movieticket/config/loadmovies',event.target,factory.updateMovieCount,'Movies',120000);
 
   }
 
   factory.loadPosters = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadposters',event.target,factory.updatePosterCount,'Posters');
+  	factory.loadSampleData('/movieticket/config/loadposters',event.target,factory.updatePosterCount,'Posters',120000);
 
   }
 
   factory.generateScreenings = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadscreenings',event.target,factory.updateScreeningCount,'Screenings');
+  	factory.loadSampleData('/movieticket/config/loadscreenings',event.target,factory.updateScreeningCount,'Screenings',240000);
 
   }
 
@@ -291,10 +305,9 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
 	, tmdbKey          : ""
   }
 
-  $http({
-    method : 'GET',
-    url    : '/movieticket/application/status/',
-  }).then(function(response) {  	
+  var path = "/movieticket/application/status/";
+
+  $http.get(path).then(function(response) {  	
 
 		// console.log(JSON.stringify(response.data));
 
@@ -342,6 +355,8 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
  	 	else {
  	  	enableConfiguration();
     } 	 		
+  },function (response) {
+  			showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
   });
 
   $scope.updateDataSources = function (googleKey, tmdbKey, geocodingSvc, mappingSvc) {
@@ -385,7 +400,8 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
 		    }
       }
 
-      $http.post('/movieticket/application/dataSources', updates).then(function (response) {
+      var path = '/movieticket/application/dataSources';
+      $http.post(path, updates).then(function (response) {
       	// Saving the Keys enables the Load Theaters and Load Movies Buttons.
       	$scope.appConfigService.status.googleKey = googleKey;
       	$scope.appConfigService.status.tmdbKey = tmdbKey;
@@ -398,8 +414,8 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
 		 	  	$scope.appConfigService.applicationReady = true;
  	  			enableApplication();
  	  		} 				
-      }).error(function (response) {
-        showErrorMessage('Error saving keys');
+      },function (response) {
+  			showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
       });
   };
   
@@ -439,11 +455,18 @@ app.factory('theaterService', function($http, appConfigService) {
 
      $http.post(path,qbe).then(function(response) {
        factory.theaters = response.data;
-    	 var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
-       $http.get(path).then(function(response) {
-    	   factory.logRecord = response.data
-    	   // console.log(JSON.stringify(factory.logRecord));
-       });
+    	 var logToken = response.headers('X-SODA-LOG-TOKEN');
+   	   if (logToken != null) {
+   	     var path = '/movieticket/movieticketlog/operationId/' +  logToken;
+         $http.get(path).then(function(response) {
+      	   factory.logRecord = response.data
+      	   // console.log(JSON.stringify(factory.logRecord));
+         },function (response) {
+     			 showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+		     });
+		   }
+		 },function (response) {
+     	 showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
      });
 	}
 
@@ -478,10 +501,16 @@ app.factory('theaterService', function($http, appConfigService) {
     $http.get(path).then(function(response) {
   	  if (response.data.length > 0) {
   	  	factory.addMarkersToMap(response.data);
-     	  var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
-        $http.get(path).then(function(response) {
-          factory.logRecord = response.data
-        });
+      	var logToken = response.headers('X-SODA-LOG-TOKEN');
+    	  if (logToken != null) {
+   	      var path = '/movieticket/movieticketlog/operationId/' + logToken; 
+          $http.get(path).then(function(response) {
+      	    factory.logRecord = response.data
+      	    // console.log(JSON.stringify(factory.logRecord));
+          },function (response) {
+      			showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+		      });
+		    }
       }
       else {
      		console.log('theaterService: showNearbyTheaters():  No theaters found within 5 Miles of actual location [' + maplocation.coords.latitude + ',' + maplocation.coords.longitude + '].');
@@ -490,17 +519,27 @@ app.factory('theaterService', function($http, appConfigService) {
 	      $http.get(path).then(function(response) {
 		  	  if (response.data.length > 0) {
   			   	factory.addMarkersToMap(data);
-     	 	  	var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
-        	  $http.get(path).then(function(response) {
-             	factory.logRecord = response.data
-            });
+          	var logToken = response.headers('X-SODA-LOG-TOKEN');
+        	  if (logToken != null) {
+       	      var path = '/movieticket/movieticketlog/operationId/' + logToken; 
+              $http.get(path).then(function(response) {
+          	    factory.logRecord = response.data
+        	      // console.log(JSON.stringify(factory.logRecord));
+              },function (response) {
+                showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+		          });
+		        }
          	}
          	else {
 						console.log('theaterService: showNearbyTheaters():  No theaters found within 5 Miles of simulated location [' + maplocation.coords.latitude + ',' + maplocation.coords.longitude + '].');
           }
-	  	  });
-	  	}
-   	});
+	  	  },function (response) {
+          showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+        });
+      }
+   	},function (response) {
+      showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+    });
   }
 
 	factory.getMoviesByTheater = function (theaterId) {
@@ -515,11 +554,18 @@ app.factory('theaterService', function($http, appConfigService) {
 	 	 var path = '/movieticket/theaters/' + theaterId + '/movies/' + dateWithTZOffset(date);
      $http.get(path).then(function(response) {
      	 factory.moviesByTheater = response.data;
-    	 var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
-       $http.get(path).then(function(response) {
-    	   factory.mbtLogRecord = response.data
-    	   // console.log(JSON.stringify(factory.mbtLogRecord));
-       });
+    	 var logToken = response.headers('X-SODA-LOG-TOKEN');
+   	   if (logToken != null) {
+   	     var path = '/movieticket/movieticketlog/operationId/' +  logToken;
+         $http.get(path).then(function(response) {
+      	   factory.mbtLogRecord = response.data
+      	   // console.log(JSON.stringify(factory.mbtLogRecord));
+         },function (response) {
+           showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+ 	     });
+		   }
+		 },function (response) {
+       showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
      });
   };
 
@@ -550,17 +596,23 @@ app.controller('theatersCtrl',function($scope, $http, $cookies, theaterService, 
   $scope.theaterService = theaterService;
   $scope.appConfigService = appConfigService
   
-  $http({
-    method: 'GET',
-    url: '/movieticket/theaters/',
-  }).then(function(response) {
+  var path = "/movieticket/theaters/";
+  
+  $http.get(path).then(function(response) {
  	  $scope.theaterService.theaters = response.data;
-	  var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
-    $http.get(path).then(function(response) {
-    	 $scope.theaterService.logRecord = response.data
-    	 // console.log(JSON.stringify($scope.theaterService.logRecord));
-    });
-  });
+  	var logToken = response.headers('X-SODA-LOG-TOKEN');
+   	if (logToken != null) {
+   	  var path = '/movieticket/movieticketlog/operationId/' +  logToken;
+      $http.get(path).then(function(response) {
+    	  $scope.theaterService.logRecord = response.data
+    	  // console.log(JSON.stringify($scope.theaterService.logRecord));
+      },function (response) {
+      	showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+		  });
+		}
+	},function (response) {
+    showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+  });	 
 
 });
 
@@ -632,35 +684,49 @@ app.factory('movieService', function($http, $cookies, appConfigService) {
 
     $http.post(path,qbe).then(function(response) {
       factory.movies = response.data;
-    	 var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
-       $http.get(path).then(function(response) {
-    	   factory.logRecord = response.data
-    	   // console.log(JSON.stringify(factory.logRecord));
-       });
-    });
+    	var logToken = response.headers('X-SODA-LOG-TOKEN');
+     	if (logToken != null) {
+   	    var path = '/movieticket/movieticketlog/operationId/' +  logToken;
+        $http.get(path).then(function(response) {
+    	    factory.logRecord = response.data
+    	    // console.log(JSON.stringify(factory.logRecord));
+        },function (response) {
+        	showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+		    });
+	 	  }
+	  },function (response) {
+      showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+    });	 
 	}
 
 	factory.theatersByMovie = [];
 	factory.tbmLogRecord = null;
 
 	factory.getTheatersByMovie = function (movieId) {
-   	 var date = new Date($('#datePicker').datepicker('getUTCDate'));
-   	 if (date == 'Invalid Date') {
-   	 	 showErrorMessage('Please select date');
-   	 	 return;
-   	 }
+    var date = new Date($('#datePicker').datepicker('getUTCDate'));
+    if (date == 'Invalid Date') {
+   	  showErrorMessage('Please select date');
+   	 	return;
+   	}
 
-	 	 showTheatersByMovie();
+	 	showTheatersByMovie();
 
-	 	 var path = '/movieticket/movies/' + movieId + '/theaters/' + dateWithTZOffset(date);
-     $http.get(path).then(function(response) {
-       factory.theatersByMovie = response.data;
-    	 var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
-       $http.get(path).then(function(response) {
-    	   factory.tbmLogRecord = response.data
-    	   // console.log(JSON.stringify(factory.factory.tbmLogRecord));
-       });
-     });
+	 	var path = '/movieticket/movies/' + movieId + '/theaters/' + dateWithTZOffset(date);
+    $http.get(path).then(function(response) {
+      factory.theatersByMovie = response.data;
+    	var logToken = response.headers('X-SODA-LOG-TOKEN');
+     	if (logToken != null) {
+   	    var path = '/movieticket/movieticketlog/operationId/' +  logToken;
+        $http.get(path).then(function(response) {
+      	  factory.tbmLogRecord = response.data
+    	    // console.log(JSON.stringify(factory.factory.tbmLogRecord));
+        },function (response) {
+        	showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+		    });
+	 	  }
+	  },function (response) {
+      showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+    });	 
   };
 
   factory.showNextLogEntry = function() {
@@ -688,17 +754,23 @@ app.controller('moviesCtrl',function($scope, $http,  $cookies, movieService) {
 
   $cookies.put('movieTicketGUID', GUID)
 
-  $http({
-    method : 'GET',
-    url    : '/movieticket/movies/',
-  }).then(function(response) {
+  var path = "/movieticket/movies/";
+
+  $http.get(path).then(function(response) {
  	  $scope.movieService.movies = response.data;
-	  var path = '/movieticket/movieticketlog/operationId/'+ response.headers('X-SODA-LOG-TOKEN')
-    $http.get(path).then(function(response) {
-    	 $scope.movieService.logRecord = response.data
-    	 // console.log(JSON.stringify($scope.movieService.logRecord));
-    });
-  });
+  	var logToken = response.headers('X-SODA-LOG-TOKEN');
+   	if (logToken != null) {
+   	  var path = '/movieticket/movieticketlog/operationId/' +  logToken;
+      $http.get(path).then(function(response) {
+      	 $scope.movieService.logRecord = response.data
+      	 // console.log(JSON.stringify($scope.movieService.logRecord));
+      },function (response) {
+      	showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+		  });
+		}
+	},function (response) {
+    showErrorMessage("Error invoking service " + path + ". Status: " + response.status );
+  });	 
 
 });
 

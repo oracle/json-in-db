@@ -196,7 +196,7 @@ function loadScreenings (sessionState, response, next) {
 
   writeLogEntry('loadScreenings()');
   createScreenings(sessionState,response).then(function(total) {
-    response.write('"count" : ' + total)
+    response.write('  , "count" : ' + total)
     response.write('}');
     response.end('')
   }).catch(function(e) {
@@ -1100,45 +1100,63 @@ function createScreenings(sessionState,response) {
       var movieItem = movieList[movieIndex];
       movieItem.value.inTheaters = true;
       var showCount = generateShows(engagementStartDate,engagementEndDate,screen,theater.value.id,movieItem.value.id,movieItem.value.runtime);
-      var status = {
-      	date       : new Date().toISOString()
-      , theater    : theater.id
-      , showCount  : showCount
-      }
-      response.write(JSON.stringify(status));
-      response.write(',');
     });
    
   }
-	       
+	var elapsedTime;
+	var requestStartTime = new Date();       
+	
+	response.write('{');
+  response.write(' "status"           : {');
+  response.write('   "startTime"      : "' + requestStartTime.toISOString() + '"');
+  
   return movieAPI.getTheaters(sessionState).then(function(sodaResponse) {
+  	elapsedTime = new Date().getTime() - requestStartTime.getTime();
   	theaterList = sodaResponse.json.items;
-  	response.write('{"status":{');
-  	response.write('  "theaters" : ' + theaterList.length + ',');
+  	response.write(' , "theaters"      : {');
+	  response.write('     "elapsedTime" : ' + elapsedTime);
+  	response.write('   , "count"       : ' + theaterList.length);
+  	response.write('   }');
+  	// writeLogEntry(moduleId,'getTheaters() : ' + elapsedTime + "ms.");
     var qbe = {"$query" : {}, $orderby :{"releaseDate" : -1}};
 	  return movieAPI.queryMovies(sessionState, qbe, 50)
   }).then(function(sodaResponse) {
+  	elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
   	movieList = sodaResponse.json.items;
-  	response.write('  "movies" : ' + movieList.length + ',');
+  	response.write(' , "movies"      : {');
+	  response.write('     "elapsedTime" : ' + elapsedTime);
+  	response.write('   , "count"       : ' + movieList.length);
+  	response.write('   }');
+  	// writeLogEntry(moduleId,'queryMovies() : ' + elapsedTime + "ms.");
   	movieList.forEach(function(movie) {
   		movie.value.inTheaters = false;
   	});
-  	response.write('      "screenings" : [');
   	theaterList.forEach(function(theater) {
   		generateScreeningsForTheater(theater,engagementStartDate,engagementEndDate,response)
   	});
-    var status = {
-    	date       : new Date().toISOString()
-    , showCount  : screenings.length
-    }
-    response.write('        ' + JSON.stringify(status));
-  	response.write('      ]},');
+  	elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
+  	response.write(' , "generateScreenings"      : {');
+	  response.write('     "elapsedTime" : ' + elapsedTime);
+  	response.write('   , "count"       : ' + screenings.length);
+  	response.write('   }');
+  	// writeLogEntry(moduleId,'generateScreenings() : ' + elapsedTime + "ms.");
     return movieAPI.recreateLoadIndexScreenings(sessionState,screenings)
   }).then(function(e) {
+  	elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
+  	response.write(' , "recreateLoadIndexScreenings"      : {');
+	  response.write('     "elapsedTime" : ' + elapsedTime);
+  	response.write('   }');
+  	// writeLogEntry(moduleId,'recreateLoadIndexScreenings() : ' + elapsedTime + "ms.");
   	return Promise.all(movieList.map(function(movieItem) {
   	 return movieAPI.updateMovie(sessionState, movieItem.id, movieItem.value);
   	}))
   }).then(function(sodaResponse) {
+  	elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
+  	response.write(' , "updateMovie"      : {');
+	  response.write('     "elapsedTime" : ' + elapsedTime);
+  	response.write('   }');
+  	response.write(' }');
+  	// writeLogEntry(moduleId,'updateMovie() : ' + elapsedTime + "ms.");
   	return screenings.length;
   }).catch(function(e) {
     writeLogEntry(moduleId,'Broken Promise.');

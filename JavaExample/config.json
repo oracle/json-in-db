@@ -1,0 +1,10 @@
+{
+  "protocol": "https",
+  "path": "/apex/movies/soda/latest",
+  "authMethod": "Basic",
+  "useProxy": false,
+  "proxy": {
+    "hostname": null,
+    "port": null
+  }
+}

@@ -1,0 +1,37 @@
+package com.oracle.st.pm.json.movieTicketing.test;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import com.oracle.st.pm.json.movieTicketing.docStore.TicketSale;
+import com.oracle.st.pm.json.movieTicketing.service.BookingService;
+import com.oracle.st.pm.json.movieTicketing.utilitiy.DBConnection;
+
+import java.sql.Connection;
+
+import oracle.soda.OracleDatabase;
+import oracle.soda.rdbms.OracleRDBMSClient;
+
+public class makeBooking {
+
+    private static Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
+
+    public makeBooking() {
+        super();
+    }
+
+    public static void main(String[] args) {
+        try {
+            DBConnection mgr = DBConnection.getDBConnection();
+            Connection conn = mgr.createConnection();
+            OracleRDBMSClient cl = new OracleRDBMSClient();
+            // Get a database.
+            OracleDatabase db = cl.getDatabase(conn);
+            String booking = "{\"key\":\"XXXXXXXXXXXXXXXXXXX\",\"customerId\":1,\"adult\":2,\"child\":2,\"senior\":0}";
+            System.out.println(BookingService.bookTickets(db, booking));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+}

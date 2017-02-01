@@ -2,8 +2,6 @@ package com.oracle.st.pm.json.movieTicketing.jetty;
 
 
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -24,10 +22,16 @@ public class App {
                                        com.oracle.st.pm.json.movieTicketing.service.Routes.class.getCanonicalName());
 
         ServletHolder defaultServlet = new ServletHolder("static-home", DefaultServlet.class);
-        defaultServlet.setInitParameter("resourceBase", "public");
+        defaultServlet.setInitParameter("resourceBase", "static");
         defaultServlet.setInitParameter("dirAllowed", "false");
         defaultServlet.setInitParameter("pathInfoOnly", "true");
         context.addServlet(defaultServlet, "/*");
+
+        ServletHolder frameworksServlet = new ServletHolder("static-home", DefaultServlet.class);
+        frameworksServlet.setInitParameter("resourceBase", "node_modules");
+        frameworksServlet.setInitParameter("dirAllowed", "false");
+        frameworksServlet.setInitParameter("pathInfoOnly", "true");
+        context.addServlet(frameworksServlet, "/frameworks/*");
 
         try {
             jettyServer.start();

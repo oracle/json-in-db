@@ -182,33 +182,26 @@ public class DBConnection {
             }
 
             if ((tnsnamesLocation != null) && (tnsnamesLocation.length() > 0)) {
-              System.out.println("Using connection information from TNSNAMES.ora located in \"" + tnsnamesLocation + "\"." );                
+              System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Using connection information from TNSNAMES.ora located in \"" + tnsnamesLocation + "\"." );                
               System.setProperty("oracle.net.tns_admin", tnsnamesLocation);
             }
             
             String tnsEntry = this.tnsEntry;
             if (tnsEntry != null) {
+              System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Attempting connection to \"" + tnsEntry + "\" using \"" + driver + "\" driver as user \"" + schema +"\"." );         
               ods.setUser(schema);
-              ods.setPassword(this.getPassword());
+              ods.setPassword(password);
               ods.setDriverType(driver);
               ods.setTNSEntryName(tnsEntry);
-              System.out.println("Attempting connection to \"" + tnsEntry + "\" using \"" + driver + "\" driver as user \"" + schema +"\"." );         
             }
             else {
               String dataSourceURL = this.getOracleDataSourceURL();
-              System.out.println("Attempting connection using \"" + dataSourceURL + "\"." );         
+              System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Attempting connection using \"" + dataSourceURL + "\"." );         
               ods.setURL(dataSourceURL);
             }
             conn = (OracleConnection) ods.getConnection();
         }
         return conn;
-    }
-
-    public OracleConnection createConnection1() throws SQLException, IOException {
-        OracleDataSource ds;
-        ds = new OracleDataSource();
-        ds.setURL(getDatabaseURL());
-        return (OracleConnection) ds.getConnection(this.getSchema(), this.getPassword());
     }
 
     public static void main(String[] args) {

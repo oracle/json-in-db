@@ -214,15 +214,20 @@ public class Movie {
 
     public static OracleDocument[] getMovies(OracleDatabase db) throws OracleException, IOException {
         OracleCollection movies = db.openCollection(Movie.COLLECTION_NAME);
-        OracleOperationBuilder movieDocuments = movies.find();
-        long movieCount = movieDocuments.count();
-        OracleDocument[] movieList = new OracleDocument[(int) movieCount];
-        OracleCursor movieCursor = movieDocuments.getCursor();
-        for (int i = 0; i < movieCount; i++) {
-            movieList[i] = movieCursor.next();
+        if (movies != null) {
+          OracleOperationBuilder movieDocuments = movies.find();
+          long movieCount = movieDocuments.count();
+          OracleDocument[] movieList = new OracleDocument[(int) movieCount];
+          OracleCursor movieCursor = movieDocuments.getCursor();
+          for (int i = 0; i < movieCount; i++) {
+             movieList[i] = movieCursor.next();
+          }
+          movieCursor.close();
+          return movieList;
+        } 
+        else {
+            return new OracleDocument[0];
         }
-        movieCursor.close();
-        return movieList;
     }
 
     public static OracleDocument getMovie(OracleDatabase db, String key) throws OracleException, IOException {

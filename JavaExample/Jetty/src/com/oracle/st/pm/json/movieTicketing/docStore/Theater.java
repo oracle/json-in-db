@@ -323,15 +323,20 @@ public class Theater {
 
     public static OracleDocument[] getTheaters(OracleDatabase db) throws OracleException, IOException {
         OracleCollection theaters = db.openCollection(Theater.COLLECTION_NAME);
-        OracleOperationBuilder theaterDocuments = theaters.find();
-        long theaterCount = theaterDocuments.count();
-        OracleDocument[] theaterList = new OracleDocument[(int) theaterCount];
-        OracleCursor theaterCursor = theaterDocuments.getCursor();
-        for (int i = 0; i < theaterCount; i++) {
-            theaterList[i] = theaterCursor.next();
+        if (theaters != null) {
+          OracleOperationBuilder theaterDocuments = theaters.find();
+          long theaterCount = theaterDocuments.count();
+          OracleDocument[] theaterList = new OracleDocument[(int) theaterCount];
+          OracleCursor theaterCursor = theaterDocuments.getCursor();
+          for (int i = 0; i < theaterCount; i++) {
+             theaterList[i] = theaterCursor.next();
+          }
+          theaterCursor.close();
+          return theaterList;
         }
-        theaterCursor.close();
-        return theaterList;
+        else {
+            return new OracleDocument[0];
+        }
     }
 
     public static OracleDocument getTheater(OracleDatabase db, String key) throws OracleException, IOException {
@@ -352,34 +357,39 @@ public class Theater {
     public static ApplicationStatus.Position getTheaterCentroid(OracleDatabase db) throws OracleException,
                                                                                                  IOException {
         OracleCollection theaters = db.openCollection(Theater.COLLECTION_NAME);
-        OracleOperationBuilder theaterDocuments = theaters.find();
-        OracleCursor theaterCursor = theaterDocuments.getCursor();
-        double minLatitude = 360;
-        double minLongitude = 360;
-        double maxLatitude = -360;
-        double maxLongitude = -360;
-        while (theaterCursor.hasNext()) {
-            OracleDocument doc = theaterCursor.next();
-            Theater theater = gson.fromJson(doc.getContentAsString(), Theater.class);
-            double[] coordinates = theater.getLocation().getGeoCoding().getCoordinates();
-            if (coordinates != null) {
-              if (coordinates[0] < minLatitude) {
-                 minLatitude = coordinates[0];
+        if (theaters != null) {
+          OracleOperationBuilder theaterDocuments = theaters.find();
+          OracleCursor theaterCursor = theaterDocuments.getCursor();
+          double minLatitude = 360;
+          double minLongitude = 360;
+          double maxLatitude = -360;
+          double maxLongitude = -360;
+          while (theaterCursor.hasNext()) {
+              OracleDocument doc = theaterCursor.next();
+              Theater theater = gson.fromJson(doc.getContentAsString(), Theater.class);
+              double[] coordinates = theater.getLocation().getGeoCoding().getCoordinates();
+              if (coordinates != null) {
+                if (coordinates[0] < minLatitude) {
+                   minLatitude = coordinates[0];
+                }
+                if (coordinates[0] > maxLatitude) {
+                    maxLatitude = coordinates[0];
+                }
+                if (coordinates[1] < minLongitude) {
+                  minLongitude = coordinates[1];
+                }
+                if (coordinates[1] > maxLongitude) {
+                  maxLongitude = coordinates[1];
+                }
               }
-              if (coordinates[0] > maxLatitude) {
-                  maxLatitude = coordinates[0];
-              }
-              if (coordinates[1] < minLongitude) {
-                minLongitude = coordinates[1];
-              }
-              if (coordinates[1] > maxLongitude) {
-                maxLongitude = coordinates[1];
-              }
-            }
-        }
-        theaterCursor.close();
-        return new ApplicationStatus.Position(((minLatitude + maxLatitude) / 2),
+          }
+          theaterCursor.close();
+          return new ApplicationStatus.Position(((minLatitude + maxLatitude) / 2),
                                                      ((minLongitude + maxLongitude) / 2));
+        } 
+        else {
+            return new ApplicationStatus.Position(0.0,0.0);
+        }
     }
 
     public static OracleDocument[] getTheatersByLocation(OracleDatabase db, double latitude, double longitude,

@@ -28,7 +28,7 @@ var externalInterfaces = require('./external_interfaces.js');
 var app;
 
 function writeLogEntry(module,message) {
-	module = ( message === undefined) ? module : module + ": " + message
+  module = ( message === undefined) ? module : module + ": " + message
   console.log(new Date().toISOString() + ": index." + module);
 }
 
@@ -36,7 +36,7 @@ function initApp() {
 
   var moduleId = 'initApp()';
 
-	var port = process.env.PORT || 3000;
+  var port = process.env.PORT || 3000;
   app = express();
   
   var httpServer = http.Server(app);
@@ -56,31 +56,31 @@ function initApp() {
 
   app.use(handleError);
 	
-	app.use(function noCache(req, res, next) {
+  app.use(function noCache(req, res, next) {
     res.header("Cache-Control", "no-cache, no-store, must-revalidate");
     res.header("Pragma", "no-cache");
     res.header("Expires", 0);
     next();
-    
-});
+  });
+  
   httpServer.listen(port, function() {
-      writeLogEntry(moduleId,'Listening on localhost:' + port);
+    writeLogEntry(moduleId,'Listening on localhost:' + port);
   });
 }
 
 function handleError(err, req, res, next) {
-	  console.error('MovieTicketing : Operation Failed:');
-    console.error( err.stack ? err.stack : err);
-    if ((err instanceof sodaRest.SodaError) || (err instanceof externalInterfaces.ExternalError)) {
-      console.error(JSON.stringify(err));
-      // console.error(JSON.stringify(err.details))
-    } 
-    res.status(500).send({message: 'An error has occurred, please contact support if the error persists'});
+  console.error('MovieTicketing : Operation Failed:');
+  console.error( err.stack ? err.stack : err);
+  if ((err instanceof sodaRest.SodaError) || (err instanceof externalInterfaces.ExternalError)) {
+    console.error(JSON.stringify(err));
+    // console.error(JSON.stringify(err.details))
+  } 
+  res.status(500).send({message: 'An error has occurred, please contact support if the error persists'});
 }
 
 process.on('unhandledRejection', (reason, p) => {
-    console.log("Unhandled Rejection at: Promise ", p, " reason: ", reason);
-    // application specific logging, throwing an error, or other logic here
+  console.log("Unhandled Rejection at: Promise ", p, " reason: ", reason);
+  // application specific logging, throwing an error, or other logic here
 });
 
 initApp();

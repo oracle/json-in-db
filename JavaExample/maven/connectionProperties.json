@@ -1,10 +1,6 @@
 {
-  "hosstname": "localhost",
-  "port": 1521,
-  "tnsEntry": null,
-  "oracleHome": null,
-  "serviceName": null,
-  "schema": null,
-  "password": null,
-  "hostname": "localhost"
+  "tnsHome": "e:\\app\\oracle\\cloud\\DBCS",
+  "tnsEntry": PROCKY17,
+  "schema": "STUDENT01",
+  "password": "STUDENT01"
 }

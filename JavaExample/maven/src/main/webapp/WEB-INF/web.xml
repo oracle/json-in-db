@@ -29,6 +29,19 @@
     </servlet>
 
     <servlet>
+       <servlet-name>frameworks</servlet-name>
+       <servlet-class>org.eclipse.jetty.servlet.DefaultServlet</servlet-class>
+       <init-param>
+          <param-name>resourceBase</param-name>
+          <param-value>./target/classes/node_modules</param-value>
+        </init-param>
+       <init-param>
+          <param-name>pathInfoOnly</param-name>
+          <param-value>true</param-value>
+        </init-param>
+    </servlet>
+    
+    <servlet>
        <servlet-name>default</servlet-name>
        <servlet-class>org.eclipse.jetty.servlet.DefaultServlet</servlet-class>
        <init-param>
@@ -43,10 +56,13 @@
     </servlet-mapping>
 
     <servlet-mapping>
+        <servlet-name>frameworks</servlet-name>
+        <url-pattern>/frameworks/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
         <servlet-name>default</servlet-name>
         <url-pattern>/*</url-pattern>
     </servlet-mapping>
     
-
-
 </web-app>

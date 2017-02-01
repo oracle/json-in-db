@@ -8,6 +8,7 @@ import com.oracle.st.pm.json.movieTicketing.docStore.Theater;
 
 import com.oracle.st.pm.json.movieTicketing.service.ApplicationStatusService;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -59,6 +60,7 @@ public class DBConnection {
     private String serverMode = null;
     private String tnsEntry = "ORCL";
     private String oracleHome = null;
+    private String tnsHome = null;
     private String schema = "SCOTT";
     private String password = "oracle";
 
@@ -152,24 +154,50 @@ public class DBConnection {
     public OracleConnection createConnection() throws SQLException, IOException {
         OracleConnection conn = null;
 
-        if (this.getDriver().equalsIgnoreCase(DBConnection.INTERNAL_DRIVER)) {
+        String driver = this.getDriver();
+        if ((driver == null) ||(driver.length() ==0)) {
+          throw new SQLException("Invalid driver specified in connection properties file.");
+        }
+
+        if (driver.equalsIgnoreCase(DBConnection.INTERNAL_DRIVER)) {
+            System.out.println("Attempting connection using \"" + driver + "\" driver." );
             OracleDriver ora = new OracleDriver();
             conn = (OracleConnection) ora.defaultConnection();
         } else {
             OracleDataSource ods = new OracleDataSource();
-            ods.setUser(this.getSchema());
-            ods.setPassword(this.getPassword());
-            ods.setDriverType(this.getDriver());
+
+            String schema = this.getSchema();
+            if ((schema == null) ||(schema.length() ==0)) {
+              throw new SQLException("Invalid schema specified in connection properties file.");
+            }
+
+            String password = this.getPassword();
+            if ((password == null) ||(password.length() ==0)) {
+              throw new SQLException("Invalid password specified in connection properties file.");
+            }
+
+            String tnsnamesLocation = this.tnsHome;
+            if ((tnsnamesLocation == null) || (tnsnamesLocation.length() == 0)) {
+              tnsnamesLocation = this.oracleHome;
+            }
+
+            if ((tnsnamesLocation != null) && (tnsnamesLocation.length() > 0)) {
+              System.out.println("Using connection information from TNSNAMES.ora located in \"" + tnsnamesLocation + "\"." );                
+              System.setProperty("oracle.net.tns_admin", tnsnamesLocation);
+            }
             
-            String TNSEntry = this.getTNSEntry();
-            if (TNSEntry != null) {
-              if (this.getDriver().equalsIgnoreCase("thin")) {
-                System.setProperty("oracle.net.tns_admin", this.oracleHome);
-              }
-              ods.setTNSEntryName(TNSEntry);
+            String tnsEntry = this.tnsEntry;
+            if (tnsEntry != null) {
+              ods.setUser(schema);
+              ods.setPassword(this.getPassword());
+              ods.setDriverType(driver);
+              ods.setTNSEntryName(tnsEntry);
+              System.out.println("Attempting connection to \"" + tnsEntry + "\" using \"" + driver + "\" driver as user \"" + schema +"\"." );         
             }
             else {
-              ods.setURL(this.getOracleDataSourceURL());
+              String dataSourceURL = this.getOracleDataSourceURL();
+              System.out.println("Attempting connection using \"" + dataSourceURL + "\"." );         
+              ods.setURL(dataSourceURL);
             }
             conn = (OracleConnection) ods.getConnection();
         }
@@ -193,7 +221,9 @@ public class DBConnection {
             String filename =
                 System.getProperty("com.oracle.st.xmldb.pm.ConnectionParameters",
                                    DBConnection.DEFAULT_CONNECTION_DEFINITION);
-            return gson.fromJson(new FileReader(filename), DBConnection.class);
+            File connectionProperties = new File(filename);
+            System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Using connection properties file + \"" + connectionProperties.getAbsolutePath() + "\".");
+            return gson.fromJson(new FileReader(connectionProperties), DBConnection.class);
         } catch (FileNotFoundException fnf) {
             return new DBConnection();
         }

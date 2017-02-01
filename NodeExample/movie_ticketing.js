@@ -18,11 +18,13 @@ var movieAPI = require('./movie_ticket_api.js');
 var cfg = require('./config.js');
 
 module.exports.theatersService               = theatersService;
+module.exports.theaterService                = theaterService;
 module.exports.theaterByIdService            = theaterByIdService;
 module.exports.searchTheatersService         = searchTheatersService;
 module.exports.moviesByTheaterService        = moviesByTheaterService;
 module.exports.locateTheatersService         = locateTheatersService;
 module.exports.moviesService                 = moviesService;
+module.exports.movieService                  = movieService;
 module.exports.moviesByReleaseDateService    = moviesByReleaseDateService
 module.exports.movieByIdService              = movieByIdService;
 module.exports.searchMoviesService           = searchMoviesService;
@@ -98,6 +100,21 @@ function theatersService(sessionState, response, next) {
     }
   });
 } 
+
+function theaterService(sessionState, response, next, key) {
+
+  var moduleId = 'theaterService(' + key + ')';
+  writeLogEntry(moduleId);
+
+  movieAPI.getTheater(sessionState, key).then(function(sodaResponse) {
+    //  writeLogEntry(moduleId,JSON.stringify(sodaResponse));
+    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
+    response.json(sodaResponse.json);
+    response.end();
+  }).catch(function(e) {
+    next(e);
+  })
+}
 
 function theaterByIdService(sessionState, response, next, id) {
 
@@ -190,6 +207,21 @@ function moviesService(sessionState, response, next) {
     }
   });
 } 
+
+function movieService(sessionState, response, next, key) {
+
+  var moduleId = 'movieService(' + key + ')';
+  writeLogEntry(moduleId);
+
+  movieAPI.getMovie(sessionState, key).then(function(sodaResponse) {
+    //  writeLogEntry(moduleId,JSON.stringify(sodaResponse));
+    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
+    response.json(sodaResponse.json);
+    response.end();
+  }).catch(function(e) {
+    next(e);
+  })
+}
 
 function moviesByReleaseDateService(sessionState, response, next) {
 
@@ -303,7 +335,7 @@ function applicationStatusService(sessionState,response,next) {
   writeLogEntry(moduleId);
   
 	var status = {
-		googleKey         : cfg.dataSources.google.apiKey
+          googleKey         : cfg.dataSources.google.apiKey
 	, tmdbKey           : cfg.dataSources.tmdb.apiKey
 	, supportedFeatures : movieAPI.getDetectedFeatures()
 	, geocodingService  : cfg.dataSources.geocodingService

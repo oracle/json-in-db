@@ -1,5 +1,5 @@
-/* ================================================  
- *    
+/* ================================================
+ *
  * Copyright (c) 2016 Oracle and/or its affiliates.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -12,7 +12,7 @@
  */
 
 "use strict";
- 
+
 var http = require('http');
 var request = require('request');
 
@@ -47,45 +47,45 @@ var $containsSupported        = true;
 var $nearSupported            = true;
 var nullOnEmptySupported      = true;
 
-var collectionProperties = {}  
+var collectionProperties = {}
 var connectionProperties = {}
 var documentStoreRoot     = "";
 
 function writeLogEntry(module,message) {
-	module = ( message === undefined) ? module : module + ": " + message
+  module = ( message === undefined) ? module : module + ": " + message
   console.log(new Date().toISOString() + ": sodaRest." + module);
 }
 
 function initialize(connectionProps, collectionProps) {
-	
+
   var moduleId = 'initialize()'
 
-	connectionProperties = connectionProps;
-	collectionProperties = collectionProps;
-	
-	if (connectionProperties.port === null) {
-	  documentStoreRoot = connectionProperties.protocol + "://" + connectionProperties.hostname + connectionProperties.path + "/" 
+  connectionProperties = connectionProps;
+  collectionProperties = collectionProps;
+
+  if (connectionProperties.port === null) {
+    documentStoreRoot = connectionProperties.protocol + "://" + connectionProperties.hostname + connectionProperties.path + "/"
   }
   else {
-	  documentStoreRoot = connectionProperties.protocol + "://" + connectionProperties.hostname + ":" + connectionProperties.port + connectionProperties.path + "/" 
-  }  
-	writeLogEntry(moduleId,'Document Store URI = "' + documentStoreRoot + '".');
-	
-	return featureDetection();
-	
+    documentStoreRoot = connectionProperties.protocol + "://" + connectionProperties.hostname + ":" + connectionProperties.port + connectionProperties.path + "/"
+  }
+
+  writeLogEntry(moduleId,'Document Store URI = "' + documentStoreRoot + '".');
+  return featureDetection();
+
 }
 
 function getConnectionProperties() {
-	
-	return connectionProperties;
+
+  return connectionProperties;
 
 }
 
-function getCollectionProperties(collectionName) { 
+function getCollectionProperties(collectionName) {
 
   var properties = collectionProperties[collectionName];
   if (properties != null) {
-  	properties = JSON.parse(JSON.stringify(properties))
+    properties = JSON.parse(JSON.stringify(properties))
     delete(properties.indexes);
   }
   return properties
@@ -96,9 +96,9 @@ function getIndexProperties(collectionName) {
 
   var properties = collectionProperties[collectionName];
   if ((properties != null) && (properties.hasOwnProperty('indexes'))) {
-  	
-  	var indexes = JSON.parse(JSON.stringify(properties.indexes));
- 	  // Remove disabled Indexes
+
+    var indexes = JSON.parse(JSON.stringify(properties.indexes));
+    // Remove disabled Indexes
     for (var i=0; i < indexes.length; /* i is only incremented when not splicing */  ) {
       if ((indexes[i].hasOwnProperty('disabled')) && (indexes[i].disabled === true))  {
         indexes.splice(i,1);
@@ -114,21 +114,19 @@ function getIndexProperties(collectionName) {
 }
 
 function getDocumentStoreURI(collectionName) {
-	
-	return documentStoreRoot + collectionName;
-	
+
+  return documentStoreRoot + collectionName;
+
 }
 
 function collectionNotFound(e) {
-	
-	if ((e) && (e.statusCode) && (e.statusCode === 404)) {
-	  if ((e.details) && (e.details.json) && (e.details.json['o:errorCode'] === 'REST-02000')) {
-	  	return true;
-	  }
-	}
-	
-	return false;
-	
+
+  if ((e) && (e.statusCode) && (e.statusCode === 404)) {
+    if ((e.details) && (e.details.json) && (e.details.json['o:errorCode'] === 'REST-02000')) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Create a new object, that prototypally inherits from the Error constructor
@@ -148,42 +146,41 @@ SodaError.prototype.constructor = SodaError;
 
 var disableSodaLogging = {sodaLoggingEnabled : false}
 
-
 function setHeaders(contentType, eTag) {
-	 
-	 var headers = {};
+
+   var headers = {};
 
    if (contentType === undefined) {
-  	 contentType = 'application/json'; 
+  	 contentType = 'application/json';
    }
 
    if (contentType !== null) {
-     headers['Content-Type'] = contentType;  
+     headers['Content-Type'] = contentType;
    }
-   
+
    if (eTag !== undefined) {
      headers["If-Match"] = eTag;
    }
-   
+
    return headers;
 }
-  
+
 function addLimitAndFields(queryProperties, limit, fields, total) {
- 
+
   if (fields === undefined) {
     fields = 'all';
   }
 
-  queryProperties.fields = fields;      
-      
+  queryProperties.fields = fields;
+
   if (limit !== undefined) {
-  	queryProperties.limit = limit;
+    queryProperties.limit = limit;
   }
-  
+
   if (total) {
-  	queryProperties.totalResults = true;
+    queryProperties.totalResults = true;
   }
-    
+
   return queryProperties;
 }
 
@@ -208,24 +205,24 @@ function newLogEntry(moduleId, sessionId, operationId, requestOptions) {
 
 function createLogRequest(moduleId, sessionState, requestOptions) {
 
-  var moduleId = 'createLogRequest()'; 
+  var moduleId = 'createLogRequest()';
   // writeLogEntry(moduleId,JSON.stringify(sessionState));
-  
+
   var logRequest = null;
 
   if (sessionState.sodaLoggingEnabled) {
-    logRequest = { 
+    logRequest = {
       logCollection    : sessionState.logCollectionName
     , cfg              : connectionProperties
     , logEntry         : newLogEntry(moduleId, sessionState.sodaSessionId, sessionState.operationId, requestOptions)
     }
-  }   
+  }
 
   return logRequest;
 }
 
 function logResponse(response, logRequest) {
-  
+
   var moduleId = 'logResponse()';
   // writeLogEntry(moduleId,JSON.stringify(logRequest));
 
@@ -246,25 +243,25 @@ function logResponse(response, logRequest) {
 }
 
 function getSodaError(moduleName,path,e) {
-	
-	
+
+
   var moduleId = 'getSodaError("' + moduleName + '")';
   // writeLogEntry(moduleId,JSON.stringify(e));
 
-	var details = { 
+  var details = {
     module         : moduleName,
     requestOptions : path,
     cause          : e
   }
-  
+
   return new SodaError(details);
-  
+
 }
 
 function processSodaResponse(moduleName, requestOptions, logRequest, sodaResponse, body, resolve, reject) {
-		
-	var moduleId = 'processSodaResponse("' + moduleName + '")';
-		
+
+  var moduleId = 'processSodaResponse("' + moduleName + '")';
+
   var response = {
     module         : moduleName
   , requestOptions : requestOptions
@@ -274,7 +271,7 @@ function processSodaResponse(moduleName, requestOptions, logRequest, sodaRespons
   , headers        : sodaResponse.headers
   , elapsedTime    : sodaResponse.elapsedTime
   }
- 
+
   if ((body !== undefined) && (body !== null)) {
   	if ((response.contentType !== undefined) && (response.contentType.startsWith("application/json"))) {
 		  // writeLogEntry(moduleId,'Type = ' + typeof body);
@@ -307,7 +304,7 @@ function processSodaResponse(moduleName, requestOptions, logRequest, sodaRespons
     }
    });
 }
-    
+
 function generateRequest(moduleName, sessionState, requestOptions) {
 
   var moduleId = 'generateRequest("' + moduleName + '")';
@@ -315,10 +312,10 @@ function generateRequest(moduleName, sessionState, requestOptions) {
 	if (getConnectionProperties().useProxy) {
 		requestOptions.proxy = 'http://' + getConnectionProperties().proxy.hostname + ':' + getConnectionProperties().proxy.port
 	}
-  
+
   var e = new Error()
   requestOptions.stack = e.stack;
-  
+
   return new Promise(function(resolve, reject) {
 		// writeLogEntry('Execute Promise: Method = "' + requestOptions.method + '". URI = "' + requestOptions.uri + '".');
  	  var logRequest = createLogRequest(moduleId, sessionState, requestOptions)
@@ -336,9 +333,9 @@ function generateRequest(moduleName, sessionState, requestOptions) {
 function createCollection(sessionState, collectionName) {
 
   var moduleId = 'createCollection("' + collectionName + '")';
-  
+
   var requestOptions = {
-  	method  : 'PUT'
+    method  : 'PUT'
   , uri     : getDocumentStoreURI(collectionName)
   , json    : getCollectionProperties(collectionName)
   , time    : true
@@ -346,10 +343,10 @@ function createCollection(sessionState, collectionName) {
 
   return generateRequest(moduleId, sessionState, requestOptions);
 }
-   
+
 function createIndex(sessionState, collectionName, indexProperties) {
 
-  var moduleId = 'createIndex("' + collectionName + '","' + indexProperties.name + '")'; 
+  var moduleId = 'createIndex("' + collectionName + '","' + indexProperties.name + '")';
 
   // Skip Spatial Indexes in environments where spatial operations on Geo-JSON are not supported
 
@@ -369,10 +366,10 @@ function createIndex(sessionState, collectionName, indexProperties) {
   if ((!nullOnEmptySupported) && (indexProperties.fields !== undefined) && (!indexProperties.scalarRequired))  {
     indexProperties.scalarRequired = true;
   }
- 
+
   var requestOptions = {
-  	method  : 'POST'
-  , uri     : getDocumentStoreURI(collectionName) 
+    method  : 'POST'
+  , uri     : getDocumentStoreURI(collectionName)
   , qs      : {action : 'index'}
   , json    : indexProperties
   , time    : true
@@ -384,7 +381,7 @@ function createIndex(sessionState, collectionName, indexProperties) {
 function createIndexes(sessionState, collectionName) {
 
   var moduleId = 'createIndexes("' + collectionName + '")';
-  
+
   var indexes = getIndexProperties(collectionName);
   return indexes.reduce(
     function(sequence, index) {
@@ -393,7 +390,7 @@ function createIndexes(sessionState, collectionName) {
       }).catch(function(e) {
         writeLogEntry(moduleId,'Broken Promise. createCollectionWithIndexes(): ');
         throw e;
-      })  
+      })
     },
     Promise.resolve()
   )
@@ -406,15 +403,15 @@ function createCollectionWithIndexes(sessionState, collectionName) {
   return createCollection(sessionState, collectionName).then(function() {
   	return createIndexes(sessionState, collectionName);
   });
-  
-}  
+
+}
 
 function dropCollection(sessionState, collectionName) {
 
   var moduleId = 'dropCollection("' + collectionName + '")';
 
   var requestOptions = {
-  	method  : 'DELETE'
+    method  : 'DELETE'
   , uri     : getDocumentStoreURI(collectionName)
   , time    : true
   };
@@ -438,9 +435,9 @@ function dropCollectionCatch404(sessionState, collectionName) {
 }
 
 function recreateCollection(sessionState, collectionName) {
-   
+
   var moduleId = 'recreateCollection("' + collectionName + '")';
-   
+
   return dropCollectionCatch404(sessionState, collectionName).then(function() {
      return createCollectionWithIndexes(sessionState, collectionName)
   }).catch(function(e) {
@@ -452,9 +449,9 @@ function recreateCollection(sessionState, collectionName) {
 function getCollection(sessionState, collectionName, limit, fields, total) {
 
   var moduleId = 'getCollection("' + collectionName + '")';
-  
-	var requestOptions = {
-  	method  : 'GET'
+
+  var requestOptions = {
+    method  : 'GET'
   , uri     : getDocumentStoreURI(collectionName)
   , qs      : addLimitAndFields({}, limit, fields, total)
   , headers : setHeaders()
@@ -469,17 +466,17 @@ function getDocumentContent(sessionState, collectionName, key, binary, eTag) {
 
   var moduleId = 'getDocument("' + collectionName + '","' + key +'")';
 
-	var requestOptions = {
-  	method  : 'GET'
+  var requestOptions = {
+    method  : 'GET'
   , uri     : getDocumentStoreURI(collectionName) + '/' + key
   , headers : setHeaders(null, eTag)
   , time    : true
   };
 
   if (binary) {
-  	requestOptions.encoding = null;
+    requestOptions.encoding = null;
   }
-  
+
   return generateRequest(moduleId, sessionState, requestOptions);
 }
 
@@ -487,19 +484,19 @@ function postJSON(sessionState, collectionName, json) {
 
   var moduleId = 'postJSON("' + collectionName + '")';
   // writeLogEntry(moduleId);
-   
+
   return postDocument(sessionState, collectionName, json, 'application/json');
-   
+
 }
 
 function postJSONCatch404(sessionState, collectionName, json) {
-	
+
 	return postDocumentCatch404(sessionState, collectionName, json, 'application/json');
-	
+
 }
 
 function postDocumentCatch404(sessionState, collectionName, document, contentType) {
-	  
+
 	return postDocument(sessionState, collectionName, document, contentType).catch(function(e) {
 		if (collectionNotFound(e)) {
 			return createCollectionWithIndexes(sessionState,collectionName).then(function(sodaResponse) {
@@ -523,7 +520,7 @@ function postDocument(sessionState, collectionName, document, contentType) {
   , headers : setHeaders(contentType , undefined)
   , time    : true
   };
-  
+
   if (contentType === 'application/json') {
   	requestOptions.json = document
  	}
@@ -537,28 +534,28 @@ function postDocument(sessionState, collectionName, document, contentType) {
 function bulkInsert(sessionState, collectionName, documents) {
 
   var moduleId = 'bulkInsert("' + collectionName + '")';
-  
+
   var requestOptions = {
-  	method  : 'POST'
+    method  : 'POST'
   , uri     : getDocumentStoreURI(collectionName)
   , qs      : {action : 'insert'}
   , json    : documents
   , time    : true
   };
-  
+
   return generateRequest(moduleId, sessionState, requestOptions);
 }
 
 function putDocument(sessionState, collectionName, key, document, contentType, eTag) {
 
   var moduleId = 'putDocument(' + collectionName + '","' + key + '","' + contentType + '")';
-	var requestOptions = {
-  	method  : 'PUT'
+  var requestOptions = {
+    method  : 'PUT'
   , uri     : getDocumentStoreURI(collectionName) + '/' + key
   , headers : setHeaders(contentType , eTag)
   , time    : true
   };
-  
+
   if (contentType === 'application/json') {
   	requestOptions.json = document
  	}
@@ -579,23 +576,23 @@ function deleteDocument(sessionState, collectionName, key, eTag) {
   , headers : setHeaders(undefined, eTag)
   , time    : true
   };
-  
+
   return generateRequest(moduleId, sessionState, requestOptions);
 }
 
 function queryByExample(sessionState, collectionName, qbe, limit, fields, total) {
 
-  var moduleId = 'queryByExample("' + collectionName + '",' + JSON.stringify(qbe) + ')'; 
+  var moduleId = 'queryByExample("' + collectionName + '",' + JSON.stringify(qbe) + ')';
   // writeLogEntry(moduleId);
-   
-	var requestOptions = {
-  	method  : 'POST'
+
+  var requestOptions = {
+    method  : 'POST'
   , uri     : getDocumentStoreURI(collectionName)
   , qs      : addLimitAndFields({action : "query"}, limit, fields, total)
   , json    : qbe
   , time    : true
   };
-  
+
   return generateRequest(moduleId, sessionState, requestOptions);
 }
 
@@ -604,21 +601,18 @@ function putJSON(sessionState, collectionName, key, json, eTag) {
   var moduleId = 'putJSON("' + collectionName + '","' + key + '")';
   // writeLogEntry(moduleId);
 
-  return putDocument(sessionState, collectionName, key, json, 'application/json', eTag);   
+  return putDocument(sessionState, collectionName, key, json, 'application/json', eTag);
 }
 
 function getJSON(sessionState, collectionName, key, eTag) {
-  
-  return getDocument(sessionState, collectionName, key, eTag);
+  return getDocumentContent(sessionState, collectionName, key, false, eTag);
 }
 
 function getDocument(sessionState, collectionName, key, eTag) {
-
   return getDocumentContent(sessionState, collectionName, key, false, eTag);
 }
 
 function getBinaryDocument(sessionState, collectionName, key, eTag) {
- 
   return getDocumentContent(sessionState, collectionName, key, true, eTag);
 }
 
@@ -636,12 +630,12 @@ function featureDetection() {
 
   /*
   ** Test for $CONTAINS support
-  */ 
-  
+  */
+
   var moduleId = 'feaureDetection()'
-  
+
   var collectionName = 'TMP_' + generateRandomName();
-  
+
   return createCollection(disableSodaLogging, collectionName).then(function(){
     var qbe = {id : {"$contains" : 'XXX'}}
     return queryByExample(disableSodaLogging, collectionName, qbe).catch(function(sodaError){
@@ -656,13 +650,13 @@ function featureDetection() {
 
       /*
       ** Test for $NEAR support and spatial indexes.
-      */ 
-  
+      */
+
       var qbe = {
         geoCoding          : {
         	$near            : {
             $geometry      : {
-            	 type        : "Point", 
+            	 type        : "Point",
             	 coordinates : [-122.12469369777311,37.895215209615884]
             },
             $distance      : 5,
@@ -670,7 +664,7 @@ function featureDetection() {
           }
         }
       }
-    
+
       return queryByExample(disableSodaLogging, collectionName, qbe).catch(function(sodaError){
         if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
           var sodaErrorDetails = sodaError.details.json;
@@ -680,12 +674,12 @@ function featureDetection() {
             $nearSupported = false;
           }
         }
-      }).then(function() { 
-      	
+      }).then(function() {
+
       	/*
       	** Test for 'singleton' support in index creation
       	*/
-      	
+
       	var indexDef = {
       		name         : "TEST_IDX"
   			, unique       : true
@@ -709,7 +703,7 @@ function featureDetection() {
   		  	**
   		  	** ToDo : Can we use alternative index properties if we encounter "DRG-10700: preference does not exist: CTXSYS.JSONREST_ENGLISH_LEXER"
   		    **
-  		  	*/ 
+  		  	*/
 
         	var indexDef = {
         		name      : "FULLTEXT_INDEX"
@@ -725,7 +719,7 @@ function featureDetection() {
           	}
   		  	})
   		  })
-  		})  
+  		})
     })
   }).then(function() {
   	return dropCollection(disableSodaLogging, collectionName)
@@ -734,18 +728,18 @@ function featureDetection() {
     writeLogEntry(moduleId,'$near operatator   supported:  ' + $nearSupported);
 		writeLogEntry(moduleId,'Text Index         supported:  ' + textIndexSupported);
         // writeLogEntry(moduleId,'"NULL ON EMPTY"    supported:  ' + nullOnEmptySupported);
-  }).catch(function(e) {
+  }).catch(function(err) {
     console.error('Broken Promise : featureDetection().');
     console.error( err.stack ? err.stack : err);
-    if ((err instanceof sodaRest.SodaError) || (err instanceof externalInterfaces.ExternalError)) {
+    if ((err instanceof SodaError) || (err instanceof externalInterfaces.ExternalError)) {
       console.error(JSON.stringify(err));
-    } 
-    throw e;
+    }
+    throw err;
   });
 };
 
 function getDetectedFeatures() {
-	
+
 	return {
 		$contains : $containsSupported
 	  , $near     : $nearSupported
@@ -755,11 +749,11 @@ function getDetectedFeatures() {
 }
 
 function recreateLoadIndex(sessionState, collectionName, contents) {
-	
+
 	var moduleId = 'recrateLoadIndex("' + collectionName + ',' + contents.length + ')';
-	
+
 	// Workaround for Bug 24907922
-	
+
 	return dropCollectionCatch404(sessionState, collectionName).then(function() {
 	  return createCollection(sessionState, collectionName);
 	}).then(function() {
@@ -770,5 +764,5 @@ function recreateLoadIndex(sessionState, collectionName, contents) {
   	writeLogEntry(moduleId,JSON.stringify(e));
   	throw e;
   });
-  
+
 }

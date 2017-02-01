@@ -1,2 +1,5 @@
 *.bak
+*.lck
+*.jdb
+*.cdi
 NodeExample/web.config

@@ -25,6 +25,6 @@
    </list>
    <list n="listOfChildren">
       <hash><url n="URL" path="Jetty.jpr"/></hash>
-      <hash><url n="URL" path="SodaMovieTicketingDemo.jpr"/></hash>
+      <hash><url n="URL" path="Maven.jpr"/></hash>
    </list>
 </jws:workspace>

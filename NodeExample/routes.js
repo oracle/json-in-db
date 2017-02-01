@@ -76,7 +76,7 @@ function getRouter() {
     router.route('/bookTickets')
         .post(postBookTicket);
 
-    router.route('/poster/:id')
+    router.route('/poster/:key')
         .get(getPoster);
 
     router.route('/config/loadMovies')
@@ -163,7 +163,7 @@ function getScreenings(req, res, next) {
 }
 
 function getPoster(req, res, next) {
-  movieTicketing.posterService(req.session, res, next, req.params.id);
+  movieTicketing.posterService(req.session, res, next, req.params.key);
 }
 function postBookTicket(req, res, next) {
 	movieTicketing.bookTicketService(req.session, res, next, req.body)

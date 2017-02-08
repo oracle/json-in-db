@@ -3,3 +3,5 @@
 *.jdb
 *.cdi
 NodeExample/web.config
+maven/target
+classes

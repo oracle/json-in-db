@@ -14,25 +14,18 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import java.text.SimpleDateFormat;
 
 import java.util.Date;
-import java.util.UUID;
 
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.OracleDriver;
 import oracle.jdbc.pool.OracleDataSource;
 
-import oracle.soda.OracleCollection;
 import oracle.soda.OracleDatabase;
-import oracle.soda.OracleDocument;
 import oracle.soda.OracleException;
-import oracle.soda.OracleOperationBuilder;
-
-import oracle.json.parser.QueryException;
 
 import oracle.soda.rdbms.OracleRDBMSClient;
 
@@ -52,17 +45,18 @@ public class DBConnection {
 
     public static final String DEFAULT_CONNECTION_DEFINITION = "connectionProperties.json";
 
+    private String schema = "SCOTT";
+    private String password = "oracle";
+
+    private String tnsAdmin = null;
+    private String tnsEntry = "ORCL";
+
     private String driver = "thin";
     private String sid = null;
     private String hostname = "localhost";
     private String port = "1521";
-    private String serviceName = null;
-    private String serverMode = null;
-    private String tnsEntry = "ORCL";
-    private String oracleHome = null;
-    private String tnsHome = null;
-    private String schema = "SCOTT";
-    private String password = "oracle";
+    private String serviceName = "orcl";
+    private String serverMode = "dedicated";
 
     // protected PoolDataSource pds;
 
@@ -176,11 +170,7 @@ public class DBConnection {
               throw new SQLException("Invalid password specified in connection properties file.");
             }
 
-            String tnsnamesLocation = this.tnsHome;
-            if ((tnsnamesLocation == null) || (tnsnamesLocation.length() == 0)) {
-              tnsnamesLocation = this.oracleHome;
-            }
-
+            String tnsnamesLocation = this.tnsAdmin;
             if ((tnsnamesLocation != null) && (tnsnamesLocation.length() > 0)) {
               System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Using connection information from TNSNAMES.ora located in \"" + tnsnamesLocation + "\"." );                
               System.setProperty("oracle.net.tns_admin", tnsnamesLocation);

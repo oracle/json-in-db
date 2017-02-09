@@ -1,6 +1,6 @@
 {
-  "tnsHome": "e:\\app\\oracle\\virtual\\product\\12.2.0\\dbhome_1\\network\\admin",
-  "tnsEntry": PDB12201,
-  "schema": "MOVIES",
-  "password": "MOVIES"
+  "tnsEntry": null,
+  "schema": null,
+  "password": null,
+  "tnsAdmin": null
 }

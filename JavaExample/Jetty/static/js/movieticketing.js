@@ -259,7 +259,7 @@ app.factory('appConfigService', function($http, $window) {
 
   factory.loadPosters = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadposters',event.target,factory.updatePosterCount,'Posters',240000
+  	factory.loadSampleData('/movieticket/config/loadposters',event.target,factory.updatePosterCount,'Posters',240000);
 
   }
 

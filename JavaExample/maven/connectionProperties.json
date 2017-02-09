@@ -1,6 +1,6 @@
 {
-  "tnsHome": "e:\\app\\oracle\\cloud\\DBCS",
-  "tnsEntry": PROCKY17,
-  "schema": "STUDENT01",
-  "password": "STUDENT01"
+  "tnsAdmin": null,
+  "tnsEntry": null,
+  "schema": null,
+  "password": null
 }

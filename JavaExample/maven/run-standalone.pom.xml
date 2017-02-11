@@ -13,9 +13,11 @@
 	<dependencies>
 
 		<dependency>
-			<groupId>org.eclipse.jetty</groupId>
-			<artifactId>jetty-server</artifactId>
-			<version>${jettyVersion}</version>
+      <groupId>org.eclipse.jetty.aggregate</groupId>
+      <artifactId>jetty-all</artifactId>
+      <version>${jettyVersion}</version>
+      <type>pom</type>
+      <scope>compile</scope>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.glassfish.jersey.containers/jersey-container-servlet -->
@@ -99,19 +101,19 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-maven-plugin</artifactId>
-				<version>${jettyVersion}</version>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.2</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
 				<configuration>
-					<systemProperties>
-						<systemProperty>
-							<name>log4j.configurationFile</name>
-							<value>log4j.properties</value>
-						</systemProperty>
-					</systemProperties>
-					<webApp>
-						<contextPath>/</contextPath>
-					</webApp>
+					<mainClass>com.oracle.st.pm.json.movieTicketing.jetty.App</mainClass>
+					<classpathScope>runtime</classpathScope>
 				</configuration>
 			</plugin>
 		</plugins>

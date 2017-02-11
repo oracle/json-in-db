@@ -148,8 +148,19 @@
          <hash n="App">
             <value n="custom" v="false"/>
             <list n="EnvironmentVariables"/>
-            <value n="javaOptions" v="-Djavax.net.ssl.trustStore=e:\app\oracle\virtual\product\12.2.0\dbhome_1\network\admin\truststore.jks -Djavax.net.ssl.trustStorePassword=Ticket1#    -Djavax.net.ssl.keyStore=e:\app\oracle\virtual\product\12.2.0\dbhome_1\network\admin\keystore.jks     -Djavax.net.ssl.keyStorePassword=Ticket1#   -Doracle.net.ssl_server_dn_match=true  -Doracle.net.ssl_version=1.2  "/>
+            <value n="javaOptions" v=""/>
             <value n="name" v="App"/>
+            <hash n="oracle.jdevimpl.runner.debug.DebugConfiguration">
+               <value n="tracingExclude" v="java;javax;sun;sunw;jdk;com.sun;apple;com.apple;com.evermind;com.orionserver;EDU.oswego;oracle.as;oracle.aurora;oracle.core;oracle.dms;oracle.gss;oracle.hooks;oracle.ide;oracle.ias;oracle.j2ee;oracle.jdbc;oracle.jdevimpl;oracle.jsp;oracle.oc4j;oracle.ojc;oracle.security;oracle.sql;oracle.webservices;oracle.xml;org.omg;org.w3c;org.xml;weblogic;org.codehaus.groovy;groovy.lang;oracle.jbo.script.groovy"/>
+            </hash>
+            <url n="runDirectoryURL" path="Jetty/"/>
+            <url n="targetURL" path="classes/com/oracle/st/pm/json/movieTicketing/jetty/App.class"/>
+         </hash>
+         <hash n="ExaExpress">
+            <value n="custom" v="false"/>
+            <list n="EnvironmentVariables"/>
+            <value n="javaOptions" v="-Djavax.net.ssl.trustStore=e:\app\oracle\virtual\product\12.2.0\dbhome_1\network\admin\truststore.jks -Djavax.net.ssl.trustStorePassword=Ticket1#    -Djavax.net.ssl.keyStore=e:\app\oracle\virtual\product\12.2.0\dbhome_1\network\admin\keystore.jks     -Djavax.net.ssl.keyStorePassword=Ticket1#   -Doracle.net.ssl_server_dn_match=true  -Doracle.net.ssl_version=1.2  "/>
+            <value n="name" v="ExaExpress"/>
             <hash n="oracle.jdevimpl.runner.debug.DebugConfiguration">
                <value n="tracingExclude" v="java;javax;sun;sunw;jdk;com.sun;apple;com.apple;com.evermind;com.orionserver;EDU.oswego;oracle.as;oracle.aurora;oracle.core;oracle.dms;oracle.gss;oracle.hooks;oracle.ide;oracle.ias;oracle.j2ee;oracle.jdbc;oracle.jdevimpl;oracle.jsp;oracle.oc4j;oracle.ojc;oracle.security;oracle.sql;oracle.webservices;oracle.xml;org.omg;org.w3c;org.xml;weblogic;org.codehaus.groovy;groovy.lang;oracle.jbo.script.groovy"/>
             </hash>
@@ -159,6 +170,7 @@
       </hash>
       <list n="runConfigurationList">
          <string v="App"/>
+         <string v="ExaExpress"/>
       </list>
    </hash>
    <hash n="oracle.jdevimpl.config.JProjectLibraries">

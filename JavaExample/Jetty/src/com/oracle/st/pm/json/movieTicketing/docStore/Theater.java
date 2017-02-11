@@ -365,15 +365,16 @@ public class Theater {
           double maxLatitude = -360;
           double maxLongitude = -360;
           while (theaterCursor.hasNext()) {
-              OracleDocument doc = theaterCursor.next();
-              Theater theater = gson.fromJson(doc.getContentAsString(), Theater.class);
+            OracleDocument doc = theaterCursor.next();
+            Theater theater = gson.fromJson(doc.getContentAsString(), Theater.class);
+            if ((theater.getLocation() != null) && (theater.getLocation().getGeoCoding() != null)) {
               double[] coordinates = theater.getLocation().getGeoCoding().getCoordinates();
               if (coordinates != null) {
                 if (coordinates[0] < minLatitude) {
-                   minLatitude = coordinates[0];
+                  minLatitude = coordinates[0];
                 }
                 if (coordinates[0] > maxLatitude) {
-                    maxLatitude = coordinates[0];
+                  maxLatitude = coordinates[0];
                 }
                 if (coordinates[1] < minLongitude) {
                   minLongitude = coordinates[1];
@@ -382,6 +383,7 @@ public class Theater {
                   maxLongitude = coordinates[1];
                 }
               }
+            }
           }
           theaterCursor.close();
           return new ApplicationStatus.Position(((minLatitude + maxLatitude) / 2),

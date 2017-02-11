@@ -189,8 +189,8 @@ public class CollectionManager {
 
         col.admin().drop();
 
-        System.out.println(sdf.format(new Date()) + ": $contains operator supported:  " + $containsSupported);
-        System.out.println(sdf.format(new Date()) + ": $near operatator   supported:  " + $nearSupported);
+        // System.out.println(sdf.format(new Date()) + ": $contains operator supported:  " + $containsSupported);
+        // System.out.println(sdf.format(new Date()) + ": $near operatator   supported:  " + $nearSupported);
         // System.out.println(sdf.format(new Date()) + ": \"NULL ON EMPTY\"    supported:  " + nullOnEmptySupported);
 
     }

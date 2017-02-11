@@ -117,7 +117,7 @@ public class DataSources {
         }
 
         if (updates.has("google")) {
-            this.google.apiKey = updates.getAsJsonObject("tmdb").getAsJsonPrimitive("apiKey").getAsString();
+            this.google.apiKey = updates.getAsJsonObject("google").getAsJsonPrimitive("apiKey").getAsString();
         }
 
         if (updates.has("geocodingService")) {

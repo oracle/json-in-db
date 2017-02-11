@@ -12,10 +12,12 @@
 	</properties>
 	<dependencies>
 
-		<dependency>
-			<groupId>org.eclipse.jetty</groupId>
-			<artifactId>jetty-server</artifactId>
-			<version>${jettyVersion}</version>
+	<dependency>
+      <groupId>org.eclipse.jetty.aggregate</groupId>
+      <artifactId>jetty-all</artifactId>
+      <version>${jettyVersion}</version>
+      <type>pom</type>
+      <scope>compile</scope>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.glassfish.jersey.containers/jersey-container-servlet -->
@@ -96,26 +98,50 @@
 		</repository>
 	</repositories>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-maven-plugin</artifactId>
-				<version>${jettyVersion}</version>
-				<configuration>
-					<systemProperties>
-						<systemProperty>
-							<name>log4j.configurationFile</name>
-							<value>log4j.properties</value>
-						</systemProperty>
-					</systemProperties>
-					<webApp>
-						<contextPath>/</contextPath>
-					</webApp>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+ <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.0.0</version>
+        <configuration>
+					<mainClass>com.oracle.st.pm.json.movieTicketing.jetty.App</mainClass>
+					<classpathScope>runtime</classpathScope>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+			<configuration>
+<filters>
+        <filter>
+            <artifact>*:*</artifact>
+            <excludes>
+                <exclude>META-INF/*.SF</exclude>
+                <exclude>META-INF/*.DSA</exclude>
+                <exclude>META-INF/*.RSA</exclude>
+            </excludes>
+        </filter>
+    </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+	  <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+            <archive>
+                <manifest>
+                    <mainClass>com.oracle.st.pm.json.movieTicketing.jetty.App</mainClass>
+                </manifest>
+            </archive>
+        </configuration>
+    </plugin>
+    </plugins>
+  </build>		
 
 	<dependencyManagement>
 		<dependencies/>

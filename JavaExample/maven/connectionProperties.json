@@ -1,6 +1,6 @@
 {
-  "tnsAdmin": null,
-  "tnsEntry": null,
-  "schema": null,
-  "password": null
+  "tnsAdmin": "",
+  "tnsEntry": "",
+  "schema": "",
+  "password": ""
 }

@@ -4,10 +4,6 @@ import com.google.gson.Gson;
 
 import com.google.gson.GsonBuilder;
 
-import com.oracle.st.pm.json.movieTicketing.docStore.Theater;
-
-import com.oracle.st.pm.json.movieTicketing.service.ApplicationStatusService;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -154,7 +150,7 @@ public class DBConnection {
         }
 
         if (driver.equalsIgnoreCase(DBConnection.INTERNAL_DRIVER)) {
-            System.out.println("Attempting connection using \"" + driver + "\" driver." );
+            // System.out.println("Attempting connection using \"" + driver + "\" driver." );
             OracleDriver ora = new OracleDriver();
             conn = (OracleConnection) ora.defaultConnection();
         } else {
@@ -172,13 +168,13 @@ public class DBConnection {
 
             String tnsnamesLocation = this.tnsAdmin;
             if ((tnsnamesLocation != null) && (tnsnamesLocation.length() > 0)) {
-              System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Using connection information from TNSNAMES.ora located in \"" + tnsnamesLocation + "\"." );                
+              // System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Using connection information from TNSNAMES.ora located in \"" + tnsnamesLocation + "\"." );                
               System.setProperty("oracle.net.tns_admin", tnsnamesLocation);
             }
             
             String tnsEntry = this.tnsEntry;
             if (tnsEntry != null) {
-              System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Attempting connection to \"" + tnsEntry + "\" using \"" + driver + "\" driver as user \"" + schema +"\"." );         
+              // System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Attempting connection to \"" + tnsEntry + "\" using \"" + driver + "\" driver as user \"" + schema +"\"." );         
               ods.setUser(schema);
               ods.setPassword(password);
               ods.setDriverType(driver);
@@ -205,7 +201,7 @@ public class DBConnection {
                 System.getProperty("com.oracle.st.xmldb.pm.ConnectionParameters",
                                    DBConnection.DEFAULT_CONNECTION_DEFINITION);
             File connectionProperties = new File(filename);
-            System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Using connection properties file + \"" + connectionProperties.getAbsolutePath() + "\".");
+            // System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Using connection properties file + \"" + connectionProperties.getAbsolutePath() + "\".");
             return gson.fromJson(new FileReader(connectionProperties), DBConnection.class);
         } catch (FileNotFoundException fnf) {
             return new DBConnection();

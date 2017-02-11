@@ -1,0 +1,156 @@
+<!-- edited with XML Spy v4.4 U (http://www.xmlspy.com) by Mark D. Drake and Geoff Lee (Oracle XML Dev) -->
+<installerConfiguration>
+	<parameters>
+		<parameter name="%DEMONAME%"              value="Oracle JSON Query and Analytics : Oracle Database 12c (12.1.0.2.0)"/>
+		<parameter name="%LAUNCHPAD%"             value="JSON (12.1.0.2.0)"/>
+		<parameter name="%LAUNCHPADFOLDER%"       value="%STARTMENU%\JSON Demonstrations"/>
+		<parameter name="%SHORTCUTFOLDER%"        value="%DEMODIRECTORY%\%USER%"/>
+
+		<parameter name="%PUBLICFOLDER%"          value="/publishedContent"/>
+		<parameter name="%DEMOCOMMON%"            value="%PUBLICFOLDER%/Hands-On-Labs/JSON"/>
+		<parameter name="%DOCLIBRARY%"            value="%PUBLICFOLDER%/Hands-On-Labs/JSON"/>
+		<parameter name="%HOMEFOLDER%"            value="/home/%USER%"/>
+		<parameter name="%DEMOLOCAL%"             value="%HOMEFOLDER%/Hands-On-Labs/JSON/introduction"/>
+		<parameter name="%XFILES_SCHEMA%"         value="XFILES"/>
+		<parameter name="%TABLE_NAME%"            value="J_PURCHASEORDER"/>
+		<parameter name="%EXTERNAL_TABLE_NAME%"   value="JSON_DUMP_CONTENTS"/>
+		<parameter name="%VIEW_NAME%"             value="J_PURCHASEORDER_VIEW"/>
+		<parameter name="%SEARCH_INDEX_NAME%"     value="JSON_SEARCH_INDEX"/>
+
+		<parameter name="enableHTTPTrace"         value="false"/>
+	</parameters>
+
+	<installation>
+		<action type="MAKEFOLDERS"/>
+		<action type="CLONEFOLDERS"/>
+
+		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\grantPermissions.sql %USER%</action>
+		<action type="RUNSQL" user="%USER%" password="%PASSWORD%">%DEMODIRECTORY%\install\sql\createHomeFolder.sql</action>
+
+		<action type="SYSDBA" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\setup\install\setupLab.sql %USER% %PASSWORD% %TNSALIAS%</action>
+ 		
+	  <action type="UPLOAD">
+  		<!-- Delete existing Source Code -->
+
+  		<action type="DELETE" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+	  		<mode>FORCE</mode>
+		  	<remote>%DEMOCOMMON%</remote>
+  		</action>
+	  	<action type="DELETE" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+ 		  	<mode>FORCE</mode>
+ 			  <remote>%DEMOLOCAL%</remote>
+ 		  </action>
+
+  		<action type="MKCOL" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DEMOCOMMON%</remote>
+  		</action>
+
+ 			<action type="MKCOL" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DOCLIBRARY%</remote>
+  		</action>
+ 			<action type="MKCOL" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DOCLIBRARY%/manual</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\manual\manual.zip</local>
+  			<remote>%DOCLIBRARY%/manual/manual.zip</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%DBA%" password="%DBAPASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\manual\manual.pdf</local>
+  			<remote>%DOCLIBRARY%/manual/manual.pdf</remote>
+  		</action>
+
+  		<action type="MKCOL" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DEMOLOCAL%</remote>
+  		</action>
+  		<action type="MKCOL" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<remote>%DEMOLOCAL%/sql</remote>
+  		</action>
+
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\%USER%\sql\0.0 RESET_DEMO.sql</local>
+  			<remote>%DEMOLOCAL%/sql/0.0 RESET_DEMO.sql</remote>
+  		</action>
+  		<action type="PUT" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+  			<mode>FORCE</mode>
+  			<local>%DEMODIRECTORY%\%USER%\sql\2.0 JSON_DATAGUIDE.sql</local>
+  			<remote>%DEMOLOCAL%/sql/2.0 JSON_DATAGUIDE.sql</remote>
+  		</action>
+  		
+  	</action>
+
+		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\unzipArchive.sql %DOCLIBRARY%/manual/manual.zip %DOCLIBRARY%/manual %DOCLIBRARY%/manual/manual.log</action>
+		
+		<action type="SQL"/>
+
+		<action type="DEMOCONFIG" serverURL="%SERVERURL%" user="%USER%" password="%PASSWORD%">
+			<remote>%DEMOLOCAL%</remote>
+		</action>
+		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\createLink.sql  %DOCLIBRARY%/manual %DEMOLOCAL% manual</action>
+		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\publishDemo.sql %DEMOLOCAL% %XFILES_SCHEMA%</action>
+		<action type="LAUNCH"/>
+		<action type="HOL"/>
+	</installation>
+
+	<make>
+		<folders>
+			<folder>%DEMODIRECTORY%\%USER%</folder>
+			<folder>%DEMODIRECTORY%\%USER%\sql</folder>
+		</folders>
+	</make>	
+	
+	<clone>
+		<files/>
+		<folders>
+			<folder>
+				<source>%DEMODIRECTORY%\setup\clone\sql</source>
+				<target>%DEMODIRECTORY%\%USER%\sql</target>
+			</folder>
+		</folders>
+	</clone>
+
+	<shortCuts>
+		<SQL executionMode="local">
+			<defaults>
+				<serverLandingPad>/XFILES/lite/Resource.html?stylesheet=/XFILES/WebDemo/xsl/LaunchPad.xsl&amp;includeContent=true</serverLandingPad>
+				<scriptPrefix>%DEMOLOCAL%</scriptPrefix>
+				<username>%USER%</username>
+				<password>%PASSWORD%</password>
+				<tnsAlias>%TNSALIAS%</tnsAlias>
+				<icon>%DEMODIRECTORY%\install\sqlplus.ico</icon>
+			</defaults>
+			<shortCut>
+				<name>0.0 Reset Demo</name>
+				<script>/sql/0.0 RESET_DEMO.sql</script>
+			</shortCut>
+			
+			<shortCut>
+				<name>2.0 JSON_DATAGUIDE Examples</name>
+				<script>/sql/2.0 JSON_DATAGUIDE.sql</script>
+				<rerunnable>true</rerunnable>
+			</shortCut>
+			
+		</SQL>
+		
+		<LAUNCH>
+			<shortCut type="url">
+				<name>%LAUNCHPAD%</name>
+				<location>%LAUNCHPADFOLDER%</location>
+				<target>%SERVERURL%%DEMOLOCAL%/index.html</target>
+			</shortCut>
+			<shortCut type="lnk">
+				<name>%LAUNCHPAD% Files</name>
+				<location>%LAUNCHPADFOLDER%</location>
+				<target>%DEMODIRECTORY%\%USER%</target>
+			</shortCut>
+		</LAUNCH>
+  </shortCuts>
+</installerConfiguration>

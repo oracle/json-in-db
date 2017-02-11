@@ -1,0 +1,95 @@
+<!-- edited with XML Spy v4.4 U (http://www.xmlspy.com) by Mark D. Drake and Geoff Lee (Oracle XML Dev) -->
+<installerConfiguration>
+	<parameters>
+		<parameter name="%DEMONAME%"              value="Oracle SQL/JSON : Oracle Database 12cR2 (12.2.0.0.0)"/>
+		<parameter name="%LAUNCHPAD%"             value="JSON (12.2.0.0.0)"/>
+		<parameter name="%LAUNCHPADFOLDER%"       value="%STARTMENU%\JSON Demonstrations"/>
+		<parameter name="%SHORTCUTFOLDER%"        value="%DEMODIRECTORY%\%USER%"/>
+
+		<parameter name="%PUBLICFOLDER%"          value="/publishedContent"/>
+		<parameter name="%DEMOCOMMON%"            value="%PUBLICFOLDER%/Hands-On-Labs/JSON-12.2"/>
+		<parameter name="%DOCLIBRARY%"            value="%PUBLICFOLDER%/Hands-On-Labs/JSON-12.2"/>
+		<parameter name="%HOMEFOLDER%"            value="/home/%USER%"/>
+		<parameter name="%DEMOLOCAL%"             value="%HOMEFOLDER%/Hands-On-Labs/JSON/introduction"/>
+		<parameter name="%XFILES_SCHEMA%"         value="XFILES"/>
+		<parameter name="%TABLE_NAME%"            value="J_PURCHASEORDER"/>
+		<parameter name="%EXTERNAL_TABLE_NAME%"   value="JSON_DUMP_CONTENTS"/>
+		<parameter name="%VIEW_NAME%"             value="J_PURCHASEORDER_VIEW"/>
+		<parameter name="%SEARCH_INDEX_NAME%"     value="JSON_SEARCH_INDEX"/>
+		
+
+		<parameter name="enableHTTPTrace"         value="false"/>
+		<parameter name="%HOL_BASE%"              value="$HOL_BASE"/>
+		<parameter name="%HOL_ROOT%"              value="$HOME/Desktop/Database_Track/JSON12.2"/>
+		<parameter name="%LABID%"                 value="json-12.2"/>
+	</parameters>
+
+	<installation>
+		<action type="MAKEFOLDERS"/>
+    <action type="UNZIP"/>
+		<action type="CLONEFOLDERS"/>
+		<action type="CLONEFILES"/>
+		<action type="COPYFILES"/>
+		<action type="COPYFOLDERS"/>
+
+		<action type="RUNSQL" user="%DBA%" password="%DBAPASSWORD%">%DEMODIRECTORY%\install\sql\grantPermissions.sql %USER%</action>
+		<action type="RUNSQL" user="%USER%" password="%PASSWORD%">%DEMODIRECTORY%\install\sql\createHomeFolder.sql</action>
+		<action type="SYSDBA" user="%DBA%"  password="%DBAPASSWORD%">"%HOL_BASE%\install\setupLab.sql" %USER% %PASSWORD% %TNSALIAS%</action>
+		<action type="RUNSQL" user="%USER%" password="%PASSWORD%">"%HOL_BASE%\install\resetLab.sql"</action>
+	</installation>
+
+	<make>
+		<folders>
+			<folder>%HOL_BASE%</folder>
+			<folder>%HOL_BASE%\sql</folder>
+			<folder>%HOL_BASE%\install</folder>
+			<folder>%HOL_BASE%\manual</folder>
+			<folder>%HOL_BASE%\SampleData</folder>
+		</folders>
+	</make>	
+	
+	<clone>
+		<files>
+			<file>
+				<source>%DEMODIRECTORY%\hol\clone\resetLab.sh</source>
+				<target>$HOME\reset_%LABID%</target>
+			</file>
+			<file>
+				<source>%DEMODIRECTORY%\hol\clone\setupLab.sh</source>
+				<target>%HOL_BASE%\install\setupLab.sh</target>
+			</file>
+			<file>
+				<source>%DEMODIRECTORY%\setup\install\setupLab.sql</source>
+				<target>%HOL_BASE%\install\setupLab.sql</target>
+			</file>
+			<file>
+				<source>%DEMODIRECTORY%\setup\install\setupCityLots.sql</source>
+				<target>%HOL_BASE%\install\setupCityLots.sql</target>
+			</file>
+		</files>
+		
+		<folders>
+			<folder>
+				<source>%DEMODIRECTORY%\setup\clone\sql</source>
+				<target>%DEMODIRECTORY%\%USER%\sql</target>
+			</folder>
+		</folders>
+	</clone>
+
+	<copy>
+		<files>
+			<file>
+				<source>$HOL_BASE\sql\0.0 RESET_DEMO.sql</source>
+				<target>$HOL_BASE\install\resetLab.sql</target>
+			</file>
+		</files>
+		<folders>
+			<folder>
+				<source>%DEMODIRECTORY%/setup/SampleData</source>
+				<target>$HOL_BASE/SampleData</target>
+			</folder>
+		</folders>
+	</copy>
+
+	<shortCuts/>		
+</installerConfiguration>

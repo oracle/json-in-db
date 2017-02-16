@@ -1,0 +1,6 @@
+{
+  "runtime": {
+    "majorVersion": "6"
+  },
+  "command": "node node_modules/oracle-movie-ticket-demo/index.js"
+} 

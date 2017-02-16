@@ -2,5 +2,5 @@
   "runtime": {
     "majorVersion": "8"
   },
-  "command": "java -jar MovieTicketing-world-0.1-SNAPSHOT.jar"
+  "command": "java -Doracle.net.tns_admin=$APP_HOME -jar MovieTicketing-world-0.1-SNAPSHOT.jar"
 } 

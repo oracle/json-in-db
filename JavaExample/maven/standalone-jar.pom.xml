@@ -7,47 +7,41 @@
 	<name>MovieTicketing Soda4Java</name>
 	<properties>
 		<!-- Adapt this to a version found on http://central.maven.org/maven2/org/eclipse/jetty/jetty-maven-plugin/ -->
-		<jettyVersion>9.4.0.v20161208</jettyVersion>
+		<jettyVersion>9.4.1.v20170120</jettyVersion>
 		<jerseyVersion>2.25</jerseyVersion>
 	</properties>
 	<dependencies>
-
-	<dependency>
-      <groupId>org.eclipse.jetty.aggregate</groupId>
-      <artifactId>jetty-all</artifactId>
-      <version>${jettyVersion}</version>
-      <type>pom</type>
-      <scope>compile</scope>
+		<dependency>
+			<groupId>org.eclipse.jetty.aggregate</groupId>
+			<artifactId>jetty-all</artifactId>
+			<version>${jettyVersion}</version>
+			<type>pom</type>
+			<scope>compile</scope>
 		</dependency>
-
 		<!-- https://mvnrepository.com/artifact/org.glassfish.jersey.containers/jersey-container-servlet -->
 		<dependency>
 			<groupId>org.glassfish.jersey.containers</groupId>
 			<artifactId>jersey-container-servlet</artifactId>
 			<version>${jerseyVersion}</version>
 		</dependency>
-
 		<!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-server -->
 		<dependency>
 			<groupId>org.glassfish.jersey.core</groupId>
 			<artifactId>jersey-server</artifactId>
 			<version>${jerseyVersion}</version>
 		</dependency>
-
 		<!-- https://mvnrepository.com/artifact/org.glassfish/javax.json -->
 		<dependency>
 			<groupId>org.glassfish</groupId>
 			<artifactId>javax.json</artifactId>
 			<version>1.0.4</version>
 		</dependency>
-
 		<!-- http://mvnrepository.com/artifact/com.google.code.gson/gson -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.7</version>
 		</dependency>
-
 		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -59,32 +53,27 @@
 			<artifactId>slf4j-simple</artifactId>
 			<version>1.7.22</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.oracle.jdbc</groupId>
 			<artifactId>ojdbc7</artifactId>
 			<version>12.1.0.2</version>
 		</dependency>
-
 		<dependency>
 			<groupId>net.sourceforge.jgeocoder</groupId>
 			<artifactId>jgeocoder</artifactId>
 			<version>0.5-SNAPSHOT</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.oracle.library</groupId>
 			<artifactId>oracle-soda</artifactId>
 			<version>1.0.3</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.oracle.library</groupId>
 			<artifactId>MovieTicketingDemo</artifactId>
 			<version>1.0-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
-
 	<repositories>
 		<repository>
 			<id>maven.oracle.com</id>
@@ -97,75 +86,70 @@
 			</releases>
 		</repository>
 	</repositories>
-
- <build>
-
-   <resources>
-     <resource>
-       <directory>static</directory>
-       <targetPath>${basedir}/target/static</targetPath>
-     </resource>
-     <resource>
-       <directory>${basedir}</directory>
-       <includes>
-       	 <include>*.json</include>
-       	 <include>*.ora</include>
-       </includes>
-       <targetPath>${basedir}/target</targetPath>
-     </resource>
-   </resources>
-   
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.0.0</version>
-        <configuration>
+	<build>
+		<resources>
+			<resource>
+				<directory>static</directory>
+				<targetPath>${basedir}/target/static</targetPath>
+			</resource>
+			<resource>
+				<directory>${basedir}</directory>
+				<includes>
+					<include>*.json</include>
+					<include>*.ora</include>
+				</includes>
+				<targetPath>${basedir}/target</targetPath>
+			</resource>
+		</resources>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.0.0</version>
+				<configuration>
 					<mainClass>com.oracle.st.pm.json.movieTicketing.jetty.App</mainClass>
 					<classpathScope>runtime</classpathScope>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
 						<configuration>
 							<filters>
-        				<filter>
-            			<artifact>*:*</artifact>
-            			<excludes>
-               			<exclude>META-INF/*.SF</exclude>
-               			<exclude>META-INF/*.DSA</exclude>
-		                <exclude>META-INF/*.RSA</exclude>
-            			</excludes>
-        				</filter>
-    					</filters>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-		  <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
 				<version>3.0.2</version>
-        <configuration>
-            <archive>
-              <manifest>
-                <mainClass>com.oracle.st.pm.json.movieTicketing.jetty.App</mainClass>
-              </manifest>
-            </archive>
-            <excludes>
-              <exclude>*/documentation/*</exclude>
-              <exclude>*/js/*</exclude>
-            </excludes>
-        </configuration>
-  	  </plugin>
-    </plugins>
-  </build>		
-
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>com.oracle.st.pm.json.movieTicketing.jetty.App</mainClass>
+						</manifest>
+					</archive>
+					<excludes>
+						<exclude>*/documentation/*</exclude>
+						<exclude>*/js/*</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 	<dependencyManagement>
 		<dependencies/>
 	</dependencyManagement>
-
 </project>

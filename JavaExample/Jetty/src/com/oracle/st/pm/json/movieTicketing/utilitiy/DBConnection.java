@@ -16,6 +16,8 @@ import java.text.SimpleDateFormat;
 
 import java.util.Date;
 
+import java.util.Properties;
+
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.OracleDriver;
 import oracle.jdbc.pool.OracleDataSource;
@@ -168,8 +170,10 @@ public class DBConnection {
 
             String tnsnamesLocation = this.tnsAdmin;
             if ((tnsnamesLocation != null) && (tnsnamesLocation.length() > 0)) {
-              // System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Using connection information from TNSNAMES.ora located in \"" + tnsnamesLocation + "\"." );                
               System.setProperty("oracle.net.tns_admin", tnsnamesLocation);
+            }
+            if (System.getProperty("oracle.net.tns_admin") != null) {
+              System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Using connection information from TNSNAMES.ora located in \"" + System.getProperty("oracle.net.tns_admin") + "\"." );                
             }
             
             String tnsEntry = this.tnsEntry;
@@ -211,7 +215,10 @@ public class DBConnection {
     public static OracleDatabase getOracleDatabase() throws SQLException, IOException, OracleException {
         DBConnection mgr = DBConnection.getDBConnection();
         Connection conn = mgr.createConnection();
-        OracleRDBMSClient cl = new OracleRDBMSClient();
+        Properties props = new Properties(); 
+        props.put("oracle.soda.sharedMetadataCache", "true");     
+        props.put("oracle.soda.localMetadataCache", "true"); 
+        OracleRDBMSClient cl = new OracleRDBMSClient(props); 
         // Get a database.
         return cl.getDatabase(conn);
     }

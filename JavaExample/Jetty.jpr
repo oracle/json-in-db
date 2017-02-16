@@ -167,10 +167,22 @@
             <url n="runDirectoryURL" path="Jetty/"/>
             <url n="targetURL" path="classes/com/oracle/st/pm/json/movieTicketing/jetty/App.class"/>
          </hash>
+         <hash n="T1">
+            <value n="custom" v="false"/>
+            <list n="EnvironmentVariables"/>
+            <value n="javaOptions" v="-Doracle.net.tns_admin=&quot;G:\\DBCS\\JavaExample\\maven\\target&quot;"/>
+            <value n="name" v="T1"/>
+            <hash n="oracle.jdevimpl.runner.debug.DebugConfiguration">
+               <value n="tracingExclude" v="java;javax;sun;sunw;jdk;com.sun;apple;com.apple;com.evermind;com.orionserver;EDU.oswego;oracle.as;oracle.aurora;oracle.core;oracle.dms;oracle.gss;oracle.hooks;oracle.ide;oracle.ias;oracle.j2ee;oracle.jdbc;oracle.jdevimpl;oracle.jsp;oracle.oc4j;oracle.ojc;oracle.security;oracle.sql;oracle.webservices;oracle.xml;org.omg;org.w3c;org.xml;weblogic;org.codehaus.groovy;groovy.lang;oracle.jbo.script.groovy"/>
+            </hash>
+            <url n="runDirectoryURL" path="Jetty/"/>
+            <url n="targetURL" path="classes/com/oracle/st/pm/json/movieTicketing/jetty/App.class"/>
+         </hash>
       </hash>
       <list n="runConfigurationList">
          <string v="App"/>
          <string v="ExaExpress"/>
+         <string v="T1"/>
       </list>
    </hash>
    <hash n="oracle.jdevimpl.config.JProjectLibraries">

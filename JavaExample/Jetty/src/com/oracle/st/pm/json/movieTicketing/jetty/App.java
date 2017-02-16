@@ -1,6 +1,8 @@
 package com.oracle.st.pm.json.movieTicketing.jetty;
 
 
+import java.util.Optional;
+
 import org.eclipse.jetty.server.NCSARequestLog;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
@@ -9,6 +11,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 
 public class App {
     
+    public static final Optional<String> port = Optional.ofNullable(System.getenv("PORT"));   ; 
     
     public static NCSARequestLog getRequestLogger() {
         NCSARequestLog requestLog = new NCSARequestLog();
@@ -27,7 +30,7 @@ public class App {
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
 
-        Server jettyServer = new Server(9999);
+        Server jettyServer = new Server(Integer.parseInt(port.orElse("8081")));
         // jettyServer.setRequestLog(getRequestLogger()); // here will set global request log
         jettyServer.setHandler(context);
 

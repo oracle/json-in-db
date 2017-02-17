@@ -34,6 +34,8 @@ public class BookingService {
         System.out.println(sdf.format(new Date()) + "[BookingService.bookTickets()]: Started.");
         TicketSale ticketSale = gson.fromJson(booking, TicketSale.class);
         System.out.println(sdf.format(new Date()) + "[BookingService.bookTickets()]: Completed.");
-        return ticketSale.recordSale(db);
+        String result = ticketSale.recordSale(db);
+        db.admin().getConnection().close();
+        return result;
     }
 }

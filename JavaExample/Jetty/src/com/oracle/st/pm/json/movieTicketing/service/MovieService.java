@@ -31,9 +31,10 @@ public class MovieService {
         super();
     }
 
-    public static String getMovies(OracleDatabase db) throws OracleException, IOException {
+    public static String getMovies(OracleDatabase db) throws OracleException, IOException, SQLException {
         System.out.println(sdf.format(new Date()) + "[MovieService.getMovies()]: Started.");
         OracleDocument[] movies = Movie.getMovies(db);
+        db.admin().getConnection().close();
         StringJoiner result = new StringJoiner(",", "[", "]");
         for (int i = 0; i < movies.length; i++) {
             result.add(Item.serializeAsItem(movies[i]));
@@ -42,17 +43,19 @@ public class MovieService {
         return result.toString();
     }
 
-    public static String getMovie(OracleDatabase db, String key) throws OracleException, IOException {
+    public static String getMovie(OracleDatabase db, String key) throws OracleException, IOException, SQLException {
         System.out.println(sdf.format(new Date()) + "[MovieService.getMovie()]: Started.");
         OracleDocument movie = Movie.getMovie(db, key);
+        db.admin().getConnection().close();
         System.out.println(sdf.format(new Date()) + "[MovieService.getMovie()]: Completed.");
         return movie.getContentAsString();
     }
 
 
-    public static String getMovieById(OracleDatabase db, int id) throws OracleException {
+    public static String getMovieById(OracleDatabase db, int id) throws OracleException, SQLException {
         System.out.println(sdf.format(new Date()) + "[MovieService.getMovieById()]: Started.");
         OracleDocument movie = Movie.getMovieById(db, id);
+        db.admin().getConnection().close();
         System.out.println(sdf.format(new Date()) + "[MovieService.getMovieById()]: Completed.");
         return movie.getContentAsString();
     }
@@ -68,9 +71,10 @@ public class MovieService {
         return new TheatersByMovie(db, key, targetDate).toJSON();
     }
 
-    public static String searchMovies(OracleDatabase db, String qbe) throws OracleException, IOException {
+    public static String searchMovies(OracleDatabase db, String qbe) throws OracleException, IOException, SQLException {
         System.out.println(sdf.format(new Date()) + "[MovieService.searchMovies()]: Started.");
         OracleDocument[] movies = Movie.searchMovies(db, qbe);
+        db.admin().getConnection().close();
         StringJoiner result = new StringJoiner(",", "[", "]");
         for (int i = 0; i < movies.length; i++) {
             result.add(Item.serializeAsItem(movies[i]));

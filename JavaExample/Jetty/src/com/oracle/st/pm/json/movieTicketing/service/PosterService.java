@@ -6,6 +6,8 @@ import com.oracle.st.pm.json.movieTicketing.docStore.Poster;
 
 import java.io.IOException;
 
+import java.sql.SQLException;
+
 import java.text.SimpleDateFormat;
 
 import java.util.Date;
@@ -22,9 +24,10 @@ public class PosterService {
         super();
     }
 
-    public static byte[] getPoster(OracleDatabase db, String key) throws OracleException, IOException {
+    public static byte[] getPoster(OracleDatabase db, String key) throws OracleException, IOException, SQLException {
         System.out.println(sdf.format(new Date()) + "[PosterService.getPoster()]: Started.");
         OracleDocument poster = Poster.getPoster(db, key);
+        db.admin().getConnection().close();
         System.out.println(sdf.format(new Date()) + "[PosterService.getPoster()]: Completed.");
         return poster.getContentAsByteArray();
     }

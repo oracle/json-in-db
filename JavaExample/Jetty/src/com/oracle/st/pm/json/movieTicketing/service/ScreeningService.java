@@ -28,9 +28,10 @@ public class ScreeningService {
         super();
     }
 
-    public static String getScreening(OracleDatabase db, String key) throws OracleException, IOException {
+    public static String getScreening(OracleDatabase db, String key) throws OracleException, IOException, SQLException {
         System.out.println(sdf.format(new Date()) + "[ScreeningService.getScreening()]: Started.");
         OracleDocument screening = Screening.getScreening(db, key);
+        db.admin().getConnection().close();
         System.out.println(sdf.format(new Date()) + "[ScreeningService.getScreening()]: Completed.");
         return screening.getContentAsString();
     }

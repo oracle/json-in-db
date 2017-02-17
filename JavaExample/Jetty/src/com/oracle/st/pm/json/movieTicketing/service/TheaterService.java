@@ -27,9 +27,10 @@ public class TheaterService {
         super();
     }
 
-    public static String getTheaters(OracleDatabase db) throws OracleException, IOException {
+    public static String getTheaters(OracleDatabase db) throws OracleException, IOException, SQLException {
         System.out.println(sdf.format(new Date()) + "[TheaterService.getTheaters()]: Started.");
         OracleDocument[] theaters = Theater.getTheaters(db);
+        db.admin().getConnection().close();
         StringJoiner result = new StringJoiner(",", "[", "]");
         for (int i = 0; i < theaters.length; i++) {
             result.add(Item.serializeAsItem(theaters[i]));
@@ -38,16 +39,18 @@ public class TheaterService {
         return result.toString();
     }
 
-    public static String getTheater(OracleDatabase db, String key) throws OracleException, IOException {
+    public static String getTheater(OracleDatabase db, String key) throws OracleException, IOException, SQLException {
         System.out.println(sdf.format(new Date()) + "[TheaterService.getTheater()]: Started.");
         OracleDocument theater = Theater.getTheater(db, key);
+        db.admin().getConnection().close();
         System.out.println(sdf.format(new Date()) + "[TheaterService.getTheaters()]: Completed.");
         return theater.getContentAsString();
     }
 
-    public static String getTheaterById(OracleDatabase db, Gson gson, int id) throws OracleException {
+    public static String getTheaterById(OracleDatabase db, Gson gson, int id) throws OracleException, SQLException {
         System.out.println(sdf.format(new Date()) + "[TheaterService.getTheaterById()]: Started.");
         OracleDocument theater = Theater.getTheaterById(db, id);
+        db.admin().getConnection().close();
         System.out.println(sdf.format(new Date()) + "[TheaterService.getTheaterById()]: Completed.");
         return theater.getContentAsString();
     }
@@ -64,9 +67,10 @@ public class TheaterService {
     }
 
     public static String getTheatersByLocation(OracleDatabase db, double latitude, double longitude,
-                                               int distance) throws OracleException, IOException {
+                                               int distance) throws OracleException, IOException, SQLException {
         System.out.println(sdf.format(new Date()) + "[TheaterService.getTheatersByLocation()]: Started.");
         OracleDocument[] theaters = Theater.getTheatersByLocation(db, latitude, longitude, distance);
+        db.admin().getConnection().close();
         StringJoiner result = new StringJoiner(",", "[", "]");
         for (int i = 0; i < theaters.length; i++) {
             result.add(Item.serializeAsItem(theaters[i]));
@@ -75,9 +79,11 @@ public class TheaterService {
         return result.toString();
     }
 
-    public static String searchTheaters(OracleDatabase db, String qbe) throws OracleException, IOException {
+    public static String searchTheaters(OracleDatabase db, String qbe) throws OracleException, IOException,
+                                                                              SQLException {
         System.out.println(sdf.format(new Date()) + "[TheaterService.searchTheaters()]: Completed.");
         OracleDocument[] theaters = Theater.searchTheaters(db, qbe);
+        db.admin().getConnection().close();
         StringJoiner result = new StringJoiner(",", "[", "]");
         for (int i = 0; i < theaters.length; i++) {
             result.add(Item.serializeAsItem(theaters[i]));

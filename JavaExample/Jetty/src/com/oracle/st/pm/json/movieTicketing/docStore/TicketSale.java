@@ -69,7 +69,7 @@ public class TicketSale {
 
         OracleCollection col = db.admin().createCollection(TicketSale.COLLECTION_NAME);
         col.insert(db.createDocumentFromString(gson.toJson(this)));
-        return "{\"status\":\"Booked\"}";
+        return "{\"status\" : \"Booked\",\"message\" : \"Please enjoy your movie.\"}";
     }
 
     public TicketSale() {

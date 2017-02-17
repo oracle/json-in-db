@@ -12,6 +12,8 @@ import com.oracle.st.pm.json.movieTicketing.qbe.BetweenOperator;
 
 import java.io.IOException;
 
+import java.sql.SQLException;
+
 import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
@@ -128,7 +130,8 @@ public class TheatersByMovie {
         }
     }
 
-    public TheaterWithShowTimes[] getShowTimesByMovieAndDate(OracleDatabase db, Date date) throws OracleException {
+    public TheaterWithShowTimes[] getShowTimesByMovieAndDate(OracleDatabase db, Date date) throws OracleException,
+                                                                                                  SQLException {
 
         HashMap<Integer, TheaterWithShowTimes> theaterCache = new HashMap<Integer, TheaterWithShowTimes>();
 
@@ -162,10 +165,11 @@ public class TheatersByMovie {
             }
             theater.addScreening(key, screening);
         }
+        db.admin().getConnection().close();
         return theaterCache.values().toArray(new TheaterWithShowTimes[0]);
     }
 
-    public TheatersByMovie(OracleDatabase db, String key, Date date) throws OracleException, IOException {
+    public TheatersByMovie(OracleDatabase db, String key, Date date) throws OracleException, IOException, SQLException {
         this.movie = Movie.fromJson(Movie.getMovie(db, key).getContentAsString());
         this.theaters = getShowTimesByMovieAndDate(db, date);
         fixLists();

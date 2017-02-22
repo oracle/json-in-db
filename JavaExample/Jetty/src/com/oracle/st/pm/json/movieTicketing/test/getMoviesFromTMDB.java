@@ -11,9 +11,7 @@ public class getMoviesFromTMDB {
 
     public static void main(String[] args) {
         try {
-            CollectionManager collectionManager = new CollectionManager();
-            collectionManager.setDatabase(DBConnection.getOracleDatabase());
-            ExternalInterfaces.loadMoviesFromTMDB(collectionManager);
+            ExternalInterfaces.loadMoviesFromTMDB(DBConnection.getOracleDatabase());
         } catch (Exception e) {
             e.printStackTrace();
         }

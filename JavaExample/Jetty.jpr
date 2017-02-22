@@ -215,6 +215,10 @@
             <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/SODA.library"/>
             <value n="isJDK" v="false"/>
          </hash>
+         <hash>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/UCP.library"/>
+            <value n="isJDK" v="false"/>
+         </hash>
       </list>
       <list n="libraryReferences">
          <hash>
@@ -243,6 +247,10 @@
          </hash>
          <hash>
             <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/SODA.library"/>
+            <value n="isJDK" v="false"/>
+         </hash>
+         <hash>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/UCP.library"/>
             <value n="isJDK" v="false"/>
          </hash>
       </list>

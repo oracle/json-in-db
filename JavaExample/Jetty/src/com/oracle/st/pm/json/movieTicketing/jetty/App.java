@@ -1,13 +1,22 @@
 package com.oracle.st.pm.json.movieTicketing.jetty;
 
 
+import com.oracle.st.pm.json.movieTicketing.utilitiy.DBConnection;
+
 import java.util.Optional;
 
+import javax.naming.Context;
+import javax.naming.InitialContext;
+
+import oracle.ucp.jdbc.PoolDataSource;
+
+import org.eclipse.jetty.plus.jndi.Resource;
 import org.eclipse.jetty.server.NCSARequestLog;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.webapp.WebAppContext;
 
 public class App {
     
@@ -24,17 +33,18 @@ public class App {
         requestLog.setLogTimeZone("GMT"); // or GMT+2 and so on. 
         return requestLog;
     }
-    
-    public static void main(String[] args) throws Exception {
-
-        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.setContextPath("/");
+        public static void main(String[] args) throws Exception {
+        
+        DBConnection.initializeConnectionPool();
 
         Server jettyServer = new Server(Integer.parseInt(port.orElse("8081")));
         // jettyServer.setRequestLog(getRequestLogger()); // here will set global request log
-        jettyServer.setHandler(context);
 
-        // Tells the Jersey Servlet which REST service/class to load.
+        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        context.setContextPath("/");
+        jettyServer.setHandler(context);
+        
+        // Create the Jersey Servlet and tell it which REST service/class to load.
         ServletHolder jerseyServlet =
             context.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/movieticket/*");
         jerseyServlet.setInitOrder(0);

@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 
 import java.util.Date;
 
+import oracle.soda.OracleDatabase;
 import oracle.soda.OracleException;
 
 
@@ -22,9 +23,9 @@ public class ApplicationStatusService {
         super();
     }
     
-    public static String getApplicationStatus(CollectionManager collectionManager) throws OracleException, IOException {
+    public static String getApplicationStatus(OracleDatabase db) throws OracleException, IOException {
         System.out.println(sdf.format(new Date()) + "[ApplicationStatusService.getApplicationStatus()]: Started.");
-        ApplicationStatus status = new ApplicationStatus(collectionManager);
+        ApplicationStatus status = new ApplicationStatus(db);
         System.out.println(sdf.format(new Date()) + "[ApplicationStatusService.getApplicationStatus()]: Completed.");
         return status.toJson();                                                                   
     }

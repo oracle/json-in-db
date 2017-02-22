@@ -17,9 +17,7 @@ public class getTheatersFromFandango {
 
     public static void main(String[] args) {
         try {
-            CollectionManager collectionManager = new CollectionManager();
-            collectionManager.setDatabase(DBConnection.getOracleDatabase());
-            ExternalInterfaces.loadTheatersFromFandango(collectionManager);
+          ExternalInterfaces.loadTheatersFromFandango(DBConnection.getOracleDatabase());
         } catch (Exception e) {
             e.printStackTrace();
         }

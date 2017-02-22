@@ -260,15 +260,15 @@ public class Movie {
         return movieList;
     }
 
-    public static void saveMovies(CollectionManager collectionManager, List<Movie> movies) throws OracleException {
+    public static void saveMovies(OracleDatabase db, List<Movie> movies) throws OracleException {
 
         // Create a collection with the name "Movie" and store the documents
-        List<OracleDocument> documents = Movie.toOracleDocumentList(collectionManager.getDatabase(), movies);
-        OracleCollection col = collectionManager.recreateCollection(Movie.COLLECTION_NAME);
+        List<OracleDocument> documents = Movie.toOracleDocumentList(db, movies);
+        OracleCollection col = CollectionManager.recreateCollection(db,Movie.COLLECTION_NAME);
         col.insert(documents.iterator());
-        col = collectionManager.recreateCollection(Poster.COLLECTION_NAME);
+        col = CollectionManager.recreateCollection(db,Poster.COLLECTION_NAME);
         col.admin().drop();
-        col = collectionManager.recreateCollection(Screening.COLLECTION_NAME);
+        col = CollectionManager.recreateCollection(db,Screening.COLLECTION_NAME);
         col.admin().drop();
     }
 

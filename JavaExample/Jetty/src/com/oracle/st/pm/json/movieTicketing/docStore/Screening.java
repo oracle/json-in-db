@@ -124,12 +124,12 @@ public class Screening {
         return operation.replaceOne(newDocument);
     }
 
-    public static void saveScreenings(CollectionManager collectionManager,
+    public static void saveScreenings(OracleDatabase db,
                                       List<Screening> screenings) throws OracleException {
 
         // Create a collection with the name "Screening" and store the documents
-        List<OracleDocument> documents = Screening.toOracleDocumentList(collectionManager.getDatabase(), screenings);
-        OracleCollection col = collectionManager.recreateCollection(Screening.COLLECTION_NAME);
+        List<OracleDocument> documents = Screening.toOracleDocumentList(db, screenings);
+        OracleCollection col = CollectionManager.recreateCollection(db,Screening.COLLECTION_NAME);
         col.insert(documents.iterator());
 
     }

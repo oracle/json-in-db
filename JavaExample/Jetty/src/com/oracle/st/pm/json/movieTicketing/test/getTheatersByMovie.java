@@ -17,9 +17,7 @@ public class getTheatersByMovie {
 
     public static void main(String[] args) {
         try {
-            CollectionManager collectionManager = new CollectionManager();
-            collectionManager.setDatabase(DBConnection.getOracleDatabase());
-            System.out.println(TheaterService.getMoviesByTheater(collectionManager.getDatabase(),"B290C1D2A1E9456595F6CEC2A27640CC", "2016-08-10"));
+          System.out.println(TheaterService.getMoviesByTheater(DBConnection.getOracleDatabase(),"B290C1D2A1E9456595F6CEC2A27640CC", "2016-08-10"));
         } catch (Exception e) {
             e.printStackTrace();
         }

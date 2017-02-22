@@ -13,6 +13,7 @@ import com.oracle.st.pm.json.movieTicketing.docStore.Poster;
 import com.oracle.st.pm.json.movieTicketing.docStore.Screening;
 import com.oracle.st.pm.json.movieTicketing.docStore.Theater;
 import com.oracle.st.pm.json.movieTicketing.utilitiy.CollectionManager;
+import com.oracle.st.pm.json.movieTicketing.utilitiy.DBConnection;
 import com.oracle.st.pm.json.movieTicketing.utilitiy.DataSources;
 
 import java.io.ByteArrayOutputStream;
@@ -141,12 +142,12 @@ public class ExternalInterfaces {
     }
 
 
-    public static String generateScreenings(CollectionManager collectionManager) throws SQLException, IOException,
+    public static String generateScreenings(OracleDatabase db) throws SQLException, IOException,
                                                                                         InterruptedException,
                                                                                         OracleException {
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.generateScreenings()]: Started.");
-        List<Screening> screenings = createScreenings(collectionManager.getDatabase());
-        Screening.saveScreenings(collectionManager, screenings);
+        List<Screening> screenings = createScreenings(db);
+        Screening.saveScreenings(db, screenings);
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.generateScreenings()]: Completed.");
         return "{\"count\":" + screenings.size() + "}";
     }
@@ -262,7 +263,7 @@ public class ExternalInterfaces {
         return loc;
     }
 
-    public static List<Theater> getNearbyTheaters(CollectionManager collectionManager) throws MalformedURLException,
+    public static List<Theater> getNearbyTheaters() throws MalformedURLException,
                                                                                               IOException,
                                                                                               XMLParseException,
                                                                                               SAXException,
@@ -303,7 +304,7 @@ public class ExternalInterfaces {
             address = (String) address.substring(3, address.indexOf("</p>"));
             Theater.Location loc = null;
 
-            if (!collectionManager.$nearSupported) {
+            if (!DBConnection.isNearSupported()) {
                 loc = new Theater.Location(address);
             } else {
                 switch (dataSources.geocodingService.toLowerCase()) {
@@ -331,15 +332,15 @@ public class ExternalInterfaces {
         return result;
     }
 
-    public static String loadTheatersFromFandango(CollectionManager collectionManager) throws SQLException, IOException,
+    public static String loadTheatersFromFandango(OracleDatabase db) throws SQLException, IOException,
                                                                                               XMLParseException,
                                                                                               SAXException,
                                                                                               XSLException,
                                                                                               OracleException,
                                                                                               InterruptedException {
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.loadTheatersFromFandango()]: Started.");
-        List<Theater> theaters = getNearbyTheaters(collectionManager);
-        Theater.saveTheaters(collectionManager, theaters);
+        List<Theater> theaters = getNearbyTheaters();
+        Theater.saveTheaters(db, theaters);
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.loadTheatersFromFandango()]: Completed.");
         return "{\"count\":" + theaters.size() + "}";
     }
@@ -444,12 +445,12 @@ public class ExternalInterfaces {
     }
 
 
-    public static String loadMoviesFromTMDB(CollectionManager collectionManager) throws SQLException, IOException,
+    public static String loadMoviesFromTMDB(OracleDatabase db) throws SQLException, IOException,
                                                                                         InterruptedException,
                                                                                         OracleException {
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.loadMoviesFromTMDB()]: Started.");
         List<Movie> movies = getMoviesFromTMDB();
-        Movie.saveMovies(collectionManager, movies);
+        Movie.saveMovies(db, movies);
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.loadMoviesFromTMDB()]: Completed.");
         return "{\"count\":" + movies.size() + "}";
     }
@@ -483,15 +484,14 @@ public class ExternalInterfaces {
         return doc;
     }
 
-    public static String loadPostersFromTMDB(CollectionManager collectionManager) throws OracleException, IOException,
+    public static String loadPostersFromTMDB(OracleDatabase db) throws OracleException, IOException,
                                                                                          InterruptedException {
 
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.loadPostersFromTMDB()]: Started.");
 
-        OracleDatabase db = collectionManager.getDatabase();
         OracleDocument[] movieList = Movie.getMovies(db);
         OracleCollection movies = db.openCollection(Movie.COLLECTION_NAME);
-        OracleCollection posters = collectionManager.recreateCollection(Poster.COLLECTION_NAME);
+        OracleCollection posters = CollectionManager.recreateCollection(db, Poster.COLLECTION_NAME);
 
         for (int i = 0; i < movieList.length; i++) {
             Movie movie = gson.fromJson(movieList[i].getContentAsString(), Movie.class);

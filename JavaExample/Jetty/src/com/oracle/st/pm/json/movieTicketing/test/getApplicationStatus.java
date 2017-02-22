@@ -12,9 +12,7 @@ public class getApplicationStatus {
 
     public static void main(String[] args) {
         try {
-            CollectionManager collectionManager = new CollectionManager();
-            collectionManager.setDatabase(DBConnection.getOracleDatabase());
-            System.out.println(ApplicationStatusService.getApplicationStatus(collectionManager));
+            System.out.println(ApplicationStatusService.getApplicationStatus(DBConnection.getOracleDatabase()));
         } catch (Exception e) {
             e.printStackTrace();
         }

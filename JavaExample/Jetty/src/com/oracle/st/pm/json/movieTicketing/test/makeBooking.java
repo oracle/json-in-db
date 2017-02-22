@@ -22,13 +22,8 @@ public class makeBooking {
 
     public static void main(String[] args) {
         try {
-            DBConnection mgr = DBConnection.getDBConnection();
-            Connection conn = mgr.createConnection();
-            OracleRDBMSClient cl = new OracleRDBMSClient();
-            // Get a database.
-            OracleDatabase db = cl.getDatabase(conn);
             String booking = "{\"key\":\"XXXXXXXXXXXXXXXXXXX\",\"customerId\":1,\"adult\":2,\"child\":2,\"senior\":0}";
-            System.out.println(BookingService.bookTickets(db, booking));
+            System.out.println(BookingService.bookTickets( DBConnection.getOracleDatabase(), booking));
         } catch (Exception e) {
             e.printStackTrace();
         }

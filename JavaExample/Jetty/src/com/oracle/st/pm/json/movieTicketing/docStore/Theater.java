@@ -426,14 +426,14 @@ public class Theater {
         return theaterList;
     }
 
-    public static void saveTheaters(CollectionManager collectionManager,
+    public static void saveTheaters(OracleDatabase db,
                                     List<Theater> theaters) throws OracleException {
 
         // Create a collection with the name "THEATER" and store the documents
-        List<OracleDocument> documents = Theater.toOracleDocumentList(collectionManager.getDatabase(), theaters);
-        OracleCollection col = collectionManager.recreateCollection(Theater.COLLECTION_NAME);
+        List<OracleDocument> documents = Theater.toOracleDocumentList(db, theaters);
+        OracleCollection col = CollectionManager.recreateCollection(db, Theater.COLLECTION_NAME);
         col.insert(documents.iterator());
-        col = collectionManager.recreateCollection(Screening.COLLECTION_NAME);
+        col = CollectionManager.recreateCollection(db, Screening.COLLECTION_NAME);
         col.admin().drop();
     }
 

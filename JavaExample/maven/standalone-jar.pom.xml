@@ -59,6 +59,11 @@
 			<version>12.1.0.2</version>
 		</dependency>
 		<dependency>
+		    <groupId>com.oracle.jdbc</groupId>
+			<artifactId>ucp</artifactId>
+			<version>12.1.0.2</version>
+		</dependency>
+		<dependency>
 			<groupId>net.sourceforge.jgeocoder</groupId>
 			<artifactId>jgeocoder</artifactId>
 			<version>0.5-SNAPSHOT</version>

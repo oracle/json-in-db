@@ -25,9 +25,7 @@ public class searchTheaters {
 
     public static void main(String[] args) {
         try {
-            CollectionManager collectionManager = new CollectionManager();
-            collectionManager.setDatabase(DBConnection.getOracleDatabase());
-            System.out.println(TheaterService.searchTheaters(collectionManager.getDatabase(),"{\"location.city\" : \"SAN FRANCISCO\"}"));
+            System.out.println(TheaterService.searchTheaters(DBConnection.getOracleDatabase(),"{\"location.city\" : \"SAN FRANCISCO\"}"));
         } catch (Exception e) {
             e.printStackTrace();
         }

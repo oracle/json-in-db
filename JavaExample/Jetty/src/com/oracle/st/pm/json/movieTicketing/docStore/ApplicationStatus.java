@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 
 import com.oracle.st.pm.json.movieTicketing.utilitiy.CollectionManager;
 
+import com.oracle.st.pm.json.movieTicketing.utilitiy.DBConnection;
 import com.oracle.st.pm.json.movieTicketing.utilitiy.DataSources;
 
 import java.io.IOException;
@@ -62,15 +63,13 @@ public class ApplicationStatus {
         }
     }
 
-    public ApplicationStatus(CollectionManager collectionManager) throws OracleException, IOException {
+    public ApplicationStatus(OracleDatabase db) throws OracleException, IOException {
         super();
-        OracleDatabase db = collectionManager.getDatabase();
-
         this.googleKey = dataSources.google.apiKey;
         this.tmdbKey = dataSources.tmdb.apiKey;
         this.geocodingService = dataSources.geocodingService;
         this.supportedFeatures =
-            new SupportedFeatures(collectionManager.$nearSupported, collectionManager.$containsSupported);
+            new SupportedFeatures(DBConnection.isNearSupported(), DBConnection.isContainsSupported());
         this.mappingService = dataSources.mappingService;
         this.movieCount = Movie.getMovieCount(db);
         this.theaterCount = Theater.getTheaterCount(db);

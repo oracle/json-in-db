@@ -11,9 +11,7 @@ public class generateScreenings {
 
     public static void main(String[] args) {
         try {
-            CollectionManager collectionManager = new CollectionManager();
-            collectionManager.setDatabase(DBConnection.getOracleDatabase());
-            ExternalInterfaces.generateScreenings(collectionManager);
+            ExternalInterfaces.generateScreenings(DBConnection.getOracleDatabase());
         } catch (Exception e) {
             e.printStackTrace();
         }

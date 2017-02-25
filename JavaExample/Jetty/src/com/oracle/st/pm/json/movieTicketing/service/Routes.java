@@ -43,10 +43,9 @@ import org.xml.sax.SAXException;
 
 public class Routes {
 
-    private static Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
-    private Connection jdbcConnection;
-
-    public Routes() throws SQLException, IOException, OracleException , NamingException{
+    private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
+    
+    public Routes() {
         super();
     }
 
@@ -228,7 +227,6 @@ public class Routes {
     protected void finalize() throws Throwable {
         // TODO Implement this method
         super.finalize();
-        DBConnection.getOracleDatabase().admin().getConnection().close();
     }
 
     /*

@@ -35,8 +35,6 @@ public class App {
     }
         public static void main(String[] args) throws Exception {
         
-        DBConnection.initializeConnectionPool();
-
         Server jettyServer = new Server(Integer.parseInt(port.orElse("8081")));
         // jettyServer.setRequestLog(getRequestLogger()); // here will set global request log
 

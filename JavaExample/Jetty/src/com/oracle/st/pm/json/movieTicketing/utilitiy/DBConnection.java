@@ -50,122 +50,42 @@ public class DBConnection {
 
     public static final boolean DEBUG = false;
 
-    public static final String THIN_DRIVER = "thin";
-    public static final String OCI_DRIVER = "oci8";
-    public static final String INTERNAL_DRIVER = "KPRB";
-
-    public static final String DEFAULT_DRIVER = OCI_DRIVER;
-    public static final String DEFAULT_HOSTNAME = "localhost";
-    public static final String DEFAULT_PORT = "1521";
-    public static final String DEFAULT_SERVERMODE = "DEDICATED";
-
-    public static final String DEFAULT_CONNECTION_DEFINITION = "connectionProperties.json";
-
-    private String schema = "SCOTT";
-    private String password = "oracle";
-
-    private String tnsAdmin = null;
-    private String tnsEntry = "ORCL";
-
-    private String driver = "thin";
-    private String sid = null;
-    private String hostname = "localhost";
-    private String port = "1521";
-    private String serviceName = "orcl";
-    private String serverMode = "dedicated";
-
-    // protected PoolDataSource pds;
-
-    private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-    public static final PoolDataSource pds = PoolDataSourceFactory.getPoolDataSource();
-    private static boolean useConnectionPool = false;
-
-    private static Properties sodaProps = new Properties(); 
-    private static Properties movieProps = new Properties(); 
+    private static final PoolDataSource pds = PoolDataSourceFactory.getPoolDataSource();
+    private static final ConnectionProperties connectionProps = ConnectionProperties.getConnectionProperties();
+    private static final Properties sodaProps = new Properties(); 
+    private static final Properties movieProps = new Properties(); 
     
     static {
       sodaProps.put("oracle.soda.sharedMetadataCache", "true");     
       sodaProps.put("oracle.soda.localMetadataCache", "true"); 
     }           
     
-    private static OracleRDBMSClient client = new OracleRDBMSClient(sodaProps);   
-
+    private static final OracleRDBMSClient client = new OracleRDBMSClient(sodaProps);   
+    
     public DBConnection() {
         super();
     }
 
-    protected String getDriver() {
-        if (this.driver != null) {
-            return this.driver;
+    private static String getDatabaseURL() {
+        if (connectionProps.getDriver().equalsIgnoreCase(ConnectionProperties.THIN_DRIVER)) {
+            return "jdbc:oracle:thin:@//" + connectionProps.getHostname() + ":" + connectionProps.getPort() + "/" + connectionProps.getServiceName();
         } else {
-            return DBConnection.DEFAULT_DRIVER;
+            return "jdbc:oracle:oci8:@(description=(address=(host=" + connectionProps.getHostname() + ")(protocol=tcp)(port=" +
+                   connectionProps.getPort() + "))(connect_data=(service_name=" + connectionProps.getServiceName() + ")(server=" +
+                   connectionProps.getServerMode() + ")))";
         }
     }
 
-    protected String getHostname() {
-        if (this.hostname != null) {
-            return this.hostname;
-        } else {
-            return DBConnection.DEFAULT_HOSTNAME;
-        }
-    }
-
-    protected String getPort() {
-        if (this.port != null) {
-            return this.port;
-        } else {
-            return DBConnection.DEFAULT_PORT;
-        }
-    }
-
-    protected String getServerMode() {
-        if (this.serverMode != null) {
-            return this.serverMode;
-        } else {
-            return DBConnection.DEFAULT_SERVERMODE;
-        }
-    }
-
-    protected String getServiceName() {
-        return this.serviceName;
-    }
-
-    protected String getSID() {
-        return this.sid;
-    }
-    
-    protected String getTNSEntry() {
-        return this.tnsEntry;
-    }
-
-    protected String getSchema() {
-        return this.schema;
-    }
-
-    protected String getPassword() {
-        return this.password;
-    }
-
-    protected String getDatabaseURL() {
-        if (this.getDriver().equalsIgnoreCase(DBConnection.THIN_DRIVER)) {
-            return "jdbc:oracle:thin:@//" + this.getHostname() + ":" + this.getPort() + "/" + this.getServiceName();
-        } else {
-            return "jdbc:oracle:oci8:@(description=(address=(host=" + this.getHostname() + ")(protocol=tcp)(port=" +
-                   this.getPort() + "))(connect_data=(service_name=" + this.getServiceName() + ")(server=" +
-                   this.getServerMode() + ")))";
-        }
-    }
-
-    protected String getOracleDataSourceURL()
+    private static String getOracleDataSourceURL()
     {
         // System.out.println("getDatabaseURL() : Driver = " + this.settings.getDriver());
-        if( this.getDriver() != null) {
-          if( this.getDriver().equalsIgnoreCase( DBConnection.THIN_DRIVER ) ) {
-              return this.getHostname() + ":" + this.getPort() + "/" + this.getServiceName();
+        if( connectionProps.getDriver() != null) {
+          if( connectionProps.getDriver().equalsIgnoreCase( ConnectionProperties.THIN_DRIVER ) ) {
+              return connectionProps.getHostname() + ":" + connectionProps.getPort() + "/" + connectionProps.getServiceName();
           }
           else {
-              return "(description=(address=(host=" + this.getHostname() + ")(protocol=tcp)(port=" + this.getPort() + "))(connect_data=(service_name=" + this.getServiceName() + ")(server=" + this.getServerMode() + ")))";
+              return "(description=(address=(host=" + connectionProps.getHostname() + ")(protocol=tcp)(port=" + connectionProps.getPort() + "))(connect_data=(service_name=" + connectionProps.getServiceName() + ")(server=" + connectionProps.getServerMode() + ")))";
           }
         }
         else {
@@ -173,23 +93,21 @@ public class DBConnection {
         }
     }   
 
-    public static void initializeConnectionPool() throws OracleException, SQLException, IOException {
+    private static void initializeConnectionPool() throws OracleException, SQLException, IOException {
 
        pds.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
-       DBConnection mgr = DBConnection.getConnectionProperties();
-       useConnectionPool = true;
-       
-       String schema = mgr.getSchema();
+      
+       String schema = connectionProps.getSchema();
        if ((schema == null) ||(schema.length() ==0)) {
          throw new SQLException("Invalid schema specified in connection properties file.");
        }
 
-       String password = mgr.getPassword();
+       String password = connectionProps.getPassword();
        if ((password == null) ||(password.length() ==0)) {
          throw new SQLException("Invalid password specified in connection properties file.");
        }
 
-       String tnsnamesLocation = mgr.tnsAdmin;
+       String tnsnamesLocation = connectionProps.getTNSAdmin();
        if ((tnsnamesLocation != null) && (tnsnamesLocation.length() > 0)) {
          System.setProperty("oracle.net.tns_admin", tnsnamesLocation);
        }
@@ -198,7 +116,7 @@ public class DBConnection {
          // System.out.println(sdf.format(new Date()) + "[DBConnection.initializeConnectionPool()]: Using connection information from TNSNAMES.ora located in \"" + System.getProperty("oracle.net.tns_admin") + "\"." );                
        }
                 
-       String tnsEntry = mgr.tnsEntry;
+       String tnsEntry = connectionProps.getTNSEntry();
        if (tnsEntry != null) {
          // System.out.println(sdf.format(new Date()) + "[DBConnection.initializeConnectionPool()]: Attempting connection to \"" + tnsEntry + "\" using \"" + mgr.getDriver() + "\" driver as user \"" + schema +"\"." );         
          pds.setUser(schema);
@@ -207,38 +125,38 @@ public class DBConnection {
        }
        else {
          // System.out.println(sdf.format(new Date()) + "[DBConnection.initializeConnectionPool()]: Attempting connection using \"" + dataSourceURL + "\"." );         
-         String dataSourceURL = mgr.getOracleDataSourceURL();
+         String dataSourceURL = getOracleDataSourceURL();
          pds.setURL(dataSourceURL);
        }       
     }
 
-    public OracleConnection createConnection() throws SQLException, IOException {
+    public static  OracleConnection getOracleConnection() throws SQLException, IOException {
 
         OracleConnection conn = null;
 
-        String driver = this.getDriver();
+        String driver = connectionProps.getDriver();
         if ((driver == null) ||(driver.length() ==0)) {
           throw new SQLException("Invalid driver specified in connection properties file.");
         }
 
-        if (driver.equalsIgnoreCase(DBConnection.INTERNAL_DRIVER)) {
+        if (driver.equalsIgnoreCase(ConnectionProperties.INTERNAL_DRIVER)) {
             // System.out.println("Attempting connection using \"" + driver + "\" driver." );
             OracleDriver ora = new OracleDriver();
             conn = (OracleConnection) ora.defaultConnection();
         } else {
             OracleDataSource ods = new OracleDataSource();
 
-            String schema = this.getSchema();
+            String schema = connectionProps.getSchema();
             if ((schema == null) ||(schema.length() ==0)) {
               throw new SQLException("Invalid schema specified in connection properties file.");
             }
 
-            String password = this.getPassword();
+            String password = connectionProps.getPassword();
             if ((password == null) ||(password.length() ==0)) {
               throw new SQLException("Invalid password specified in connection properties file.");
             }
 
-            String tnsnamesLocation = this.tnsAdmin;
+            String tnsnamesLocation = connectionProps.getTNSAdmin();
             if ((tnsnamesLocation != null) && (tnsnamesLocation.length() > 0)) {
               System.setProperty("oracle.net.tns_admin", tnsnamesLocation);
             }
@@ -246,7 +164,7 @@ public class DBConnection {
               System.out.println(sdf.format(new Date()) + "[DBConnection.createConnection()]: Using connection information from TNSNAMES.ora located in \"" + System.getProperty("oracle.net.tns_admin") + "\"." );                
             }
             
-            String tnsEntry = this.tnsEntry;
+            String tnsEntry = connectionProps.getTNSEntry();
             if (tnsEntry != null) {
               System.out.println(sdf.format(new Date()) + "[DBConnection.createConnection()]: Attempting connection to \"" + tnsEntry + "\" using \"" + driver + "\" driver as user \"" + schema +"\"." );         
               ods.setUser(schema);
@@ -255,7 +173,7 @@ public class DBConnection {
               ods.setTNSEntryName(tnsEntry);
             }
             else {
-              String dataSourceURL = this.getOracleDataSourceURL();
+              String dataSourceURL = getOracleDataSourceURL();
               System.out.println(sdf.format(new Date()) + "[DBConnection.createConnection()]: Attempting connection using \"" + dataSourceURL + "\"." );         
               ods.setURL(dataSourceURL);
             }
@@ -265,39 +183,19 @@ public class DBConnection {
         return conn;
     }
 
-    public static DBConnection getConnectionProperties() {
-        try {
-            String filename =
-                System.getProperty("com.oracle.st.xmldb.pm.ConnectionParameters",
-                                   DBConnection.DEFAULT_CONNECTION_DEFINITION);
-            File connectionProperties = new File(filename);
-            // System.out.println(sdf.format(new Date()) + "[DBConnection.getDBConnection()]: Using connection properties file + \"" + connectionProperties.getAbsolutePath() + "\".");
-            return gson.fromJson(new FileReader(connectionProperties), DBConnection.class);
-        } catch (FileNotFoundException fnf) {
-            return new DBConnection();
-        }
-    }
-
     public static OracleDatabase getOracleDatabase() throws SQLException, IOException, OracleException {
         
-        Connection conn = null;
-        
-        if (useConnectionPool) {
-          conn = pds.getConnection();
-          // System.out.println(sdf.format(new Date()) + "[DBConnection.getOracleDatabase()]: Returned pooled database connection.");
+        // Get a SODA OracleDatabase instance
+                
+        if (movieProps.isEmpty()) {
+          initializeConnectionPool();
+          OracleDatabase db = client.getDatabase(pds.getConnection());
+          doFeatureDetection(db);
+          return db;
         }
         else {
-          // System.out.println(sdf.format(new Date()) + "[DBConnection.getOracleDatabase()]: Creating non-pooled database connection.");
-          DBConnection mgr = getConnectionProperties();
-          conn = mgr.createConnection();
+          return client.getDatabase(pds.getConnection());
         }
-
-        // Get a database.
-        OracleDatabase db = client.getDatabase(conn);
-        if (movieProps.isEmpty()) {
-          doFeatureDetection(db);
-        }
-        return db;
     }
     
     public static boolean isNearSupported() {
@@ -312,19 +210,19 @@ public class DBConnection {
         return Boolean.getBoolean((String) movieProps.get("com.oracle.st.pm.json.movieTicketing.nullOnEmptySupported"));
     }
 
-    public static void supportsNear(boolean state) {
+    private static void supportsNear(boolean state) {
         movieProps.put("com.oracle.st.pm.json.movieTicketing.nearSupported",Boolean.toString(state));
     }
 
-    public static void supportsContains(boolean state) {
+    private static void supportsContains(boolean state) {
         movieProps.put("com.oracle.st.pm.json.movieTicketing.containsSupported",Boolean.toString(state));
     }
 
-    public static void supportsNullOnEmpty(boolean state) {
+    private static void supportsNullOnEmpty(boolean state) {
         movieProps.put("com.oracle.st.pm.json.movieTicketing.nullOnEmptySupported",Boolean.toString(state));
     }
     
-    public static void doFeatureDetection(OracleDatabase db) throws OracleException {
+    private static void doFeatureDetection(OracleDatabase db) throws OracleException {
 
        movieProps.put("com.oracle.st.pm.json.movieTicketing.nearSupported", "true");
        movieProps.put("com.oracle.st.pm.json.movieTicketing.containsSupported", "true");

@@ -33,7 +33,7 @@
        <servlet-class>org.eclipse.jetty.servlet.DefaultServlet</servlet-class>
        <init-param>
           <param-name>resourceBase</param-name>
-          <param-value>./target/classes/node_modules</param-value>
+          <param-value>./node_modules</param-value>
         </init-param>
        <init-param>
           <param-name>pathInfoOnly</param-name>
@@ -46,7 +46,7 @@
        <servlet-class>org.eclipse.jetty.servlet.DefaultServlet</servlet-class>
        <init-param>
           <param-name>resourceBase</param-name>
-          <param-value>./target/classes</param-value>
+          <param-value>./static</param-value>
         </init-param>
     </servlet>
 

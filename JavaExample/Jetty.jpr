@@ -134,6 +134,7 @@
    </hash>
    <hash n="oracle.jdeveloper.model.PathsConfiguration">
       <hash n="javaContentSet">
+         <list n="constituent-sets"/>
          <list n="pattern-filters">
             <string v="+**"/>
          </list>

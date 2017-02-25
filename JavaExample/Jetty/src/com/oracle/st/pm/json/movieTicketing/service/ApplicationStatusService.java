@@ -6,6 +6,8 @@ import com.oracle.st.pm.json.movieTicketing.utilitiy.DataSources;
 
 import java.io.IOException;
 
+import java.sql.SQLException;
+
 import java.text.SimpleDateFormat;
 
 import java.util.Date;
@@ -23,9 +25,10 @@ public class ApplicationStatusService {
         super();
     }
     
-    public static String getApplicationStatus(OracleDatabase db) throws OracleException, IOException {
+    public static String getApplicationStatus(OracleDatabase db) throws OracleException, IOException, SQLException {
         System.out.println(sdf.format(new Date()) + "[ApplicationStatusService.getApplicationStatus()]: Started.");
         ApplicationStatus status = new ApplicationStatus(db);
+        db.admin().getConnection().close();
         System.out.println(sdf.format(new Date()) + "[ApplicationStatusService.getApplicationStatus()]: Completed.");
         return status.toJson();                                                                   
     }

@@ -1,15 +1,14 @@
 {
   "useProxy": false,
   "proxy": {
-    "port": null,
-    "hostname": null
+    "hostname": null,
+    "port": null
   },
   "tmdb": {
     "protocol": "http",
     "hostname": "api.themoviedb.org",
     "port": 80,
     "apiPath": "/3",
-    "apiKey": "YOUR_TMDB_KEY_GOES_HERE",
     "searchCriteria": {
       "language": "en",
       "country": "US",
@@ -20,7 +19,8 @@
         "end": "2016-06-30"
       },
       "movieLimit": 1024
-    }
+    },
+    "apiKey": "YOUR_TMDB_KEY_GOES_HERE"
   },
   "fandango": {
     "protocol": "http",
@@ -28,24 +28,24 @@
     "port": 80,
     "path": "/rss/moviesnearme_",
     "searchCriteria": {
-      "zipCode": 94501
+      "zipCode": "94501"
     }
   },
+  "mappingService": "none",
   "usCensus": {
     "protocol": "http",
     "hostname": "geocoding.geo.census.gov",
     "port": 80,
     "path": "/geocoder/locations/onelineaddress"
   },
-  "geocodingService": "none",
-  "mappingService": "none",
   "google": {
-    "apiKey": "YOUR_GOOGLE_KEY_GOES_HERE",
     "geocoding": {
       "protocol": "https",
       "hostname": "maps.googleapis.com",
       "port": 443,
       "path": "/maps/api/geocode/json"
-    }
-  }
+    },
+    "apiKey": "YOUR_GOOGLE_KEY_GOES_HERE"
+  },
+  "geocodingService": "none"
 }

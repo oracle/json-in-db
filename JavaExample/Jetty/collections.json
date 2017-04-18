@@ -85,10 +85,8 @@
   	},
   	"contentColumn": {
   		"name": "JSON_DOCUMENT",
-  		"sqlType": "BLOB",
-  		"compress": "NONE",
-  		"cache": true,
-  		"encrypt": "NONE",
+  		"sqlType": "VARCHAR2",
+  		"maxLength": 255,
   		"validation": "STANDARD"
   	},
   	"lastModifiedColumn": {
@@ -113,7 +111,7 @@
   					"order": "asc"
   				}, {
   					"path": "startTime",
-  					"datatype": "datetime",
+  					"datatype": "timestamp",
   					"order": "asc"
   				}
   			]
@@ -127,7 +125,7 @@
   					"order": "asc"
   				}, {
   					"path": "startTime",
-  					"datatype": "datetime",
+  					"datatype": "timestamp",
   					"order": "asc"
   				}
   			]

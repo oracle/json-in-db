@@ -335,7 +335,7 @@ function applicationStatusService(sessionState,response,next) {
   writeLogEntry(moduleId);
   
 	var status = {
-          googleKey         : cfg.dataSources.google.apiKey
+    googleKey         : cfg.dataSources.google.apiKey
 	, tmdbKey           : cfg.dataSources.tmdb.apiKey
 	, supportedFeatures : movieAPI.getDetectedFeatures()
 	, geocodingService  : cfg.dataSources.geocodingService
@@ -351,18 +351,26 @@ function applicationStatusService(sessionState,response,next) {
 		  }
 		}
 	}
-		
+
 	return movieAPI.getMovies(sodaLoggingDisabled,1,undefined,true).then(function(sodaResponse){
 	   status.movieCount=sodaResponse.json.totalResults;
 	}).catch(function(e) {
-		 if (e.details.statusCode !== 404) {
-		 	 if (e.details.statusCode !== 400) {
-		 	 	 throw e;
+		 // console.log(e);
+ 	   if ((e.details) && (e.details.statusCode)) {
+		   if (e.details.statusCode !== 404) {
+		     if (e.details.statusCode !== 400) {
+		 	     throw e;
+		 	   }
 		 	 }
-		 	 else {
-		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
-		 	 	 	 throw e;
-		 	 	 }
+		 }
+		 else {
+		 	 if ((e.json) && (e.json['o:errorCode'])) {
+		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942'){
+	 	       throw e;
+	 	     }
+		   }
+   		 else {
+         throw e;
 		   }
 		 }
   }).then(function() {		 	 
@@ -370,14 +378,22 @@ function applicationStatusService(sessionState,response,next) {
 	}).then(function(sodaResponse){
 	   status.theaterCount=sodaResponse.json.totalResults;
 	}).catch(function(e) {
-		 if (e.details.statusCode !== 404) {
-		 	 if (e.details.statusCode !== 400) {
-		 	 	 throw e;
+		 // console.log(e);
+ 	   if ((e.details) && (e.details.statusCode)) {
+		   if (e.details.statusCode !== 404) {
+		     if (e.details.statusCode !== 400) {
+		 	     throw e;
+		 	   }
 		 	 }
-		 	 else {
-		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
-		 	 	 	 throw e;
-		 	 	 }
+		 }
+		 else {
+		 	 if ((e.json) && (e.json['o:errorCode'])) {
+		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942'){
+	 	       throw e;
+	 	     }
+		   }
+   		 else {
+         throw e;
 		   }
 		 }
   }).then(function() {		 	 
@@ -385,14 +401,22 @@ function applicationStatusService(sessionState,response,next) {
 	}).then(function(sodaResponse){
 	   status.screeningCount=sodaResponse.json.totalResults;
 	}).catch(function(e) {
-		 if (e.details.statusCode !== 404) {
-		 	 if (e.details.statusCode !== 400) {
-		 	 	 throw e;
+		 // console.log(e);
+ 	   if ((e.details) && (e.details.statusCode)) {
+		   if (e.details.statusCode !== 404) {
+		     if (e.details.statusCode !== 400) {
+		 	     throw e;
+		 	   }
 		 	 }
-		 	 else {
-		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942') {
-		 	 	 	 throw e;
-		 	 	 }
+		 }
+		 else {
+		 	 if ((e.json) && (e.json['o:errorCode'])) {
+		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942'){
+	 	       throw e;
+	 	     }
+		   }
+   		 else {
+         throw e;
 		   }
 		 }
   }).then(function() {		 	 
@@ -400,14 +424,23 @@ function applicationStatusService(sessionState,response,next) {
 	}).then(function(sodaResponse){
 	   status.posterCount=sodaResponse.json.totalResults;
 	}).catch(function(e) {
-		 if (e.details.statusCode !== 404) {
-		 	 if (e.details.statusCode !== 400) {
-		 	 	 throw e;
+		 // console.log(e);
+ 	   if ((e.details) && (e.details.statusCode)) {
+		   if (e.details.statusCode !== 404) {
+		     if (e.details.statusCode !== 400) {
+		 	     throw e;
+		 	   }
 		 	 }
-		 	 else {
-		 	 	 if (e.json['o:errorCode'] === 'SQL-00942') {
-		 	 	 	 throw e;
-		 	 	 }
+		 }
+		 else {
+		 	 if ((e.json) && (e.json['o:errorCode'])) {
+		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942'){
+	 	       throw e;
+	 	     }
+		   }
+   		 else {
+   		 	 console.log(e);
+         throw e;
 		   }
 		 }
   }).then(function() { 
@@ -417,9 +450,9 @@ function applicationStatusService(sessionState,response,next) {
 	  		 status.currentPosition = centroid
        })
 	   }
-	   else {
-	   	  return Promise.resolve()
-	   }
+	   // else {
+	   // 	  return Promise.resolve()
+	   // }
   }).then(function() {		 	 
 	   response.json(status);
 	   response.end();

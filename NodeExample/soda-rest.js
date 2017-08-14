@@ -641,6 +641,7 @@ function featureDetection() {
     return queryByExample(disableSodaLogging, collectionName, qbe).catch(function(sodaError){
       if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
         var sodaErrorDetails = sodaError.details.json;
+        // console.log(sodaError.details)
         // if (sodaErrorDetails['o:errorCode'] === 'SODA-02002') {
         if (sodaErrorDetails.title === 'The field name $contains is not a recognized operator.') {
           $containsSupported = false;

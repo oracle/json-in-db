@@ -247,25 +247,25 @@ app.factory('appConfigService', function($http, $window) {
 
   factory.loadTheaters = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadtheaters',event.target,factory.updateTheaterCount,'Theaters',120000);
+  	factory.loadSampleData('/movieticket/config/loadtheaters',event.target,factory.updateTheaterCount,'Theaters',600000);
 
   }
 
   factory.loadMovies = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadmovies',event.target,factory.updateMovieCount,'Movies',240000);
+  	factory.loadSampleData('/movieticket/config/loadmovies',event.target,factory.updateMovieCount,'Movies',600000);
 
   }
 
   factory.loadPosters = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadposters',event.target,factory.updatePosterCount,'Posters',240000);
+  	factory.loadSampleData('/movieticket/config/loadposters',event.target,factory.updatePosterCount,'Posters',600000);
 
   }
 
   factory.generateScreenings = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadscreenings',event.target,factory.updateScreeningCount,'Screenings',240000);
+  	factory.loadSampleData('/movieticket/config/loadscreenings',event.target,factory.updateScreeningCount,'Screenings',600000);
 
   }
 

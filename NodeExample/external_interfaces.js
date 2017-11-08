@@ -288,7 +288,7 @@ function geocodeAddressGoogle(address) {
             	+ cfg.dataSources.google.geocoding.hostname + ':' 
             	+ cfg.dataSources.google.geocoding.port 
             	+ cfg.dataSources.google.geocoding.path 
-      , qs    : {key : cfg.dataSources.google.apiKey, address : address}
+        , qs    : {key : cfg.dataSources.google.apiKey, address : address}
 	  	, json  : true
   		, time  : true
 			, proxy : 'http://' + cfg.dataSources.proxy.hostname + ':' + cfg.dataSources.proxy.port

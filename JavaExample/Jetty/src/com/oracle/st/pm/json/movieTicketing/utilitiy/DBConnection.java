@@ -199,15 +199,15 @@ public class DBConnection {
     }
     
     public static boolean isNearSupported() {
-        return Boolean.getBoolean((String) movieProps.get("com.oracle.st.pm.json.movieTicketing.nearSupported"));
+        return Boolean.parseBoolean((String) movieProps.get("com.oracle.st.pm.json.movieTicketing.nearSupported"));
     }
 
     public static boolean isContainsSupported() {
-        return Boolean.getBoolean((String) movieProps.get("com.oracle.st.pm.json.movieTicketing.containsSupported"));
+        return Boolean.parseBoolean((String) movieProps.get("com.oracle.st.pm.json.movieTicketing.containsSupported"));
     }
 
     public static boolean isNullOnEmptySupported() {
-        return Boolean.getBoolean((String) movieProps.get("com.oracle.st.pm.json.movieTicketing.nullOnEmptySupported"));
+        return Boolean.parseBoolean((String) movieProps.get("com.oracle.st.pm.json.movieTicketing.nullOnEmptySupported"));
     }
 
     private static void supportsNear(boolean state) {

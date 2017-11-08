@@ -189,69 +189,69 @@
    <hash n="oracle.jdevimpl.config.JProjectLibraries">
       <list n="exportedReferences">
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/Jetty.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/Jetty.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.0.42.151011.0031/o.jdeveloper/GSON.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/SODA.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/RDBMS JDBC.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/UCP.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/RDMBS XDK.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/JGeocoder.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/Jersey.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/Jersey.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/JGeocoder.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/RDMBS XDK.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/SODA.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/RDBMS JDBC.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/UCP.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/GSON.library"/>
             <value n="isJDK" v="false"/>
          </hash>
       </list>
       <list n="libraryReferences">
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/Jetty.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/Jetty.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.0.42.151011.0031/o.jdeveloper/GSON.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/SODA.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/RDBMS JDBC.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/UCP.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/RDMBS XDK.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/JGeocoder.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/Jersey.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/Jersey.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/JGeocoder.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/RDMBS XDK.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/SODA.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/RDBMS JDBC.library"/>
             <value n="isJDK" v="false"/>
          </hash>
          <hash>
-            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.1.3.0.41.140521.1008/o.jdeveloper/UCP.library"/>
+            <url n="id" protocol="file" path="/C:/Users/Mark D Drake/AppData/Roaming/JDeveloper/system12.2.1.3.42.170820.0914/o.jdeveloper/GSON.library"/>
             <value n="isJDK" v="false"/>
          </hash>
       </list>

@@ -39,7 +39,7 @@
   			]
   		},{
   			"name": "MOVIE_SEARCH",
-  			"dataguide" : "text_value",
+  			"dataguide" : "on",
   			"language": "english"
   		}
   	]
@@ -193,7 +193,7 @@
   			]
   		}, {
   			"name": "THEATER_SEARCH",
-  			"dataguide" : "text_value",
+  			"dataguide" : "on",
   			"language": "english"
   		},
   	  {

@@ -7,9 +7,9 @@ Sub batchInstall
    
   Dim CONTROLLER
   Dim nodeList, demo, i
-
+  
   Set ENVIRONMENT     = new environmentHelper
-	Set Application     = new DosInstaller
+  Set Application     = new DosInstaller
 
   set CONTROLLER      = new batchController
   
@@ -22,7 +22,7 @@ Sub batchInstall
   	If ISNULL(oracleHome) or (oracleHome = "") Then
   	  Application.exitFatalError "Unable to Determine Oracle Home. Please specifiy 'oracleHome' attribute to batchInstall.xml" 
   	End if
- 	End if
+  End if
   
   oracleSID = CONTROLLER.getGlobalParameter("tnsalias")
   
@@ -31,19 +31,19 @@ Sub batchInstall
   	If  isNULL(oracleSID) or (oracleSID = "") Then
   	  Application.exitFatalError  "Unable to Determine TNSALIAS. Please specifiy 'tnsalias' attribute to batchInstall.xml"
   	End if
- 	End if
+  End if
 
   If (Not ENVIRONMENT.validOracleHome(oracleHome,oracleSID)) Then
 	  Application.exitFatalError  "Invalid Oracle Home"
   End If
 
-	APPLICATION.writeLogMessage("Using OracleHome '" & oracleHome & "' and SID '" & oracleSID & "'")
+  APPLICATION.writeLogMessage("Using OracleHome '" & oracleHome & "' and SID '" & oracleSID & "'")
 
   Set XHELPER         = new xmlHelper
   
   Set IOMANAGER       = new fileSystemControl
   Set SQLPLUS         = new sqlPlusControl
-  Set SQLLDR		      = new sqlldrControl
+  Set SQLLDR		  = new sqlldrControl
   Set FTP             = new ftpControl
   
   dim oracleHome, oracleSID
@@ -134,6 +134,7 @@ End Sub
 
 CLASS BatchController
 
+  Dim NamedArgs
   Dim batchInstallList
   Dim currentDemo
 
@@ -144,12 +145,15 @@ CLASS BatchController
   
   Private Sub Class_Initialize()
 
+    set NamedArgs = WSCRIPT.arguments.named
+
     dim filename, result
 
     filename = "batchInstallParameters.xml"
     Set batchInstallList = CreateObject("Msxml2.FreeThreadedDOMDocument.6.0")
     batchInstallList.async = false
     result = batchInstallList.load(filename)
+
 
   End Sub
   
@@ -180,7 +184,9 @@ CLASS BatchController
   End Sub
 
   Public Function getGlobalParameter(name)
-    getGlobalParameter = batchInstallList.documentElement.getAttribute(name)
+    ' getGlobalParameter = batchInstallList.documentElement.getAttribute(name)
+	Wscript.echo "Parameter " + name + ":" + NamedArgs.item(name)
+	getGlobalParameter = NamedArgs.item(name)
   End Function
   
   Public Function getConfigurationPath 
@@ -193,19 +199,19 @@ End Class
 
 Class DosInstaller
 
-	DIM appHelper
+  DIM appHelper
   DIM logFilePath
 
-	Public Sub class_initialize
+  Public Sub class_initialize
 	
-		Dim scriptName
+	Dim scriptName
 		
-		scriptName = wscript.scriptName
+	scriptName = WSCRIPT.scriptName
 	
-	  Set AppHelper = new WscriptAppHelper
+	Set AppHelper = new WscriptAppHelper
     logFilePath = ENVIRONMENT.getWshell().CurrentDirectory & FILE_SEPERATOR & mid(scriptName,1,len(scriptName)-4) & ".log"	
 	  
-	End Sub
+  End Sub
 
   Public Function GetInstallType
   
@@ -216,7 +222,7 @@ Class DosInstaller
   Public Sub writeLogMessage(logMessage)
  
     appHelper.writeLogMessage logMessage
-    wscript.echo logMessage
+    WSCRIPT.echo logMessage
   
   End sub
 

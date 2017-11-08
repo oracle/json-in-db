@@ -23,9 +23,9 @@
     "apiKey": "YOUR_TMDB_KEY_GOES_HERE"
   },
   "fandango": {
-    "protocol": "http",
+    "protocol": "https",
     "hostname": "www.fandango.com",
-    "port": 80,
+    "port": 443,
     "path": "/rss/moviesnearme_",
     "searchCriteria": {
       "zipCode": "94501"

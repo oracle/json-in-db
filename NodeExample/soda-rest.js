@@ -151,7 +151,7 @@ function setHeaders(contentType, eTag) {
    var headers = {};
 
    if (contentType === undefined) {
-  	 contentType = 'application/json';
+     contentType = 'application/json';
    }
 
    if (contentType !== null) {
@@ -238,8 +238,8 @@ function logResponse(response, logRequest) {
     return postJSONCatch404(disableSodaLogging, logRequest.logCollection, logRequest.logEntry);
   }
   else {
-  	return Promise.resolve();
- 	}
+    return Promise.resolve();
+    }
 }
 
 function getSodaError(moduleName,path,e) {
@@ -258,7 +258,7 @@ function getSodaError(moduleName,path,e) {
 
 }
 
-function processSodaResponse(moduleName, requestOptions, logRequest, sodaResponse, body, resolve, reject) {
+async function processSodaResponse(moduleName, requestOptions, logRequest, sodaResponse, body, resolve, reject) {
 
   var moduleId = 'processSodaResponse("' + moduleName + '")';
 
@@ -273,60 +273,59 @@ function processSodaResponse(moduleName, requestOptions, logRequest, sodaRespons
   }
 
   if ((body !== undefined) && (body !== null)) {
-  	if ((response.contentType !== undefined) && (response.contentType.startsWith("application/json"))) {
-		  // writeLogEntry(moduleId,'Type = ' + typeof body);
-  		if (typeof body === 'object') {
-	  		response.json = body
-	    }
-	    else {
-    		try {
-    			response.json = JSON.parse(body);
-    	  }
-    	  catch (e) {
-	    		response.body = body;
-	    	}
-	    }
- 		}
- 		else {
-		  // writeLogEntry(moduleId,'Length = ' + Buffer.byteLength(body));
- 			response.body = body;
- 		}
+    if ((response.contentType !== undefined) && (response.contentType.startsWith("application/json"))) {
+          // writeLogEntry(moduleId,'Type = ' + typeof body);
+        if (typeof body === 'object') {
+            response.json = body
+        }
+        else {
+            try {
+                response.json = JSON.parse(body);
+          }
+          catch (e) {
+                response.body = body;
+            }
+        }
+        }
+        else {
+          // writeLogEntry(moduleId,'Length = ' + Buffer.byteLength(body));
+            response.body = body;
+        }
   }
 
-  return logResponse(response, logRequest).then(function () {
-  	if ((sodaResponse.statusCode === 200) || (sodaResponse.statusCode === 201)) {
-	  	resolve(response);
-	  }
-    else {
-		  // writeLogEntry(moduleId,'Error. Status code = ' + sodaResponse.statusCode);
-      response.cause = new Error()
-      reject(new SodaError(response));
-    }
-   });
+  await logResponse(response, logRequest);
+  if ((sodaResponse.statusCode === 200) || (sodaResponse.statusCode === 201)) {
+    resolve(response);
+  }
+  else {
+    // writeLogEntry(moduleId,'Error. Status code = ' + sodaResponse.statusCode);
+    response.cause = new Error()
+    reject(new SodaError(response));
+  }
 }
 
 function generateRequest(moduleName, sessionState, requestOptions) {
 
   var moduleId = 'generateRequest("' + moduleName + '")';
 
-	if (getConnectionProperties().useProxy) {
-		requestOptions.proxy = 'http://' + getConnectionProperties().proxy.hostname + ':' + getConnectionProperties().proxy.port
-	}
+    if (getConnectionProperties().useProxy) {
+        requestOptions.proxy = 'http://' + getConnectionProperties().proxy.hostname + ':' + getConnectionProperties().proxy.port
+    }
 
   var e = new Error()
   requestOptions.stack = e.stack;
 
   return new Promise(function(resolve, reject) {
-		// writeLogEntry('Execute Promise: Method = "' + requestOptions.method + '". URI = "' + requestOptions.uri + '".');
- 	  var logRequest = createLogRequest(moduleId, sessionState, requestOptions)
+    // writeLogEntry('Execute Promise: Method = "' + requestOptions.method + '". URI = "' + requestOptions.uri + '".');
+    var logRequest = createLogRequest(moduleId, sessionState, requestOptions)
     request(requestOptions, function(error, response, body) {
- 	  	if (error) {
-  		  reject(getSodaError(moduleId,requestOptions,error));
-			}
-			else {
-			  processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
-			}
-		}).auth(getConnectionProperties().username, getConnectionProperties().password, true);
+    if (error) {
+      reject(getSodaError(moduleId,requestOptions,error));
+    }
+    else {
+      processSodaResponse(moduleId, requestOptions, logRequest, response, body, resolve, reject);
+    }
+    }).auth(getConnectionProperties().username, getConnectionProperties().password, true);
   });
 }
 
@@ -361,7 +360,7 @@ function createIndex(sessionState, collectionName, indexProperties) {
     writeLogEntry(moduleId,'Skipped creation of unsupported text index' || indexProperties.name);
     return new Promise(function(resolve, reject) {resolve()});
   }
-	// Remove the Singleton Key from the index definition if we are in a Pre 12.2 database
+    // Remove the Singleton Key from the index definition if we are in a Pre 12.2 database
 
   if ((!nullOnEmptySupported) && (indexProperties.fields !== undefined) && (!indexProperties.scalarRequired))  {
     indexProperties.scalarRequired = true;
@@ -384,26 +383,31 @@ function createIndexes(sessionState, collectionName) {
 
   var indexes = getIndexProperties(collectionName);
   return indexes.reduce(
-    function(sequence, index) {
-      return sequence.then(function() {
-        return createIndex(sessionState, collectionName, index);
-      }).catch(function(e) {
-        writeLogEntry(moduleId,'Broken Promise. createCollectionWithIndexes(): ');
-        throw e;
+    async function(sequence, index) {
+      return sequence.then(async function() {
+        try {
+		  await createIndex(sessionState, collectionName, index);
+        } catch (e) {
+          writeLogEntry(moduleId,'Broken Promise. createIndexes(): ');
+          throw e;
+        }
       })
     },
     Promise.resolve()
   )
 }
 
-function createCollectionWithIndexes(sessionState, collectionName) {
+async function createCollectionWithIndexes(sessionState, collectionName) {
 
   var indexes = getIndexProperties(collectionName);
 
-  return createCollection(sessionState, collectionName).then(function() {
-  	return createIndexes(sessionState, collectionName);
-  });
-
+  try {
+    await createCollection(sessionState, collectionName);
+    await createIndexes(sessionState, collectionName);
+  } catch (e) {
+    writeLogEntry(moduleId,'Broken Promise. createCollectionWithIndexes(): ');
+ 	throw e;
+  }
 }
 
 function dropCollection(sessionState, collectionName) {
@@ -419,31 +423,33 @@ function dropCollection(sessionState, collectionName) {
   return generateRequest(moduleId, sessionState, requestOptions);
 }
 
-function dropCollectionCatch404(sessionState, collectionName) {
+async function dropCollectionCatch404(sessionState, collectionName) {
 
   var moduleId = 'dropCollectionCatch404("' + collectionName + '")';
-
-	return dropCollection(sessionState, collectionName).catch(function(e) {
-		if (collectionNotFound(e)) {
-			return Promise.resolve(e);
-		}
-		else {
-			throw e;
-		}
-	});
-
+  
+  try {
+    await dropCollection(sessionState, collectionName)
+  } catch (e) {
+    if (collectionNotFound(e)) {
+      return Promise.resolve(e);
+    }
+    else {
+      throw e;
+    }
+  };
 }
 
-function recreateCollection(sessionState, collectionName) {
+async function recreateCollection(sessionState, collectionName) {
 
   var moduleId = 'recreateCollection("' + collectionName + '")';
 
-  return dropCollectionCatch404(sessionState, collectionName).then(function() {
-     return createCollectionWithIndexes(sessionState, collectionName)
-  }).catch(function(e) {
-     writeLogEntry(moduleId,'.createCollectionWithIndexes() Broken Promise.' + JSON.stringify(e));
-     throw e;
-  })
+  try {
+    await dropCollectionCatch404(sessionState, collectionName)
+    await createCollectionWithIndexes(sessionState, collectionName)
+  } catch(e) {
+    writeLogEntry(moduleId,'.createCollectionWithIndexes() Broken Promise.' + JSON.stringify(e));
+    throw e;
+  };
 }
 
 function getCollection(sessionState, collectionName, limit, fields, total) {
@@ -491,42 +497,46 @@ function postJSON(sessionState, collectionName, json) {
 
 function postJSONCatch404(sessionState, collectionName, json) {
 
-	return postDocumentCatch404(sessionState, collectionName, json, 'application/json');
+    return postDocumentCatch404(sessionState, collectionName, json, 'application/json');
 
 }
 
-function postDocumentCatch404(sessionState, collectionName, document, contentType) {
+async function postDocumentCatch404(sessionState, collectionName, document, contentType) {
 
-	return postDocument(sessionState, collectionName, document, contentType).catch(function(e) {
-		if (collectionNotFound(e)) {
-			return createCollectionWithIndexes(sessionState,collectionName).then(function(sodaResponse) {
-				return postDocument(sessionState,collectionName, document, contentType);
-		  })
-		}
-		else {
-			throw e;
-		}
-	});
-
+  let soadResponse;
+  try {
+    await postDocument(sessionState, collectionName, document, contentType)
+  } catch (e) {	
+    if (collectionNotFound(e)) {
+      soadResponse = await createCollectionWithIndexes(sessionState,collectionName);
+      await postDocument(sessionState, collectionName, document, contentType);
+	  return sodaResponse;
+	}
+	else {
+	  throw e;
+    }
+  };
+  
+  return soadResponse;  
 }
 
 function postDocument(sessionState, collectionName, document, contentType) {
 
   var moduleId = 'postDocument("' + collectionName + '","' + contentType + '")';
 
-	var requestOptions = {
-  	method  : 'POST'
+    var requestOptions = {
+    method  : 'POST'
   , uri     : getDocumentStoreURI(collectionName)
   , headers : setHeaders(contentType , undefined)
   , time    : true
   };
 
   if (contentType === 'application/json') {
-  	requestOptions.json = document
- 	}
- 	else {
- 		requestOptions.body = document
- 	}
+    requestOptions.json = document
+    }
+    else {
+        requestOptions.body = document
+    }
 
   return generateRequest(moduleId, sessionState, requestOptions);
 }
@@ -557,11 +567,11 @@ function putDocument(sessionState, collectionName, key, document, contentType, e
   };
 
   if (contentType === 'application/json') {
-  	requestOptions.json = document
- 	}
- 	else {
- 		requestOptions.body = document
- 	}
+    requestOptions.json = document
+    }
+    else {
+        requestOptions.body = document
+    }
 
   return generateRequest(moduleId, sessionState, requestOptions);
 }
@@ -570,8 +580,8 @@ function deleteDocument(sessionState, collectionName, key, eTag) {
 
   var moduleId = 'deleteDocument("' + collectionName + '","' + key + '")';
 
-	var requestOptions = {
-  	method  : 'DELETE'
+    var requestOptions = {
+    method  : 'DELETE'
   , uri     : getDocumentStoreURI(collectionName) + '/' + key
   , headers : setHeaders(undefined, eTag)
   , time    : true
@@ -626,7 +636,7 @@ function generateRandomName(){
     return uuid.toUpperCase();
 }
 
-function featureDetection() {
+async function featureDetection() {
 
   /*
   ** Test for $CONTAINS support
@@ -636,134 +646,157 @@ function featureDetection() {
 
   var collectionName = 'TMP_' + generateRandomName();
 
-  return createCollection(disableSodaLogging, collectionName).then(function(){
+  try {
+    await createCollection(disableSodaLogging, collectionName);
+	
     var qbe = {id : {"$contains" : 'XXX'}}
-    return queryByExample(disableSodaLogging, collectionName, qbe).catch(function(sodaError){
+    try {
+      await queryByExample(disableSodaLogging, collectionName, qbe)
+    }
+    catch (sodaError) {
       if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
         var sodaErrorDetails = sodaError.details.json;
-        // console.log(sodaError.details)
-        // if (sodaErrorDetails['o:errorCode'] === 'SODA-02002') {
         if (sodaErrorDetails.title === 'The field name $contains is not a recognized operator.') {
           $containsSupported = false;
         }
-      }
-    }).then(function() {
+		else {
+		  throw sodaError;
+		}
+      }	
+      else {
+        throw sodaError;
+      }		
+    }
 
-      /*
-      ** Test for $NEAR support and spatial indexes.
-      */
-
-      var qbe = {
-        geoCoding          : {
-        	$near            : {
-            $geometry      : {
-            	 type        : "Point",
-            	 coordinates : [-122.12469369777311,37.895215209615884]
-            },
-            $distance      : 5,
-            $unit          : "mile"
-          }
-        }
-      }
-
-      return queryByExample(disableSodaLogging, collectionName, qbe).catch(function(sodaError){
-        if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
-          var sodaErrorDetails = sodaError.details.json;
-          // writeLogEntry(moduleId,'Error: ' + JSON.stringify(sodaErrorDetails));
-          // if (sodaErrorDetails['o:errorCode'] === 'SODA-02002') {
-          if (sodaErrorDetails.title === 'The field name $near is not a recognized operator.') {
-            $nearSupported = false;
-          }
-        }
-      }).then(function() {
-
-      	/*
-      	** Test for 'singleton' support in index creation
-      	*/
-
-      	var indexDef = {
-      		name         : "TEST_IDX"
-  			, unique       : true
-  			, fields       : [{
-  				  path       : "id"
-  			    , datatype : "number"
-  			    , order    : "asc"
-  			  }]
-  		  }
-        return createIndex(disableSodaLogging, collectionName, indexDef).catch(function(sodaError){
-          if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
-            var sodaErrorDetails = sodaError.details.json;
-            if (sodaErrorDetails['o:errorCode'] === 'SQL-00907') {
-               nullOnEmptySupported = false;
+    var qbe = {
+          geoCoding          : {
+            $near            : {
+              $geometry        : {
+                 type        : "Point",
+                 coordinates : [-122.12469369777311,37.895215209615884]
+              },
+              $distance      : 5,
+              $unit          : "mile"
             }
-          }
-  		  }).then(function() {
+          } 
+        }
 
-  		  	/*
-  		  	** Create Text Index with language specification (12.2 Format with langauge and dataguide)
-  		  	**
-  		  	** ToDo : Can we use alternative index properties if we encounter "DRG-10700: preference does not exist: CTXSYS.JSONREST_ENGLISH_LEXER"
-  		    **
-  		  	*/
+    try {
+      await queryByExample(disableSodaLogging, collectionName, qbe)
+    }
+    catch (sodaError) {
+      if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
+        var sodaErrorDetails = sodaError.details.json;
+        // writeLogEntry(moduleId,'Error: ' + JSON.stringify(sodaErrorDetails));
+        // if (sodaErrorDetails['o:errorCode'] === 'SODA-02002') {
+        if (sodaErrorDetails.title === 'The field name $near is not a recognized operator.') {
+          $nearSupported = false;
+		} else {
+		  throw sodaError;
+		}
+      }	
+      else {
+        throw sodaError;
+      }		
+    }
 
-        	var indexDef = {
-        		name      : "FULLTEXT_INDEX"
- 		  		, dataguide : "text_value"
-  			  , language  : "english"
-  			  }
-	        return createIndex(disableSodaLogging, collectionName, indexDef).catch(function(sodaError){
-  	        if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 500)) {
-    	        var sodaErrorDetails = sodaError.details.json;
-      	      if (sodaErrorDetails['o:errorCode'] === 'SQL-29855') {
-        	       textIndexSupported = false;
-          	  }
-          	}
-  		  	})
-  		  })
-  		})
-    })
-  }).then(function() {
-  	return dropCollection(disableSodaLogging, collectionName)
-  }).then(function() {
+    var indexDef = {
+          name         : "TEST_IDX"
+        , unique       : true
+        , fields       : [{
+            path       : "id"
+          , datatype : "number"
+          , order    : "asc"
+          }]
+        }
+
+	try {
+      await createIndex(disableSodaLogging, collectionName, indexDef);
+	}
+	catch (sodaError) {
+      if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 400)) {
+        var sodaErrorDetails = sodaError.details.json;
+        if (sodaErrorDetails['o:errorCode'] === 'SQL-00907') {
+          nullOnEmptySupported = false;
+		} else {
+		  throw sodaError;
+		}
+      }	
+      else {
+        throw sodaError;
+      }		
+    }	
+
+    /*
+    ** Create Text Index with language specification (12.2 Format with langauge and dataguide)
+    **
+    ** ToDo : Can we use alternative index properties if we encounter "DRG-10700: preference does not exist: CTXSYS.JSONREST_ENGLISH_LEXER"
+    **
+    */
+
+    var indexDef = {
+          name      : "FULLTEXT_INDEX"
+        , dataguide : "on"
+        , language  : "english"
+        }
+            
+	try {
+		await createIndex(disableSodaLogging, collectionName, indexDef)
+	}
+	catch (sodaError) {
+      if ((sodaError.details !== undefined ) && ( sodaError.details.statusCode === 500)) {
+        var sodaErrorDetails = sodaError.details.json;
+        if (sodaErrorDetails['o:errorCode'] === 'SQL-29855') {
+          textIndexSupported = false;
+		} else {
+		  throw sodaError;
+		}
+      }	
+      else {
+        throw sodaError;
+      }		
+    }
+	
+    await dropCollection(disableSodaLogging, collectionName);
+	
     writeLogEntry(moduleId,'$contains operator supported:  ' + $containsSupported);
     writeLogEntry(moduleId,'$near operatator   supported:  ' + $nearSupported);
-		writeLogEntry(moduleId,'Text Index         supported:  ' + textIndexSupported);
-        // writeLogEntry(moduleId,'"NULL ON EMPTY"    supported:  ' + nullOnEmptySupported);
-  }).catch(function(err) {
+    writeLogEntry(moduleId,'Text Index         supported:  ' + textIndexSupported);
+    // writeLogEntry(moduleId,'"NULL ON EMPTY"    supported:  ' + nullOnEmptySupported);
+  }
+  catch(err) {
     console.error('Broken Promise : featureDetection().');
     console.error( err.stack ? err.stack : err);
     if ((err instanceof SodaError) || (err instanceof externalInterfaces.ExternalError)) {
       console.error(JSON.stringify(err));
     }
     throw err;
-  });
+  };
 };
 
 function getDetectedFeatures() {
 
-	return {
-		$contains : $containsSupported
-	  , $near     : $nearSupported
-	  // , $near     : false
+    return {
+        $contains : $containsSupported
+      , $near     : $nearSupported
+      // , $near     : false
   }
 
 }
 
-function recreateLoadIndex(sessionState, collectionName, contents) {
+async function recreateLoadIndex(sessionState, collectionName, contents) {
 
-	var moduleId = 'recrateLoadIndex("' + collectionName + ',' + contents.length + ')';
+    var moduleId = 'recrateLoadIndex("' + collectionName + ',' + contents.length + ')';
 
-	// Workaround for Bug 24907922
-
-	return dropCollectionCatch404(sessionState, collectionName).then(function() {
-	  return createCollection(sessionState, collectionName);
-	}).then(function() {
-	  return bulkInsert(sessionState, collectionName, contents)
-	}).then(function() {
-		return createIndexes(sessionState, collectionName)
-  }).catch(function(e) {
-  	writeLogEntry(moduleId,JSON.stringify(e));
-  	throw e;
-  });
+  // Workaround for Bug 24907922
+  try {
+    await dropCollectionCatch404(sessionState, collectionName);
+    await createCollection(sessionState, collectionName);
+    await bulkInsert(sessionState, collectionName, contents);
+    await createIndexes(sessionState, collectionName);
+  } catch(e) {
+    writeLogEntry(moduleId,JSON.stringify(e));
+    throw e;
+  };
 
 }

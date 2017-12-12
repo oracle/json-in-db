@@ -115,15 +115,15 @@ function getTheater(sessionState, key, eTag) {
 
 }
 
-function getTheaterById(sessionState, id) {
+async function getTheaterById(sessionState, id) {
 
   var qbe = {'id': id};
-  return sodaRest.queryByExample(sessionState, 'Theater',qbe).then(
-    function(sodaResponse) {
-    	sodaResponse.json = sodaResponse.json[0]
-    	return sodaResponse;
-    }
-  )
+  
+  let sodaResponse;
+  
+  sodaResponse = await sodaRest.queryByExample(sessionState, 'Theater', qbe);
+  sodaResponse.json = sodaResponse.json[0]
+  return sodaResponse;
 }
 
 function queryTheaters(sessionState, qbe, limit, fields, total) {
@@ -176,15 +176,15 @@ function updateMovie(sessionState, key, movie, eTag) {
 
 }
 
-function getMovieById(sessionState,id) {
+async function getMovieById(sessionState,id) {
 
   var qbe = {'id': id};
-  return sodaRest.queryByExample(sessionState, 'Movie', qbe).then(
-    function(sodaResponse) {
-    	sodaResponse.json = sodaResponse.json[0]
-    	return sodaResponse;
-    }
-  )
+  
+  let sodaResponse
+  
+  sodaResponse = sodaRest.queryByExample(sessionState, 'Movie', qbe)
+  sodaResponse.json = sodaResponse.json[0]
+  return sodaResponse;
 }
 
 function moviesByReleaseDateService(sessionState) {
@@ -359,25 +359,26 @@ function logError(error, body) {
 	 
 }
 
-function getLogRecordByOperationId(id) {
+async function getLogRecordByOperationId(id) {
 
   var qbe = {'operationId': id, '$orderby' : {'startTime':1}};
-  return sodaRest.queryByExample(sodaLoggingDisabled, logCollectionName, qbe).then(
-    function(sodaResponse) {
-    	return sodaResponse;
-    }
-  )
+  
+  let sodaResponse;
+  
+  sodaResponse = await sodaRest.queryByExample(sodaLoggingDisabled, logCollectionName, qbe)
+  return sodaResponse;
 }
 
-function createEmptyCollections() {
+async function createEmptyCollections() {
 
-  createLogRecordCollection().then(function(){
-    createTicketSaleCollection(sodaLoggingDisabled);
-  }).catch(function(e){
+  try {
+    await createLogRecordCollection();
+    await createTicketSaleCollection(sodaLoggingDisabled);
+  } catch (e) {
    	console.log('movie_ticket_api.js: Error during Collection Creation.');
-		console.log(JSON.stringify(e));
-		throw e;
-  });
+	console.log(JSON.stringify(e));
+    throw e;
+  };
 }
 
 function initialize() {

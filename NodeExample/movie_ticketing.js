@@ -41,7 +41,7 @@ module.exports.initializeSodaLogging         = initializeSodaLogging;
 module.exports.setSessionState               = setSessionState;
 
 function writeLogEntry(module,message) {
-	module = ( message === undefined) ? module : module + ": " + message
+    module = ( message === undefined) ? module : module + ": " + message
   console.log(new Date().toISOString() + ": movieTicketing." + module);
 }
 
@@ -76,84 +76,96 @@ function generateGUID(){
 var sodaLoggingDisabled = { sodaLoggingEnabled : false };
 
 function reportStatusCode(response, e, statusCode) {
-	
-  	if ((e.statusCode) && (e.statusCode === statusCode)) {
-  		response.status(e.statusCode);
-  		response.end();
-  		return true;
-  	}
-  	return false
-}	
+    
+    if ((e.statusCode) && (e.statusCode === statusCode)) {
+        response.status(e.statusCode);
+        response.end();
+        return true;
+    }
+    return false
+}   
 
-function theatersService(sessionState, response, next) {
+async function theatersService(sessionState, response, next) {
 
   var moduleId = 'theatersService()'
   writeLogEntry(moduleId);
 
-  movieAPI.getTheaters(sessionState).then(function (sodaResponse) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.getTheaters(sessionState)
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(sodaResponse.json.items);
     response.end();
-  }).catch(function(e){
-  	if (!reportStatusCode(response, e, 404)) {
+  } catch (e) {
+    if (!reportStatusCode(response, e, 404)) {
       next(e);
     }
-  });
+  };
 } 
 
-function theaterService(sessionState, response, next, key) {
+async function theaterService(sessionState, response, next, key) {
 
   var moduleId = 'theaterService(' + key + ')';
   writeLogEntry(moduleId);
 
-  movieAPI.getTheater(sessionState, key).then(function(sodaResponse) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.getTheater(sessionState, key)
     //  writeLogEntry(moduleId,JSON.stringify(sodaResponse));
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(sodaResponse.json);
     response.end();
-  }).catch(function(e) {
+  } catch (e) {
     next(e);
-  })
+  }
 }
 
-function theaterByIdService(sessionState, response, next, id) {
+async function theaterByIdService(sessionState, response, next, id) {
 
   var moduleId = 'theaterByIdService('+ id + ')';
   writeLogEntry(moduleId);
   
-  movieAPI.getTheaterById(sessionState, id).then(function (sodaResponse) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.getTheaterById(sessionState, id)
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(sodaResponse.json.value);
     response.end();
-  }).catch(function(e){
+  } catch (e){
     next(e);
-  });
+  };
 } 
 
 
-function searchTheatersService(sessionState, response, next, qbe) {
+async function searchTheatersService(sessionState, response, next, qbe) {
 
   var moduleId = 'searchTheaterService(' + JSON.stringify(qbe) + ')';
   writeLogEntry(moduleId);
 
-  movieAPI.queryTheaters(sessionState, qbe, 'unlimited').then(function (sodaResponse) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.queryTheaters(sessionState, qbe, 'unlimited')
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(sodaResponse.json.items);
     response.end();
-  }).catch(function(e){
+  } catch (e){
     next(e);
-  });
+  };
 } 
 
 
-function locateTheatersService(sessionState, response, next, lat, long, distance) {
+async function locateTheatersService(sessionState, response, next, lat, long, distance) {
 
   var qbe = {
     "location.geoCoding": {
       "$near"           : {
         "$geometry"    : {
-        	 "type"      : "Point", 
-        	 "coordinates" : [lat,long]
+             "type"      : "Point", 
+             "coordinates" : [lat,long]
         },
         "$distance" : distance,
         "$unit" : "mile"
@@ -164,389 +176,441 @@ function locateTheatersService(sessionState, response, next, lat, long, distance
   var moduleId = 'locateTheatersService(' + JSON.stringify(qbe) + ')';
   writeLogEntry(moduleId);
 
-  movieAPI.queryTheaters(sessionState, qbe, 'unlimited').then(function (sodaResponse) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.queryTheaters(sessionState, qbe, 'unlimited')
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(sodaResponse.json.items);
     response.end();
-  }).catch(function(e){
+  } catch (e){
     next(e);
-  });
+  };
 } 
 
-function moviesByTheaterService(sessionState, response, next, id, dateStr) {
+async function moviesByTheaterService(sessionState, response, next, id, dateStr) {
 
   var moduleId = 'moviesByTheaterService(' + id  + ',' + dateStr + ')';
   writeLogEntry(moduleId);
 
-  movieAPI.getTheater(sessionState, id).then(function (sodaResponse) {
+  let sodaResponse
+  let moviesByTheater
+  
+  try {
+    sodaResponse = await movieAPI.getTheater(sessionState, id)
     var theater = sodaResponse.json;
-    delete(theater.screens);
-    return getMoviesByTheaterAndDate(sessionState,theater,dateStr)
-  }).then(function (moviesByTheater) {
+    delete(theater.screens);    
+
+    moviesByTheater = await getMoviesByTheaterAndDate(sessionState,theater,dateStr)
     // writeLogEntry(moduleId,JSON.stringify(moviesByTheater))     
+
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(moviesByTheater);
     response.end();
-  }).catch(function(e){
+  } catch (e){
     next(e);
-  });
+  };
 } 
 
-function moviesService(sessionState, response, next) {
+async function moviesService(sessionState, response, next) {
 
   var moduleId = 'moviesService()';
   writeLogEntry(moduleId);
 
-  movieAPI.getMovies(sessionState).then(function (sodaResponse) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.getMovies(sessionState)
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json((sodaResponse.json.items));
     response.end();
-  }).catch(function(e){
-  	if (!reportStatusCode(response, e, 404)) {
+  } catch (e){
+    if (!reportStatusCode(response, e, 404)) {
       next(e);
     }
-  });
+  };
 } 
 
-function movieService(sessionState, response, next, key) {
+async function movieService(sessionState, response, next, key) {
 
   var moduleId = 'movieService(' + key + ')';
   writeLogEntry(moduleId);
 
-  movieAPI.getMovie(sessionState, key).then(function(sodaResponse) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.getMovie(sessionState, key)
     //  writeLogEntry(moduleId,JSON.stringify(sodaResponse));
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(sodaResponse.json);
     response.end();
-  }).catch(function(e) {
+  } catch (e) {
     next(e);
-  })
+  }
 }
 
-function moviesByReleaseDateService(sessionState, response, next) {
+async function moviesByReleaseDateService(sessionState, response, next) {
 
   var moduleId = 'moviesByReleaseDateService()';
   writeLogEntry(moduleId);
 
-  movieAPI.moviesByReleaseDateService(sessionState).then(function (sodaResponse) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.moviesByReleaseDateService(sessionState)
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json((sodaResponse.json.items));
     response.end();
-  }).catch(function(e){
-  	if (!reportStatusCode(response, e, 404)) {
+  } catch (e){
+    if (!reportStatusCode(response, e, 404)) {
       next(e);
     }
-  });
+  };
 }
 
-function movieByIdService(sessionState, response, next, id) {
+async function movieByIdService(sessionState, response, next, id) {
 
   var moduleId = 'movieByIdService(' + id + ')';
   writeLogEntry(moduleId);
 
-  movieAPI.getMovieById(sessionState, id).then(function (sodaResponse) {                                           
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.getMovieById(sessionState, id)                                   
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(sodaResponse.json.items[0].value);                                      
     response.end();                                            
-  }).catch(function(e){
+  } catch (e){
     next(e);
-  });
+  };
 }                                                                                                                                    
 
-function searchMoviesService(sessionState, response, next, qbe) {
+async function searchMoviesService(sessionState, response, next, qbe) {
 
   var moduleId = 'searchMoviesService(' + JSON.stringify(qbe) + ')';
   writeLogEntry(moduleId);
   
-  movieAPI.queryMovies(sessionState, qbe, 'unlimited').then(function (sodaResponse) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.queryMovies(sessionState, qbe, 'unlimited')
     // writeLogEntry(moduleId,JSON.stringify(sodaResponse));
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(sodaResponse.json.items);
     response.end();
-  }).catch(function(e){
+  } catch (e){
     next(e);
-  });
+  };
 } 
 
-function theatersByMovieService(sessionState, response, next, id, dateStr) {
+async function theatersByMovieService(sessionState, response, next, id, dateStr) {
   
   var moduleId = 'theatersByMovieService(' + id  + ',' + dateStr + ')';
   writeLogEntry(moduleId);
   
-  movieAPI.getMovie(sessionState, id).then(function (sodaResponse) {
+  let sodaResponse
+  let theatersByMovie
+  
+  try {
+    sodaResponse = await movieAPI.getMovie(sessionState, id)
     var movie = sodaResponse.json;
-    return getTheatersByMovieAndDate(sessionState,movie,dateStr)
-  }).then(function (theatersByMovie) {
+    
+    theatersByMovie = await getTheatersByMovieAndDate(sessionState,movie,dateStr)
+    
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(theatersByMovie);
     response.end();
-  }).catch(function(e){
+  } catch (e){
     next(e);
-  });
+  };
 } 
 
-function moviesInTheatersService(sessionState, response, next) {
+async function moviesInTheatersService(sessionState, response, next) {
 
   var moduleId = 'moviesInTheatersService()';
   writeLogEntry(moduleId);
 
-  movieAPI.getMovies(sessionState).then(function (sodaResponse) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.getMovies(sessionState)
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json((sodaResponse.json));
     response.end();
-  }).catch(function(e){
+  } catch (e){
     next(e);
-  });
+  };
 } 
   
-function bookTicketService(sessionState, response, next, bookingRequest) {
+async function bookTicketService(sessionState, response, next, bookingRequest) {
 
   var moduleId = 'bookTicketService(' + JSON.stringify(bookingRequest) +')';
   writeLogEntry(moduleId);
 
-  bookTickets(sessionState, bookingRequest).then(function (bookingStatus) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await bookTickets(sessionState, bookingRequest)
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(bookingStatus);
     response.end();
-  }).catch(function(err) {
+  } catch (err) {
     next(err);
-  });
+  };
  
 }
 
-function screeningService(sessionState, response, next, key) {
+async function screeningService(sessionState, response, next, key) {
 
   var moduleId = 'screeningService(' + key + ')';
   writeLogEntry(moduleId);
 
-  movieAPI.getScreening(sessionState, key).then(function(sodaResponse) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.getScreening(sessionState, key)
     //  writeLogEntry(moduleId,JSON.stringify(sodaResponse));
     response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
     response.json(sodaResponse.json);
     response.end();
-  }).catch(function(e) {
+  } catch (e) {
     next(e);
-  })
+  }
 }
 
-function applicationStatusService(sessionState,response,next) {
-	
+async function applicationStatusService(sessionState,response,next) {
+    
   var moduleId = 'applicationStatusService()';
   writeLogEntry(moduleId);
   
-	var status = {
-    googleKey         : cfg.dataSources.google.apiKey
-	, tmdbKey           : cfg.dataSources.tmdb.apiKey
-	, supportedFeatures : movieAPI.getDetectedFeatures()
-	, geocodingService  : cfg.dataSources.geocodingService
-	, mappingService    : cfg.dataSources.mappingService
-	, movieCount        : 0
-	, theaterCount      : 0
-	, screeningCount    : 0
-	, posterCount       : 0 
-	, currentPosition   : {
-		  coords          : {
-		    latitude      : 0.0
-		  , longitude     : 0.0
-		  }
-		}
-	}
+  var status = {
+        googleKey         : cfg.dataSources.google.apiKey
+      , tmdbKey           : cfg.dataSources.tmdb.apiKey
+      , supportedFeatures : movieAPI.getDetectedFeatures()
+      , geocodingService  : cfg.dataSources.geocodingService
+      , mappingService    : cfg.dataSources.mappingService
+      , movieCount        : 0
+      , theaterCount      : 0
+      , screeningCount    : 0
+      , posterCount       : 0 
+      , currentPosition   : {
+          coords          : {
+            latitude      : 0.0
+          , longitude     : 0.0
+          }
+        }
+      }
 
-	return movieAPI.getMovies(sodaLoggingDisabled,1,undefined,true).then(function(sodaResponse){
-	   status.movieCount=sodaResponse.json.totalResults;
-	}).catch(function(e) {
-		 // console.log(e);
- 	   if ((e.details) && (e.details.statusCode)) {
-		   if (e.details.statusCode !== 404) {
-		     if (e.details.statusCode !== 400) {
-		 	     throw e;
-		 	   }
-		 	 }
-		 }
-		 else {
-		 	 if ((e.json) && (e.json['o:errorCode'])) {
-		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942'){
-	 	       throw e;
-	 	     }
-		   }
-   		 else {
-         throw e;
-		   }
-		 }
-  }).then(function() {		 	 
-	   return movieAPI.getTheaters(sodaLoggingDisabled,1,undefined,true)
-	}).then(function(sodaResponse){
-	   status.theaterCount=sodaResponse.json.totalResults;
-	}).catch(function(e) {
-		 // console.log(e);
- 	   if ((e.details) && (e.details.statusCode)) {
-		   if (e.details.statusCode !== 404) {
-		     if (e.details.statusCode !== 400) {
-		 	     throw e;
-		 	   }
-		 	 }
-		 }
-		 else {
-		 	 if ((e.json) && (e.json['o:errorCode'])) {
-		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942'){
-	 	       throw e;
-	 	     }
-		   }
-   		 else {
-         throw e;
-		   }
-		 }
-  }).then(function() {		 	 
-	   return movieAPI.getScreenings(sodaLoggingDisabled,1,undefined,true)
-	}).then(function(sodaResponse){
-	   status.screeningCount=sodaResponse.json.totalResults;
-	}).catch(function(e) {
-		 // console.log(e);
- 	   if ((e.details) && (e.details.statusCode)) {
-		   if (e.details.statusCode !== 404) {
-		     if (e.details.statusCode !== 400) {
-		 	     throw e;
-		 	   }
-		 	 }
-		 }
-		 else {
-		 	 if ((e.json) && (e.json['o:errorCode'])) {
-		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942'){
-	 	       throw e;
-	 	     }
-		   }
-   		 else {
-         throw e;
-		   }
-		 }
-  }).then(function() {		 	 
-	   return movieAPI.getPosters(sodaLoggingDisabled,1,undefined,true)
-	}).then(function(sodaResponse){
-	   status.posterCount=sodaResponse.json.totalResults;
-	}).catch(function(e) {
-		 // console.log(e);
- 	   if ((e.details) && (e.details.statusCode)) {
-		   if (e.details.statusCode !== 404) {
-		     if (e.details.statusCode !== 400) {
-		 	     throw e;
-		 	   }
-		 	 }
-		 }
-		 else {
-		 	 if ((e.json) && (e.json['o:errorCode'])) {
-		 	 	 if (e.json['o:errorCode'] !== 'SQL-00942'){
-	 	       throw e;
-	 	     }
-		   }
-   		 else {
-   		 	 console.log(e);
-         throw e;
-		   }
-		 }
-  }).then(function() { 
-  	 if (status.theaterCount > 0) {
-	   	 return getTheaterCentroid(sodaLoggingDisabled).then(function(centroid){
-		     // writeLogEntry(moduleId','Centroid = ' + JSON.stringify(centroid));
-	  		 status.currentPosition = centroid
-       })
-	   }
-	   // else {
-	   // 	  return Promise.resolve()
-	   // }
-  }).then(function() {		 	 
-	   response.json(status);
-	   response.end();
-  }).catch(function(e){
-  	writeLogEntry('movieTicketing.applicationStatusService(): Broken Promise.');
+  let sodaResponse
+
+  try {  
+
+    try {
+      sodaResponse = await movieAPI.getMovies(sodaLoggingDisabled,1,undefined,true)
+      status.movieCount=sodaResponse.json.totalResults;
+    } catch (e) {
+      // console.log(e);
+      if ((e.details) && (e.details.statusCode)) {
+        if (e.details.statusCode !== 404) {
+          if (e.details.statusCode !== 400) {
+            throw e;
+          }
+        }
+      }
+      else {
+        if ((e.json) && (e.json['o:errorCode'])) {
+          if (e.json['o:errorCode'] !== 'SQL-00942'){
+            throw e;
+          }
+        }
+        else {
+          throw e;
+        }
+      }
+    }
+    
+    try {
+      sodaResponse = await movieAPI.getTheaters(sodaLoggingDisabled,1,undefined,true)
+      status.theaterCount=sodaResponse.json.totalResults;
+    } catch (e) {
+      // console.log(e);
+      if ((e.details) && (e.details.statusCode)) {
+        if (e.details.statusCode !== 404) {
+          if (e.details.statusCode !== 400) {
+            throw e;
+          }
+        }
+      }
+      else {
+        if ((e.json) && (e.json['o:errorCode'])) {
+          if (e.json['o:errorCode'] !== 'SQL-00942'){
+            throw e;
+          }
+        }
+        else {
+          throw e;
+        }
+      }
+    }
+    
+    try {
+      sodaResponse = await movieAPI.getScreenings(sodaLoggingDisabled,1,undefined,true)
+      status.screeningCount=sodaResponse.json.totalResults;
+    } catch (e) {
+      // console.log(e);
+      if ((e.details) && (e.details.statusCode)) {
+        if (e.details.statusCode !== 404) {
+          if (e.details.statusCode !== 400) {
+            throw e;
+          }
+        }
+      }
+      else {
+        if ((e.json) && (e.json['o:errorCode'])) {
+          if (e.json['o:errorCode'] !== 'SQL-00942'){
+            throw e;
+          }
+        }
+        else {
+          throw e;
+        }
+      }
+    }
+    
+    try {
+      sodaResponse = await movieAPI.getPosters(sodaLoggingDisabled,1,undefined,true)
+      status.posterCount=sodaResponse.json.totalResults;
+    } catch (e) {
+      // console.log(e);
+      if ((e.details) && (e.details.statusCode)) {
+        if (e.details.statusCode !== 404) {
+          if (e.details.statusCode !== 400) {
+            throw e;
+          }
+        }
+      }
+      else {
+        if ((e.json) && (e.json['o:errorCode'])) {
+          if (e.json['o:errorCode'] !== 'SQL-00942'){
+            throw e;
+          }
+        }
+        else {
+          throw e;
+        }
+      }
+    }
+      
+    let centroid
+    
+    if (status.theaterCount > 0) {      
+      centroid = await getTheaterCentroid(sodaLoggingDisabled)
+      // writeLogEntry(moduleId','Centroid = ' + JSON.stringify(centroid));
+      status.currentPosition = centroid
+    }
+
+    response.json(status);
+    response.end();
+  } catch (e){
+    writeLogEntry('movieTicketing.applicationStatusService(): Broken Promise.');
     next(e);
-  });
+  };
 
-}	   
+}      
 
 function updateDataSourcesService(sessionState, response, next, updatedValues) {
-	
+    
   var moduleId = 'applicationStatusService(' + JSON.stringify(updatedValues) + ')';
   writeLogEntry(moduleId);
 
-	try {
-		cfg.updateDataSources(updatedValues);
-	  response.json({status : "success" })
-	  response.end();
-	}
-	catch (e) {
-		next(e);
-	}
+  try {
+    cfg.updateDataSources(updatedValues);
+    response.json({status : "success" })
+    response.end();
+  } catch (e) {
+    next(e);
+  }
 }
-	   
-function getTheaterCentroid(sessionState) {
-	
-	var moduleId = 'getTheaterCentroid()';
-	
-  return movieAPI.getTheaters(sessionState).then(function (sodaResponse) {
-  	var boundsBox = {
-  		latitude  : [ 360, -360 ],
-  		longitude : [ 360, -360 ]
-  	}
-  	
-  	for (var i=0; i < sodaResponse.json.items.length; i++) {
-  	  if (sodaResponse.json.items[i].value.location.geoCoding.coordinates) {
-  	  	var latitude = sodaResponse.json.items[i].value.location.geoCoding.coordinates[0]
-  	  	var longitude = sodaResponse.json.items[i].value.location.geoCoding.coordinates[1]
-	  	  if (latitude < boundsBox.latitude[0]) {
-  		  	boundsBox.latitude[0] = latitude;
-  		  }
-  	 	 	if (latitude > boundsBox.latitude[1]) {
-  	  		boundsBox.latitude[1] = latitude;
-  	  	}
+       
+async function getTheaterCentroid(sessionState) {
+    
+  var moduleId = 'getTheaterCentroid()';
+  
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.getTheaters(sessionState)
+        
+    var boundsBox = {
+        latitude  : [ 360, -360 ],
+        longitude : [ 360, -360 ]
+    }
+    
+    for (var i=0; i < sodaResponse.json.items.length; i++) {
+      if (sodaResponse.json.items[i].value.location.geoCoding.coordinates) {
 
-	  	  if (longitude < boundsBox.longitude[0]) {
-  		  	boundsBox.longitude[0] = longitude;
-  		  }
-  		  
-  	 	 	if (longitude > boundsBox.longitude[1]) {
-  	  		boundsBox.longitude[1] = longitude;
-  	  	}
-  	  }
-  	}	
+        var latitude = sodaResponse.json.items[i].value.location.geoCoding.coordinates[0]
+        var longitude = sodaResponse.json.items[i].value.location.geoCoding.coordinates[1]
+       
+        if (latitude < boundsBox.latitude[0]) {
+            boundsBox.latitude[0] = latitude;
+        }
+        if (latitude > boundsBox.latitude[1]) {
+          boundsBox.latitude[1] = latitude;
+        }
+        if (longitude < boundsBox.longitude[0]) {
+          boundsBox.longitude[0] = longitude;
+        }
+        if (longitude > boundsBox.longitude[1]) {
+          boundsBox.longitude[1] = longitude;
+        }
+      }
+    }   
     
     var centroid = {
-    	coords       : {
-  		  latitude   : ((boundsBox.latitude[0] + boundsBox.latitude[1])/2)
-  	  , longitude  : ((boundsBox.longitude[0] + boundsBox.longitude[1])/2)
-  	  }
-  	}
-  	  	
+        coords       : {
+          latitude   : ((boundsBox.latitude[0] + boundsBox.latitude[1])/2)
+      , longitude  : ((boundsBox.longitude[0] + boundsBox.longitude[1])/2)
+      }
+    }
+        
     // writeLogEntry(moduleId,'Centroid = ' + JSON.stringify(centroid));
 
-  	return centroid;
-  
-  });
-  	
+    return centroid;
+  } catch (e) {
+    writeLogEntry('movieTicketing.getTheaterCentroid(): Broken Promise.');
+  };
+    
 }
 
-function bookTickets(sessionState, bookingRequest) {
+async function bookTickets(sessionState, bookingRequest) {
 
   var key           = bookingRequest.key;
   var eTag          = null;
   var screening     = {}
   var seatsRequired = bookingRequest.adult + bookingRequest.senior + bookingRequest.child;
   
-  return movieAPI.getScreening(sessionState, key).then(function(sodaResponse) {
-  	eTag = sodaResponse.eTag;
-  	screening = sodaResponse.json;
-	  if (screening.seatsRemaining < seatsRequired) {
-    	return {
-    	  status : 'SoldOut', 
-    	  message : 'Only ' + screening.seatsRemaining + ' seats are available for this performance.'
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.getScreening(sessionState, key)
+    eTag = sodaResponse.eTag;
+    screening = sodaResponse.json;
+      if (screening.seatsRemaining < seatsRequired) {
+        return {
+          status : 'SoldOut', 
+          message : 'Only ' + screening.seatsRemaining + ' seats are available for this performance.'
       };
     }
     else {
-    screening.seatsRemaining = screening.seatsRemaining - seatsRequired;
-      return movieAPI.updateScreening(sessionState, key, screening, eTag).then(function(sodaResponse) {
+      screening.seatsRemaining = screening.seatsRemaining - seatsRequired;
+      try {
+        sodaResponse = await movieAPI.updateScreening(sessionState, key, screening, eTag)
         switch (sodaResponse.statusCode) {
           case 200: // Seat Reserved : Record Ticket Sale
             var ticketSale = makeTicketSale(bookingRequest, screening);
-            return movieAPI.insertTicketSale(sessionState, ticketSale).then(function(sodaResponse) {
+            try {
+              sodaResponse = await movieAPI.insertTicketSale(sessionState, ticketSale)
               switch (sodaResponse.statusCode) {
                 case 201: // Booking Completed
                   return { 
@@ -554,29 +618,29 @@ function bookTickets(sessionState, bookingRequest) {
                     message : "Please enjoy your movie."
                   }
                 default:
-                	throw sodaResponse;
+                  throw sodaResponse;
               }
-            }).catch(function (err) {
-            	throw err;     
-            })
+            } catch (err) {
+              throw err;     
+            }
           default:
             throw sodaResponse;
         }
-      }).catch(function (err) {
+      } catch (err) {
         switch (err.statusCode) {
           case 412: // Conflicting Ticket Sales : Try again
             return bookTickets(sessionState,bookingRequest) 
           default:
             throw err;
         }
-      })
+      }
     }
-  }).catch(function (err) {
-   	throw err;     
-  })
+  } catch (err) {
+    throw err;     
+  }
 }
 
-function processScreeningsByTheaterAndDate(sessionState,sodaResponse) {
+async function processScreeningsByTheaterAndDate(sessionState,sodaResponse) {
   
   var moduleId = 'processScreeningsByTheaterAndDate(sodaResponse.json.items[' + sodaResponse.json.items.length + '])';
   // writeLogEntry(moduleId);
@@ -652,20 +716,23 @@ function processScreeningsByTheaterAndDate(sessionState,sodaResponse) {
   sodaResponse.json.items.map(addScreeningDetails);
 
   if (movies.length > 0) {
-    return getMovieDetails(movies.map(getMovieIdList)).then(function(sodaResponse) {
+	let sodaResponse
+  
+    try {
+      sodaResponse = await getMovieDetails(movies.map(getMovieIdList))
       sodaResponse.json.items.map(processMovie);
       return movies
-    }).catch(function(e){
+    } catch (e){
       writeLogEntry(moduleId, 'Broken Promise');
       throw e
-    })
+    }
   }
   else {
-    return movies  	
+    return movies   
   }
 }  
 
-function getMoviesByTheaterAndDate(sessionState,theater, date) {
+async function getMoviesByTheaterAndDate(sessionState,theater, date) {
 
   var moduleId = 'getMoviesByTheaterAndDate(' + theater.id + ',' + date + ')';
   // writeLogEntry(moduleId);
@@ -690,15 +757,17 @@ function getMoviesByTheaterAndDate(sessionState,theater, date) {
   
   var qbe = { theaterId : theater.id, startTime : { "$gte" : startDate, "$lt" : endDate }, "$orderby" : { screenId : 1, startTime : 2}};
 
-  return movieAPI.queryScreenings(sessionState, qbe, 'unlimited').then(function(sodaResponse) {
-    return processScreeningsByTheaterAndDate(sessionState,sodaResponse)
-  }).then(function(movies) {
-    moviesByTheater.movies = movies;
-    return moviesByTheater;
-  })
+  let sodaResponse
+  let movies
+  
+  sodaResponse = await  movieAPI.queryScreenings(sessionState, qbe, 'unlimited')
+  movies = await processScreeningsByTheaterAndDate(sessionState,sodaResponse)
+  moviesByTheater.movies = movies;
+  return moviesByTheater;
+
 }
   
-function processScreeningsByMovieAndDate(sessionState,sodaResponse) {
+async function processScreeningsByMovieAndDate(sessionState,sodaResponse) {
   
   var moduleId = 'processScreeningsByMovieAndDate(sodaResponse.json.items[' + sodaResponse.json.items.length + '])';
   // writeLogEntry(moduleId);
@@ -774,21 +843,23 @@ function processScreeningsByMovieAndDate(sessionState,sodaResponse) {
   sodaResponse.json.items.map(addScreeningDetails);
   
   if (theaters.length > 0) {
-    return getTheaterDetails(theaters.map(getTheaterIdList)).then(function(sodaResponse) {
+    let sodaResponse
+    try {
+      sodaResponse = await getTheaterDetails(theaters.map(getTheaterIdList))
       sodaResponse.json.items.map(processTheater);
       return theaters
-    }).catch(function(e){
-	    writeLogEntry(moduleId, 'Broken Promise');
+    } catch (e){
+      writeLogEntry(moduleId, 'Broken Promise');
       throw e
-    })
+    }
   }
   else {
-  	return theaters;
+    return theaters;
   }
   
 }
   
-function getTheatersByMovieAndDate(sessionState,movie, date) {
+async function getTheatersByMovieAndDate(sessionState,movie, date) {
 
   var moduleId = 'getTheatersByMovieAndDate(' + movie.id + ',' + date + ')';
   // writeLogEntry(moduleId);
@@ -814,12 +885,14 @@ function getTheatersByMovieAndDate(sessionState,movie, date) {
 
   var qbe = { movieId : movie.id, startTime : { "$gte" : startDate, "$lt" : endDate } , "$orderby" : { screenId : 1, startTime : 2}};
 
-  return movieAPI.queryScreenings(sessionState, qbe, 'unlimited').then(function(sodaResponse) {
-    return processScreeningsByMovieAndDate(sessionState,sodaResponse)
-  }).then(function(theaters) {
-    theatersByMovie.theaters = theaters;
-    return theatersByMovie;
-  })
+  let sodaResponse
+  let theaters
+  
+  sodaResponse = await movieAPI.queryScreenings(sessionState, qbe, 'unlimited')
+  theaters = await processScreeningsByMovieAndDate(sessionState,sodaResponse)
+  theatersByMovie.theaters = theaters;
+  return theatersByMovie;
+
 }
 
 function makeTicketSale(bookingRequest, screening) {
@@ -838,23 +911,26 @@ function makeTicketSale(bookingRequest, screening) {
 
 }
 
-function posterService(sessionState, response, next, key) {
+async function posterService(sessionState, response, next, key) {
 
   var moduleId = 'posterService(' + key + ')';
   // writeLogEntry(moduleId);
   
   var sessionState = sodaLoggingDisabled;
   
-  movieAPI.getPoster(sessionState, key).then(function(sodaResponse) {
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.getPoster(sessionState, key)
     response.setHeader('content-type',sodaResponse.contentType);
     // response.setHeader('content-length', Buffer.byteLength(sodaResponse.body));
     // writeLogEntry(moduleId,'Image Size = ' + Buffer.byteLength(sodaResponse.body));
     // response.end(sodaResponse.body,'binary');
     response.write(sodaResponse.body);
     response.end();
-  }).catch(function(e) {
+  } catch (e) {
     next(e);
-  })
+  }
 }
 
 function setSessionState(cookies,sessionState) {
@@ -875,17 +951,20 @@ function initializeSodaLogging(sessionState) {
   return movieAPI.initializeSodaLogging(sessionState);
 }
 
-function logRecordsByOperationService(sessionState, response, next, id) {
+async function logRecordsByOperationService(sessionState, response, next, id) {
 
   var moduleId = 'logRecordsByOperationService(' + id + ')';
   // writeLogEntry(moduleId);
                                  
-  movieAPI.getLogRecordByOperationId(id).then(function (sodaResponse) { 
+  let sodaResponse
+  
+  try {
+    sodaResponse = await movieAPI.getLogRecordByOperationId(id)
     // writeLogEntry(moduleId,JSON.stringify(sodaResponse.json))
     response.json(sodaResponse.json.items);                                      
     response.end();                                            
-  }).catch(function(e){
+  } catch (e){
     next(e);
-  });
+  };
 }                                                                                                                                    
 

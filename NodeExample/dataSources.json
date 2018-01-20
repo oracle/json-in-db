@@ -48,7 +48,7 @@
     "apiKey": "YOUR_GOOGLE_KEY_GOES_HERE"
   },
   "geocodingService": "none",
-  "emulate": true,
+  "emulate": false,
   "emulation": {
     "theaters": "emulation/theaterList.json",
     "movies": "emulation/movieList.json",

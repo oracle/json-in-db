@@ -163,7 +163,7 @@ body {
       	 									<td><strong>Body:</strong> {{l.value.request.json}}</td>
       	 								</tr>
 	          		 				<tr>
-      				 						<td><strong>Status:</strong> {{l.value.response.statusCode}} [{{l.value.response.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
+      				 						<td><strong>Status:</strong> {{l.value.http.statusCode}} [{{l.value.http.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
       	 								</tr>
       	 							</tbody>
       	 						</table>
@@ -248,7 +248,7 @@ body {
 						  	 					<td><strong>Body:</strong> {{l.value.request.json}}</td>
       	 								</tr>
           		 					<tr>
-      										<td><strong>Status:</strong> {{l.value.response.statusCode}} [{{l.value.response.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
+      										<td><strong>Status:</strong> {{l.value.http.statusCode}} [{{l.value.http.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
       	 								</tr>
       	 							</tbody>
       	 						</table>
@@ -350,7 +350,7 @@ body {
 				      	 					<td><strong>Body:</strong> {{l.value.request.json}}</td>
 				      	 				</tr>
           		 					<tr>
-      	 									<td><strong>Status:</strong> {{l.value.response.statusCode}} [{{l.value.response.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
+      	 									<td><strong>Status:</strong> {{l.value.http.statusCode}} [{{l.value.http.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
       	 								</tr>
       	 							</tbody>
       	 						</table>
@@ -468,7 +468,7 @@ body {
 				      	 					<td><strong>Body:</strong> {{l.value.request.json}}</td>
       	 								</tr>
 				          		 	<tr>
-				      	 					<td><strong>Status:</strong> {{l.value.response.statusCode}} [{{l.value.response.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
+				      	 					<td><strong>Status:</strong> {{l.value.http.statusCode}} [{{l.value.http.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
       	 								</tr>
       	 							</tbody>
       	 						</table>
@@ -611,6 +611,44 @@ body {
       				</table>
       			</div>
    		   	</div>
+		      <div class="container row" id="log_ApplicationStatus" ng-repeat="l in appConfigService.acsLogRecord" ng-show="appConfigService.logRecordIndex == $index" ng-init="appConfigService.logRecordIndex = 0">
+		      	<table>
+		      		<tbody>
+ 			      		<tr>
+			      			<td style="padding-right:1em; width:100px; vertical-align:top;">
+			      				<div class="btn-group" role="group">
+  							    	<button type="button" class="btn btn-default btn-med" ng-click="appConfigService.showPrevLogEntry()" ng-disabled="$first" >
+	  								    <span class="glyphicon glyphicon-arrow-up"></span>
+  							    	</button>
+  							    	<button type="button" class="btn btn-default btn-med" ng-click="appConfigService.showNextLogEntry()" ng-disabled="$last">
+	  								    <span class="glyphicon glyphicon-arrow-down"></span>
+  							    	</button>
+  							    </div>
+  						  	</td>
+	  						 	<td>
+	  						 		<table>
+	  						 			<tbody>
+	  						 				<tr>
+	  						 					<td>
+				  	       		  		<span style="margin-right:1em;"><strong>Method:</strong> {{l.value.request.method}}</span>
+    	      	 							<span style="margin-right:1em;"><strong>URL:</strong> {{l.value.request.uri}}{{appConfigService.getQueryString(l.value.request.qs)}}</span>
+				      	    	 		<td>
+       				 	  	 		</tr>
+          		 					<tr ng-if="appConfigService.isObject(l.value.request.json)">
+				      	 					<td><strong>Body:</strong> {{l.value.request.json}}</td>
+				      	 				</tr>
+          		 					<tr>
+      	 									<td><strong>Status:</strong> {{l.value.http.statusCode}} [{{l.value.http.statusText}}] <strong>Elapsed Time:</strong> {{l.value.elapsedTime}}ms.</td>
+      	 								</tr>
+      	 							</tbody>
+      	 						</table>
+      	 					</td>
+      	 				</tr>
+      	 			</tbody>
+      	 		</table>
+	      	</div>
+      	</div>
+      </div>
       	</div>
     </div>
 

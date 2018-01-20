@@ -40,7 +40,7 @@ function generateGUID(){
     return uuid;
 }
 
-var GUID = generateGUID();
+const GUID = generateGUID();
 
 function loadTestData(URL, button) {
 
@@ -80,7 +80,7 @@ function loadTestData(URL, button) {
 
 }
 
-var app = angular.module('movieTicketing', ['ngCookies']);
+const app = angular.module('movieTicketing', ['ngCookies']);
 
 app.factory('bookingService', function($http) {
 
@@ -173,6 +173,7 @@ app.factory('appConfigService', function($http, $window) {
 	var factory = {};
 
 	factory.status = {}
+    factory.mbtLogRecord = null;
 	
 	factory.applicationReady = false;
 

@@ -1,0 +1,662 @@
+/* ================================================
+ *
+ * Copyright (c) 2016 Oracle and/or its affiliates.  All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * ================================================
+ */
+
+"use strict";
+
+const fs = require('fs');
+const http = require('http');
+const uuidv4 = require('uuid/v4');
+const request = require('request-promise-native');
+
+const constants = require('./constants.js');
+const dbLibrary = require('./generic_api.js');
+const errorLibrary = require('./error_library.js');
+
+const httpRequestLoggingEnabled = true
+const driverName = "SODA-REST"
+
+module.exports.initialize                  = initialize
+module.exports.getSupportedFeatures        = getSupportedFeatures
+module.exports.getDBDriverName             = getDBDriverName
+module.exports.processError                = processError
+module.exports.getDocumentContent          = getDocumentContent
+module.exports.getCollection               = getCollection
+module.exports.queryByExample              = queryByExample
+module.exports.postDocument                = postDocument
+module.exports.bulkInsert                  = bulkInsert
+module.exports.putDocument                 = putDocument
+module.exports.deleteDocument              = deleteDocument
+module.exports.createIndexes               = createIndexes
+module.exports.createCollection            = createCollection
+module.exports.dropCollection              = dropCollection
+module.exports.collectionNotFound          = collectionNotFound 
+module.exports.collectionExists            = collectionExists
+
+module.exports.initialize                  = initialize
+
+let connectionProperties = {}
+let collectionMetadata = {}
+let supportedFeatures = null
+let documentStoreURL    = "";
+
+function writeLogEntry(module,comment) {
+	
+const message = ( comment === undefined) ? module : `${module}: ${comment}`
+  console.log(`${new Date().toISOString()}: ${driverName}.${message}`);
+}
+
+function getConnectionProperties() {
+
+  return connectionProperties;
+
+}
+
+function getCollectionMetadata(collectionName) {
+
+  let metadata = collectionMetadata[collectionName];
+  if (metadata != null) {
+    metadata = JSON.parse(JSON.stringify(metadata))
+    delete(metadata.indexes);
+  }
+  return metadata
+
+}
+
+function getCollectionLink(collectionName) {
+
+  return `${connectionProperties.path}/${collectionName}`;
+
+}
+
+function getDocumentLink(collectionName,key) {
+
+  return `${getCollectionLink(collectionName)}/${key}`;
+
+}
+
+function processError(invokerId, logRequest, e) {
+
+  const moduleId = `processError()`;
+  // writeLogEntry(moduleId,JSON.stringify(e));
+  
+  if ((e.statusCode) && (e.error) && (typeof e.error === "string")) {
+	try {
+      e.error = JSON.parse(e.error);
+	} catch (e) {}
+  }
+
+  const details = { driver           : driverName
+                  , module           : invokerId
+                  , request          : logRequest.logEntry ? logRequest.logEntry.request : null
+                  , stack            : logRequest.logEntry.stack ? logRequest.logEntry.stack : null
+                  , underlyingCause  : e
+                  , status           : dbLibrary.interpretHTTPStatusCode(e.statusCode) 
+                  }
+
+  return new errorLibrary.GenericException(`${driverName}: Unexpected exception encountered`,details)
+  
+}
+
+async function sendRequest(invokerId, sessionState, options, log) {
+
+  const moduleId = `${invokerId}.sendRequest("${options.method}","${options.uri}")`;
+  // writeLogEntry(moduleId);
+  
+  options.resolveWithFullResponse = true
+  options.simple = true
+ 
+  if (getConnectionProperties().useProxy) {
+    options.proxy = `http://${getConnectionProperties().proxy.hostname}:${getConnectionProperties().proxy.port}`
+  }
+  
+  log.logRequest = dbLibrary.createLogRequest(moduleId, sessionState, options)
+	
+  try {	
+    const rawResponse = await request(options).auth(getConnectionProperties().username, getConnectionProperties().password, true);
+	// writeLogEntry(moduleId,`Success : HTTP statusCode = ${response.statusCode}`);
+	// writeLogEntry(moduleId,`Response:\n"${JSON.stringify(response.toJSON()," ",2)}`)
+	
+	// elapsedTime is lost for PUT and POST when calling toJSON()
+	const response = rawResponse.toJSON()
+	response.elapsedTime = rawResponse.elapsedTime
+    return response
+  } catch (e) {
+	// writeLogEntry(moduleId,`Exception:\n"${JSON.stringify(e," ",2)}`);
+	throw processError(moduleId,log.logRequest,e);
+  }    					 
+}
+
+function setHeaders(contentType, etag) {
+
+   var headers = {};
+
+   if (contentType === undefined) {
+     contentType = 'application/json';
+   }
+
+   if (contentType !== null) {
+     headers['Content-Type'] = contentType;
+   }
+
+   if (etag !== undefined) {
+     headers["If-Match"] = etag;
+   }
+
+   return headers;
+}
+
+function initialize(applicationName) {
+
+  const moduleId = `initialize()`
+
+  try {
+    const connectionDetails = fs.readFileSync(`${__dirname}/${applicationName}.connectionProperties.soda.json`);
+    connectionProperties = JSON.parse(connectionDetails);
+
+    const collectionDetails = fs.readFileSync(`${__dirname}/${applicationName}.collectionMetadata.soda.json`);
+    collectionMetadata    = JSON.parse(collectionDetails);
+  
+    documentStoreURL = `${connectionProperties.protocol}://${connectionProperties.hostname}`
+    if (connectionProperties.port !== null) {
+      documentStoreURL =  `${documentStoreURL}:${connectionProperties.port}`
+    }
+
+    writeLogEntry(moduleId,`Document Store URL = "${documentStoreURL}".`);
+
+	getSupportedFeatures()
+	
+  } catch (e) {
+    const details = {
+            module           : moduleId
+          , applicationName  : applicationName
+          , underlyingCause  : e
+          }
+    throw new errorLibrary.GenericException(`${driverName}: Driver Intialization Failure`,details)
+  }
+}
+
+async function getSupportedFeatures() {
+  
+  /*
+  ** Test for $CONTAINS support
+  */
+  const moduleId = `getSupportedFeatures()`
+  writeLogEntry(moduleId);
+ 
+  if (supportedFeatures !== null) {
+	 return supportedFeatures
+  }
+  
+  supportedFeatures = { textIndexSupported   : true
+                      , $containsSupported   : true
+                      , $nearSupported       : true
+                      , nullOnEmptySupported : true
+                      }
+				   
+
+  var collectionName = 'TMP_' + uuidv4();
+
+  try {
+    const sodaResponse = await createCollection(constants.DB_LOGGING_DISABLED, collectionName);
+	
+    var indexDef = {
+          name         : "TEST_IDX"
+        , unique       : true
+        , fields       : [{
+            path       : "id"
+          , datatype : "number"
+          , order    : "asc"
+          }]
+        }
+
+	try {
+      await createIndex(constants.DB_LOGGING_DISABLED, collectionName, indexDef);
+	}
+	catch (sodaError) {
+      if (sodaError.status === constants.BAD_REQUEST) {
+        var sodaException = sodaError.details.underlyingCause.error;
+        if (sodaException['o:errorCode'] === 'SQL-00907') {
+          supportedFeatures.nullOnEmptySupported = false;
+		} else {
+		  throw sodaError;
+		}
+      }	
+      else {
+        throw sodaError;
+      }		
+    }	
+
+    var qbe = {id : {"$contains" : 'XXX'}}
+    try {
+      await queryByExample(constants.DB_LOGGING_DISABLED, collectionName, qbe)
+    }
+    catch (sodaError) {
+      if (sodaError.status === constants.BAD_REQUEST) {
+        var sodaException = sodaError.details.underlyingCause.error;
+        if (sodaException.title === 'The field name $contains is not a recognized operator.') {
+          supportedFeatures.$containsSupported = false;
+        }
+		else {
+		  throw sodaError;
+		}
+      }	
+      else {
+        throw sodaError;
+      }		
+    }
+
+    var qbe = {
+          geoCoding          : {
+            $near            : {
+              $geometry        : {
+                 type        : "Point",
+                 coordinates : [-122.12469369777311,37.895215209615884]
+              },
+              $distance      : 5,
+              $unit          : "mile"
+            }
+          } 
+        }
+
+    try {
+      await queryByExample(constants.DB_LOGGING_DISABLED, collectionName, qbe)
+    }
+    catch (sodaError) {
+      if (sodaError.status === constants.BAD_REQUEST) {
+        var sodaException = sodaError.details.underlyingCause.error;
+        // writeLogEntry(moduleId,'Error: ' + JSON.stringify(sodaException));
+        // if (sodaException['o:errorCode'] === 'SODA-02002') {
+        if (sodaException.title === 'The field name $near is not a recognized operator.') {
+          supportedFeatures.$nearSupported = false;
+		} else {
+		  throw sodaError;
+		}
+      }	
+      else {
+        throw sodaError;
+      }		
+    }
+
+    /*
+    ** Create Text Index with language specification (12.2 Format with langauge and dataguide)
+    **
+    ** ToDo : Can we use alternative index metadata if we encounter "DRG-10700: preference does not exist: CTXSYS.JSONREST_ENGLISH_LEXER"
+    **
+    */
+
+    var indexDef = {
+          name      : "FULLTEXT_INDEX"
+        , dataguide : "on"
+        , language  : "english"
+        }
+            
+	try {
+		await createIndex(constants.DB_LOGGING_DISABLED, collectionName, indexDef)
+	}
+	catch (sodaError) {
+	  console.log(sodaError)
+      if ((sodaError.status === constants.FATAL_ERRROR)) {
+        var sodaException = sodaError.details.underlyingCause.error;
+        if (sodaException['o:errorCode'] === 'SQL-29855') {
+          supportedFeatures.textIndexSupported = false;
+		} else {
+		  throw sodaError;
+		}
+      }	
+      else {
+        throw sodaError;
+      }		
+    }
+	
+    await dropCollection(constants.DB_LOGGING_DISABLED, collectionName);
+	
+    writeLogEntry(moduleId,`$contains operator supported:  ${supportedFeatures.$containsSupported}`);
+    writeLogEntry(moduleId,`$near operatator   supported:  ${supportedFeatures.$nearSupported}`);
+    writeLogEntry(moduleId,`Text Index         supported:  ${supportedFeatures.textIndexSupported}`);
+    writeLogEntry(moduleId,`"NULL ON EMPTY"    supported:  ${supportedFeatures.nullOnEmptySupported}`);
+	
+	return supportedFeatures
+  }
+  catch(err) {
+    writeLogEntry(moduleId,`Exception encountered at:\n${err.stack ? err.stack : err}`);
+    throw err;
+  };
+
+}
+
+function getDBDriverName() {
+	
+   return driverName
+   
+}
+
+async function getDocumentContent(sessionState, collectionName, key, binary, etag) {
+
+  const moduleId = `getDocumentContent("${collectionName}","${key}")`;
+
+  const options = { method  : 'GET'
+                  , baseUrl : documentStoreURL
+                  , uri     : getDocumentLink(collectionName,key)
+                  , headers : setHeaders(null, etag)
+                  , time    : true
+                  };
+
+  if (binary) {
+    options.encoding = null;
+  }
+
+  const log = {}
+  const results = await sendRequest(moduleId, sessionState, options, log);
+  writeLogEntry(moduleId,`Returned document in ${results.elapsedTime} ms.`);
+  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);
+}
+
+function addLimitAndFields(queryProperties, limit, fields, includeTotal) {
+
+  if (fields === undefined) {
+    fields = 'all';
+  }
+
+  queryProperties.fields = fields;
+
+  if (limit !== undefined) {
+    queryProperties.limit = limit;
+  }
+
+  if (includeTotal) {
+    queryProperties.totalResults = true;
+  }
+
+  return queryProperties;
+}
+
+async function getCollection(sessionState, collectionName, limit, fields, includeTotal) {
+
+  const moduleId = `getCollection("${collectionName}")`;
+
+  const options = { method  : 'GET'
+                  , baseUrl : documentStoreURL
+                  , uri     : getCollectionLink(collectionName)
+                  , qs      : addLimitAndFields({}, limit, fields, includeTotal)
+                  , headers : setHeaders()
+                  , time    : true
+                  , json    : true
+                  };
+
+  const log = {}
+  const results = await sendRequest(moduleId, sessionState, options, log);
+  writeLogEntry(moduleId,`Returned ${results.body.items.length} documents in ${results.elapsedTime} ms.`);
+  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);    
+}
+
+async function queryByExample(sessionState, collectionName, qbe, limit, fields, includeTotal) {
+
+  const moduleId = `queryByExample("${collectionName}","${JSON.stringify(qbe)}")`;
+  // writeLogEntry(moduleId);
+
+  const options = { method  : 'POST'
+                  , baseUrl : documentStoreURL
+                  , uri     : getCollectionLink(collectionName)
+                  , qs      : addLimitAndFields({action : "query"}, limit, fields, includeTotal)
+                  , json    : qbe
+                  , time    : true
+                  };
+
+  const log = {}
+  const results = await sendRequest(moduleId, sessionState, options, log);
+  writeLogEntry(moduleId,`Returned ${results.body.items.length} documents in ${results.elapsedTime} ms.`);
+  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);    
+}
+
+async function postDocument(sessionState, collectionName, document, contentType) {
+
+  const moduleId = `postDocument("${collectionName}","${contentType}")`;
+  writeLogEntry(moduleId);
+
+  const options = { method  : 'POST'
+                  , baseUrl : documentStoreURL
+                  , uri     : getCollectionLink(collectionName)
+                  , headers : setHeaders(contentType , undefined)
+                  , time    : true
+                  };
+
+  if (contentType === 'application/json') {
+    options.json = document
+  }
+  else {
+    options.body = document
+  }
+
+  const log = {}
+  const results = await sendRequest(moduleId, sessionState, options, log);
+  
+  writeLogEntry(moduleId,`Inserted document in ${results.elapsedTime} ms.`);
+  // Appears BODY is a string when the payload was not JSON
+  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);  
+}
+
+async function bulkInsert(sessionState, collectionName, documents) {
+
+  const moduleId = `bulkInsert("${collectionName}")`;
+  writeLogEntry(moduleId)
+  
+  const options = { method  : 'POST'
+                  , baseUrl : documentStoreURL
+                  , uri     : getCollectionLink(collectionName)
+                  , qs      : {action : 'insert'}
+                  , json    : documents
+                  , time    : true
+                  };
+
+  const log = {}
+  const results = await sendRequest(moduleId, sessionState, options, log);
+  writeLogEntry(moduleId,`Inserted ${results.body.items.length} documents in ${results.elapsedTime} ms. `);
+  return dbLibrary.processHTTPResponse(moduleId, results, log.logRequest);  
+}
+
+async function putDocument(sessionState, collectionName, key, document, contentType, etag) {
+
+  const moduleId = `putDocument("${collectionName}","${key}","${contentType}")`;
+  writeLogEntry(moduleId)
+
+  const options = { method  : 'PUT'
+                  , baseUrl : documentStoreURL
+                  , uri     : getDocumentLink(collectionName,key)
+                  , headers : setHeaders(contentType , etag)
+                  , time    : true
+                  };
+
+  if (contentType === 'application/json') {
+    options.json = document
+  }
+  else {
+    options.body = document
+  }
+
+  const log = {}
+  const results = await sendRequest(moduleId, sessionState, options, log);
+
+  const updateResponse = { id             : key
+                         , etag           : results.headers.etag
+						 , lastModified   : results.headers["last-modified"]
+                         , location       : results.headers.location
+                         }
+						 
+  results.body = dbLibrary.formatSingleInsert(updateResponse)
+  writeLogEntry(moduleId,`Updated document in ${results.elapsedTime} ms.`);
+  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);  
+}
+
+async function deleteDocument(sessionState, collectionName, key, etag) {
+
+  const moduleId = `deleteDocument("${collectionName}","{key}")`;
+  writeLogEntry(moduleId)
+  
+  const options = { method  : 'DELETE'
+                  , baseUrl : documentStoreURL
+                  , uri     : getDocumentLink(collectionName,key)
+                  , headers : setHeaders(undefined, etag)
+                  , time    : true
+                  };
+
+  const log = {}
+  const results = await sendRequest(moduleId, sessionState, options, log);
+  writeLogEntry(moduleId,`Deleted document in ${results.elapsedTime} ms.`);
+  return dbLibrary.processHTTPResponse(moduleId, results, log.logRequest);  
+}
+
+function getIndexMetadata(collectionName) {
+
+  var metadata = collectionMetadata[collectionName];
+  if ((metadata != null) && (metadata.hasOwnProperty('indexes'))) {
+
+    var indexes = JSON.parse(JSON.stringify(metadata.indexes));
+    // Remove disabled Indexes
+    for (var i=0; i < indexes.length; /* i is only incremented when not splicing */  ) {
+      if ((indexes[i].hasOwnProperty('disabled')) && (indexes[i].disabled === true))  {
+        indexes.splice(i,1);
+      }
+      else {
+        delete(indexes[i].disabled);
+        i++;
+      }
+    }
+    return indexes;
+  }
+  return []
+}
+
+async function createIndex(sessionState, collectionName, indexMetadata) {
+
+  const moduleId = `createIndex("${collectionName}","${indexMetadata.name}")`;
+  writeLogEntry(moduleId)
+  
+  // Skip Spatial Indexes in environments where spatial operations on Geo-JSON are not supported
+
+  if ((indexMetadata.spatial) && !supportedFeatures.$nearSupported) {
+    writeLogEntry(moduleId,'Skipped creation of unsupported spatial index')
+    return constants.HTTP_RESPONSE_SUCCESS
+  }
+
+  // Skip Text Indexes in environments where text index syntax is not supported
+
+  if ((indexMetadata.language) && !supportedFeatures.textIndexSupported) {
+    writeLogEntry(moduleId,'Skipped creation of unsupported text index' || indexMetadata.name);
+    return constants.HTTP_RESPONSE_SUCCESS
+  }
+  
+  // Remove the Singleton Key from the index definition if we are in a Pre 12.2 database
+
+  if ((!supportedFeatures.nullOnEmptySupported) && (indexMetadata.fields !== undefined) && (!indexMetadata.scalarRequired))  {
+    indexMetadata.scalarRequired = true;
+  }
+
+  const options = { method  : 'POST'
+                  , baseUrl : documentStoreURL
+                  , uri     : getCollectionLink(collectionName)
+                  , qs      : {action : 'index'}
+                  , json    : indexMetadata
+                  , time    : true
+                  };
+
+  const log = {}
+  const results = await sendRequest(moduleId, sessionState, options, log);
+  writeLogEntry(moduleId,`Index Created in ${results.elapsedTime} ms.`); 
+  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);
+}
+
+function createIndexes(sessionState, collectionName) {
+
+  const moduleId = 'createIndexes("' + collectionName + '")';
+  writeLogEntry(moduleId)
+  
+  var indexes = getIndexMetadata(collectionName);
+  
+  return indexes.reduce(
+    function(sequence, index) {
+      return sequence.then(async function() {
+		try {
+          createIndex(sessionState, collectionName, index);
+        } catch (e) {
+          writeLogEntry(moduleId,'Broken Promise. createCollectionWithIndexes(): ');
+          throw e;
+        }
+	  })
+    },
+    Promise.resolve()
+  )
+}
+
+function collectionExists(e) {
+	
+  return true;
+
+}
+
+async function createCollection(sessionState, collectionName) {
+
+  const moduleId = `createCollection("${collectionName}")`;
+  writeLogEntry(moduleId)
+  
+  const options = { method  : 'PUT'
+                  , baseUrl : documentStoreURL
+                  , uri     : getCollectionLink(collectionName)
+                  , json    : getCollectionMetadata(collectionName)
+                  , time    : true
+                  };
+
+  const log = {}
+  const results = await sendRequest(moduleId, sessionState, options, log);
+  writeLogEntry(moduleId,`Created collection in ${results.elapsedTime} ms.`);
+  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);  
+}
+
+function collectionNotFound(e) {
+
+  if ((e.status) && (e.status === constants.NOT_FOUND)) {
+    if ((e.details) && (e.details.underlyingCause)) {
+	  const sodaError = e.details.underlyingCause
+	  if ((sodaError.statusCode) && (sodaError.statusCode === 404) && (sodaError.error) && (sodaError.error['o:errorCode'] === 'REST-02000')) {
+        return true;
+	  }
+    }
+  }
+  return false;
+}
+
+async function dropCollection(sessionState, collectionName) {
+
+  const moduleId = `dropCollection("${collectionName}")`;
+  writeLogEntry(moduleId)
+  
+  const options = { method  : 'DELETE'
+                  , baseUrl : documentStoreURL
+                  , uri     : getCollectionLink(collectionName)
+                  , time    : true
+                  };
+
+  const log = {}
+  try {
+    const results = await sendRequest(moduleId, sessionState, options, log);
+    writeLogEntry(moduleId,`Dropped collection in ${results.elapsedTime} ms.`); 
+    return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);
+  } catch (e) {
+ 	if (collectionNotFound(e)) {
+      writeLogEntry(moduleId,`NOT-FOUND: ${e.status}. Returning success.`)
+      const logRequest = dbLibrary.createLogRequest(moduleId, sessionState, options)
+      return dbLibrary.processHTTPResponse(moduleId, constants.HTTP_RESPONSE_SUCCESS,  log.logRequest);
+    }
+    writeLogEntry(moduleId,`Exception: ${e.status}`)
+	throw processError(moduleId,log.logRequest,e);	
+  }
+}

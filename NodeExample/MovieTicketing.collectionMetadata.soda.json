@@ -85,8 +85,10 @@
   	},
   	"contentColumn": {
   		"name": "JSON_DOCUMENT",
-  		"sqlType": "VARCHAR2",
-  		"maxLength": 255,
+  		"sqlType": "BLOB",
+  		"compress": "NONE",
+  		"cache": true,
+  		"encrypt": "NONE",
   		"validation": "STANDARD"
   	},
   	"lastModifiedColumn": {

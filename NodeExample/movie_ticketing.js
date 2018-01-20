@@ -13,9 +13,10 @@
  
 "use strict";
 
-var http = require('http');
-var movieAPI = require('./movie_ticket_api.js');
-var cfg = require('./config.js');
+const util = require('util');
+const cfg = require('./config.js');
+const constants = require('./constants.js');
+const movieAPI = require('./movie_ticket_api.js');
 
 module.exports.theatersService               = theatersService;
 module.exports.theaterService                = theaterService;
@@ -37,12 +38,13 @@ module.exports.logRecordsByOperationService  = logRecordsByOperationService
 module.exports.applicationStatusService      = applicationStatusService
 module.exports.updateDataSourcesService      = updateDataSourcesService
                                              
-module.exports.initializeSodaLogging         = initializeSodaLogging;
+module.exports.initializeLogging             = initializeLogging;
 module.exports.setSessionState               = setSessionState;
 
-function writeLogEntry(module,message) {
-    module = ( message === undefined) ? module : module + ": " + message
-  console.log(new Date().toISOString() + ": movieTicketing." + module);
+function writeLogEntry(module,comment) {
+	
+  const message = ( comment === undefined) ? module : module + ": " + comment
+  console.log(new Date().toISOString() + ": movieTicketing." + message);
 }
 
 function dateWithTZOffset(date) {
@@ -73,32 +75,37 @@ function generateGUID(){
     return uuid;
 }
 
-var sodaLoggingDisabled = { sodaLoggingEnabled : false };
-
-function reportStatusCode(response, e, statusCode) {
+function sendStatus(response, e, status, httpStatusCode) {
     
-    if ((e.statusCode) && (e.statusCode === statusCode)) {
-        response.status(e.statusCode);
+    if ((e.status) && (e.status === status)) {
+        response.status(httpStatusCode);bv
         response.end();
         return true;
     }
     return false
 }   
 
+function writeResponse(response, content, operationId) {
+
+  const moduleId = 'writeResponse("' + operationId + '")';
+  // writeLogEntry(moduleId,)
+  
+  response.setHeader('X-SODA-LOG-TOKEN',operationId);
+  response.json(content);
+  response.end();
+}
+
 async function theatersService(sessionState, response, next) {
 
-  var moduleId = 'theatersService()'
+  const moduleId = 'theatersService()'
   writeLogEntry(moduleId);
-
-  let sodaResponse
   
   try {
-    sodaResponse = await movieAPI.getTheaters(sessionState)
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json.items);
-    response.end();
+    const httpResponse = await movieAPI.getTheaters(sessionState);
+    // writeLogEntry(moduleId,"Items.length = " + httpResponse.json.items.length);
+	writeResponse(response,httpResponse.json.items,sessionState.operationId);
   } catch (e) {
-    if (!reportStatusCode(response, e, 404)) {
+    if (!sendStatus(httpResponse, e, constants.NOT_FOUND, 404)) {
       next(e);
     }
   };
@@ -106,17 +113,12 @@ async function theatersService(sessionState, response, next) {
 
 async function theaterService(sessionState, response, next, key) {
 
-  var moduleId = 'theaterService(' + key + ')';
+  const moduleId = 'theaterService(' + key + ')';
   writeLogEntry(moduleId);
 
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.getTheater(sessionState, key)
-    //  writeLogEntry(moduleId,JSON.stringify(sodaResponse));
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json);
-    response.end();
+    const httpResponse = await movieAPI.getTheater(sessionState, key)
+	writeResponse(response,httpResponse.json,sessionState.operationId);
   } catch (e) {
     next(e);
   }
@@ -124,16 +126,12 @@ async function theaterService(sessionState, response, next, key) {
 
 async function theaterByIdService(sessionState, response, next, id) {
 
-  var moduleId = 'theaterByIdService('+ id + ')';
+  const moduleId = 'theaterByIdService('+ id + ')';
   writeLogEntry(moduleId);
   
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.getTheaterById(sessionState, id)
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json.value);
-    response.end();
+    const httpResponse = await movieAPI.getTheaterById(sessionState, id)
+	writeResponse(response,httpResponse.json.value,sessionState.operationId);
   } catch (e){
     next(e);
   };
@@ -142,16 +140,12 @@ async function theaterByIdService(sessionState, response, next, id) {
 
 async function searchTheatersService(sessionState, response, next, qbe) {
 
-  var moduleId = 'searchTheaterService(' + JSON.stringify(qbe) + ')';
+  const moduleId = 'searchTheaterService(' + JSON.stringify(qbe) + ')';
   writeLogEntry(moduleId);
 
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.queryTheaters(sessionState, qbe, 'unlimited')
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json.items);
-    response.end();
+    const httpResponse = await movieAPI.queryTheaters(sessionState, qbe, 'unlimited')
+	writeResponse(response,httpResponse.json.items,sessionState.operationId);
   } catch (e){
     next(e);
   };
@@ -173,16 +167,12 @@ async function locateTheatersService(sessionState, response, next, lat, long, di
     }
   };
 
-  var moduleId = 'locateTheatersService(' + JSON.stringify(qbe) + ')';
+  const moduleId = 'locateTheatersService(' + JSON.stringify(qbe) + ')';
   writeLogEntry(moduleId);
 
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.queryTheaters(sessionState, qbe, 'unlimited')
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json.items);
-    response.end();
+    const httpResponse = await movieAPI.queryTheaters(sessionState, qbe, 'unlimited')
+	writeResponse(response,httpResponse.json.value,sessionState.operationId);
   } catch (e){
     next(e);
   };
@@ -190,23 +180,16 @@ async function locateTheatersService(sessionState, response, next, lat, long, di
 
 async function moviesByTheaterService(sessionState, response, next, id, dateStr) {
 
-  var moduleId = 'moviesByTheaterService(' + id  + ',' + dateStr + ')';
+  const moduleId = 'moviesByTheaterService(' + id  + ',' + dateStr + ')';
   writeLogEntry(moduleId);
-
-  let sodaResponse
-  let moviesByTheater
   
   try {
-    sodaResponse = await movieAPI.getTheater(sessionState, id)
-    var theater = sodaResponse.json;
+    const httpResponse = await movieAPI.getTheater(sessionState, id)
+    const theater = httpResponse.json;
     delete(theater.screens);    
 
-    moviesByTheater = await getMoviesByTheaterAndDate(sessionState,theater,dateStr)
-    // writeLogEntry(moduleId,JSON.stringify(moviesByTheater))     
-
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(moviesByTheater);
-    response.end();
+    const moviesByTheater = await getMoviesByTheaterAndDate(sessionState,theater,dateStr)
+	writeResponse(response,moviesByTheater,sessionState.operationId);
   } catch (e){
     next(e);
   };
@@ -214,18 +197,14 @@ async function moviesByTheaterService(sessionState, response, next, id, dateStr)
 
 async function moviesService(sessionState, response, next) {
 
-  var moduleId = 'moviesService()';
+  const moduleId = 'moviesService()';
   writeLogEntry(moduleId);
 
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.getMovies(sessionState)
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json((sodaResponse.json.items));
-    response.end();
+    const httpResponse = await movieAPI.getMovies(sessionState)
+	writeResponse(response,httpResponse.json.items,sessionState.operationId);
   } catch (e){
-    if (!reportStatusCode(response, e, 404)) {
+    if (!sendStatus(response, e, constants.NOT_FOUND, 404)) {
       next(e);
     }
   };
@@ -233,17 +212,12 @@ async function moviesService(sessionState, response, next) {
 
 async function movieService(sessionState, response, next, key) {
 
-  var moduleId = 'movieService(' + key + ')';
+  const moduleId = 'movieService(' + key + ')';
   writeLogEntry(moduleId);
 
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.getMovie(sessionState, key)
-    //  writeLogEntry(moduleId,JSON.stringify(sodaResponse));
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json);
-    response.end();
+    const httpResponse = await movieAPI.getMovie(sessionState, key)
+	writeResponse(response,httpResponse.json,sessionState.operationId);
   } catch (e) {
     next(e);
   }
@@ -251,18 +225,15 @@ async function movieService(sessionState, response, next, key) {
 
 async function moviesByReleaseDateService(sessionState, response, next) {
 
-  var moduleId = 'moviesByReleaseDateService()';
+  const moduleId = 'moviesByReleaseDateService()';
   writeLogEntry(moduleId);
 
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.moviesByReleaseDateService(sessionState)
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json((sodaResponse.json.items));
-    response.end();
+    const httpResponse = await movieAPI.moviesByReleaseDateService(sessionState)
+    // writeLogEntry(moduleId,"Items.length = " + httpResponse.json.items.length);
+    writeResponse(response,httpResponse.json.items,sessionState.operationId);
   } catch (e){
-    if (!reportStatusCode(response, e, 404)) {
+    if (!sendStatus(response, e, constants.NOT_FOUND, 404)) {
       next(e);
     }
   };
@@ -270,16 +241,12 @@ async function moviesByReleaseDateService(sessionState, response, next) {
 
 async function movieByIdService(sessionState, response, next, id) {
 
-  var moduleId = 'movieByIdService(' + id + ')';
+  const moduleId = 'movieByIdService(' + id + ')';
   writeLogEntry(moduleId);
 
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.getMovieById(sessionState, id)                                   
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json.items[0].value);                                      
-    response.end();                                            
+    const httpResponse = await movieAPI.getMovieById(sessionState, id)                                   
+	writeResponse(response,httpResponse.json.items[0].value,sessionState.operationId);
   } catch (e){
     next(e);
   };
@@ -287,17 +254,12 @@ async function movieByIdService(sessionState, response, next, id) {
 
 async function searchMoviesService(sessionState, response, next, qbe) {
 
-  var moduleId = 'searchMoviesService(' + JSON.stringify(qbe) + ')';
+  const moduleId = 'searchMoviesService(' + JSON.stringify(qbe) + ')';
   writeLogEntry(moduleId);
   
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.queryMovies(sessionState, qbe, 'unlimited')
-    // writeLogEntry(moduleId,JSON.stringify(sodaResponse));
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json.items);
-    response.end();
+    const httpResponse = await movieAPI.queryMovies(sessionState, qbe, 'unlimited')
+	writeResponse(response,httpResponse.json.items,sessionState.operationId);
   } catch (e){
     next(e);
   };
@@ -305,21 +267,14 @@ async function searchMoviesService(sessionState, response, next, qbe) {
 
 async function theatersByMovieService(sessionState, response, next, id, dateStr) {
   
-  var moduleId = 'theatersByMovieService(' + id  + ',' + dateStr + ')';
+  const moduleId = 'theatersByMovieService(' + id  + ',' + dateStr + ')';
   writeLogEntry(moduleId);
   
-  let sodaResponse
-  let theatersByMovie
-  
   try {
-    sodaResponse = await movieAPI.getMovie(sessionState, id)
-    var movie = sodaResponse.json;
-    
-    theatersByMovie = await getTheatersByMovieAndDate(sessionState,movie,dateStr)
-    
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(theatersByMovie);
-    response.end();
+    const httpResponse = await movieAPI.getMovie(sessionState, id)
+    var movie = httpResponse.json;
+    let theatersByMovie = await getTheatersByMovieAndDate(sessionState,movie,dateStr)
+	writeResponse(response,theatersByMovie,sessionState.operationId);
   } catch (e){
     next(e);
   };
@@ -327,16 +282,12 @@ async function theatersByMovieService(sessionState, response, next, id, dateStr)
 
 async function moviesInTheatersService(sessionState, response, next) {
 
-  var moduleId = 'moviesInTheatersService()';
+  const moduleId = 'moviesInTheatersService()';
   writeLogEntry(moduleId);
 
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.getMovies(sessionState)
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json((sodaResponse.json));
-    response.end();
+    const httpResponse = await movieAPI.getMovies(sessionState)
+	writeResponse(response,httpResponse.json,sessionState.operationId);
   } catch (e){
     next(e);
   };
@@ -344,16 +295,13 @@ async function moviesInTheatersService(sessionState, response, next) {
   
 async function bookTicketService(sessionState, response, next, bookingRequest) {
 
-  var moduleId = 'bookTicketService(' + JSON.stringify(bookingRequest) +')';
+  const moduleId = 'bookTicketService(' + JSON.stringify(bookingRequest) +')';
   writeLogEntry(moduleId);
 
-  let sodaResponse
-  
   try {
-    sodaResponse = await bookTickets(sessionState, bookingRequest)
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(bookingStatus);
-    response.end();
+    let bookingStatus = await bookTickets(sessionState, bookingRequest)
+	// console.log(bookingStatus);
+	writeResponse(response,bookingStatus,sessionState.operationId);
   } catch (err) {
     next(err);
   };
@@ -362,31 +310,26 @@ async function bookTicketService(sessionState, response, next, bookingRequest) {
 
 async function screeningService(sessionState, response, next, key) {
 
-  var moduleId = 'screeningService(' + key + ')';
-  writeLogEntry(moduleId);
+  const moduleId = 'screeningService(' + key + ')';
+  // writeLogEntry(moduleId);
 
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.getScreening(sessionState, key)
-    //  writeLogEntry(moduleId,JSON.stringify(sodaResponse));
-    response.setHeader('X-SODA-LOG-TOKEN',sessionState.operationId);
-    response.json(sodaResponse.json);
-    response.end();
+    const httpResponse = await movieAPI.getScreening(sessionState, key)
+	writeResponse(response,httpResponse.json,sessionState.operationId);
   } catch (e) {
     next(e);
   }
 }
 
-async function applicationStatusService(sessionState,response,next) {
+async function applicationStatusService(sessionState, response, next) {
     
-  var moduleId = 'applicationStatusService()';
+  const moduleId = 'applicationStatusService()';
   writeLogEntry(moduleId);
   
   var status = {
         googleKey         : cfg.dataSources.google.apiKey
       , tmdbKey           : cfg.dataSources.tmdb.apiKey
-      , supportedFeatures : movieAPI.getDetectedFeatures()
+      , supportedFeatures : movieAPI.getSupportedFeatures()
       , geocodingService  : cfg.dataSources.geocodingService
       , mappingService    : cfg.dataSources.mappingService
       , movieCount        : 0
@@ -401,18 +344,16 @@ async function applicationStatusService(sessionState,response,next) {
         }
       }
 
-  let sodaResponse
-
   try {  
 
     try {
-      sodaResponse = await movieAPI.getMovies(sodaLoggingDisabled,1,undefined,true)
-      status.movieCount=sodaResponse.json.totalResults;
+      const httpResponse = await movieAPI.getMovies(constants.DB_LOGGING_DISABLED,1,undefined,true)
+	  status.movieCount=httpResponse.json.totalResults;
     } catch (e) {
-      // console.log(e);
-      if ((e.details) && (e.details.statusCode)) {
-        if (e.details.statusCode !== 404) {
-          if (e.details.statusCode !== 400) {
+	  // TODO : This should be caught and handled by the database interface layer !!!
+      if (e.status) {
+        if (e.status !== constants.NOT_FOUND) {
+          if (e.status !== constants.BAD_REQUEST) {
             throw e;
           }
         }
@@ -430,13 +371,14 @@ async function applicationStatusService(sessionState,response,next) {
     }
     
     try {
-      sodaResponse = await movieAPI.getTheaters(sodaLoggingDisabled,1,undefined,true)
-      status.theaterCount=sodaResponse.json.totalResults;
+      const httpResponse = await movieAPI.getTheaters(constants.DB_LOGGING_DISABLED,1,undefined,true)
+	  // writeLogEntry(moduleId,"Theaters:\n" + JSON.stringify(httpResponse," ",2))
+	  // writeLogEntry(moduleId,"Theater Count:" + httpResponse.json.totalResults)
+      status.theaterCount=httpResponse.json.totalResults;
     } catch (e) {
-      // console.log(e);
-      if ((e.details) && (e.details.statusCode)) {
-        if (e.details.statusCode !== 404) {
-          if (e.details.statusCode !== 400) {
+      if (e.status) {
+        if (e.status !== constants.NOT_FOUND) {
+          if (e.status !== constants.BAD_REQUEST) {
             throw e;
           }
         }
@@ -454,13 +396,13 @@ async function applicationStatusService(sessionState,response,next) {
     }
     
     try {
-      sodaResponse = await movieAPI.getScreenings(sodaLoggingDisabled,1,undefined,true)
-      status.screeningCount=sodaResponse.json.totalResults;
+      const httpResponse = await movieAPI.getScreenings(constants.DB_LOGGING_DISABLED,1,undefined,true)
+      status.screeningCount=httpResponse.json.totalResults;
     } catch (e) {
       // console.log(e);
-      if ((e.details) && (e.details.statusCode)) {
-        if (e.details.statusCode !== 404) {
-          if (e.details.statusCode !== 400) {
+      if (e.status) {
+        if (e.status !== constants.NOT_FOUND) {
+          if (e.status !== constants.BAD_REQUEST) {
             throw e;
           }
         }
@@ -478,13 +420,13 @@ async function applicationStatusService(sessionState,response,next) {
     }
     
     try {
-      sodaResponse = await movieAPI.getPosters(sodaLoggingDisabled,1,undefined,true)
-      status.posterCount=sodaResponse.json.totalResults;
+      const httpResponse = await movieAPI.getPosters(constants.DB_LOGGING_DISABLED,1,undefined,true)
+      status.posterCount=httpResponse.json.totalResults;
     } catch (e) {
       // console.log(e);
-      if ((e.details) && (e.details.statusCode)) {
-        if (e.details.statusCode !== 404) {
-          if (e.details.statusCode !== 400) {
+      if (e.status) {
+        if (e.status !== constants.NOT_FOUND) {
+          if (e.status !== constants.BAD_REQUEST) {
             throw e;
           }
         }
@@ -501,10 +443,8 @@ async function applicationStatusService(sessionState,response,next) {
       }
     }
       
-    let centroid
-    
     if (status.theaterCount > 0) {      
-      centroid = await getTheaterCentroid(sodaLoggingDisabled)
+      let centroid = await getTheaterCentroid(constants.DB_LOGGING_DISABLED)
       // writeLogEntry(moduleId','Centroid = ' + JSON.stringify(centroid));
       status.currentPosition = centroid
     }
@@ -512,7 +452,9 @@ async function applicationStatusService(sessionState,response,next) {
     response.json(status);
     response.end();
   } catch (e){
-    writeLogEntry('movieTicketing.applicationStatusService(): Broken Promise.');
+	  
+    writeLogEntry(moduleId,'Broken Promise.');
+	console.log(e)
     next(e);
   };
 
@@ -520,7 +462,7 @@ async function applicationStatusService(sessionState,response,next) {
 
 function updateDataSourcesService(sessionState, response, next, updatedValues) {
     
-  var moduleId = 'applicationStatusService(' + JSON.stringify(updatedValues) + ')';
+  const moduleId = 'updateDataSourcesService(' + JSON.stringify(updatedValues) + ')';
   writeLogEntry(moduleId);
 
   try {
@@ -534,23 +476,21 @@ function updateDataSourcesService(sessionState, response, next, updatedValues) {
        
 async function getTheaterCentroid(sessionState) {
     
-  var moduleId = 'getTheaterCentroid()';
-  
-  let sodaResponse
+  const moduleId = 'getTheaterCentroid()';
   
   try {
-    sodaResponse = await movieAPI.getTheaters(sessionState)
+    const httpResponse = await movieAPI.getTheaters(sessionState)
         
     var boundsBox = {
         latitude  : [ 360, -360 ],
         longitude : [ 360, -360 ]
     }
     
-    for (var i=0; i < sodaResponse.json.items.length; i++) {
-      if (sodaResponse.json.items[i].value.location.geoCoding.coordinates) {
+    for (var i=0; i < httpResponse.json.items.length; i++) {
+      if (httpResponse.json.items[i].value.location.geoCoding.coordinates) {
 
-        var latitude = sodaResponse.json.items[i].value.location.geoCoding.coordinates[0]
-        var longitude = sodaResponse.json.items[i].value.location.geoCoding.coordinates[1]
+        var latitude = httpResponse.json.items[i].value.location.geoCoding.coordinates[0]
+        var longitude = httpResponse.json.items[i].value.location.geoCoding.coordinates[1]
        
         if (latitude < boundsBox.latitude[0]) {
             boundsBox.latitude[0] = latitude;
@@ -578,71 +518,76 @@ async function getTheaterCentroid(sessionState) {
 
     return centroid;
   } catch (e) {
-    writeLogEntry('movieTicketing.getTheaterCentroid(): Broken Promise.');
+    writeLogEntry(moduleId,'Broken Promise');
+	throw e;
   };
     
 }
 
 async function bookTickets(sessionState, bookingRequest) {
 
+  const moduleId = 'bookTickets(' + JSON.stringify(bookingRequest) + ')';
+  // writeLogEntry(moduleId);
+
   var key           = bookingRequest.key;
-  var eTag          = null;
+  var etag          = null;
   var screening     = {}
   var seatsRequired = bookingRequest.adult + bookingRequest.senior + bookingRequest.child;
   
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.getScreening(sessionState, key)
-    eTag = sodaResponse.eTag;
-    screening = sodaResponse.json;
-      if (screening.seatsRemaining < seatsRequired) {
-        return {
-          status : 'SoldOut', 
-          message : 'Only ' + screening.seatsRemaining + ' seats are available for this performance.'
+    let httpResponse = await movieAPI.getScreening(sessionState, key)
+    etag = httpResponse.etag;
+    screening = httpResponse.json;
+
+    if (screening.seatsRemaining < seatsRequired) {
+      return {
+        status : "SoldOut", 
+        message : "Only " + screening.seatsRemaining + " seats are available for this performance."
       };
     }
     else {
       screening.seatsRemaining = screening.seatsRemaining - seatsRequired;
       try {
-        sodaResponse = await movieAPI.updateScreening(sessionState, key, screening, eTag)
-        switch (sodaResponse.statusCode) {
-          case 200: // Seat Reserved : Record Ticket Sale
+        httpResponse = await movieAPI.updateScreening(sessionState, key, screening, etag)
+        switch (httpResponse.status) {
+          case constants.SUCCESS: // Seat Reserved : Record Ticket Sale
             var ticketSale = makeTicketSale(bookingRequest, screening);
             try {
-              sodaResponse = await movieAPI.insertTicketSale(sessionState, ticketSale)
-              switch (sodaResponse.statusCode) {
-                case 201: // Booking Completed
+              httpResponse = await movieAPI.insertTicketSale(sessionState, ticketSale)
+              switch (httpResponse.status) {
+                case constants.CREATED: // Booking Completed
                   return { 
                     status  : "Booked",
                     message : "Please enjoy your movie."
                   }
                 default:
-                  throw sodaResponse;
+                  throw httpResponse;
               }
             } catch (err) {
               throw err;     
             }
           default:
-            throw sodaResponse;
+            throw httpResponse;
         }
       } catch (err) {
-        switch (err.statusCode) {
-          case 412: // Conflicting Ticket Sales : Try again
+        switch (err.status) {
+          case constants.CONFLICTING_UPDATE: // Conflicting Ticket Sales : Try again
             return bookTickets(sessionState,bookingRequest) 
           default:
             throw err;
         }
       }
     }
-  } catch (err) {
+
+	} catch (err) {
+	console.log(err)
     throw err;     
   }
 }
 
-async function processScreeningsByTheaterAndDate(sessionState,sodaResponse) {
+async function processScreeningsByTheaterAndDate(sessionState,httpResponse) {
   
-  var moduleId = 'processScreeningsByTheaterAndDate(sodaResponse.json.items[' + sodaResponse.json.items.length + '])';
+  const moduleId = 'processScreeningsByTheaterAndDate(httpResponse.json.items[' + httpResponse.json.items.length + '])';
   // writeLogEntry(moduleId);
   
   var movies = [];
@@ -713,14 +658,13 @@ async function processScreeningsByTheaterAndDate(sessionState,sodaResponse) {
   // Transform the screenings into an array of Movies with the Screening information for each movie attached.
   
  
-  sodaResponse.json.items.map(addScreeningDetails);
+  httpResponse.json.items.map(addScreeningDetails);
 
   if (movies.length > 0) {
-	let sodaResponse
   
     try {
-      sodaResponse = await getMovieDetails(movies.map(getMovieIdList))
-      sodaResponse.json.items.map(processMovie);
+      const httpResponse = await getMovieDetails(movies.map(getMovieIdList))
+      httpResponse.json.items.map(processMovie);
       return movies
     } catch (e){
       writeLogEntry(moduleId, 'Broken Promise');
@@ -734,8 +678,8 @@ async function processScreeningsByTheaterAndDate(sessionState,sodaResponse) {
 
 async function getMoviesByTheaterAndDate(sessionState,theater, date) {
 
-  var moduleId = 'getMoviesByTheaterAndDate(' + theater.id + ',' + date + ')';
-  // writeLogEntry(moduleId);
+  const moduleId = 'getMoviesByTheaterAndDate(' + theater.id + ',' + date + ')';
+  writeLogEntry(moduleId);
   
   var moviesByTheater = { 
     'theater' : theater,
@@ -755,21 +699,18 @@ async function getMoviesByTheaterAndDate(sessionState,theater, date) {
   endDate.setMilliseconds(0);
   endDate.setDate(endDate.getDate() + 1);
   
-  var qbe = { theaterId : theater.id, startTime : { "$gte" : startDate, "$lt" : endDate }, "$orderby" : { screenId : 1, startTime : 2}};
-
-  let sodaResponse
-  let movies
+  var qbe = { theaterId : theater.id, startTime : { "$gte" : startDate, "$lt" : endDate }, "$orderby" : { screenId : 1, startTime : 1}};
   
-  sodaResponse = await  movieAPI.queryScreenings(sessionState, qbe, 'unlimited')
-  movies = await processScreeningsByTheaterAndDate(sessionState,sodaResponse)
+  const httpResponse = await  movieAPI.queryScreenings(sessionState, qbe, 'unlimited')
+  let movies = await processScreeningsByTheaterAndDate(sessionState,httpResponse)
   moviesByTheater.movies = movies;
   return moviesByTheater;
 
 }
   
-async function processScreeningsByMovieAndDate(sessionState,sodaResponse) {
+async function processScreeningsByMovieAndDate(sessionState,httpResponse) {
   
-  var moduleId = 'processScreeningsByMovieAndDate(sodaResponse.json.items[' + sodaResponse.json.items.length + '])';
+  const moduleId = 'processScreeningsByMovieAndDate(httpResponse.json.items[' + httpResponse.json.items.length + '])';
   // writeLogEntry(moduleId);
   
   var theaters = [];
@@ -840,13 +781,12 @@ async function processScreeningsByMovieAndDate(sessionState,sodaResponse) {
 
   // Transform the screenings into an array of Theaters with the Screening information for each theater attached.
   
-  sodaResponse.json.items.map(addScreeningDetails);
+  httpResponse.json.items.map(addScreeningDetails);
   
   if (theaters.length > 0) {
-    let sodaResponse
     try {
-      sodaResponse = await getTheaterDetails(theaters.map(getTheaterIdList))
-      sodaResponse.json.items.map(processTheater);
+      const httpResponse = await getTheaterDetails(theaters.map(getTheaterIdList))
+      httpResponse.json.items.map(processTheater);
       return theaters
     } catch (e){
       writeLogEntry(moduleId, 'Broken Promise');
@@ -861,7 +801,7 @@ async function processScreeningsByMovieAndDate(sessionState,sodaResponse) {
   
 async function getTheatersByMovieAndDate(sessionState,movie, date) {
 
-  var moduleId = 'getTheatersByMovieAndDate(' + movie.id + ',' + date + ')';
+  const moduleId = 'getTheatersByMovieAndDate(' + movie.id + ',' + date + ')';
   // writeLogEntry(moduleId);
 
   var theatersByMovie = { 
@@ -883,13 +823,11 @@ async function getTheatersByMovieAndDate(sessionState,movie, date) {
   endDate.setMilliseconds(0);
   endDate.setDate(endDate.getDate() + 1);
 
-  var qbe = { movieId : movie.id, startTime : { "$gte" : startDate, "$lt" : endDate } , "$orderby" : { screenId : 1, startTime : 2}};
+  var qbe = { movieId : movie.id, startTime : { "$gte" : startDate, "$lt" : endDate } , "$orderby" : { screenId : 1, startTime : 1}};
+  // var qbe = { movieId : movie.id, startTime : { "$gte" : startDate, "$lt" : endDate }}
 
-  let sodaResponse
-  let theaters
-  
-  sodaResponse = await movieAPI.queryScreenings(sessionState, qbe, 'unlimited')
-  theaters = await processScreeningsByMovieAndDate(sessionState,sodaResponse)
+  const httpResponse = await movieAPI.queryScreenings(sessionState, qbe, 'unlimited')
+  let theaters = await processScreeningsByMovieAndDate(sessionState,httpResponse)
   theatersByMovie.theaters = theaters;
   return theatersByMovie;
 
@@ -913,20 +851,17 @@ function makeTicketSale(bookingRequest, screening) {
 
 async function posterService(sessionState, response, next, key) {
 
-  var moduleId = 'posterService(' + key + ')';
+  const moduleId = 'posterService(' + key + ')';
   // writeLogEntry(moduleId);
   
-  var sessionState = sodaLoggingDisabled;
-  
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.getPoster(sessionState, key)
-    response.setHeader('content-type',sodaResponse.contentType);
-    // response.setHeader('content-length', Buffer.byteLength(sodaResponse.body));
-    // writeLogEntry(moduleId,'Image Size = ' + Buffer.byteLength(sodaResponse.body));
-    // response.end(sodaResponse.body,'binary');
-    response.write(sodaResponse.body);
+    const httpResponse = await movieAPI.getPoster(constants.DB_LOGGING_DISABLED, key)
+    writeLogEntry(moduleId,`ContentType: ${httpResponse.contentType}. Poster length ${Buffer.byteLength(httpResponse.body)} bytes.`);
+    response.setHeader('content-type',httpResponse.contentType);
+    // response.setHeader('content-length', Buffer.byteLength(httpResponse.body));
+    // writeLogEntry(moduleId,'Image Size = ' + Buffer.byteLength(httpResponse.body));
+    // response.end(httpResponse.body,'binary');
+    response.write(httpResponse.body);
     response.end();
   } catch (e) {
     next(e);
@@ -935,10 +870,10 @@ async function posterService(sessionState, response, next, key) {
 
 function setSessionState(cookies,sessionState) {
 
-  if (!sessionState.sodaSessionId) {
-    sessionState.sodaSessionId = cookies.movieTicketGUID;
+  if (!sessionState.sessionId) {
+    sessionState.sessionId = cookies.movieTicketGUID;
     sessionState.operationId = cookies.operationId;
-    sessionState.sodaLoggingEnabled = true;
+    sessionState.dbLoggingEnabled = true;
     sessionState.logCollectionName = null;
   }
 
@@ -947,21 +882,19 @@ function setSessionState(cookies,sessionState) {
 
 }
 
-function initializeSodaLogging(sessionState) {
-  return movieAPI.initializeSodaLogging(sessionState);
+function initializeLogging(sessionState) {
+  return movieAPI.initializeLogging(sessionState);
 }
 
 async function logRecordsByOperationService(sessionState, response, next, id) {
 
-  var moduleId = 'logRecordsByOperationService(' + id + ')';
+  const moduleId = 'logRecordsByOperationService(' + id + ')';
   // writeLogEntry(moduleId);
                                  
-  let sodaResponse
-  
   try {
-    sodaResponse = await movieAPI.getLogRecordByOperationId(id)
-    // writeLogEntry(moduleId,JSON.stringify(sodaResponse.json))
-    response.json(sodaResponse.json.items);                                      
+    const httpResponse = await movieAPI.getLogRecordByOperationId(id)
+    // writeLogEntry(moduleId,JSON.stringify(httpResponse.json))
+    response.json(httpResponse.json.items);                                      
     response.end();                                            
   } catch (e){
     next(e);

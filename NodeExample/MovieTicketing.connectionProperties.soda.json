@@ -2,7 +2,7 @@
   "protocol": "http",
   "hostname": "localhost",
   "port": 8080,
-  "path": "/ords/movies/soda/latest",
+  "path": "ords/movies/soda/latest",
   "authMethod": "Basic",
   "username": "MovieTicketing",
   "password": "MovieTicketing",

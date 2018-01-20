@@ -14,30 +14,29 @@
 "use strict";
 
 const path = require('path');
-var http = require('http');
-var express = require('express');
-var cookieParser = require('cookie-parser');
-var session = require('express-session');
-var morgan = require('morgan');
-var bodyParser = require('body-parser');
-var routes = require('./routes.js');
-var serveStatic = require('serve-static');
-var sodaRest = require('./soda-rest.js');
-var externalInterfaces = require('./external_interfaces.js');
+const http = require('http');
+const express = require('express');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const morgan = require('morgan');
+const bodyParser = require('body-parser');
+const routes = require('./routes.js');
+const serveStatic = require('serve-static');
+const errorLibrary = require('./error_library.js');
 
-var app;
+const app  = express();
 
-function writeLogEntry(module,message) {
-  module = ( message === undefined) ? module : module + ": " + message
-  console.log(new Date().toISOString() + ": index." + module);
+function writeLogEntry(module,comment) {
+	
+  const message = ( comment === undefined) ? module : module + ": " + comment
+  console.log(new Date().toISOString() + ": index." + message);
 }
 
 function initApp() {
 
-  var moduleId = 'initApp()';
+  const moduleId = 'initApp()';
 
   var port = process.env.PORT || 3000;
-  app = express();
   
   var httpServer = http.Server(app);
 
@@ -69,18 +68,27 @@ function initApp() {
 }
 
 function handleError(err, req, res, next) {
-  console.error('MovieTicketing : Operation Failed:');
-  console.error( err.stack ? err.stack : err);
-  if ((err instanceof sodaRest.SodaError) || (err instanceof externalInterfaces.ExternalError)) {
-    console.error(JSON.stringify(err));
-    // console.error(JSON.stringify(err.details))
+  console.log('MovieTicketing : Operation Failed:');
+  console.log( err.stack ? err.stack : err);
+  if ((err instanceof errorLibrary.GenericException) || (err instanceof errorLibrary.ExternalError)) {
+    console.log(JSON.stringify(err," ",2));
+    // console.log(JSON.stringify(err.details))
   } 
   res.status(500).send({message: 'An error has occurred, please contact support if the error persists'});
+  res.end();
 }
 
 process.on('unhandledRejection', (reason, p) => {
-  console.log("Unhandled Rejection at: Promise ", p, " reason: ", reason);
+  console.log("Unhandled Rejection:\nPromise:\n ", p, "\nReason:");
   // application specific logging, throwing an error, or other logic here
+  if ((reason instanceof errorLibrary.GenericException) || (reason instanceof errorLibrary.ExternalError)) {
+    console.log(JSON.stringify(reason," ",2));
+    // console.log(JSON.stringify(err.details))
+  } 
+  else {
+	console.log(reason);
+  }
+  
 });
 
 initApp();

@@ -13,94 +13,77 @@
  
 "use strict";
 
-var express = require('express');
-var cookieParser = require('cookie-parser');
-var movieTicketing = require('./movie_ticketing.js');
-var externalInterfaces = require('./external_interfaces.js');
+const express = require('express');
+const cookieParser = require('cookie-parser');
+const movieTicketing = require('./movie_ticketing.js');
+const externalInterfaces = require('./external_interfaces.js');
 
 function setSessionId(cookies,sessionState) {
-	movieTicketing.setSessionState(cookies,sessionState);
+  
+  movieTicketing.setSessionState(cookies,sessionState);
 
 }
 
 function initializeSodaLogging(sessionState) {
-  movieTicketing.initializeSodaLogging(sessionState)
-	sessionState.save();
+  
+  movieTicketing.initializeLogging(sessionState)
+  sessionState.save();
+
 }
 
 function getRouter() {
-    var router = express.Router();
+
+  const router = express.Router();
     
-		router.use(function initalizeSession(req, res, next) {
-			setSessionId(req.cookies,req.session);
-			initializeSodaLogging(req.session);
-  		next();
-		});
+  router.use(function initalizeSession(req, res, next) {
+    setSessionId(req.cookies,req.session);
+    initializeSodaLogging(req.session);
+    next();
+  });
 
-    router.route('/theaters')
-        .get(getTheaters);
+  router.route('/theaters').get(getTheaters);
 
-    router.route('/theaters/:key')
-        .get(getTheaters);
+  router.route('/theaters/:key').get(getTheaters);
 
-    router.route('/theaters/id/:id')
-        .get(getTheaterById);
+  router.route('/theaters/id/:id').get(getTheaterById);
 
-    router.route('/theaters/search/qbe')
-        .post(searchTheaters);
+  router.route('/theaters/search/qbe').post(searchTheaters);
 
-    router.route('/theaters/:id/movies/:date')
-        .get(getMoviesByTheater);
+  router.route('/theaters/:id/movies/:date').get(getMoviesByTheater);
 
-    router.route('/theaters/latitude/:latitude/longitude/:longitude/distance/:distance')
-        .get(getTheatersByLocation);
+  router.route('/theaters/latitude/:latitude/longitude/:longitude/distance/:distance').get(getTheatersByLocation);
 
-    router.route('/movies')
-        .get(getMovies);
+  router.route('/movies').get(getMovies);
 
-    router.route('/movies/:key')
-        .get(getMovies);
+  router.route('/movies/:key').get(getMovies);
 
-    router.route('/movies/id/:id')
-        .get(getMovieById);
+  router.route('/movies/id/:id').get(getMovieById);
 
-    router.route('/movies/search/qbe')
-        .post(searchMovies);
+  router.route('/movies/search/qbe').post(searchMovies);
 
-    router.route('/movies/:id/theaters/:date')
-        .get(getTheatersByMovie);
+  router.route('/movies/:id/theaters/:date').get(getTheatersByMovie);
 
-    router.route('/screenings/:key')
-        .get(getScreenings);
+  router.route('/screenings/:key').get(getScreenings);
 
-    router.route('/bookTickets')
-        .post(postBookTicket);
+  router.route('/bookTickets').post(postBookTicket);
 
-    router.route('/poster/:key')
-        .get(getPoster);
+  router.route('/poster/:key').get(getPoster);
 
-    router.route('/config/loadMovies')
-        .get(getLoadMovies);
+  router.route('/config/loadMovies').get(getLoadMovies);
 
-    router.route('/config/loadTheaters')
-        .get(getLoadTheaters);
+  router.route('/config/loadTheaters').get(getLoadTheaters);
 
-    router.route('/config/loadScreenings')
-        .get(getLoadScreenings);
+  router.route('/config/loadScreenings').get(getLoadScreenings);
 
-    router.route('/config/loadPosters')
-        .get(getLoadPosters);
+  router.route('/config/loadPosters').get(getLoadPosters);
 
-    router.route('/application/status')
-        .get(getApplicationStatus);
+  router.route('/application/status').get(getApplicationStatus);
 
-    router.route('/application/dataSources')
-        .post(postDataSources);
+  router.route('/application/dataSources').post(postDataSources);
 
-    router.route('/movieticketlog/operationId/:id')
-        .get(getLogRecordsByOperation);
+  router.route('/movieticketlog/operationId/:id').get(getLogRecordsByOperation);
 
-    return router;
+  return router;
 }
 
 module.exports.getRouter = getRouter;
@@ -136,7 +119,7 @@ function getMoviesByTheater(req, res, next) {
 
 function getMovies(req, res, next) {
   if (req.params.key) {
-	  movieTicketing.movieService(req.session, res, next, req.params.key);
+      movieTicketing.movieService(req.session, res, next, req.params.key);
   }
   else {
     // movieTicketing.moviesService(req.session, res, next);
@@ -166,7 +149,7 @@ function getPoster(req, res, next) {
   movieTicketing.posterService(req.session, res, next, req.params.key);
 }
 function postBookTicket(req, res, next) {
-	movieTicketing.bookTicketService(req.session, res, next, req.body)
+  movieTicketing.bookTicketService(req.session, res, next, req.body)
 }
 
 function getLoadMovies(req, res, next) {
@@ -174,15 +157,15 @@ function getLoadMovies(req, res, next) {
 }
 
 function getLoadTheaters(req, res, next) {
-	externalInterfaces.loadTheaters(req.session, res, next)
+  externalInterfaces.loadTheaters(req.session, res, next)
 }
 
 function getLoadScreenings(req, res, next) {
-	externalInterfaces.loadScreenings(req.session, res, next)
+  externalInterfaces.loadScreenings(req.session, res, next)
 }
 
 function getLoadPosters(req, res, next) {
-	externalInterfaces.loadPosters(req.session, res, next)
+  externalInterfaces.loadPosters(req.session, res, next)
 }
 
 function getLogRecordsByOperation(req, res, next) {
@@ -194,5 +177,5 @@ function getApplicationStatus(req, res, next) {
 }
 
 function postDataSources(req, res, next) {
-	movieTicketing.updateDataSourcesService(req.session, res, next, req.body)
+  movieTicketing.updateDataSourcesService(req.session, res, next, req.body)
 }

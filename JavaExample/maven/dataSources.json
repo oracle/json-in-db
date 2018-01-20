@@ -16,7 +16,7 @@
       "popularity": 2,
       "releaseDates": {
         "start": "2013-01-01",
-        "end": "2016-06-30"
+        "end": "2018-01-30"
       },
       "movieLimit": 1024
     },
@@ -47,5 +47,11 @@
     },
     "apiKey": "YOUR_GOOGLE_KEY_GOES_HERE"
   },
-  "geocodingService": "none"
+  "geocodingService": "none",
+  "emulate": true,
+  "emulation": {
+    "theaters": "emulation/theaterList.json",
+    "movies": "emulation/movieList.json",
+    "screenings": "emulation/screenings.json"
+  }
 }

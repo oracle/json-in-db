@@ -13,22 +13,24 @@
  
 "use strict";
 
-var http = require('http');
-var request = require('request');
-var url = require('url');
-var cfg = require('./config.js');
-var xmlParser = require('xml2js').Parser();
-var movieAPI = require('./movie_ticket_api.js');
-var usAddressParser = require('parse-address');
-var googleMapsClient = require('@google/maps').createClient({key: cfg.dataSources.google.apiKey});
-var fs = require('fs');
+const http = require('http');
+const request = require('request-promise-native');
+const url = require('url');
+const cfg = require('./config.js');
+const xmlParser = require('xml2js').Parser();
+const movieAPI = require('./movie_ticket_api.js');
+const usAddressParser = require('parse-address');
+const googleMapsClient = require('@google/maps').createClient({key: cfg.dataSources.google.apiKey});
+const fs = require('fs');
+const errorLibrary = require('./error_library.js');
+const constants = require('./constants.js');
 
-module.exports.ExternalError     = ExternalError;
 module.exports.loadTheaters      = loadTheaters;
 module.exports.loadMovies        = loadMovies;
 module.exports.loadScreenings    = loadScreenings;
 module.exports.loadPosters       = loadPosters;
 
+const DEFAULT_RETRY_COUNT = 0
 
 function timeout(duration) {
   return new Promise(
@@ -43,26 +45,14 @@ function timeout(duration) {
 			 )
 };
 
-function writeLogEntry(module,message) {
-    module = ( message === undefined) ? module : module + ": " + message
-  console.log(new Date().toISOString() + ": externalInterfaces." + module);
+function writeLogEntry(module,comment) {
+	
+  const message = ( comment === undefined) ? module : module + ": " + comment
+  console.log(new Date().toISOString() + ": externalInterfaces." + message);
 }
-
-function ExternalError(details) {
-  this.name    = 'ExternalError';
-  this.message = 'Unexpected error while accessing external data source:';
-  this.stack   = details.cause.stack;
-  this.details = details
-}
-
-ExternalError.prototype = Object.create(Error.prototype);
-ExternalError.prototype.constructor = ExternalError;
 
 // var engagementStartDate = new Date(cfg.dataSources.engagementStartDate)
 // var engagementEndDate = new Date(cfg.dataSources.engagementEndDate)
-
-var sodaLoggingDisabled = { sodaLoggingEnabled : false };
-var sodaLoggingState    = sodaLoggingDisabled;
 
 function dateWithTZOffset(date) {
   var tzo = -date.getTimezoneOffset()
@@ -82,142 +72,209 @@ function dateWithTZOffset(date) {
        + ':' + pad(tzo % 60);
 }
 
+function generateSummary(documents) {
+	
+	return { documentCount : documents.length, firstDocument: documents[0], lastDocument : documents[documents.length-1]}
+
+}
+
 function getRandomBetweenValues(low,high) {
   return Math.floor(Math.random() * (high-low) + low);
 }   
 
-function getExternalError(moduleName,path,e) {
-    
-    // writeLogEntry('getExtenalError',moduleName)
-    var details = { 
-    module         : moduleName,
-    requestOptions : path,
-    cause          : e
-  }
-  
-  writeLogEntry(JSON.stringify(details));
-  return new ExternalError(details);
-  
-}
-function processResponse(moduleName, requestOptions, httpResponse, body, resolve, reject) {
-    
-    var moduleId = 'processResponse("' + moduleName + '","' + httpResponse.contentType + '","' + typeof body + '")'
+function formatBody(invokerId,body,contentType) {
 
-  var response = {
-    module         : moduleName
-  , requestOptions : requestOptions
-  , statusCode     : httpResponse.statusCode
-  , statusText     : http.STATUS_CODES[httpResponse.statusCode]
-  , contentType    : httpResponse.headers["content-type"]
-  , headers        : httpResponse.headers
-  , elapsedTime    : httpResponse.elapsedTime
-  }
+  const moduleId = invokerId + ".formatBody(" + typeof body + "," + contentType + ")"
+
+  let result = {}
  
-  if ((body !== undefined) && (body !== null)) {
-    if (response.contentType.startsWith("application/json")) {
-          // writeLogEntry(moduleId);
-        if (typeof body === 'object') {
-            response.json = body
-        }
-        else {
-            try {
-                response.json = JSON.parse(body);
-          }
-          catch (e) {
-                response.body = body;
-            }
-        }
-        }
-        else {
-          // writeLogEntry(moduleId,'Body length = ' + Buffer.byteLength(body));    
-            response.body = body;
-        }
+  if (((body !== undefined) && (body !== null)) && ((contentType !== undefined) && (contentType.startsWith("application/json")))) {
+    // writeLogEntry(moduleId,'Type = ' + typeof body);
+    if (typeof body === 'object') {
+      result = { json : body }
+    }
+    else {
+      try {
+        result = { json : JSON.parse(body) }
+      } catch (e) {
+        result = { body : body }
+      }
+    }
+  }
+  else {
+    // writeLogEntry(moduleId,'Returning Binary Content: Byte Length = ' + Buffer.byteLength(httpResponse.body));
+    result = { body : body } ;
   }
 
-    if ((httpResponse.statusCode === 200) || (httpResponse.statusCode === 201)) {
-        resolve(response);
-    }
+  return result
+  
+}
+
+function interpetStatusCode(statusCode) {
+	
+  switch (statusCode) {
+    case 200: 
+	  return constants.SUCCESS
+	case 201:
+	  return constants.CREATED
+	case 400:
+	  return constants.BAD_REQUEST
+	case 404:
+	  return constants.NOT_FOUND
+	case 412:
+	  return constants.CONFLICTING_UPDATE
+	case 500:
+	  return constants.FATAL_ERRROR
+	  break;
+	default:
+	  return constants.UNKNOWN_ERROR
+  }
+
+}
+
+function processError(invokerId, error) {
+
+  const moduleId = invokerId + '.processError()';
+  // writeLogEntry(moduleId,JSON.stringify(e))
+
+  var details = {
+        module           : invokerId
+      // , request          : options
+      // , stack            : callStack
+	  // , response         : response
+      , underlyingCause  : error
+      // , statusCode       : e.statusCode 
+      }
+ 
+  return new errorLibrary.GenericException('EXT-DATA-SOURCE' + ": Unexpected exception encountered",details)
+  
+}
+  
+function formatResponse(invokerId, httpResponse) {
+
+  const moduleId = invokerId + '.formatResponse("' + httpResponse.statusCode + '")';
+  // writeLogEntry(moduleId);
+  
+  if ((httpResponse.statusCode === 200) || (httpResponse.statusCode === 201)) {
+	
+	const response =  { module         : invokerId
+                      , elapsedTime    : httpResponse.elapsedTime
+                      , status         : interpetStatusCode(httpResponse.statusCode)
+                 	  , contentType    : httpResponse.headers["content-type"]
+					  , headers        : httpResponse.headers
+                      }
+	
+    Object.assign(response, formatBody(moduleId,httpResponse.body,response.contentType))
+
+    return response
+  }
   else {
-    response.cause = new Error()
-    reject(new ExternalError(response));
+	const error =  { status         : interpetStatusCode(httpResponse.statusCode)
+	               , httpResponse   : httpResponse
+                   // , requestStack   : logRequest.logEntry.stack
+                   // , httpRequest    : logRequest.logEntry.request
+	               }
+
+   throw processError(moduleId,error);
   }
 }
-    
-function generateRequest(moduleId, cfg, requestOptions) {
 
-    if (cfg.dataSources.useProxy) {
-        requestOptions.proxy = 'http://' + cfg.dataSources.proxy.hostname + ':' + cfg.dataSources.proxy.port
-    }
+async function generateRequest(invokerId, options, retryCount) {
+
+  const moduleId = invokerId + '.generateRequest("' + options.method + '","' + options.uri + '")';
+  // writeLogEntry(moduleId);
   
-  return new Promise(function(resolve, reject) {
-    request(requestOptions, function(error, response, body) {
-        if (error) {
-          reject(getExternalError(moduleId,requestOptions,error));
-            }
-            else {
-              processResponse(moduleId, requestOptions, response, body, resolve, reject);
-            }
-        });
-  });
+  options.resolveWithFullResponse = true
+  options.simple = true
+ 
+  if (cfg.dataSources.useProxy) {
+    options.proxy = 'http://' + cfg.dataSources.proxy.hostname + ':' + cfg.dataSources.proxy.port
+  }
+  
+  try {	
+    const response = await request(options)
+	// writeLogEntry(moduleId,"Response:\n" + JSON.stringify(response," ",2))
+	// writeLogEntry(moduleId,"Success : HTTP statusCode = " + response.statusCode);
+    return formatResponse(moduleId, response) 
+  } catch (e) {
+    if (retryCount < 0) {
+	  retryCount++
+      writeLogEntry(moduleId,"Unexpected Error : Retry [" + retryCount + "]")
+	  return generateRequest(invokerId, options,retryCount)
+	}
+	// writeLogEntry(moduleId,"Exception:\n" + JSON.stringify(e," ",2));
+	throw processError(moduleId,e);
+  }    					 
 }
 
 async function loadTheaters (sessionState, response, next) {
 
-  var moduleId = 'loadTheaters';
+  const moduleId = 'loadTheaters(' + cfg.dataSources.emulate + ')';
   writeLogEntry(moduleId);
 
-  /* Disable Soda Logging */  
-  var sessionState = sodaLoggingState;
-
-  var theaterList = [];
-  var status = {}
-    
-  let theaters;
-  let sodaResponse;
-
+  let theaterList = []
   try {  
-    theaters = await getTheaterInformation()
-    theaterList = theaters;
-    // fs.writeFileSync('theaterList.json',JSON.stringify(theaterList,null,2));
-    sodaResponse = await movieAPI.recreateLoadIndexTheaters(sessionState,theaterList);
-    status = { count : theaterList.length};
-    sodaResponse = await movieAPI.dropScreeningCollection(sessionState)
-    response.json(status)
-    response.end('')
+    response.write('{"status":[') 
+    if (cfg.dataSources.emulate) {
+      theaterList = JSON.parse(fs.readFileSync(cfg.dataSources.emulation.theaters));
+	}
+	else {
+      theaterList = await getTheaterInformation(constants.DB_LOGGING_DISABLED)
+      // fs.writeFileSync(cfg.dataSources.emulation.theaters,JSON.stringify(theaterList,null,2));
+    }
+    response.write('],');
+    let httpResponse = await movieAPI.recreateLoadTheaterCollection(sessionState,theaterList);
+    // writeLogEntry(moduleId,"Response:\n" + JSON.stringify(httpResponse," ",2));
+    // writeLogEntry(moduleId,"count = " + httpResponse.json.count);
+    response.write('"count":' + httpResponse.json.count);
+    response.write('}');
+    httpResponse = await movieAPI.dropScreeningCollection(sessionState)
+    response.end()
   } catch(e) {
-    movieAPI.logError(e,theaterList);
+    movieAPI.logError(e,generateSummary(theaterList));
     next(e)
   };
 } 
 
 async function loadMovies(sessionState, response, next) {
 
-  var moduleId = 'loadMovies';
+  const moduleId = 'loadMovies(' + cfg.dataSources.emulate + ')';
   writeLogEntry(moduleId);
-
-  /* Disable Soda Logging */  
-  var sessionState = sodaLoggingState;
-
+ 
+  let movieList = []
   
   try {
-    await getMoviesFromTMDB(sessionState,response)
+    // Response #1 Open Object, Output key "status" : Start Array
+    response.write('{"status":[') 
+    if (cfg.dataSources.emulate) {
+      movieList = JSON.parse(fs.readFileSync(cfg.dataSources.emulation.movies));
+	}
+	else {
+      movieList = await getMoviesFromTMDB(constants.DB_LOGGING_DISABLED,response)
+      // fs.writeFileSync(cfg.dataSources.emulation.movies,JSON.stringify(movieList,null,2));
+    }
+    response.write('],');
+    let httpResponse = await movieAPI.recreateLoadMovieCollection(sessionState,movieList)
+    // writeLogEntry(moduleId,"Response:\n" + JSON.stringify(httpResponse," ",2));
+    // writeLogEntry(moduleId,"count = " + httpResponse.json.count);
+    response.write('"count":' + httpResponse.json.count);
+	response.write('}');
+    httpResponse = await movieAPI.dropPosterCollection(sessionState)
+    httpResponse = await movieAPI.dropScreeningCollection(sessionState)
+    response.end();	
   } catch (e) {
+    movieAPI.logError(e,generateSummary(movieList));
     next(e)
   };
 } 
 
 async function loadScreenings (sessionState, response, next) {
 
-  var moduleId = 'loadScreenings';
+  const moduleId = 'loadScreenings';
   writeLogEntry(moduleId);
-
-  /* Disable Soda Logging */  
-  var sessionState = sodaLoggingState;
-
-  let total;
   
   try {
-    total = await createScreenings(sessionState,response);
+    const total = await createScreenings(constants.DB_LOGGING_DISABLED,response);
     response.write('  , "count" : ' + total)
     response.write('}');
     response.end('')
@@ -228,14 +285,16 @@ async function loadScreenings (sessionState, response, next) {
   
 async function loadPosters(sessionState, response, next) {
 
-  var moduleId = 'loadPosters';
+  const moduleId = 'loadPosters';
   writeLogEntry(moduleId);
 
-  /* Disable Soda Logging */  
-  var sessionState = sodaLoggingState;
-  
   try {
-    await getPostersFromTMDB(sessionState,response)
+    response.write('{"status":[') 
+    const posterCount = await getPostersFromTMDB(constants.DB_LOGGING_DISABLED,response)
+    response.write('],');
+    response.write('"count":' + posterCount);
+	response.write('}');
+	response.end();
   } catch (e) {
     next(e)
   };
@@ -243,9 +302,9 @@ async function loadPosters(sessionState, response, next) {
 
 function doGeocoding(address,benchmark) {
 
-  var moduleId = 'geocodeAddress("' + address + '",' + benchmark + ')';
+  const moduleId = 'geocodeAddress("' + address + '",' + benchmark + ')';
 
-  var requestOptions = {
+  const options = {
     method  : 'GET'
   , uri     : cfg.dataSources.usCensus.protocol + '://' 
             + cfg.dataSources.usCensus.hostname + ':' 
@@ -256,13 +315,13 @@ function doGeocoding(address,benchmark) {
   , time    : true
   };
      
-  return generateRequest(moduleId, cfg, requestOptions);  
+  return generateRequest(moduleId, options, DEFAULT_RETRY_COUNT);  
 
 }
    
 function getGeoJSON(address, geocodeResult, benchmark) {
    
-  var moduleId = 'getGeoJSON("' + address + '")';
+  const moduleId = 'getGeoJSON("' + address + '")';
    
   if (geocodeResult.addressMatches.length === 0) {
     if (benchmark === 'Public_AR_Census2010') {
@@ -285,7 +344,7 @@ function getGeoJSON(address, geocodeResult, benchmark) {
 
 async function geocodeAddress(address,benchmark,count) {
 
-  var moduleId = 'geocodeAddress("' + address + '","' + benchmark + '",' + count +')';
+  const moduleId = 'geocodeAddress("' + address + '","' + benchmark + '",' + count +')';
 
   let httpResponse
   
@@ -305,72 +364,52 @@ async function geocodeAddress(address,benchmark,count) {
 
 function geocodeAddressGoogle(address) {
     
-  var moduleId = 'geocodeAddressGoogle("' + address + '")';
-    
+  const moduleId = 'geocodeAddressGoogle("' + address + '")';
+
+  let response = {}
+  
   if (cfg.dataSources.useProxy) {
-    var requestOptions = {
-          method  : 'GET'
-        , uri   : cfg.dataSources.google.geocoding.protocol + '://' 
-                + cfg.dataSources.google.geocoding.hostname + ':' 
-                + cfg.dataSources.google.geocoding.port 
-                + cfg.dataSources.google.geocoding.path 
-        , qs    : {key : cfg.dataSources.google.apiKey, address : address}
-        , json  : true
-        , time  : true
-        , proxy : 'http://' + cfg.dataSources.proxy.hostname + ':' + cfg.dataSources.proxy.port
-        }
+    const options = { method  : 'GET'
+                    , uri   : cfg.dataSources.google.geocoding.protocol + '://' 
+                            + cfg.dataSources.google.geocoding.hostname + ':' 
+                            + cfg.dataSources.google.geocoding.port 
+                            + cfg.dataSources.google.geocoding.path 
+                    , qs    : {key : cfg.dataSources.google.apiKey, address : address}
+                    , json  : true
+                    , time  : true
+                    , proxy : 'http://' + cfg.dataSources.proxy.hostname + ':' + cfg.dataSources.proxy.port
+                    }
        
-	return new Promise(async function(resolve,reject) {
-      try {
-	    let response;	
-        response = await generateRequest(moduleId, cfg, requestOptions)
-        var location = response.json.results[0].geometry.location
-        var geoCoding = {
-              type        : "Point"
-            , coordinates : [location.lat, location.lng]                                                                      
-            }
-        resolve(geoCoding);
-      } catch(e) {
-        reject(e);
-      };
-    })
+    response = generateRequest(moduleId, options, DEFAULT_RETRY_COUNT)
   }
   else {
-    return new Promise(function(resolve,reject) {
-      googleMapsClient.geocode({
-        address: address
-      },
-      function(err, response) {
-        if (err) {
-          reject(err) 
-        }
-        else {
-          try {
-            var location = response.json.results[0].geometry.location
-            var geoCoding = {
-                  type        : "Point"
-                , coordinates : [location.lat, location.lng]                                                                      
-                }
-            resolve(geoCoding);
-          } catch(e) {
-            reject(e);
-          }
-        }
-      })
-    });
+    googleMapsClient.geocode({address: address},function(err, geocodingResponse) {
+                                                  if (err) {
+													throw err
+                                                  }
+                                                  else {
+                                                    response = getCodingResponse;
+                                                  }
+	                                            })
   }
+
+  const location = response.json.results[0].geometry.location
+  
+  return { type        : "Point"
+         , coordinates : [location.lat, location.lng]                                                                      
+         }
+				  
 }
 
 async function geocodeTheater(theater) {
     
-    var moduleId = 'geocodeTheater(' + theater.id + ',' + theater.name + ')'
+    const moduleId = 'geocodeTheater(' + theater.id + ',' + theater.name + ')'
 
     // If $near is not supported by SODA then geocoding is irrelevant.
     
     
-  if (!movieAPI.getDetectedFeatures().$near) {
+  if (!movieAPI.getSupportedFeatures().$near) {
     theater.location.geoCoding = {}
-    // return Promise.resolve(theater);
     return theater;
   }
 
@@ -405,33 +444,31 @@ async function geocodeTheater(theater) {
       break;
     case "oracle" :
       // TODO : Add support for Oracle Geocoding Service
-        writeLogEntry(moduleId,'Unable to get location for = "' + address + '". [Oracle]');
-      // break;
+      writeLogEntry(moduleId,'Unable to get location for = "' + address + '". [Oracle]');
+      break;
     default :
-        theater.location.geoCoding = {}
-        // return Promise.resolve(theater);
+      theater.location.geoCoding = {}
       return theater;
   }
 }
     
 function parseAddress(address) {
     
-    var location = {
-        address : address,
-        city : "unavailable",
-        zipCode : 0
-  }
+  let location = { address : address
+                 , city : "unavailable"
+                 , zipCode : 0
+                 }
   
-    var moduleId = 'parseAddress("' + address + '")';
+  const moduleId = 'parseAddress("' + address + '")';
   
-  var parsedAddress = usAddressParser.parseLocation(address);
+  const parsedAddress = usAddressParser.parseLocation(address);
 
-  var street    
+  let street    
   if (parsedAddress != null) {      
     if (parsedAddress.number) {
       street = parsedAddress.number;
-        if (parsedAddress.prefix) {
-       street = street + ' ' + parsedAddress.prefix;
+      if (parsedAddress.prefix) {
+        street = street + ' ' + parsedAddress.prefix;
       }
       street = street + ' ' + parsedAddress.street;
       if (parsedAddress.type) {
@@ -448,14 +485,13 @@ function parseAddress(address) {
     }
   
     if (street !== undefined) {                 
-      location = {
-        street      : street,
-        city        : parsedAddress.city.toUpperCase(), // Match the US Census geocoding service's behavoir
-        zipCode     : parsedAddress.zip,
-        state       : parsedAddress.state,
-        phoneNumber : null,
-          geoCoding   : {}
-        }
+     location = { street      : street
+                , city        : parsedAddress.city.toUpperCase() // Match the US Census geocoding service's behavoir
+                , zipCode     : parsedAddress.zip
+                , state       : parsedAddress.state
+                , phoneNumber : null
+                , geoCoding   : {}
+                }
       }
   }
   else {
@@ -468,75 +504,64 @@ function parseAddress(address) {
 
 function generateTheater(item, index) {
 
-  var moduleId = 'generateTheater(' + index + ')';
+  const moduleId = 'generateTheater(' + index + ')'      
+  // writeLogEntry(moduleId);
+      
+  const name = item.title[0]
+  let screenCount = name.match(/\d+$/);
+      
+  if (screenCount == null) {
+    screenCount = getRandomBetweenValues(8,17)
+  }
 
-  return new Promise(
-  
-    function(resolve, reject) {
+  const screens = []
+  for (var i=0; i < screenCount; i++) {
+    const screen = { id             : i+1
+                   , capacity       : getRandomBetweenValues(64,129)
+                   , features       : {
+                       threeD       : false
+                     , reserveSeats : false
+                     }
+                   , ticketPricing  : {
+                       adultPrice   : 14.95
+                     , childPrice   : 9.95
+                     , seniorPrice  : 9.95
+                     }
+                   }
+    screens.push(screen);
+  }
       
-      // writeLogEntry(moduleId);
-      
-      var name = item.title[0]
-      var screenCount = name.match(/\d+$/);
-      
-      if (screenCount == null) {
-        screenCount = getRandomBetweenValues(8,17)
-       }
-       var screens = []
-       for (var i=0; i < screenCount; i++) {
-        var screen = {
-          id            : i+1,
-          capacity      : getRandomBetweenValues(64,129),
-            features      : {
-             threeD         : false,
-             reserveSeats   : false
-            },
-            ticketPricing : {
-              adultPrice    : 14.95,
-              childPrice    : 9.95,
-              seniorPrice   : 9.95
-            }
-        }
-        screens.push(screen);
-      }
-      
-      var location = parseAddress(item.description[0].substring(3,item.description[0].indexOf('</p>')));
+  const location = parseAddress(item.description[0].substring(3,item.description[0].indexOf('</p>')));
 
-      var theater = {
-        id       : index +1,
-        name     : name,
-        location : location,
-        screens  : screens,
-      }                         
+  return { id       : index + 1
+         , name     : name
+         , location : location
+         , screens  : screens
+         }                         
 
-      resolve(theater)
-    }
-  )
 }
 
 function getTheatersFromFandango() {
   
-  var moduleId = 'getTheatersFromFandango';
+  const moduleId = 'getTheatersFromFandango';
   
-  var requestOptions = {
-    method  : 'GET'
-  , uri     : cfg.dataSources.fandango.protocol + '://' 
-            + cfg.dataSources.fandango.hostname + ':' 
-            + cfg.dataSources.fandango.port 
-            + cfg.dataSources.fandango.path 
-            + cfg.dataSources.fandango.searchCriteria.zipCode 
-            + '.rss'
-  , time    : true
+  const options = { method  : 'GET'
+                  , uri     : cfg.dataSources.fandango.protocol + '://'  
+                              + cfg.dataSources.fandango.hostname + ':' 
+                              + cfg.dataSources.fandango.port 
+                              + cfg.dataSources.fandango.path 
+                              + cfg.dataSources.fandango.searchCriteria.zipCode 
+                              + '.rss'
+                  , time    : true
   };
      
-  return generateRequest(moduleId, cfg, requestOptions);  
+  return generateRequest(moduleId, options, DEFAULT_RETRY_COUNT);  
      
 }
 
 async function getTheaterInformation() {
-  
-  
-  var moduleId = "getTheaterInformation()"
+    
+  const moduleId = "getTheaterInformation()"
     // writeLogEntry(moduleId,'Fetching Theaters');
   
   // Generate a set of Theater documents from the Fandango TheatersNearMe RSS feed and geocode the results.
@@ -556,13 +581,13 @@ async function getTheaterInformation() {
 	
   theaters = await Promise.all(theaters.map(generateTheater))
   // writeLogEntry(moduleId,'Starting Geocoding');
-  await Promise.all(theaters.map(geocodeTheater)) 
+  return Promise.all(theaters.map(geocodeTheater)) 
 
 }
     
 async function getMoviesFromTMDB(sessionState,response) {
 
-  var moduleId = 'getMoviesFromTMDB';
+  const moduleId = 'getMoviesFromTMDB';
 
   var movies = []
   var movieCache = [];
@@ -575,147 +600,114 @@ async function getMoviesFromTMDB(sessionState,response) {
   
   function getTMDBConfiguration() {
     
-    var moduleId = 'getTMDBConfiguration'
+    const moduleId = 'getTMDBConfiguration()'
   
-    var requestOptions = {
-        method  : 'GET'
-    , uri     : cfg.dataSources.tmdb.protocol + '://' 
-              + cfg.dataSources.tmdb.hostname + ':' 
-              + cfg.dataSources.tmdb.port 
-              + cfg.dataSources.tmdb.apiPath 
-              + '/configuration'
-        , qs      : { api_key : cfg.dataSources.tmdb.apiKey}
-    , json    : true
-    , time    : true
-    };
+    const options = { method  : 'GET'
+                    , uri     : cfg.dataSources.tmdb.protocol + '://' 
+                                + cfg.dataSources.tmdb.hostname + ':' 
+                                + cfg.dataSources.tmdb.port 
+                                + cfg.dataSources.tmdb.apiPath 
+                                + '/configuration'
+                    , qs      : { api_key : cfg.dataSources.tmdb.apiKey}
+                    , json    : true
+                    , time    : true
+                    };
      
-    return generateRequest(moduleId, cfg, requestOptions);  
+    return generateRequest(moduleId, options, DEFAULT_RETRY_COUNT);  
 
   }
       
   function getCastMembers(cast) {
     
-    var castMembers = []
-    try {
-      cast.forEach(
-        function(castMember) {
-          var newCastMember = {
-              name : castMember.name,
-              character : castMember.character
-          }       
-          castMembers.push(newCastMember);
-        }
-      )
-    } catch(e) {
-      throw e;
-    }
-    
-    return castMembers      
+    return cast.map(function(castMember) {
+                      return { name      : castMember.name
+                             , character : castMember.character
+                             }       
+           })
   }
   
   function getCrewMembers(crew) {
     
-    var crewMembers = []
-
-    try {   
-      crew.forEach(
-        function(crewMember) {
-          var newCrewMember = {
-              name : crewMember.name,
-              job : crewMember.job
-          }       
-          crewMembers.push(newCrewMember);
-        }
-      )
-    } catch(e) {
-      throw e;
-    }
-    
-    return crewMembers
+    return crew.map(function(crewMember) {
+                      return { name : crewMember.name
+                             , job : crewMember.job
+                             }       
+                    })
   }
       
   function getMovieFromTMDB(movieId) {
     
-    var moduleId = 'getMovieFromTMDB(' + movieId + ')';
+    const moduleId = 'getMovieFromTMDB(' + movieId + ')';
   
-    var requestOptions = {
-        method  : 'GET'
-    , uri     : cfg.dataSources.tmdb.protocol + '://' 
-              + cfg.dataSources.tmdb.hostname + ':' 
-              + cfg.dataSources.tmdb.port 
-                            + cfg.dataSources.tmdb.apiPath 
-                            + '/movie/' + movieId 
-        , qs      : { api_key : cfg.dataSources.tmdb.apiKey, append_to_response : 'credits,releases'}
-    , json    : true
-    , time    : true
-    };
+    const options = { method  : 'GET'
+                    , uri     : cfg.dataSources.tmdb.protocol + '://' 
+                                + cfg.dataSources.tmdb.hostname + ':' 
+                                + cfg.dataSources.tmdb.port 
+                                + cfg.dataSources.tmdb.apiPath 
+                                + '/movie/' + movieId 
+                    , qs      : { api_key : cfg.dataSources.tmdb.apiKey, append_to_response : 'credits,releases'}
+                    , json    : true
+                    , time    : true
+                    };
 
-    return generateRequest(moduleId, cfg, requestOptions);  
+    return generateRequest(moduleId, options, DEFAULT_RETRY_COUNT);  
 
   }
                            
   function isUnratedMovie(movieDetails) {
 
-      var unrated = false
+    let unrated = false
                                  
-        movieDetails.releases.countries.forEach(function(release) {
-        if ((release.iso_3166_1 === "US") && (release.certification === 'NR')) {
-            unrated = true;
-        }
-      })
+    movieDetails.releases.countries.forEach(function(release) {
+                                              if ((release.iso_3166_1 === "US") && (release.certification === 'NR')) {
+                                                unrated = true;
+                                              }
+                                            })
          
-      return unrated;
-   
+    return unrated;
+	
   }
                            
   async function createMovie(tmdbMovie) {
 
-    var moduleId = 'createMovie(' + tmdbMovie.id + ')';
+    const moduleId = 'createMovie(' + tmdbMovie.id + ')';
     // writeLogEntry(moduleId);
 
-    let httpResponse
-
-	try {
-      httpResponse = await getMovieFromTMDB(tmdbMovie.id)
+    let httpResponse = await getMovieFromTMDB(tmdbMovie.id)
         
-      var movieDetails = httpResponse.json;
+    const movieDetails = httpResponse.json;
             
-      if (!isUnratedMovie(movieDetails)) { 
+    if (!isUnratedMovie(movieDetails)) { 
 
-        var certification;
-        var releaseDate = "2999-01-01";
+     var certification;
+     var releaseDate = "2999-01-01";
         
-        movieDetails.releases.countries.forEach(function(release) {
-          if (release.iso_3166_1 === cfg.dataSources.tmdb.searchCriteria.country) {
-            if (release.release_date < releaseDate) {
-               certification = release.certification
-               releaseDate = release.release_date;
-            }
-          }
-        })
+     movieDetails.releases.countries.forEach(function(release) {
+                                               if (release.iso_3166_1 === cfg.dataSources.tmdb.searchCriteria.country) {
+                                                 if (release.release_date < releaseDate) {
+                                                   certification = release.certification
+                                                   releaseDate = release.release_date;        
+                                                 }
+                                               }
+                                             })
       
-        var movie = {
-              id            : movieDetails.id
-            , title         : movieDetails.title
-            , plot          : movieDetails.overview
-            , runtime       : movieDetails.runtime
-            , posterURL     : baseURL
-                              + "w185"
-                              + movieDetails.poster_path
-                              + '?' + 'api_key=' + cfg.dataSources.tmdb.apiKey
-            , castMember    : getCastMembers(movieDetails.credits.cast)
-            , crewMember    : getCrewMembers(movieDetails.credits.crew)
-            , releaseDate   : releaseDate
-            , certification : certification
-            }
-        movieCache.push(movie);
-      }
-      else {
-        writeLogEntry(moduleId,'Skipping unrated movie : ' + movieDetails.title);
-      }
-    } catch (e) {
-      writeLogEntry(moduleId,'Broken Promise.')
-      throw e
+      const movie = { id            : movieDetails.id
+                    , title         : movieDetails.title
+                    , plot          : movieDetails.overview
+                    , runtime       : movieDetails.runtime
+                    , posterURL     : baseURL
+                                      + "w185"
+                                      + movieDetails.poster_path
+                                      + '?' + 'api_key=' + cfg.dataSources.tmdb.apiKey
+                   , castMember    : getCastMembers(movieDetails.credits.cast)
+                   , crewMember    : getCrewMembers(movieDetails.credits.crew)
+                   , releaseDate   : releaseDate
+                   , certification : certification
+                   }
+      movieCache.push(movie);
+    }
+    else {
+      writeLogEntry(moduleId,'Skipping unrated movie : ' + movieDetails.title)
     }
                             
     return movie;
@@ -723,52 +715,49 @@ async function getMoviesFromTMDB(sessionState,response) {
 
   function getMoviePage(pageNo) {
     
-    var moduleId = 'getMoviePage(' + pageNo + ')';
+    const moduleId = 'getMoviePage(' + pageNo + ')';
     
-    var qs = {
-          api_key                    : cfg.dataSources.tmdb.apiKey
-        , "primary_release_date.gte" : cfg.dataSources.tmdb.searchCriteria.releaseDates.start
-        , "primary_release_date.lte" : cfg.dataSources.tmdb.searchCriteria.releaseDates.end 
-        , certification_country      : cfg.dataSources.tmdb.searchCriteria.country 
-        , "certification.lte"        : cfg.dataSources.tmdb.searchCriteria.certification
-        , original_language          : cfg.dataSources.tmdb.searchCriteria.language 
-        , include_adult              : false
-        , sort_by                    : 'popularity.desc'
-        }
+    const qs = { api_key                    : cfg.dataSources.tmdb.apiKey
+               , "primary_release_date.gte" : cfg.dataSources.tmdb.searchCriteria.releaseDates.start
+               , "primary_release_date.lte" : cfg.dataSources.tmdb.searchCriteria.releaseDates.end 
+               , certification_country      : cfg.dataSources.tmdb.searchCriteria.country 
+               , "certification.lte"        : cfg.dataSources.tmdb.searchCriteria.certification
+               , original_language          : cfg.dataSources.tmdb.searchCriteria.language 
+               , include_adult              : false
+               , sort_by                    : 'popularity.desc'
+               }
 
     if (pageNo > 0) {
       qs.page = pageNo
     }         
 
-    var requestOptions = {
-          method  : 'GET'
-        , uri     : cfg.dataSources.tmdb.protocol + '://' 
-                  + cfg.dataSources.tmdb.hostname + ':' 
-                  + cfg.dataSources.tmdb.port 
-                  + cfg.dataSources.tmdb.apiPath 
-                  + '/discover/movie' 
-        , qs      : qs
-        , json    : true
-        , time    : true
-        };
+    const opions = { method  : 'GET'
+                   , uri     : cfg.dataSources.tmdb.protocol + '://' 
+                               + cfg.dataSources.tmdb.hostname + ':' 
+                               + cfg.dataSources.tmdb.port 
+                               + cfg.dataSources.tmdb.apiPath 
+                               + '/discover/movie' 
+                   , qs      : qs
+                   , json    : true
+                   , time    : true
+                   };
 
-    return generateRequest(moduleId, cfg, requestOptions);  
+    return generateRequest(moduleId, options, DEFAULT_RETRY_COUNT);  
   
   }
 
   async function getMovieDetails(movies, batchNo, batchSize, response) {
 
-    var moduleId = 'getMovieDetails(' + batchNo + ')';
+    const moduleId = 'getMovieDetails(' + batchNo + ')';
 
-    var batch = movies.splice(0,batchSize)
+    const batch = movies.splice(0,batchSize)
     writeLogEntry(moduleId,'Movies remaining = ' + movies.length);
     
-    var status = {
-          date   : dateWithTZOffset(new Date())
-        , module : moduleId
-        , state  : "Processing"
-        , batch  : batchNo
-        }
+    const status = { date   : dateWithTZOffset(new Date())
+                   , module : moduleId
+                   , state  : "Processing"
+                   , batch  : batchNo
+                   }
 		
     response.write(JSON.stringify(status));
     response.write(',');
@@ -781,7 +770,7 @@ async function getMoviesFromTMDB(sessionState,response) {
 
   function processPage(httpResponse) {
     
-    var moduleId = 'processPage';
+    const moduleId = 'processPage';
 
 	httpResponse.json.results.forEach(
       function(m){
@@ -805,7 +794,7 @@ async function getMoviesFromTMDB(sessionState,response) {
 
   function processPages(httpResponses) {
     
-    var moduleId = 'processPages';
+    const moduleId = 'processPages';
 
     httpResponses.forEach(processPage)
 
@@ -815,7 +804,7 @@ async function getMoviesFromTMDB(sessionState,response) {
 
     // Pages is an array of Page Numbers that need to be processed. Get Pages in Batches of 40. 
   
-    var moduleId = 'getMoviePageBatch(' + batchNo +')';
+    const moduleId = 'getMoviePageBatch(' + batchNo +')';
     writeLogEntry(moduleId);
 
     var batch = pages.splice(0,batchSize)
@@ -838,160 +827,125 @@ async function getMoviesFromTMDB(sessionState,response) {
 
   writeLogEntry(moduleId);
   
-  let httpResponse;
+  let httpResponse = await getTMDBConfiguration()
+  baseURL = httpResponse.json.images.base_url
+
+  // writeLogEntry(moduleId,'Poster URL = ' + baseURL);
   
-  try {
-    httpResponse = await getTMDBConfiguration()
-    baseURL = httpResponse.json.images.base_url
+  httpResponse = await getMoviePage(0)
+  writeLogEntry(moduleId,'Page Count = ' + httpResponse.json.total_pages);
+  maxPageNumber = (httpResponse.json.total_pages > maxPageNumber ) ? maxPageNumber : httpResponse.json.total_pages;
 
-    // writeLogEntry(moduleId,'Poster URL = ' + baseURL);
-    
-	httpResponse = await getMoviePage(0)
-    writeLogEntry(moduleId,'Page Count = ' + httpResponse.json.total_pages);
-    maxPageNumber = (httpResponse.json.total_pages > maxPageNumber ) ? maxPageNumber : httpResponse.json.total_pages;
+  // Create an Array of Page Numbers
 
-	// Create an Array of Page Numbers
-	
-    for (var i=0; i < maxPageNumber; i++) {   
-       pages.push(i+1)
+  for (var i=0; i < maxPageNumber; i++) {   
+     pages.push(i+1)
+  }
+
+  var batchNo = 0;
+
+  // Processing page '0' leads to duplicates
+  // processPage(httpResponse);
+
+  await timeout(10000);
+  while (pages.length > 0) {
+    writeLogEntry(moduleId + '(' + batchNo + '): Pages remaining = ' + pages.length);
+    batchNo++;
+    var batchStartTime = Date.now();
+    // TMDb throttles requests to 40 in 10 seconds. 
+    // Each Page requires 1 request. 
+	await getMoviePageBatch(pages, batchNo, 40, response)
+    // If necessary wait for up to 10 seconds.
+    // var batchEndTime = Date.now();
+    // var timeRemaining = 10000 - (batchEndTime - batchStartTime);
+    // if (timeRemaining > 0) {
+    //   await timeout(timeRemaining);		
+    // }
+    await timeout(10000);
+  }
+
+  writeLogEntry(moduleId,'getMoviePageBatch() operations complete. Movie count = ' + movies.length);
+
+  batchNo = 0;
+  while (movies.length > 0) {
+    writeLogEntry(moduleId + '(' + batchNo + '): Movies remaining = ' + movies.length);
+    batchNo++;
+    var batchStartTime = Date.now();
+    // TMDb throttles requests to 40 in 10 seconds. 
+    // Each Movie requires 2 requests. 
+	await getMovieDetails(movies, batchNo, 20, response)
+    // If necessary wait for up to 10 seconds.
+    var batchEndTime = Date.now();
+    var timeRemaining = 10000 - (batchEndTime - batchStartTime);
+    if (timeRemaining > 0) {
+      await timeout(timeRemaining);		
     }
+  }
 
-	var batchNo = 0;
+  writeLogEntry(moduleId,'getMovieDetails() operations complete. Movie count = ' + movieCache.length);
+     
+  var status = {
+        date   : dateWithTZOffset(new Date()),
+        module : moduleId,
+        state  : "Completed"
+      }
+     
+  response.write(JSON.stringify(status))
 
-    // Response #1 Open Object, Output key "status" : Start Array
-    response.write('{"status":[') 
- 
-    // Processing page '0' leads to duplicates
-    // processPage(httpResponse);
-
-	await timeout(10000);
-	while (pages.length > 0) {
-      writeLogEntry(moduleId + '(' + batchNo + '): Pages remaining = ' + pages.length);
-      batchNo++;
-	  var batchStartTime = Date.now();
-      // TMDb throttles requests to 40 in 10 seconds. 
-	  // Each Page requires 1 request. 
-  	  await getMoviePageBatch(pages, batchNo, 40, response)
-      // If necessary wait for up to 10 seconds.
-      var batchEndTime = Date.now();
-	  var timeRemaining = 10000 - (batchEndTime - batchStartTime);
-	  if (timeRemaining > 0) {
-        await timeout(timeRemaining);		
-	  }
-	}
- 
-    writeLogEntry(moduleId,'getMoviePageBatch() operations complete. Movie count = ' + movies.length);
-	
-    batchNo = 0;
-	while (movies.length > 0) {
-      writeLogEntry(moduleId + '(' + batchNo + '): Movies remaining = ' + movies.length);
-      batchNo++;
-	  var batchStartTime = Date.now();
-      // TMDb throttles requests to 40 in 10 seconds. 
-	  // Each Movie requires 2 requests. 
-  	  await getMovieDetails(movies, batchNo, 20, response)
-      // If necessary wait for up to 10 seconds.
-      var batchEndTime = Date.now();
-	  var timeRemaining = 10000 - (batchEndTime - batchStartTime);
-	  if (timeRemaining > 0) {
-        await timeout(timeRemaining);		
-	  }
-	}
-	
-    writeLogEntry(moduleId,'getMovieDetails() operations complete. Movie count = ' + movieCache.length);
-
-	// Uncomment to Log Data
-    // fs.writeFileSync('movieCache.json',JSON.stringify(movieCache,null,2));
-       
-    var status = {
-          date   : dateWithTZOffset(new Date()),
-          module : moduleId,
-          state  : "Completed"
-        }
-       
-    response.write(JSON.stringify(status))
-    response.write(']');
- 
-    await movieAPI.recreateLoadIndexMovies(sessionState,movieCache)
-    response.write(',');
-    response.write('"count":' + movieCache.length);
-    response.write('}');
-    response.end();
-
-	await movieAPI.dropPosterCollection(sessionState)
-    await movieAPI.dropScreeningCollection(sessionState)
-	
-  } catch (e) {
-    writeLogEntry(moduleId,'Broken Promise.');
-    throw e;
-  };   
+  return movieCache	
 
 }  
      
 function getMoviePoster(movieId,posterURL) {
   
-  var moduleId = 'getMoviePoster(' + movieId + ',"' + posterURL + '")';
+  const moduleId = 'getMoviePoster(' + movieId + ',"' + posterURL + '")';
   // writeLogEntry(moduleId);
 
   if (posterURL.indexOf('/movieticket/poster/') == 0) {
-    return Promise.resolve({body : null});
+    return {body : null};
   }
 
-  var requestOptions = {
+  const options = {
         method    : 'GET'
       , uri       : posterURL
       , encoding  : null
       , time      : true
       };
 
-  return generateRequest(moduleId, cfg, requestOptions);  
+  return generateRequest(moduleId, options, DEFAULT_RETRY_COUNT);  
   
 }                         
 
 async function getPostersFromTMDB(sessionState,response) {
 
-  var movieItems = [];
-  var posterCount = 0;
-
+  let movieItems = [];
+  let posterCount = 0;
   
   async function getPosterFromTMDB(movieItem) {
 
-    var movie =  movieItem.value;
+    const moduleId = 'getPosterFromTMDB(' + movieItem.value.id + ')';
+	writeLogEntry(moduleId);
+    const movie =  movieItem.value;
  
-    let httpResponse;
- 
-    try {
-      httpResponse = await getMoviePoster(movieItem.id, movie.posterURL)
+    let httpResponse = await getMoviePoster(movieItem.id, movie.posterURL)
 
-      if (httpResponse.body != null) {
-        posterCount++;
-        // writeLogEntry('getPosterFromTMDB() : Poster size = ' + httpResponse.body.length);
-		
-        let sodaResponse 
+    if (httpResponse.body != null) {
+      posterCount++;
+      // writeLogEntry(moduleId,"Poster size = " + httpResponse.body.length);
 
-		try {
-		  sodaResponse = await movieAPI.insertPoster(sessionState, httpResponse.body)
-          movie.externalURL = movie.posterURL
-          movie.posterURL = '/movieticket/poster/' + sodaResponse.json.items[0].id;
-		} catch(e) {
-          writeLogEntry('getPosterFromTMDB(' + movie.id + ').insertPoster(): Broken Promise.');
-          throw e;
-        }
-
-        try {  
-          await movieAPI.updateMovie(sessionState, movieItem.id, movie)
-		} catch(e) {
-          writeLogEntry('getPosterFromTMDB(' + movie.id + ').updateMovie(): Broken Promise.');
-          throw e;
-        }
-      }
-      else {
-        // Nothing to do - Poster URL has already been updated implying poster had already been loaded. Reload Movies before reloading posters.
-        return Promise.resolve();
-      }
-    } catch (e) {
-      writeLogEntry('getPosterFromTMDB(' + movie.id + '): Broken Promise.');
-      throw e;
+      httpResponse = await movieAPI.insertPoster(constants.DB_LOGGING_DISABLED, httpResponse.body)
+      movie.externalURL = movie.posterURL
+	  if (httpResponse.json.items) {
+		movie.posterURL = '/movieticket/poster/' + httpResponse.json.items[0].id;
+	  }
+	  else {
+		console.log(JSON.stringify(httpResponse," ",2))
+	  }
+      await movieAPI.updateMovie(sessionState, movieItem.id, movie)
+    }
+    else {
+      // Nothing to do - Poster URL has already been updated implying poster had already been loaded. Reload Movies before reloading posters.
+	  // writeLogEntry(moduleId, "Id: " + movieItem.id + ", PosterURL[" + movie.posterURL +"]: Poster Skipped");
     }
   }
   
@@ -999,7 +953,7 @@ async function getPostersFromTMDB(sessionState,response) {
     
     var batch = movieItems.splice(0,batchSize)
      
-    var moduleId = 'getPosterBatchFromTMDB(' + batchNo +',' + batch.length + ')';
+    const moduleId = 'getPosterBatchFromTMDB(' + batchNo +',' + batch.length + ')';
   
     var status = {
           date   : dateWithTZOffset(new Date())
@@ -1017,61 +971,48 @@ async function getPostersFromTMDB(sessionState,response) {
     await Promise.all(batch.map(getPosterFromTMDB))
   }
       
-  var moduleId = 'getPostersFromTMDB';
+  const moduleId = 'getPostersFromTMDB';
 
-  var qbe = { posterURL : { '$ne' : null }}
+  const qbe = { posterURL : { '$ne' : null }}
   
-  let sodaResponse
-  
-  try {
-    sodaResponse = await movieAPI.queryMovies(sessionState, qbe,'unlimited')
-    movieItems = sodaResponse.json.items;
-    // console.log(moduleId,JSON.stringify(movieItems).substring(0,9999));
-    writeLogEntry('getPostersFromTMDB() : Movie count = ' + movieItems.length);
+  const httpResponse = await movieAPI.queryMovies(sessionState, qbe,'unlimited')
+  movieItems = httpResponse.json.items;
+  // writeLogEntry(moduleId,JSON.stringify(generateSummary(movieItems)));
+  // writeLogEntry(moduleId,"Movie count = ' + movieItems.length);
 
-    await movieAPI.recreatePosterCollection(sessionState)
+  await movieAPI.recreatePosterCollection(sessionState)
 
-    response.write('{"status":[') 
+  let batchNo = 0;
+  const batchSize = 40;
 	
-	var batchNo = 0;
-	const batchSize = 40;
-	
-    while (movieItems.length > 0) {
-        writeLogEntry('getPosterBatchFromTMDB(' + batchNo + '): Movies remaining = ' + movieItems.length);
-        batchNo++;
-		var batchStartTime = Date.now();
-		await getPosterBatchFromTMDB(movieItems, batchNo, batchSize, response);  
-        // TMDb throttles requests to 40 in 10 seconds. Each batch makes 40 requests. If batch completed in less than 10 seconds wait		
-        // await timeout(10000);		
-		var batchEndTime = Date.now();
-		var timeRemaining = 10000 - (batchEndTime - batchStartTime);
-		if (timeRemaining > 0) {
-         await timeout(timeRemaining);		
-		}
+  while (movieItems.length > 0) {
+    writeLogEntry('getPosterBatchFromTMDB(' + batchNo + '): Movies remaining = ' + movieItems.length);
+    batchNo++;
+	const batchStartTime = Date.now();
+    getPosterBatchFromTMDB(movieItems, batchNo, batchSize, response);  
+    // TMDb throttles requests to 40 in 10 seconds. Each batch makes 40 requests. If batch completed in less than 10 seconds wait		
+    // await timeout(10000);		
+	const batchEndTime = Date.now();
+    const timeRemaining = 10000 - (batchEndTime - batchStartTime);
+    if (timeRemaining > 0) {
+      await timeout(timeRemaining);		
 	}
-		
-    writeLogEntry('getPosterBatchFromTMDB(): getPosterFromTMDB() operations complete');
-    var status = {
+  }	
+    
+  writeLogEntry('getPosterBatchFromTMDB(): getPosterFromTMDB() operations complete.');
+  const status = {
           date   : dateWithTZOffset(new Date())
         , module : 'getPosterBatchFromTMDB'
         , state  : "Completed"
         }
     
-	response.write(JSON.stringify(status))
-    response.write(']');
-    response.write(',');
-    response.write('"count":' + posterCount);
-    response.write('}');
-    response.end();
-  } catch (e) {
-    writeLogEntry('getPostersFromTMDB(): Broken Promise.');
-    throw e;
-  };
+  response.write(JSON.stringify(status))
+  return posterCount
 }      
   
 async function createScreenings(sessionState,response) {
 
-  var moduleId = 'createScreenings';
+  const moduleId = 'createScreenings';
   // writeLogEntry(moduleId);
 
   var screenings  = []
@@ -1095,7 +1036,7 @@ async function createScreenings(sessionState,response) {
 
   function generateShows(engagementStartDate, engagementEndDate, screen, theaterId, movieId, runtime) {
       
-    var moduleId = 'generateShows(' + dateWithTZOffset(engagementStartDate)  + ',' + dateWithTZOffset(engagementEndDate) + ',' + screen.id + ',' + theaterId + ',' + movieId + ',' + runtime + ')';
+    const moduleId = 'generateShows(' + dateWithTZOffset(engagementStartDate)  + ',' + dateWithTZOffset(engagementEndDate) + ',' + screen.id + ',' + theaterId + ',' + movieId + ',' + runtime + ')';
     // writeLogEntry(moduleId);
 
     var showCount = 0;
@@ -1151,7 +1092,7 @@ async function createScreenings(sessionState,response) {
   
   function generateScreeningsForTheater(theater, engagementStartDate, engagementEndDate, response) {
     
-    var moduleId = 'createScreenings().generateScreeningsForTheater(' + theater.id + ')';
+    const moduleId = 'createScreenings().generateScreeningsForTheater(' + theater.id + ')';
     // writeLogEntry(moduleId);
  
     // For Each Screen in the Theater
@@ -1176,63 +1117,64 @@ async function createScreenings(sessionState,response) {
   response.write(' "status"           : {');
   response.write('   "startTime"      : "' + requestStartTime.toISOString() + '"');
   
-  let sodaResponse;
+  let httpResponse = await movieAPI.getTheaters(sessionState);
+  elapsedTime = new Date().getTime() - requestStartTime.getTime();
+  theaterList = httpResponse.json.items;
+  response.write(' , "theaters"      : {');
+  response.write('     "elapsedTime" : ' + elapsedTime);
+  response.write('   , "count"       : ' + theaterList.length);
+  response.write('   }');
+
+  // writeLogEntry(moduleId,'getTheaters() : ' + elapsedTime + "ms.");
+
+  const qbe = {"$query" : {}, $orderby :{"releaseDate" : -1}};
+  httpResponse = await movieAPI.queryMovies(sessionState, qbe, 50)
+  elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
+  movieList = httpResponse.json.items;
+  response.write(' , "movies"      : {');
+  response.write('     "elapsedTime" : ' + elapsedTime);
+  response.write('   , "count"       : ' + movieList.length);
+  response.write('   }');
+ 
+ // writeLogEntry(moduleId,'queryMovies() : ' + elapsedTime + "ms.");
   
-  try {
-    sodaResponse = await movieAPI.getTheaters(sessionState);
-    elapsedTime = new Date().getTime() - requestStartTime.getTime();
-    theaterList = sodaResponse.json.items;
-    response.write(' , "theaters"      : {');
-      response.write('     "elapsedTime" : ' + elapsedTime);
-    response.write('   , "count"       : ' + theaterList.length);
-    response.write('   }');
-    // writeLogEntry(moduleId,'getTheaters() : ' + elapsedTime + "ms.");
 
-    var qbe = {"$query" : {}, $orderby :{"releaseDate" : -1}};
-    sodaResponse = await movieAPI.queryMovies(sessionState, qbe, 50)
-    elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
-    movieList = sodaResponse.json.items;
-    response.write(' , "movies"      : {');
-      response.write('     "elapsedTime" : ' + elapsedTime);
-    response.write('   , "count"       : ' + movieList.length);
-    response.write('   }');
-    // writeLogEntry(moduleId,'queryMovies() : ' + elapsedTime + "ms.");
+  movieList.forEach(function(movie) {
+    movie.value.inTheaters = false;
+  });
 
-    movieList.forEach(function(movie) {
-      movie.value.inTheaters = false;
-	});
-
-    theaterList.forEach(function(theater) {
-        generateScreeningsForTheater(theater,engagementStartDate,engagementEndDate,response)
-    });
+  theaterList.forEach(function(theater) {
+    generateScreeningsForTheater(theater,engagementStartDate,engagementEndDate,response)
+  });
 	
-    elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
-    response.write(' , "generateScreenings"      : {');
-    response.write('     "elapsedTime" : ' + elapsedTime);
-    response.write('   , "count"       : ' + screenings.length);
-    response.write('   }');
-    // writeLogEntry(moduleId,'generateScreenings() : ' + elapsedTime + "ms.");
+  elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
+  response.write(' , "generateScreenings"      : {');
+  response.write('     "elapsedTime" : ' + elapsedTime);
+  response.write('   , "count"       : ' + screenings.length);
+  response.write('   }');
+
+  // writeLogEntry(moduleId,'generateScreenings() : ' + elapsedTime + "ms.");
     
-    await movieAPI.recreateLoadIndexScreenings(sessionState,screenings)
-    elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
-    response.write(' , "recreateLoadIndexScreenings"      : {');
-    response.write('   "elapsedTime" : ' + elapsedTime);
-    response.write('   }');
-    // writeLogEntry(moduleId,'recreateLoadIndexScreenings() : ' + elapsedTime + "ms.");
-	
-	movieItem = await Promise.all(movieList.map(async function(movieItem) {
-     await movieAPI.updateMovie(sessionState, movieItem.id, movieItem.value);
-    }));
+  httpResponse = await movieAPI.recreateLoadScreeningCollection(sessionState,screenings)
+  elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
+  const count = httpResponse.json.count;
+  response.write(' , "recreateLoadScreeningCollection"      : {');
+  response.write('   "elapsedTime" : ' + elapsedTime);
+  response.write('   }');
+  writeLogEntry(moduleId,'recreateLoadScreeningCollection() : ' + elapsedTime + "ms.");
 
-	elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
-    response.write(' , "updateMovie"      : {');
-    response.write('     "elapsedTime" : ' + elapsedTime);
-    response.write('   }');
-    response.write(' }');
-    // writeLogEntry(moduleId,'updateMovie() : ' + elapsedTime + "ms.");
-    return screenings.length;
-  } catch (e) {
-    writeLogEntry('createScreenings(): Broken Promise.');
-    throw e;
- }	  
+  // Don't log multiple movie update operations.
+  
+  httpResponse = await Promise.all(movieList.map(async function(movieItem) {
+    return await movieAPI.updateMovie(constants.DB_LOGGING_DISABLED, movieItem.id, movieItem.value);
+  }));
+
+  elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
+  response.write(' , "updateMovie"      : {');
+  response.write('     "elapsedTime" : ' + elapsedTime);
+  response.write('   }');
+  response.write(' }');
+  writeLogEntry(moduleId,'updateMovie() : ' + elapsedTime + "ms.");
+  return count;
+	  
 }

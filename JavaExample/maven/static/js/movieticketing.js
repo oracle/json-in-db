@@ -1,3 +1,17 @@
+function getPosterTimeout() {
+  const maxMovies = 1000;
+  // return Batches (Movies / Requests) * Wait (10s) * 1000 (Milliseconds);
+  var timeout = (maxMovies/40) * 10 * 1000;
+  return timeout;
+}
+
+function getMovieTimeout() {
+  const maxMovies = 1000;
+  // return Batches (Movies / Requests) * Wait (10s) * 1000 (Milliseconds) * Passes
+  var timeout = (maxMovies/20) * 10 * 1000 * 2;
+  return timeout;
+}
+
 function dateWithTZOffset(date) {
   var tzo = -date.getTimezoneOffset()
    var dif = tzo >= 0 ? '+' : '-'
@@ -233,39 +247,39 @@ app.factory('appConfigService', function($http, $window) {
     statusWindow.value = 'Working';
 
     $http.get(url,{ timeout : timeout}).then(function(response) {
- 	  	button.getElementsByTagName('span')[0].classList.remove('spinning')
+ 	  button.getElementsByTagName('span')[0].classList.remove('spinning')
       button.classList.remove('disabled');
       statusWindow.value = 'Documents: ' + response.data.count;
-    	callback(response.data.count);
+      callback(response.data.count);
     },function(response) {
- 	  	button.getElementsByTagName('span')[0].classList.remove('spinning')
+ 	  button.getElementsByTagName('span')[0].classList.remove('spinning')
       button.classList.remove('disabled');
       statusWindow.value = 'Failed. Status: ' + response.status;
-     	showErrorMessage("Error invoking service " + url + ". Status: " + response.status );
+      showErrorMessage("Error invoking service " + url + ". Status: " + response.status );
     })
   }
 
   factory.loadTheaters = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadtheaters',event.target,factory.updateTheaterCount,'Theaters',600000);
+  	factory.loadSampleData('/movieticket/config/loadtheaters',event.target,factory.updateTheaterCount,'Theaters',120000);
 
   }
 
   factory.loadMovies = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadmovies',event.target,factory.updateMovieCount,'Movies',600000);
+  	factory.loadSampleData('/movieticket/config/loadmovies',event.target,factory.updateMovieCount,'Movies',getMovieTimeout());
 
   }
 
   factory.loadPosters = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadposters',event.target,factory.updatePosterCount,'Posters',600000);
+  	factory.loadSampleData('/movieticket/config/loadposters',event.target,factory.updatePosterCount,'Posters',getPosterTimeout());
 
   }
 
   factory.generateScreenings = function (event) {
 
-  	factory.loadSampleData('/movieticket/config/loadscreenings',event.target,factory.updateScreeningCount,'Screenings',600000);
+  	factory.loadSampleData('/movieticket/config/loadscreenings',event.target,factory.updateScreeningCount,'Screenings',240000);
 
   }
 

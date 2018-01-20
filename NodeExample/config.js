@@ -13,14 +13,11 @@
  
 "use strict";
 
-var fs = require('fs');
+const fs = require('fs');
+   
+const dataSourceData = fs.readFileSync(__dirname + '/dataSources.json');
+const dataSources = JSON.parse(dataSourceData);
 
-var configData = fs.readFileSync(__dirname + '/config.json');
-var config = JSON.parse(configData);         
-var dataSourceData = fs.readFileSync(__dirname + '/dataSources.json');
-var dataSources = JSON.parse(dataSourceData);
-
-module.exports.config            = config;
 module.exports.dataSources       = dataSources;
 module.exports.updateDataSources = updateDataSources;
 

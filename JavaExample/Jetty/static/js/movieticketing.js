@@ -335,7 +335,7 @@ app.controller('appConfigCtrl',function($scope, $http, appConfigService) {
       	  if (position.coords.latitude) {
       	    response.data.simulatedPosition =  {
       	    	coords      : {
-      	    		latitude  : response.data.currentPosition.coords.latitude
+      	    	  latitude  : response.data.currentPosition.coords.latitude
       	    	, longitude : response.data.currentPosition.coords.longitude
       	      }
       	    }
@@ -491,7 +491,7 @@ app.factory('theaterService', function($http, appConfigService) {
   factory.addMarkersToMap = function(data) {
 	  for (var i=0; i < data.length; i++) {
   	  var marker = new google.maps.Marker({
-       	position: {lat: data[i].value.location.geoCoding.coordinates[0] , lng: data[i].value.location.geoCoding.coordinates[1]},
+       	position: {lat: data[i].value.location.geoCoding.coordinates[1] , lng: data[i].value.location.geoCoding.coordinates[0]},
         map: factory.theaterMap,
         title: data[i].value.name,
         id : data[i].id

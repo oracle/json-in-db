@@ -24,9 +24,9 @@ function setSessionId(cookies,sessionState) {
 
 }
 
-function initializeSodaLogging(sessionState) {
+function initializeApplication(sessionState) {
   
-  movieTicketing.initializeLogging(sessionState)
+  movieTicketing.initialize(sessionState)
   sessionState.save();
 
 }
@@ -37,7 +37,7 @@ function getRouter() {
     
   router.use(function initalizeSession(req, res, next) {
     setSessionId(req.cookies,req.session);
-    initializeSodaLogging(req.session);
+    initializeApplication(req.session);
     next();
   });
 

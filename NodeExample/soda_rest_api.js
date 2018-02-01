@@ -19,11 +19,12 @@ const uuidv4 = require('uuid/v4');
 const request = require('request-promise-native');
 
 const constants = require('./constants.js');
-const dbLibrary = require('./generic_api.js');
+const dbLibrary = require('./cloudDB_api.js');
 const errorLibrary = require('./error_library.js');
 
-const httpRequestLoggingEnabled = true
 const driverName = "SODA-REST"
+
+const supportedFeatures = {}
 
 module.exports.initialize                  = initialize
 module.exports.getSupportedFeatures        = getSupportedFeatures
@@ -36,6 +37,7 @@ module.exports.postDocument                = postDocument
 module.exports.bulkInsert                  = bulkInsert
 module.exports.putDocument                 = putDocument
 module.exports.deleteDocument              = deleteDocument
+module.exports.createIndex                 = createIndex
 module.exports.createIndexes               = createIndexes
 module.exports.createCollection            = createCollection
 module.exports.dropCollection              = dropCollection
@@ -46,7 +48,6 @@ module.exports.initialize                  = initialize
 
 let connectionProperties = {}
 let collectionMetadata = {}
-let supportedFeatures = null
 let documentStoreURL    = "";
 
 function writeLogEntry(module,comment) {
@@ -55,155 +56,18 @@ const message = ( comment === undefined) ? module : `${module}: ${comment}`
   console.log(`${new Date().toISOString()}: ${driverName}.${message}`);
 }
 
-function getConnectionProperties() {
-
-  return connectionProperties;
-
-}
-
-function getCollectionMetadata(collectionName) {
-
-  let metadata = collectionMetadata[collectionName];
-  if (metadata != null) {
-    metadata = JSON.parse(JSON.stringify(metadata))
-    delete(metadata.indexes);
-  }
-  return metadata
-
-}
-
-function getCollectionLink(collectionName) {
-
-  return `${connectionProperties.path}/${collectionName}`;
-
-}
-
-function getDocumentLink(collectionName,key) {
-
-  return `${getCollectionLink(collectionName)}/${key}`;
-
-}
-
-function processError(invokerId, logRequest, e) {
-
-  const moduleId = `processError()`;
-  // writeLogEntry(moduleId,JSON.stringify(e));
-  
-  if ((e.statusCode) && (e.error) && (typeof e.error === "string")) {
-	try {
-      e.error = JSON.parse(e.error);
-	} catch (e) {}
-  }
-
-  const details = { driver           : driverName
-                  , module           : invokerId
-                  , request          : logRequest.logEntry ? logRequest.logEntry.request : null
-                  , stack            : logRequest.logEntry.stack ? logRequest.logEntry.stack : null
-                  , underlyingCause  : e
-                  , status           : dbLibrary.interpretHTTPStatusCode(e.statusCode) 
-                  }
-
-  return new errorLibrary.GenericException(`${driverName}: Unexpected exception encountered`,details)
-  
-}
-
-async function sendRequest(invokerId, sessionState, options, log) {
-
-  const moduleId = `${invokerId}.sendRequest("${options.method}","${options.uri}")`;
-  // writeLogEntry(moduleId);
-  
-  options.resolveWithFullResponse = true
-  options.simple = true
- 
-  if (getConnectionProperties().useProxy) {
-    options.proxy = `http://${getConnectionProperties().proxy.hostname}:${getConnectionProperties().proxy.port}`
-  }
-  
-  log.logRequest = dbLibrary.createLogRequest(moduleId, sessionState, options)
-	
-  try {	
-    const rawResponse = await request(options).auth(getConnectionProperties().username, getConnectionProperties().password, true);
-	// writeLogEntry(moduleId,`Success : HTTP statusCode = ${response.statusCode}`);
-	// writeLogEntry(moduleId,`Response:\n"${JSON.stringify(response.toJSON()," ",2)}`)
-	
-	// elapsedTime is lost for PUT and POST when calling toJSON()
-	const response = rawResponse.toJSON()
-	response.elapsedTime = rawResponse.elapsedTime
-    return response
-  } catch (e) {
-	// writeLogEntry(moduleId,`Exception:\n"${JSON.stringify(e," ",2)}`);
-	throw processError(moduleId,log.logRequest,e);
-  }    					 
-}
-
-function setHeaders(contentType, etag) {
-
-   var headers = {};
-
-   if (contentType === undefined) {
-     contentType = 'application/json';
-   }
-
-   if (contentType !== null) {
-     headers['Content-Type'] = contentType;
-   }
-
-   if (etag !== undefined) {
-     headers["If-Match"] = etag;
-   }
-
-   return headers;
-}
-
-function initialize(applicationName) {
-
-  const moduleId = `initialize()`
-
-  try {
-    const connectionDetails = fs.readFileSync(`${__dirname}/${applicationName}.connectionProperties.soda.json`);
-    connectionProperties = JSON.parse(connectionDetails);
-
-    const collectionDetails = fs.readFileSync(`${__dirname}/${applicationName}.collectionMetadata.soda.json`);
-    collectionMetadata    = JSON.parse(collectionDetails);
-  
-    documentStoreURL = `${connectionProperties.protocol}://${connectionProperties.hostname}`
-    if (connectionProperties.port !== null) {
-      documentStoreURL =  `${documentStoreURL}:${connectionProperties.port}`
-    }
-
-    writeLogEntry(moduleId,`Document Store URL = "${documentStoreURL}".`);
-
-	getSupportedFeatures()
-	
-  } catch (e) {
-    const details = {
-            module           : moduleId
-          , applicationName  : applicationName
-          , underlyingCause  : e
-          }
-    throw new errorLibrary.GenericException(`${driverName}: Driver Intialization Failure`,details)
-  }
-}
-
 async function getSupportedFeatures() {
   
   /*
   ** Test for $CONTAINS support
   */
+  
   const moduleId = `getSupportedFeatures()`
-  writeLogEntry(moduleId);
  
-  if (supportedFeatures !== null) {
+  if (Object.keys(supportedFeatures).length > 0) {
 	 return supportedFeatures
   }
-  
-  supportedFeatures = { textIndexSupported   : true
-                      , $containsSupported   : true
-                      , $nearSupported       : true
-                      , nullOnEmptySupported : true
-                      }
-				   
-
+  				   
   var collectionName = 'TMP_' + uuidv4();
 
   try {
@@ -219,8 +83,9 @@ async function getSupportedFeatures() {
           }]
         }
 
+    supportedFeatures.nullOnEmptySupported = true;
 	try {
-      await createIndex(constants.DB_LOGGING_DISABLED, collectionName, indexDef);
+      await createIndex(constants.DB_LOGGING_DISABLED, collectionName, indexDef.name, indexDef);
 	}
 	catch (sodaError) {
       if (sodaError.status === constants.BAD_REQUEST) {
@@ -237,6 +102,8 @@ async function getSupportedFeatures() {
     }	
 
     var qbe = {id : {"$contains" : 'XXX'}}
+
+    supportedFeatures.$containsSupported = true;
     try {
       await queryByExample(constants.DB_LOGGING_DISABLED, collectionName, qbe)
     }
@@ -268,6 +135,7 @@ async function getSupportedFeatures() {
           } 
         }
 
+    supportedFeatures.$nearSupported = true;
     try {
       await queryByExample(constants.DB_LOGGING_DISABLED, collectionName, qbe)
     }
@@ -300,11 +168,12 @@ async function getSupportedFeatures() {
         , language  : "english"
         }
             
+    supportedFeatures.textIndexSupported = true;
 	try {
-		await createIndex(constants.DB_LOGGING_DISABLED, collectionName, indexDef)
+		await createIndex(constants.DB_LOGGING_DISABLED, collectionName, indexDef.name, indexDef)
 	}
 	catch (sodaError) {
-	  console.log(sodaError)
+	  console.logContainer(sodaError)
       if ((sodaError.status === constants.FATAL_ERRROR)) {
         var sodaException = sodaError.details.underlyingCause.error;
         if (sodaException['o:errorCode'] === 'SQL-29855') {
@@ -340,28 +209,55 @@ function getDBDriverName() {
    
 }
 
-async function getDocumentContent(sessionState, collectionName, key, binary, etag) {
+function getConnectionProperties() {
 
-  const moduleId = `getDocumentContent("${collectionName}","${key}")`;
+  return connectionProperties;
 
-  const options = { method  : 'GET'
-                  , baseUrl : documentStoreURL
-                  , uri     : getDocumentLink(collectionName,key)
-                  , headers : setHeaders(null, etag)
-                  , time    : true
-                  };
-
-  if (binary) {
-    options.encoding = null;
-  }
-
-  const log = {}
-  const results = await sendRequest(moduleId, sessionState, options, log);
-  writeLogEntry(moduleId,`Returned document in ${results.elapsedTime} ms.`);
-  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);
 }
 
-function addLimitAndFields(queryProperties, limit, fields, includeTotal) {
+function getCollectionMetadata(collectionName) {
+
+  let metadata = collectionMetadata[collectionName];
+  if (metadata != null) {
+    metadata = Object.assign({},metadata);
+    delete(metadata.indexes);
+  }
+  return metadata
+
+}
+
+function getCollectionLink(collectionName) {
+
+  return `${connectionProperties.path}/${collectionName}`;
+
+}
+
+function getDocumentLink(collectionName,key) {
+
+  return `${getCollectionLink(collectionName)}/${key}`;
+
+}
+
+function setHeaders(contentType, etag) {
+
+   var headers = {};
+
+   if (contentType === undefined) {
+     contentType = 'application/json';
+   }
+
+   if (contentType !== null) {
+     headers['Content-Type'] = contentType;
+   }
+
+   if (etag !== undefined) {
+     headers["If-Match"] = etag;
+   }
+
+   return headers;
+}
+
+function getLimitAndFields(queryProperties, limit, fields, includeTotal) {
 
   if (fields === undefined) {
     fields = 'all';
@@ -380,23 +276,181 @@ function addLimitAndFields(queryProperties, limit, fields, includeTotal) {
   return queryProperties;
 }
 
+function processError(invokerId, logRequest, e) {
+
+  const moduleId = `processError()`;
+  // writeLogEntry(moduleId,JSON.stringify(e));
+  
+  if ((e.statusCode) && (e.error) && (typeof e.error === "string")) {
+	try {
+      e.error = JSON.parse(e.error);
+	} catch (e) {}
+  }
+
+  const details = { driver           : driverName
+                  , module           : invokerId
+				  , elapsedTime      : e.elapsedTime ? e.elapsedTime : new Date().getTime() - logRequest.startTime 
+                  , request          : logRequest.logEntry ? logRequest.logEntry.request : null
+                  , stack            : logRequest.logEntry.stack ? logRequest.logEntry.stack : null
+                  , underlyingCause  : e
+                  , status           : dbLibrary.interpretHTTPStatusCode(e.statusCode) 
+                  }
+
+  return new errorLibrary.GenericException(`${driverName}: Unexpected exception encountered`,details)
+  
+}
+
+async function sendRequest(invokerId, sessionState, options, logContainer) {
+
+  const moduleId = `${invokerId}.sendRequest("${options.method}","${options.uri}")`;
+  // writeLogEntry(moduleId);
+  
+  options.resolveWithFullResponse = true
+  options.simple = true
+ 
+  if (getConnectionProperties().useProxy) {
+    options.proxy = `http://${getConnectionProperties().proxy.hostname}:${getConnectionProperties().proxy.port}`
+  }
+  
+  logContainer.logRequest = dbLibrary.createLogRequest(moduleId, sessionState, options)
+	
+  let startTime = null
+  try {	
+    startTime = new Date().getTime()
+    const rawResponse = await request(options).auth(getConnectionProperties().username, getConnectionProperties().password, true);
+	// mwriteLogEntry(moduleId,`Success : HTTP statusCode = ${rawResponse.statusCode} Elapsed time: ${rawResponse.elapsedTime}`);
+	// writeLogEntry(moduleId,`Response:\n"${JSON.stringify(rawResponse.toJSON()," ",2)}`)
+	
+	// elapsedTime is lost for PUT and POST when calling toJSON()
+	const response = rawResponse.toJSON()
+	response.elapsedTime = rawResponse.elapsedTime
+    return response
+  } catch (e) {
+	const endTime = new Date().getTime();
+	if (e.elapsedTime === undefined) {
+	  e.elapsedTime = endTime - startTime
+	}
+	
+	if (typeof e.toJSON === 'function') {
+      const elapsedTime = e.elapsedTime
+	  e = e.toJSON()
+	  e.elapsedTime = elapsedTime
+	}
+	// writeLogEntry(moduleId,`Exception:\n"${JSON.stringify(e," ",2)}`);
+	throw processError(moduleId,logContainer.logRequest,e);
+  }    					 
+}
+
+async function processQuery(sessionState, options, limit) {
+  
+  const moduleId = `processQuery()`
+  
+  const logContainer = {}
+  
+  const startTime = new Date().getTime()
+  const results = await sendRequest(moduleId, sessionState, options, logContainer);
+  
+  if ((limit !== 'unlimited') && (limit === 0)) {
+	results.body.items = []
+	results.body.count = 0
+  }
+  else {
+	if ((limit === 'unlimited') || (results.body.count < limit)) {
+	  let batchCount = 1;
+      while (results.body.hasMore) {
+		batchCount++
+		if (limit !== 'unlimited') {
+		  options.qs.limit = limit - results.body.count
+		}
+	    options.qs.offset = results.body.count
+        const moreResults = await sendRequest(moduleId, sessionState, options, logContainer);
+	    results.body.items = results.body.items.concat(moreResults.body.items);
+	    results.body.count = results.body.items.length
+		results.body.hasMore = moreResults.body.hasMore
+		if (results.body.count === limit) {
+		  break;
+	    }
+      }
+      logContainer.logRequest.endTime = new Date().getTime()
+      logContainer.logRequest.startTime = startTime
+	  results.elapsedTime = logContainer.logRequest.endTime - logContainer.logRequest.startTime
+      logContainer.logRequest.batchCount = batchCount
+    } 
+  }
+  
+  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);    
+
+}
+async function initialize(applicationName) {
+
+  const moduleId = `initialize()`
+
+  try {
+    const connectionDetails = fs.readFileSync(`${__dirname}/${applicationName}.connectionProperties.soda.json`);
+    connectionProperties = JSON.parse(connectionDetails);
+
+    const collectionDetails = fs.readFileSync(`${__dirname}/${applicationName}.collectionMetadata.soda.json`);
+    collectionMetadata    = JSON.parse(collectionDetails);
+  
+    documentStoreURL = `${connectionProperties.protocol}://${connectionProperties.hostname}`
+    if (connectionProperties.port !== null) {
+      documentStoreURL =  `${documentStoreURL}:${connectionProperties.port}`
+    }
+
+    writeLogEntry(moduleId,`Document Store URL = "${documentStoreURL}".`);
+
+	await getSupportedFeatures()
+	
+  } catch (e) {
+    const details = {
+            module           : moduleId
+          , applicationName  : applicationName
+          , underlyingCause  : e
+          }
+    throw new errorLibrary.GenericException(`${driverName}: Driver Intialization Failure`,details)
+  }
+}
+
+async function getDocumentContent(sessionState, collectionName, key, binary, etag) {
+
+  const moduleId = `getDocumentContent("${collectionName}","${key}")`;
+
+  const options = { method  : 'GET'
+                  , baseUrl : documentStoreURL
+                  , uri     : getDocumentLink(collectionName,key)
+                  , headers : setHeaders(null, etag)
+                  , time    : true
+                  };
+
+  if (binary) {
+    options.encoding = null;
+  }
+
+  const logContainer = {}
+  const results = await sendRequest(moduleId, sessionState, options, logContainer);
+  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);
+}
+
 async function getCollection(sessionState, collectionName, limit, fields, includeTotal) {
 
   const moduleId = `getCollection("${collectionName}")`;
 
+  let sodaLimit = limit
+  if ((limit !== undefined) && (limit === 0)) {
+	sodaLimit = 1
+  }
+
   const options = { method  : 'GET'
                   , baseUrl : documentStoreURL
                   , uri     : getCollectionLink(collectionName)
-                  , qs      : addLimitAndFields({}, limit, fields, includeTotal)
+                  , qs      : getLimitAndFields({}, sodaLimit, fields, includeTotal)
                   , headers : setHeaders()
                   , time    : true
                   , json    : true
                   };
 
-  const log = {}
-  const results = await sendRequest(moduleId, sessionState, options, log);
-  writeLogEntry(moduleId,`Returned ${results.body.items.length} documents in ${results.elapsedTime} ms.`);
-  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);    
+  return processQuery(sessionState,options,limit)
+
 }
 
 async function queryByExample(sessionState, collectionName, qbe, limit, fields, includeTotal) {
@@ -407,22 +461,18 @@ async function queryByExample(sessionState, collectionName, qbe, limit, fields, 
   const options = { method  : 'POST'
                   , baseUrl : documentStoreURL
                   , uri     : getCollectionLink(collectionName)
-                  , qs      : addLimitAndFields({action : "query"}, limit, fields, includeTotal)
+                  , qs      : getLimitAndFields({action : "query"}, limit, fields, includeTotal)
                   , json    : qbe
                   , time    : true
                   };
 
-  const log = {}
-  const results = await sendRequest(moduleId, sessionState, options, log);
-  writeLogEntry(moduleId,`Returned ${results.body.items.length} documents in ${results.elapsedTime} ms.`);
-  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);    
+  return processQuery(sessionState,options,limit)
 }
 
 async function postDocument(sessionState, collectionName, document, contentType) {
 
   const moduleId = `postDocument("${collectionName}","${contentType}")`;
-  writeLogEntry(moduleId);
-
+  
   const options = { method  : 'POST'
                   , baseUrl : documentStoreURL
                   , uri     : getCollectionLink(collectionName)
@@ -437,18 +487,16 @@ async function postDocument(sessionState, collectionName, document, contentType)
     options.body = document
   }
 
-  const log = {}
-  const results = await sendRequest(moduleId, sessionState, options, log);
+  const logContainer = {}
+  const results = await sendRequest(moduleId, sessionState, options, logContainer);
   
-  writeLogEntry(moduleId,`Inserted document in ${results.elapsedTime} ms.`);
   // Appears BODY is a string when the payload was not JSON
-  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);  
+  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 async function bulkInsert(sessionState, collectionName, documents) {
 
   const moduleId = `bulkInsert("${collectionName}")`;
-  writeLogEntry(moduleId)
   
   const options = { method  : 'POST'
                   , baseUrl : documentStoreURL
@@ -458,16 +506,14 @@ async function bulkInsert(sessionState, collectionName, documents) {
                   , time    : true
                   };
 
-  const log = {}
-  const results = await sendRequest(moduleId, sessionState, options, log);
-  writeLogEntry(moduleId,`Inserted ${results.body.items.length} documents in ${results.elapsedTime} ms. `);
-  return dbLibrary.processHTTPResponse(moduleId, results, log.logRequest);  
+  const logContainer = {}
+  const results = await sendRequest(moduleId, sessionState, options, logContainer);
+  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 async function putDocument(sessionState, collectionName, key, document, contentType, etag) {
 
   const moduleId = `putDocument("${collectionName}","${key}","${contentType}")`;
-  writeLogEntry(moduleId)
 
   const options = { method  : 'PUT'
                   , baseUrl : documentStoreURL
@@ -483,8 +529,8 @@ async function putDocument(sessionState, collectionName, key, document, contentT
     options.body = document
   }
 
-  const log = {}
-  const results = await sendRequest(moduleId, sessionState, options, log);
+  const logContainer = {}
+  const results = await sendRequest(moduleId, sessionState, options, logContainer);
 
   const updateResponse = { id             : key
                          , etag           : results.headers.etag
@@ -493,8 +539,7 @@ async function putDocument(sessionState, collectionName, key, document, contentT
                          }
 						 
   results.body = dbLibrary.formatSingleInsert(updateResponse)
-  writeLogEntry(moduleId,`Updated document in ${results.elapsedTime} ms.`);
-  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);  
+  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 async function deleteDocument(sessionState, collectionName, key, etag) {
@@ -509,37 +554,15 @@ async function deleteDocument(sessionState, collectionName, key, etag) {
                   , time    : true
                   };
 
-  const log = {}
-  const results = await sendRequest(moduleId, sessionState, options, log);
-  writeLogEntry(moduleId,`Deleted document in ${results.elapsedTime} ms.`);
-  return dbLibrary.processHTTPResponse(moduleId, results, log.logRequest);  
+  const logContainer = {}
+  const results = await sendRequest(moduleId, sessionState, options, logContainer);
+  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
-function getIndexMetadata(collectionName) {
 
-  var metadata = collectionMetadata[collectionName];
-  if ((metadata != null) && (metadata.hasOwnProperty('indexes'))) {
+async function createIndex(sessionState, collectionName, indexName, indexMetadata) {
 
-    var indexes = JSON.parse(JSON.stringify(metadata.indexes));
-    // Remove disabled Indexes
-    for (var i=0; i < indexes.length; /* i is only incremented when not splicing */  ) {
-      if ((indexes[i].hasOwnProperty('disabled')) && (indexes[i].disabled === true))  {
-        indexes.splice(i,1);
-      }
-      else {
-        delete(indexes[i].disabled);
-        i++;
-      }
-    }
-    return indexes;
-  }
-  return []
-}
-
-async function createIndex(sessionState, collectionName, indexMetadata) {
-
-  const moduleId = `createIndex("${collectionName}","${indexMetadata.name}")`;
-  writeLogEntry(moduleId)
+  const moduleId = `createIndex("${collectionName}","${indexName}")`;
   
   // Skip Spatial Indexes in environments where spatial operations on Geo-JSON are not supported
 
@@ -569,32 +592,51 @@ async function createIndex(sessionState, collectionName, indexMetadata) {
                   , time    : true
                   };
 
-  const log = {}
-  const results = await sendRequest(moduleId, sessionState, options, log);
-  writeLogEntry(moduleId,`Index Created in ${results.elapsedTime} ms.`); 
-  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);
+  const logContainer = {}
+  const results = await sendRequest(moduleId, sessionState, options, logContainer);
+  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);
 }
 
-function createIndexes(sessionState, collectionName) {
+function getIndexMetadata(collectionName) {
+
+  const metadata = collectionMetadata[collectionName];
+  if ((metadata != null) && (metadata.hasOwnProperty('indexes'))) {
+    const indexes = metadata.indexes.slice(0)
+    // Remove disabled Indexes
+    for (let i=0; i < indexes.length; /* i is only incremented when not splicing */  ) {
+      if ((indexes[i].hasOwnProperty('disabled')) && (indexes[i].disabled === true))  {
+        indexes.splice(i,1);
+      }
+      else {
+        delete(indexes[i].disabled);
+        i++;
+      }
+    }
+    return indexes;
+  }
+  return []
+}
+
+async function createIndexes(sessionState, collectionName) {
 
   const moduleId = 'createIndexes("' + collectionName + '")';
-  writeLogEntry(moduleId)
   
-  var indexes = getIndexMetadata(collectionName);
+  const indexes = getIndexMetadata(collectionName);
   
-  return indexes.reduce(
-    function(sequence, index) {
-      return sequence.then(async function() {
-		try {
-          createIndex(sessionState, collectionName, index);
-        } catch (e) {
-          writeLogEntry(moduleId,'Broken Promise. createCollectionWithIndexes(): ');
-          throw e;
-        }
-	  })
-    },
-    Promise.resolve()
-  )
+  const createIndexOperations = indexes.map(function(indexMetadata) {
+	                                          return dbLibrary.createIndex(sessionState,collectionName,indexMetadata.name,indexMetadata)
+                                           })
+
+  const logRequest = dbLibrary.createLogRequest(moduleId, sessionState, indexes)
+
+  logRequest.startTime = new Date().getTime();
+  const createIndexResults = await Promise.all(createIndexOperations)
+  logRequest.endTime = new Date().getTime()
+  const results = Object.assign({},constants.HTTP_RESPONSE_SUCCESS)
+  results.elapsedTime = logRequest.endTime - logRequest.startTime
+  results.json = createIndexResults
+  return dbLibrary.processResultsHTTP(moduleId, results, logRequest);  
+
 }
 
 function collectionExists(e) {
@@ -606,7 +648,6 @@ function collectionExists(e) {
 async function createCollection(sessionState, collectionName) {
 
   const moduleId = `createCollection("${collectionName}")`;
-  writeLogEntry(moduleId)
   
   const options = { method  : 'PUT'
                   , baseUrl : documentStoreURL
@@ -615,10 +656,9 @@ async function createCollection(sessionState, collectionName) {
                   , time    : true
                   };
 
-  const log = {}
-  const results = await sendRequest(moduleId, sessionState, options, log);
-  writeLogEntry(moduleId,`Created collection in ${results.elapsedTime} ms.`);
-  return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);  
+  const logContainer = {}
+  const results = await sendRequest(moduleId, sessionState, options, logContainer);
+  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 function collectionNotFound(e) {
@@ -637,7 +677,6 @@ function collectionNotFound(e) {
 async function dropCollection(sessionState, collectionName) {
 
   const moduleId = `dropCollection("${collectionName}")`;
-  writeLogEntry(moduleId)
   
   const options = { method  : 'DELETE'
                   , baseUrl : documentStoreURL
@@ -645,18 +684,17 @@ async function dropCollection(sessionState, collectionName) {
                   , time    : true
                   };
 
-  const log = {}
+  const logContainer = {}
   try {
-    const results = await sendRequest(moduleId, sessionState, options, log);
-    writeLogEntry(moduleId,`Dropped collection in ${results.elapsedTime} ms.`); 
-    return dbLibrary.processResultsHTTP(moduleId, results, log.logRequest);
+    const results = await sendRequest(moduleId, sessionState, options, logContainer);
+    return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);
   } catch (e) {
  	if (collectionNotFound(e)) {
       writeLogEntry(moduleId,`NOT-FOUND: ${e.status}. Returning success.`)
-      const logRequest = dbLibrary.createLogRequest(moduleId, sessionState, options)
-      return dbLibrary.processHTTPResponse(moduleId, constants.HTTP_RESPONSE_SUCCESS,  log.logRequest);
+	  const results = Object.assign({},constants.HTTP_RESPONSE_SUCCESS)
+	  results.elapsedTime = e.elapsedTime
+      return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);
     }
-    writeLogEntry(moduleId,`Exception: ${e.status}`)
-	throw processError(moduleId,log.logRequest,e);	
+	throw processError(moduleId,logContainer.logRequest,e);	
   }
 }

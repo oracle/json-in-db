@@ -13,10 +13,10 @@
  
 "use strict";
 
-const applicationName       = "MovieTicketing"
-const logCollectionName     = 'MovieTicketLog';
+const APPLICATION_NAME       = "MovieTicketing"
+const LOG_COLLECTION_NAME     = 'MovieTicketLog';
 
-const dbAPI = require('./generic_api.js');
+const dbAPI = require('./cloudDB_api.js');
 const constants = require('./constants.js');
 
 module.exports.createTheaterCollection           = createTheaterCollection;
@@ -67,12 +67,34 @@ module.exports.getPoster                         = getPoster;
                                              
 module.exports.getLogRecordByOperationId         = getLogRecordByOperationId
                                              
-module.exports.initializeLogging                 = initializeLogging;
+module.exports.initialize                        = initialize;
+module.exports.getDBDriverName                   = getDBDriverName;
 module.exports.logError                          = logError;
 module.exports.writeLogEntry                     = writeLogEntry;
 module.exports.getSupportedFeatures              = getSupportedFeatures
 
-initialize()
+async function initialize(sessionState) {
+
+  if ((sessionState.dbLoggingEnabled) && (sessionState.logCollectionName == null)) {
+    sessionState.logCollectionName = LOG_COLLECTION_NAME;
+  }
+
+  await dbAPI.initialize(APPLICATION_NAME);
+  await createEmptyCollections();
+  return
+}
+
+async function getSupportedFeatures() {
+	
+	return dbAPI.getSupportedFeatures();
+
+}
+
+function getDBDriverName() {
+	
+	return dbAPI.getDBDriverName();
+
+}
 
 // Theater Collection
 
@@ -99,15 +121,15 @@ function insertTheaters(sessionState, theaterList) {
 
 }
 
-function getTheaters(sessionState, limit, fields, total) {
+function getTheaters(sessionState, limit, fields, includeTotal) {
   
-   return dbAPI.getCollection(sessionState, 'Theater', limit, fields, total)
+   return dbAPI.getCollection(sessionState, 'Theater', limit, fields, includeTotal)
      
 }
 
-function getTheater(sessionState, key, eTag) {
+function getTheater(sessionState, key, etag) {
 	
-	return dbAPI.getJSON(sessionState, 'Theater', key, eTag);
+	return dbAPI.getJSON(sessionState, 'Theater', key, etag);
 
 }
 
@@ -115,14 +137,14 @@ async function getTheaterById(sessionState, id) {
 
   var qbe = {'id': id};
   
-  let httpResponse = await dbAPI.queryByExample(sessionState, 'Theater', qbe);
+  let httpResponse = await dbAPI.queryByExample(sessionState, 'Theater', qbe, 1);
   httpResponse.json = httpResponse.json.items[0]
   return httpResponse;
 }
 
-function queryTheaters(sessionState, qbe, limit, fields, total) {
+function queryTheaters(sessionState, qbe, limit, fields, includeTotal) {
 	
-	return dbAPI.queryByExample(sessionState, 'Theater',qbe, limit, fields, total);
+	return dbAPI.queryByExample(sessionState, 'Theater', qbe, limit, fields, includeTotal);
 
 }
 
@@ -152,21 +174,21 @@ function insertMovies(sessionState, movieList) {
 
 }
 
-function getMovies(sessionState,  limit, fields, total) {
+function getMovies(sessionState,  limit, fields, includeTotal) {
   
-   return dbAPI.getCollection(sessionState, 'Movie', limit, fields, total)
+   return dbAPI.getCollection(sessionState, 'Movie', limit, fields, includeTotal)
      
 }
 
-function getMovie(sessionState, key, eTag) {
+function getMovie(sessionState, key, etag) {
 	
-	return dbAPI.getJSON(sessionState, 'Movie', key, eTag);
+	return dbAPI.getJSON(sessionState, 'Movie', key, etag);
 
 }
 
-function updateMovie(sessionState, key, movie, eTag) {
+function updateMovie(sessionState, key, movie, etag) {
 	
-	return dbAPI.putJSON(sessionState, 'Movie', key, movie, eTag);
+	return dbAPI.putJSON(sessionState, 'Movie', key, movie, etag);
 
 }
 
@@ -174,7 +196,7 @@ async function getMovieById(sessionState,id) {
 
   var qbe = {'id': id};
    
-  let httpResponse = await dbAPI.queryByExample(sessionState, 'Movie', qbe)
+  let httpResponse = await dbAPI.queryByExample(sessionState, 'Movie', qbe, 1)
   httpResponse.json = httpResponse.json.items[0]
   return httpResponse;
 }
@@ -185,9 +207,9 @@ function moviesByReleaseDateService(sessionState) {
   return dbAPI.queryByExample(sessionState, 'Movie', qbe)
 }
 
-function queryMovies(sessionState, qbe, limit, fields, total) {
+function queryMovies(sessionState, qbe, limit, fields, includeTotal) {
 	
-	return dbAPI.queryByExample(sessionState, 'Movie',qbe, limit, fields, total);
+	return dbAPI.queryByExample(sessionState, 'Movie', qbe, limit, fields, includeTotal);
 
 }
 
@@ -217,27 +239,27 @@ function insertScreenings(sessionState, screeningList) {
 
 }
 
-function getScreenings(sessionState,  limit, fields, total) {
+function getScreenings(sessionState,  limit, fields, includeTotal) {
   
-   return dbAPI.getCollection(sessionState, 'Screening', limit, fields, total)
+   return dbAPI.getCollection(sessionState, 'Screening', limit, fields, includeTotal)
      
 }
 
-function getScreening(sessionState, key, eTag) {
+function getScreening(sessionState, key, etag) {
 	
-	return dbAPI.getJSON(sessionState, 'Screening', key, eTag);
+	return dbAPI.getJSON(sessionState, 'Screening', key, etag);
 
 }
 
-function queryScreenings(sessionState, qbe, limit, fields, total) {
+function queryScreenings(sessionState, qbe, limit, fields, includeTotal) {
 	
-	return dbAPI.queryByExample(sessionState, 'Screening', qbe, limit, fields, total);
+	return dbAPI.queryByExample(sessionState, 'Screening', qbe, limit, fields, includeTotal);
 
 }
 
-function updateScreening(sessionState, key,screening,eTag) {
+function updateScreening(sessionState, key,screening,etag) {
 	
-	return dbAPI.putJSON(sessionState, 'Screening',key,screening,eTag);
+	return dbAPI.putJSON(sessionState, 'Screening',key,screening,etag);
 
 }
 
@@ -273,15 +295,15 @@ function insertTicketSale(sessionState, ticketSale) {
 
 }
 
-function updateTicketSale(sessionState, key,ticketSale,eTag) {
+function updateTicketSale(sessionState, key,ticketSale,etag) {
 	
-	return dbAPI.putJSON(sessionState, 'TicketSale', key, ticketSale,eTag);
+	return dbAPI.putJSON(sessionState, 'TicketSale', key, ticketSale,etag);
 
 }
 
-function queryTicketSales(sessionState, qbe, limit, fields, total) {
+function queryTicketSales(sessionState, qbe, limit, fields, includeTotal) {
 	
-	return dbAPI.queryByExample(sessionState, 'TicketSale', qbe, limit, fields, total);
+	return dbAPI.queryByExample(sessionState, 'TicketSale', qbe, limit, fields, includeTotal);
 
 }
 
@@ -312,9 +334,9 @@ function insertPoster(sessionState, poster) {
 
 }
 
-function getPosters(sessionState, limit, fields, total) {
+function getPosters(sessionState, limit, fields, includeTotal) {
   
-   return dbAPI.getCollection(sessionState, 'Poster', limit, fields, total)
+   return dbAPI.getCollection(sessionState, 'Poster', limit, fields, includeTotal)
      
 }
 
@@ -326,21 +348,27 @@ function getPoster(sessionState, key) {
 
 function createLogRecordCollection() {
 	
-	return dbAPI.createCollectionWithIndexes(constants.DB_LOGGING_DISABLED, logCollectionName);
+	return dbAPI.createCollectionWithIndexes(constants.DB_LOGGING_DISABLED, LOG_COLLECTION_NAME);
 
 }
 
-function initializeLogging(sessionState) {
+async function createEmptyCollections() {
 
-	if ((sessionState.dbLoggingEnabled) && (sessionState.logCollectionName == null)) {
-    sessionState.logCollectionName = logCollectionName;
-	}
-
+  try {
+    await createLogRecordCollection();
+    await createTicketSaleCollection(constants.DB_LOGGING_DISABLED);
+  } catch (e) {
+   	console.log('movie_ticket_api.js: Error during Collection Creation.');
+	console.log(JSON.stringify(e));
+    throw e;
+  };
 }
+
+
 
 function writeLogEntry(logEntry) {
 	 
-	 return dbAPI.ensurePostJSON(constants.DB_LOGGING_DISABLED, logCollectionName, logEntry);
+	 return dbAPI.ensurePostJSON(constants.DB_LOGGING_DISABLED, LOG_COLLECTION_NAME, logEntry);
 	 
 }
 
@@ -357,32 +385,8 @@ function getLogRecordByOperationId(id) {
   
   let httpResponse;
   
-  httpResponse = dbAPI.queryByExample(constants.DB_LOGGING_DISABLED, logCollectionName, qbe)
+  httpResponse = dbAPI.queryByExample(constants.DB_LOGGING_DISABLED, LOG_COLLECTION_NAME, qbe)
   return httpResponse;
-}
-
-async function createEmptyCollections() {
-
-  try {
-    await createLogRecordCollection();
-    await createTicketSaleCollection(constants.DB_LOGGING_DISABLED);
-  } catch (e) {
-   	console.log('movie_ticket_api.js: Error during Collection Creation.');
-	console.log(JSON.stringify(e));
-    throw e;
-  };
-}
-
-async function initialize() {
-	
- 	await dbAPI.initialize(applicationName);
-	await createEmptyCollections();	
-}
-
-function getSupportedFeatures() {
-	
-	return dbAPI.getSupportedFeatures();
-
 }
 
 function recreateLoadMovieCollection(sessionState, movieCache) {

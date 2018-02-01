@@ -12,7 +12,7 @@
  * ================================================
  */
 
-var jPP = new JSONPrettyPrinter();
+const jPP = new JSONPrettyPrinter();
 
 function JSONPrettyPrinter() {
 

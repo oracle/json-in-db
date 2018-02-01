@@ -39,6 +39,10 @@ function GenericException(message, details) {
     }
   }
 
+  if (details.elapsedTime) {
+	this.elapsedTime = details.elapsedTime
+  }
+ 
   this.details = details
 }
 

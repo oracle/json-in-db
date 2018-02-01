@@ -104,7 +104,7 @@ body {
       		<div class="panel-heading">
      				<h3 class="panel-title" style="line-height:35px;">Theater Information
 	   					<span class="pull-right">
-   							<button ng-hide="((!appConfigService.status.supportedFeatures.$near) || (appConfigService.status.mappingService === 'none') || ((appConfigService.status.mappingService === 'google') && (appConfigService.status.googleKey === 'YOUR_GOOGLE_KEY_GOES_HERE')) || ((appConfigService.status.currentPosition.coords.latitude === 0.0) && (appConfigService.status.currentPosition.coords.longitude === 0.0)))" class="btn btn-success btn-med" id="btn_LocationSearch" type="button" ng-click="theaterService.showNearbyTheaters(appConfigService.status)">
+   							<button ng-hide="((!appConfigService.status.supportedFeatures.$nearSupported) || (appConfigService.status.mappingService === 'none') || ((appConfigService.status.mappingService === 'google') && (appConfigService.status.googleKey === 'YOUR_GOOGLE_KEY_GOES_HERE')) || ((appConfigService.status.currentPosition.coords.latitude === 0.0) && (appConfigService.status.currentPosition.coords.longitude === 0.0)))" class="btn btn-success btn-med" id="btn_LocationSearch" type="button" ng-click="theaterService.showNearbyTheaters(appConfigService.status)">
 						 			<span class="glyphicon glyphicon-map-marker"></span>
 								</button>
 	  						<button class="btn btn-success btn-med" id="btn_TheaterSearch" type="button" onclick="showTheaterSearch()">
@@ -502,7 +502,7 @@ body {
 															</span>
 														</span>
 
-   	           							<span ng-if="appConfigService.status.supportedFeatures.$near">
+   	           							<span ng-if="appConfigService.status.supportedFeatures.$nearSupported">
     	 	       									<label for="geocodingService">Geocoding Service:</label>
       	 	     									<select class="form-control" id="geocodingService" ng-model="formState.geocodingService">
    	 														<option value="google">Google</option>

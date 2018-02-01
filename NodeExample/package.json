@@ -1,14 +1,36 @@
 {
-  "name": "oracle-movie-ticket-demo",
-  "version": "5.1.1",
-  "description": "Sample application for demonstrating the use of Node.js and SODA for REST with the Oracle 12c Database",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "_from": "oracle-movie-ticket-demo",
+  "_id": "oracle-movie-ticket-demo@5.1.1",
+  "_inBundle": false,
+  "_integrity": "sha512-2IWsPrI9uTz0xcEBLrU31DqJmvEmir7vEvAL8DU1w1wjg/1Uz78BKzEWuSXjjzmiiRZX2DK0h8Oe7Mj05JVSfg==",
+  "_location": "/oracle-movie-ticket-demo",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "oracle-movie-ticket-demo",
+    "name": "oracle-movie-ticket-demo",
+    "escapedName": "oracle-movie-ticket-demo",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
   },
-  "keywords": [],
-  "author": "Mark Drake <mark.drake@oracle.com>",
-  "license": "ISC",
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/oracle-movie-ticket-demo/-/oracle-movie-ticket-demo-5.1.1.tgz",
+  "_shasum": "aa0611116c631b69b57583a792ce1befdc5d9c2c",
+  "_spec": "oracle-movie-ticket-demo",
+  "_where": "g:\\",
+  "author": {
+    "name": "Mark Drake",
+    "email": "mark.drake@oracle.com"
+  },
+  "bugs": {
+    "url": "https://github.com/oracle/json-in-db/issues"
+  },
+  "bundleDependencies": false,
   "dependencies": {
     "@google/maps": "^0.2.1",
     "angular": "^1.5.5",
@@ -26,13 +48,20 @@
     "serve-static": "^1.10.2",
     "xml2js": "^0.4.16"
   },
+  "deprecated": false,
+  "description": "Sample application for demonstrating the use of Node.js and SODA for REST with the Oracle 12c Database",
   "devDependencies": {},
+  "homepage": "https://github.com/oracle/json-in-db#readme",
+  "keywords": [],
+  "license": "ISC",
+  "main": "index.js",
+  "name": "oracle-movie-ticket-demo",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oracle/json-in-db.git"
   },
-  "bugs": {
-    "url": "https://github.com/oracle/json-in-db/issues"
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "homepage": "https://github.com/oracle/json-in-db#readme"
+  "version": "5.2.0"
 }

@@ -14,6 +14,7 @@
 "use strict";
 
 const util = require('util');
+const uuidv4 = require('uuid/v4')
 const cfg = require('./config.js');
 const constants = require('./constants.js');
 const movieAPI = require('./movie_ticket_api.js');
@@ -38,7 +39,7 @@ module.exports.logRecordsByOperationService  = logRecordsByOperationService
 module.exports.applicationStatusService      = applicationStatusService
 module.exports.updateDataSourcesService      = updateDataSourcesService
                                              
-module.exports.initializeLogging             = initializeLogging;
+module.exports.initialize                    = initialize;
 module.exports.setSessionState               = setSessionState;
 
 function writeLogEntry(module,comment) {
@@ -66,19 +67,13 @@ function dateWithTZOffset(date) {
 }
 
 function generateGUID(){
-    var d = new Date().getTime();
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = (d + Math.random()*16)%16 | 0;
-        d = Math.floor(d/16);
-        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
-    });
-    return uuid;
+    return uuidv4();
 }
 
 function sendStatus(response, e, status, httpStatusCode) {
     
     if ((e.status) && (e.status === status)) {
-        response.status(httpStatusCode);bv
+        response.status(httpStatusCode);
         response.end();
         return true;
     }
@@ -159,7 +154,7 @@ async function locateTheatersService(sessionState, response, next, lat, long, di
       "$near"           : {
         "$geometry"    : {
              "type"      : "Point", 
-             "coordinates" : [lat,long]
+             "coordinates" : [long,lat]
         },
         "$distance" : distance,
         "$unit" : "mile"
@@ -246,7 +241,7 @@ async function movieByIdService(sessionState, response, next, id) {
 
   try {
     const httpResponse = await movieAPI.getMovieById(sessionState, id)                                   
-	writeResponse(response,httpResponse.json.items[0].value,sessionState.operationId);
+	writeResponse(response,httpResponse.json.value,sessionState.operationId);
   } catch (e){
     next(e);
   };
@@ -286,8 +281,8 @@ async function moviesInTheatersService(sessionState, response, next) {
   writeLogEntry(moduleId);
 
   try {
-    const httpResponse = await movieAPI.getMovies(sessionState)
-	writeResponse(response,httpResponse.json,sessionState.operationId);
+    const httpResponse = await movieAPI.queryMovies(sessionState, {inTheaters : true} , 'unlimited')
+ 	writeResponse(response,httpResponse.json,sessionState.operationId);
   } catch (e){
     next(e);
   };
@@ -329,7 +324,7 @@ async function applicationStatusService(sessionState, response, next) {
   var status = {
         googleKey         : cfg.dataSources.google.apiKey
       , tmdbKey           : cfg.dataSources.tmdb.apiKey
-      , supportedFeatures : movieAPI.getSupportedFeatures()
+      , supportedFeatures : await movieAPI.getSupportedFeatures()
       , geocodingService  : cfg.dataSources.geocodingService
       , mappingService    : cfg.dataSources.mappingService
       , movieCount        : 0
@@ -347,7 +342,7 @@ async function applicationStatusService(sessionState, response, next) {
   try {  
 
     try {
-      const httpResponse = await movieAPI.getMovies(constants.DB_LOGGING_DISABLED,1,undefined,true)
+      const httpResponse = await movieAPI.getMovies(constants.DB_LOGGING_DISABLED,0,undefined,true)
 	  status.movieCount=httpResponse.json.totalResults;
     } catch (e) {
 	  // TODO : This should be caught and handled by the database interface layer !!!
@@ -371,7 +366,7 @@ async function applicationStatusService(sessionState, response, next) {
     }
     
     try {
-      const httpResponse = await movieAPI.getTheaters(constants.DB_LOGGING_DISABLED,1,undefined,true)
+      const httpResponse = await movieAPI.getTheaters(constants.DB_LOGGING_DISABLED,0,undefined,true)
 	  // writeLogEntry(moduleId,"Theaters:\n" + JSON.stringify(httpResponse," ",2))
 	  // writeLogEntry(moduleId,"Theater Count:" + httpResponse.json.totalResults)
       status.theaterCount=httpResponse.json.totalResults;
@@ -396,7 +391,7 @@ async function applicationStatusService(sessionState, response, next) {
     }
     
     try {
-      const httpResponse = await movieAPI.getScreenings(constants.DB_LOGGING_DISABLED,1,undefined,true)
+      const httpResponse = await movieAPI.getScreenings(constants.DB_LOGGING_DISABLED,0,undefined,true)
       status.screeningCount=httpResponse.json.totalResults;
     } catch (e) {
       // console.log(e);
@@ -420,7 +415,7 @@ async function applicationStatusService(sessionState, response, next) {
     }
     
     try {
-      const httpResponse = await movieAPI.getPosters(constants.DB_LOGGING_DISABLED,1,undefined,true)
+      const httpResponse = await movieAPI.getPosters(constants.DB_LOGGING_DISABLED,0,undefined,true)
       status.posterCount=httpResponse.json.totalResults;
     } catch (e) {
       // console.log(e);
@@ -882,8 +877,10 @@ function setSessionState(cookies,sessionState) {
 
 }
 
-function initializeLogging(sessionState) {
-  return movieAPI.initializeLogging(sessionState);
+async function initialize(sessionState) {
+
+  await movieAPI.initialize(sessionState);
+  return 
 }
 
 async function logRecordsByOperationService(sessionState, response, next, id) {

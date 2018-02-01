@@ -139,7 +139,7 @@ var theater = {
   ]
 };
 
-var movie = {
+const movie = {
 	"id": 153518,
 	"title": "The Angry Birds Movie",
 	"plot": "An island populated entirely by happy, flightless birds or almost entirely. In this paradise, Red, a bird with a temper problem, speedy Chuck, and the volatile Bomb have always been outsiders. But when the island is visited by mysterious green piggies, it∆s up to these unlikely outcasts to figure out what the pigs are up to.",
@@ -270,7 +270,7 @@ var movie = {
 	"externalURL": "http://image.tmdb.org/t/p/w185/t2mZzQXjpQxmqtJOPpe8Dr2YpMl.jpg?api_key=ebdef9b4d4764fa65c16039d09eb0eed"
 }
 
-var screening = {
+const screening = {
   "theaterId": 62,
   "movieId": 382638,
   "screenId": 1,
@@ -283,7 +283,7 @@ var screening = {
   }
 };
 
-var ticketSale = {
+const ticketSale = {
   "customerId": 1,
   "adult": 2,
   "senior": null,
@@ -298,7 +298,7 @@ var ticketSale = {
   "purchaseDate": "2016-06-08T13:59:59-07:00"
 };
 
-var sampleConfig = {
+const sampleConfig = {
   "hostname" : "localhost",
   "port" : 8080,
   "path" : "/ords/movies/soda/latest",
@@ -306,7 +306,7 @@ var sampleConfig = {
   "password" : "MovieTicketing"
 }
 
-var sampleDataSources = {
+const sampleDataSources = {
   "useProxy": false,
   "proxy": {
     "hostname": null,
@@ -359,7 +359,7 @@ function escapeHtml(unsafe) {
          .replace(/'/g, "&#039;");
 }
 
-var theaterServiceHTML = 
+const theaterServiceHTML = 
 `<div class="tab-pane active" id="tab_TheaterList">
 	<div id="TheaterList" class="panel panel-default" ng-controller="theatersCtrl">
   		<div class="panel-heading">

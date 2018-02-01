@@ -12,12 +12,14 @@
  */
 
 "use strict";
+
 const http = require('http');
-const dbAPI = require('./soda_rest_api.js');
+const driverMapper = require('./driver_mapper.js')
+const dbAPI = require(`${getDBAPI()}`)
 const constants = require('./constants.js');
 const errorLibrary = require('./error_library.js');
 
-// High Level Helper Functins : Local Implementation
+// High Level Helper Functions : Local Implementation
 
 module.exports.getJSON                     = getJSON
 module.exports.getDocument                 = getDocument
@@ -42,7 +44,7 @@ module.exports.generateSummary             = generateSummary
 module.exports.insert2Item                 = document2Item
 module.exports.document2Item               = document2Item
 module.exports.documents2Items             = documents2Items
-module.exports.formatResults               = formatResults
+// module.exports.formatResults               = formatResults
 module.exports.formatSingleInsert          = formatSingleInsert
 module.exports.processSingleInsert         = processSingleInsert
 module.exports.processResults              = processResults
@@ -54,6 +56,7 @@ module.exports.interpretHTTPStatusCode     = interpretHTTPStatusCode
 
 // Native Functions : Pass Through
 
+module.exports.getDBDriverName             = getDBDriverName
 module.exports.initialize                  = initialize
 module.exports.getSupportedFeatures        = getSupportedFeatures
 module.exports.getCollection               = getCollection
@@ -62,27 +65,79 @@ module.exports.postDocument                = postDocument
 module.exports.bulkInsert                  = bulkInsert
 module.exports.putDocument                 = putDocument
 module.exports.deleteDocument              = deleteDocument
+module.exports.createIndex                 = createIndex
 module.exports.createIndexes               = createIndexes
 module.exports.createCollection            = createCollection
 module.exports.dropCollection              = dropCollection
 
+const DEFAULT_LIMIT = 128
+let applicationName = null;
+	  						
+function getDBAPI() {
+  console.log(process.argv)
+  if (process.argv[process.argv.length-1] === 'DEBUG') {
+    return './cloudDB_trace.js'
+  }
+  else {
+	if (process.argv.length > 2) {
+      let driverMapping = driverMapper.getDriverMapping(process.argv[process.argv.length-1])
+  	  return driverMapping
+	}
+	else {
+	  return driverMapper.getDefaultDriver()
+	}
+  }
+}
 
 function writeLogEntry(module,comment) {
 	
   const message = ( comment === undefined) ? module : `${module}: ${comment}`
-  console.log(`${new Date().toISOString()}: genericAPI.${message}`);
+  console.log(`${new Date().toISOString()}: cloudDB.${message}`);
 }
 
-function getCollectionProperties(collectionName) {
+let isReady                  = false
+let initializationInProgress = false	
 
-  var properties = collectionProperties[collectionName];
-  if (properties != null) {
-    properties = JSON.parse(JSON.stringify(properties))
-    delete(properties.indexes);
+
+function timeout(duration) {
+  return new Promise(
+               function(resolve, reject) {
+			     setTimeout(
+				   function(){
+			         resolve();
+   			       }, 
+			       duration
+			     )
+			   }
+			 )
+};
+
+async function driverReady() {
+
+  if (isReady) {
+	return isReady;
   }
-  return properties
+  
+  
+  try {
+    if (!initializationInProgress) {
+	   initializationInProgress = true
+	   await dbAPI.initialize(applicationName)
+       isReady = true;
+    }
+  } catch(e) {
+	isReady = false;
+	initializationInProgress = false;
+	throw e;
+  }
 
+  while (initializationInProgress & !isReady) {
+	await timeout(100)
+  }
+  
+  return true
 }
+
 
 function interpretHTTPStatusCode(statusCode) {
 	
@@ -109,6 +164,8 @@ function interpretHTTPStatusCode(statusCode) {
 	  return constants.DOCUMENT_TOO_LARGE
 	case 500:
 	  return constants.FATAL_ERRROR
+	case 503:
+	  return constants.SYSTEM_UNAVAILABLE
 	default:
 	  return constants.UNKNOWN_ERROR
   }
@@ -145,12 +202,26 @@ function createLogRequest(invokerId, sessionState, details) {
   return logRequest;
 }
 
-async function logResponse(logRequest, response, elapsedTime) {
+function getElapsedTime(logRequest) {
+
+  if (logRequest.elapsedTime === undefined) {
+    logRequest.elapsedTime = logRequest.endTime - logRequest.startTime
+  }
+  return logRequest.elapsedTime
+
+}
+
+function setElapsedTime(logRequest,elapsedTime) {
+
+  logRequest.elapsedTime = elapsedTime
+
+}
+
+async function logResponse(logRequest, response) {
 
   const moduleId = `${dbAPI.getDBDriverName()}.logResponse()`;
 
   logRequest.logEntry.response = response;
-  logRequest.logEntry.elapsedTime = elapsedTime
   
   if (!logRequest.status.enabled) {
 	return
@@ -188,10 +259,11 @@ function documents2Items(documents) {
                        })
 }
 
-function formatResponseJSON(invokerId, status, json, contentType, elapsedTime) {
+function formatResponseJSON(invokerId, status, json, contentType, elapsedTime, batchCount) {
 					
   return { module         : invokerId
          , elapsedTime    : elapsedTime
+		 , batchCount     : batchCount === undefined ? 1 : batchCount
          , contentType    : contentType
 	 	 , status         : status
 	     , json           : json
@@ -219,7 +291,7 @@ function formatSingleInsert(invokerId, item, elapsedTime) {
   return formatResponseJSON(invokerId, constants.CREATED, json, "application/json", elapsedTime);
 }
 
-function formatResults(invokerId, status, body, contentType, elapsedTime) {
+function formatResults(invokerId, status, body, contentType, elapsedTime,batchCount) {
 
   const moduleId = `${dbAPI.getDBDriverName()}.${invokerId}.formatResults("${typeof body}","${contentType}")`;
   // writeLogEntry(moduleId);
@@ -227,11 +299,11 @@ function formatResults(invokerId, status, body, contentType, elapsedTime) {
   if (((body !== undefined) && (body !== null)) && ((contentType !== undefined) && (contentType.startsWith("application/json")))) {
     // writeLogEntry(moduleId,`Type = ${typeof body)}`;
     if (typeof body === 'object') {
-      return formatResponseJSON(invokerId, status, body, contentType, elapsedTime)
+      return formatResponseJSON(invokerId, status, body, contentType, elapsedTime,batchCount)
 	}    
     else {
       try {
-        return formatResponseJSON(invokerId, status, JSON.parse(body), contentType, elapsedTime)
+        return formatResponseJSON(invokerId, status, JSON.parse(body), contentType, elapsedTime,batchCount)
       } catch (e) {
         return formatResponseBody(invokerId, status, body, contentType, elapsedTime)
       }
@@ -265,86 +337,99 @@ function formatHTTPResults(invokerId, status, results, contentType, elapsedTime)
 
 }
 
-function processBulkInsert(invokerId, items, elapsedTime, logRequest) {
+function processBulkInsert(invokerId, items, logRequest) {
+
+  const elapsedTime = getElapsedTime(logRequest)
 
   const json = { items: items
                , count : items.length
 			   }
-
-  const response = formatResponseJSON(invokerId, constants.CREATED, json, "application/json", elapsedTime)  
+  
+  const response = formatResponseJSON(invokerId, constants.CREATED, json, "application/json", elapsedTime, logRequest.batchCount)  
   logResponse(logRequest, response);
   return response
 }
 
-function processBulkFetch(invokerId, items, metadata, elapsedTime, logRequest) {
+function processBulkFetch(invokerId, items, metadata, logRequest) {
    
+  const elapsedTime = getElapsedTime(logRequest)
+
   const json = { items : items
                , count : items.length
 			   , totalResults : metadata.totalResults
                }
 			 
-  const response = formatResponseJSON(invokerId, constants.CREATED, json, "application/json", elapsedTime);
-  logResponse(logRequest, response, elapsedTime);
+  const response = formatResponseJSON(invokerId, constants.CREATED, json, "application/json", elapsedTime, logRequest.batchCount);
+  logResponse(logRequest, response);
   return response
 }
   
-function processSingleInsert(invokerId, item, elapsedTime, logRequest) {
+function processSingleInsert(invokerId, item, logRequest) {
+	
+  const elapsedTime = getElapsedTime(logRequest)
 	
   const response = formatSingleInsert(invokerId,item,elapsedTime)
-  logResponse(logRequest,response,elapsedTime);
+  logResponse(logRequest,response);
   return response
 }
 
-function processResults(invokerId, status, results, contentType, elapsedTime, logRequest) {
+function processResults(invokerId, status, results, contentType, logRequest) {
+
+  const elapsedTime = getElapsedTime(logRequest)
 	
-  const response = formatResults(invokerId,status,results,contentType,elapsedTime)
-  logResponse(logRequest,response,elapsedTime);
+  const response = formatResults(invokerId,status,results,contentType,elapsedTime,logRequest.batchCount)
+  logResponse(logRequest,response);
   return response
 
 }
 
-function processResultsJSON(invokerId, status, results, elapsedTime, logRequest) {
+function processResultsJSON(invokerId, status, results, logRequest) {
 	
-  const response = formatResponseJSON(invokerId,status,results,"application/json",elapsedTime)
-  logResponse(logRequest,response,elapsedTime);
+  const elapsedTime = getElapsedTime(logRequest)
+	
+  const response = formatResponseJSON(invokerId,status,results,"application/json",elapsedTime,logRequest.batchCount)
+  logResponse(logRequest,response);
   return response
 
 }
   
 function processResultsHTTP(moduleId, results, logRequest) {
+	
+	
+  setElapsedTime(logRequest, results.elapsedTime);
 
   logRequest.logEntry.http = { statusCode : results.statusCode 
                              , statusText : http.STATUS_CODES[results.statusCode]
                              }
   
-  const response = formatResults(moduleId, interpretHTTPStatusCode(results.statusCode), results.body, results.headers["content-type"], results.elapsedTime) 
+  const response = formatResults(moduleId, interpretHTTPStatusCode(results.statusCode), results.body, results.headers["content-type"], results.elapsedTime, logRequest.batchCount) 
   logResponse(logRequest,response,results.elapsedTime);
   return response
 
 }
 
-function getDocument(sessionState, collectionName, key, eTag) {
+function getDocument(sessionState, collectionName, key, etag) {
 
   const moduleId = `${dbAPI.getDBDriverName()}.getDocument("${collectionName}","${key}")`;
   // writeLogEntry(moduleId);
 
-  return getDocumentContent(sessionState, collectionName, key, false, eTag);
+  return getDocumentContent(sessionState, collectionName, key, false, etag);
 }
 
-function getBinaryDocument(sessionState, collectionName, key, eTag) {
+function getBinaryDocument(sessionState, collectionName, key, etag) {
 
   const moduleId = `${dbAPI.getDBDriverName()}.getBinaryDocument("${collectionName}","${key}")`;
   // writeLogEntry(moduleId);
 
-  return getDocumentContent(sessionState, collectionName, key, true, eTag);
+  return getDocumentContent(sessionState, collectionName, key, true, etag);
 }
 
-function getJSON(sessionState, collectionName, key, eTag) {	
+function getJSON(sessionState, collectionName, key, etag) {	
   
   const moduleId = `${dbAPI.getDBDriverName()}.getJSON("${collectionName}","${key}")`;
   // writeLogEntry(moduleId);
 
-  return getDocumentContent(sessionState, collectionName, key, false, eTag);
+  return getDocumentContent(sessionState, collectionName, key, false, etag);
   
 }
 
@@ -384,37 +469,10 @@ function ensurePostJSON(sessionState, collectionName, json) {
 
 }
 
-function putJSON(sessionState, collectionName, key, json, eTag) {
+function putJSON(sessionState, collectionName, key, json, etag) {
 
-  return putDocument(sessionState, collectionName, key, json, 'application/json', eTag);
+  return putDocument(sessionState, collectionName, key, json, 'application/json', etag);
 
-}
-
-async function deleteDocument(sessionState, collectionName, key, eTag) {
-
-  return dbaAPI.deleteDocument(sessionState,collectionName, key, eTag)
-  
-}
-
-function getIndexProperties(collectionName) {
-
-  var properties = collectionProperties[collectionName];
-  if ((properties != null) && (properties.hasOwnProperty('indexes'))) {
-
-    var indexes = JSON.parse(JSON.stringify(properties.indexes));
-    // Remove disabled Indexes
-    for (var i=0; i < indexes.length; /* i is only incremented when not splicing */  ) {
-      if ((indexes[i].hasOwnProperty('disabled')) && (indexes[i].disabled === true))  {
-        indexes.splice(i,1);
-      }
-      else {
-        delete(indexes[i].disabled);
-        i++;
-      }
-    }
-    return indexes;
-  }
-  return []
 }
 
 async function createCollectionWithIndexes(sessionState, collectionName) {
@@ -424,7 +482,8 @@ async function createCollectionWithIndexes(sessionState, collectionName) {
 
   try {
     await dbAPI.createCollection(sessionState, collectionName);
-    await dbAPI.createIndexes(sessionState, collectionName);
+    const results = await dbAPI.createIndexes(sessionState, collectionName);
+	return results
   } catch (e) {
  	throw e;
   }
@@ -432,7 +491,7 @@ async function createCollectionWithIndexes(sessionState, collectionName) {
 
 async function ensureDropCollection(sessionState, collectionName) {
 
-  const moduleId = `${dbAPI.getDBDriverName()}ensureDropCollection("${collectionName}")`
+  const moduleId = `${dbAPI.getDBDriverName()}.ensureDropCollection("${collectionName}")`
 
   let logRequest = {}
   
@@ -480,67 +539,109 @@ async function recreateLoadCollection(sessionState, collectionName, contents) {
 
 }
 
-function initialize(applicationName) {
 
-  return dbAPI.initialize(applicationName)
-  
-}
+function getDBDriverName() {
 
-function getSupportedFeatures() {
-
-    return dbAPI.getSupportedFeatures();
+  return dbAPI.getDBDriverName();
 	
 }
 
-function getDocumentContent(sessionState, collectionName, key, binary, eTag) {
-
-  return dbAPI.getDocumentContent(sessionState,collectionName, key, binary, eTag) 
-
-}
-
-function getCollection(sessionState, collectionName, limit, fields, total) {
-
-  return dbAPI.getCollection(sessionState, collectionName, limit, fields, total)
+async function initialize(appName) {
+	
+  applicationName = appName
+  await driverReady(applicationName)
+  // return dbAPI.initialize(applicationName)
   
 }
 
-function queryByExample(sessionState, collectionName, qbe, limit, fields, total) {
+async function getSupportedFeatures() {
 
-  return dbAPI.queryByExample(sessionState, collectionName, qbe, limit, fields, total)
+  await driverReady()
+  return dbAPI.getSupportedFeatures();
+	
+}
+
+async function getDocumentContent(sessionState, collectionName, key, binary, etag) {
+
+  await driverReady()
+  return dbAPI.getDocumentContent(sessionState,collectionName, key, binary, etag) 
+
+}
+
+async function getCollection(sessionState, collectionName, limit, fields, includeTotal) {
+
+  if ((limit === undefined) || (limit === null)) {
+	limit = DEFAULT_LIMIT
+  }
+
+  await driverReady()
+  return dbAPI.getCollection(sessionState, collectionName, limit, fields, includeTotal)
   
 }
 
-function postDocument(sessionState, collectionName, document, contentType) {
+async function queryByExample(sessionState, collectionName, qbe, limit, fields, includeTotal) {
 
+  if ((limit === undefined) || (limit === null)) {
+	limit = DEFAULT_LIMIT
+  }
+
+  await driverReady()
+  return dbAPI.queryByExample(sessionState, collectionName, qbe, limit, fields, includeTotal)
+  
+}
+
+async function postDocument(sessionState, collectionName, document, contentType) {
+
+  await driverReady()
   return dbAPI.postDocument(sessionState, collectionName, document, contentType)
 
 }
 
-function bulkInsert(sessionState, collectionName, documents) {
+async function bulkInsert(sessionState, collectionName, documents) {
 
+  await driverReady()
   return dbAPI.bulkInsert(sessionState, collectionName, documents);
 
 }
 
-function putDocument(sessionState, collectionName, key, document, contentType, eTag) {
+async function putDocument(sessionState, collectionName, key, document, contentType, etag) {
 
-  return dbAPI.putDocument(sessionState, collectionName, key, document, contentType, eTag)
+  await driverReady()
+  return dbAPI.putDocument(sessionState, collectionName, key, document, contentType, etag)
   
 }  
 
-function createCollection(sessionState, collectionName) {
+async function deleteDocument(sessionState, collectionName, key, etag) {
+
+  await driverReady()
+  return dbaAPI.deleteDocument(sessionState,collectionName, key, etag)
   
+}
+
+async function createIndex(sessionState, collectionName, indexName, metadata) {
+  
+  await driverReady()
+  return dbAPI.createIndex(sessionState, collectionName, indexName, metadata);
+
+}
+
+async function createIndexes(sessionState, collectionName) {
+  
+  await driverReady()
+  return dbAPI.createIndexes(sessionState, collectionName);
+
+}
+
+async function createCollection(sessionState, collectionName) {
+  
+  await driverReady()
   return dbAPI.createCollection(sessionState, collectionName);
 
 }
 
-function createIndexes(sessionState, collectionName) {
+async function dropCollection(sessionState, collectionName) {
   
-  return dbAPI.createIndexes(sessionState, collectionName);
-
-}
-function dropCollection(sessionState, collectionName) {
-  
+  await driverReady()
   return dbAPI.dropCollection(sessionState, collectionName);
 
 }

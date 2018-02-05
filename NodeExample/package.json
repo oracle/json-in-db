@@ -43,7 +43,7 @@
     "documentdb": "^1.14.2",
     "express": "^4.13.4",
     "express-session": "^1.13.0",
-    "jquery": "^2.2.2",
+    "jquery": "^3.3.1",
     "mongodb": "^3.0.2",
     "morgan": "^1.7.0",
     "parse-address": "0.0.5",

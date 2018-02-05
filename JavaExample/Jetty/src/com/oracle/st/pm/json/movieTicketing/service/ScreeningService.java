@@ -1,20 +1,15 @@
 package com.oracle.st.pm.json.movieTicketing.service;
 
-import com.google.gson.Gson;
-
-import com.oracle.st.pm.json.movieTicketing.docStore.Movie;
 import com.oracle.st.pm.json.movieTicketing.docStore.Screening;
-import com.oracle.st.pm.json.movieTicketing.docStore.Theater;
+import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
 
 import java.io.IOException;
 
 import java.sql.SQLException;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 import java.util.Date;
-import java.util.StringJoiner;
 
 import oracle.soda.OracleDatabase;
 import oracle.soda.OracleDocument;
@@ -22,7 +17,7 @@ import oracle.soda.OracleException;
 
 public class ScreeningService {
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat(SodaCollection.ISO_DATE_FORMAT);
 
     public ScreeningService() {
         super();

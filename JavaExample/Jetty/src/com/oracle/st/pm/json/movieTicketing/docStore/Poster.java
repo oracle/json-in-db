@@ -6,9 +6,8 @@ import oracle.soda.OracleCollection;
 import oracle.soda.OracleDatabase;
 import oracle.soda.OracleDocument;
 import oracle.soda.OracleException;
-import oracle.soda.OracleOperationBuilder;
 
-public class Poster {
+public class Poster extends SodaCollection {
 
     public static final String COLLECTION_NAME = "Poster";
 
@@ -17,19 +16,16 @@ public class Poster {
     }
 
     public static OracleDocument getPoster(OracleDatabase db, String key) throws OracleException, IOException {
-        OracleCollection posters = db.openCollection(Poster.COLLECTION_NAME);
-        OracleDocument poster = posters.findOne(key);
-        return poster;
+        return getDocument(db,COLLECTION_NAME,key);
     }
 
     public static long getPosterCount(OracleDatabase db) throws OracleException {
-        OracleCollection posters = db.openCollection(COLLECTION_NAME);
-        if (posters != null) {
-            OracleOperationBuilder posterDocuments = posters.find();
-            return posterDocuments.count();
-        }
-        else {
-            return 0;
-        }
+        return getDocumentCount(db, COLLECTION_NAME);
+    }
+    
+    public static OracleCollection recreatePosterCollection(OracleDatabase db) throws OracleException {
+
+        // Create a collection with the name "THEATER" and store the documents
+        return recreateCollection(db,COLLECTION_NAME);
     }
 }

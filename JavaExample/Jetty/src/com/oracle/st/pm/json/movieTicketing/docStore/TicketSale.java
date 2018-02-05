@@ -1,21 +1,16 @@
 package com.oracle.st.pm.json.movieTicketing.docStore;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import java.io.IOException;
 
 import java.util.Date;
 
-import oracle.soda.OracleCollection;
 import oracle.soda.OracleDatabase;
 import oracle.soda.OracleDocument;
 import oracle.soda.OracleException;
 
-public class TicketSale {
+public class TicketSale extends SodaCollection{
 
     public static final String COLLECTION_NAME = "TicketSale";
-    private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
 
     private String key;
     private int customerId;
@@ -42,13 +37,17 @@ public class TicketSale {
         this.movieId = screening.getMovieId();
         this.purchaseDate = new Date();
     }
+    
+    public void insertTicketSale(OracleDatabase db) throws OracleException {
+      insertDocument(db,COLLECTION_NAME,this);
+    }
 
     public String recordSale(OracleDatabase db) throws OracleException, IOException {
 
         OracleDocument doc = Screening.getScreening(db, this.key);
         this.key = null;
-
-        Screening screening = gson.fromJson(doc.getContentAsString(), Screening.class);
+        // System.out.println("Before Image: " + doc.getContentAsString());
+        Screening screening = Screening.fromJSON(doc.getContentAsString());
         addScreeningDetails(screening);
 
         int seats = this.adult + this.child + this.adult;
@@ -59,16 +58,16 @@ public class TicketSale {
                 return "{\"status\":\"SoldOut\"}";
             }
             OracleDocument updatedDoc = db.createDocumentFromString(gson.toJson(screening));
+            // System.out.println("After Image: " + updatedDoc.getContentAsString());
             booked = screening.updateScreening(db, doc.getKey(), doc.getVersion(), updatedDoc);
             if (!booked) {
                 // Document updated by another session. Reload and try again.
                 doc = Screening.getScreening(db, this.key);
-                screening = gson.fromJson(doc.getContentAsString(), Screening.class);
+                screening = Screening.fromJSON(doc.getContentAsString());
             }
         }
 
-        OracleCollection col = db.admin().createCollection(TicketSale.COLLECTION_NAME);
-        col.insert(db.createDocumentFromString(gson.toJson(this)));
+        insertTicketSale(db);
         return "{\"status\" : \"Booked\",\"message\" : \"Please enjoy your movie.\"}";
     }
 
@@ -79,7 +78,4 @@ public class TicketSale {
         return gson.fromJson(json, TicketSale.class);
     }
 
-    public String toJSON() {
-        return gson.toJson(this);
-    }
 }

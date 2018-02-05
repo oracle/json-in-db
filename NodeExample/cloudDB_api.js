@@ -44,7 +44,6 @@ module.exports.generateSummary             = generateSummary
 module.exports.insert2Item                 = document2Item
 module.exports.document2Item               = document2Item
 module.exports.documents2Items             = documents2Items
-// module.exports.formatResults               = formatResults
 module.exports.formatSingleInsert          = formatSingleInsert
 module.exports.processSingleInsert         = processSingleInsert
 module.exports.processResults              = processResults
@@ -74,8 +73,8 @@ const DEFAULT_LIMIT = 128
 let applicationName = null;
 	  						
 function getDBAPI() {
-  console.log(process.argv)
-  if (process.argv[process.argv.length-1] === 'DEBUG') {
+
+  if (process.argv[process.argv.length-1] === 'TRACE') {
     return './cloudDB_trace.js'
   }
   else {

@@ -1,19 +1,41 @@
 {
-  "name": "oracle-movie-ticket-demo",
-  "version": "3.3.6",
-  "description": "Sample application for demonstrating the use of Node.js and SODA for REST with the Oracle 12c Database",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "_from": "oracle-movie-ticket-demo",
+  "_id": "oracle-movie-ticket-demo@5.2.0",
+  "_inBundle": false,
+  "_integrity": "sha512-XuDQku9Lt62HnoMxhSefJajugBF9xmu15Br3U1YpCCHCZDkFp4jhsJ1ZwDchjLA6wT6F83GMHpiIjOUovtUVcQ==",
+  "_location": "/oracle-movie-ticket-demo",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "oracle-movie-ticket-demo",
+    "name": "oracle-movie-ticket-demo",
+    "escapedName": "oracle-movie-ticket-demo",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
   },
-  "keywords": [],
-  "author": "Mark Drake <mark.drake@oracle.com>",
-  "license": "ISC",
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/oracle-movie-ticket-demo/-/oracle-movie-ticket-demo-5.2.0.tgz",
+  "_shasum": "d045363e1532cdc4925b2e1f5f233642c56b4cd9",
+  "_spec": "oracle-movie-ticket-demo",
+  "_where": "G:\\Node-8\\NodeExample",
+  "author": {
+    "name": "Mark Drake",
+    "email": "mark.drake@oracle.com"
+  },
+  "bugs": {
+    "url": "https://github.com/oracle/json-in-db/issues"
+  },
+  "bundleDependencies": false,
   "dependencies": {
     "@google/maps": "^0.2.1",
     "angular": "^1.5.5",
     "angular-cookies": "^1.5.5",
-    "aws-sdk": "^2.171.0",
+    "aws-sdk": "^2.188.0",
     "body-parser": "^1.15.1",
     "bootstrap": "^3.3.6",
     "bootstrap-datepicker": "^1.6.1",
@@ -22,22 +44,28 @@
     "express": "^4.13.4",
     "express-session": "^1.13.0",
     "jquery": "^2.2.2",
-    "mongodb": "^3.0.0-rc0",
+    "mongodb": "^3.0.2",
     "morgan": "^1.7.0",
     "parse-address": "0.0.5",
     "request": "^2.74.0",
     "request-promise-native": "^1.0.5",
     "serve-static": "^1.10.2",
-    "uuid": "^3.1.0",
     "xml2js": "^0.4.16"
   },
+  "deprecated": false,
+  "description": "Sample application for demonstrating the use of Node.js and SODA for REST with the Oracle 12c Database",
   "devDependencies": {},
+  "homepage": "https://github.com/oracle/json-in-db#readme",
+  "keywords": [],
+  "license": "ISC",
+  "main": "index.js",
+  "name": "oracle-movie-ticket-demo",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oracle/json-in-db.git"
   },
-  "bugs": {
-    "url": "https://github.com/oracle/json-in-db/issues"
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "homepage": "https://github.com/oracle/json-in-db#readme"
+  "version": "5.2.0"
 }

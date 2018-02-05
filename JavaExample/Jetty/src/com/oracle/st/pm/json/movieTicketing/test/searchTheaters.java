@@ -3,21 +3,13 @@ package com.oracle.st.pm.json.movieTicketing.test;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import com.oracle.st.pm.json.movieTicketing.docStore.Theater;
+import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
 import com.oracle.st.pm.json.movieTicketing.service.TheaterService;
-import com.oracle.st.pm.json.movieTicketing.utilitiy.CollectionManager;
 import com.oracle.st.pm.json.movieTicketing.utilitiy.DBConnection;
-
-import java.sql.Connection;
-
-import java.util.Calendar;
-
-import oracle.soda.OracleDatabase;
-import oracle.soda.rdbms.OracleRDBMSClient;
 
 public class searchTheaters {
 
-    private static Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
+    private static Gson gson = new GsonBuilder().setDateFormat(SodaCollection.ISO_DATE_FORMAT).create();
 
     public searchTheaters() {
         super();

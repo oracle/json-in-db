@@ -1,22 +1,13 @@
 package com.oracle.st.pm.json.movieTicketing.jetty;
 
 
-import com.oracle.st.pm.json.movieTicketing.utilitiy.DBConnection;
-
 import java.util.Optional;
 
-import javax.naming.Context;
-import javax.naming.InitialContext;
-
-import oracle.ucp.jdbc.PoolDataSource;
-
-import org.eclipse.jetty.plus.jndi.Resource;
 import org.eclipse.jetty.server.NCSARequestLog;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.webapp.WebAppContext;
 
 public class App {
     

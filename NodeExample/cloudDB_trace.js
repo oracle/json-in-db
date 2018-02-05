@@ -41,7 +41,7 @@ function getDBAPI() {
  
   let driver = process.argv[process.argv.length-1]
 
-  if ( driver === 'DEBUG') {
+  if ( driver === 'TRACE') {
     driver = process.argv[process.argv.length-2]
   }
 
@@ -172,13 +172,17 @@ function queryByExample(sessionState, collectionName, qbe, limit, fields, includ
 
     try {
 	  if (TRACE_PROMISE_EXECUTION) writeLogEntry(moduleId,`Executing Promise`)	
+      sessionState.sqlTrace = true;  
+	  const qbeClone = JSON.parse(JSON.stringify(qbe))
 	  const results = await dbAPI.queryByExample(sessionState, collectionName, qbe, limit, fields, includeTotal)
+      delete sessionState.sqlTrace
 	  if (TRACE_PROMISE_EXECUTION) writeLogEntry(moduleId,`Executed Promise`)	
-      writeLogEntry(moduleId,`\nQBE expression:\n${JSON.stringify(qbe)}${sessionState.qbeRewrite !== undefined ? `\nQuery translation:\n${JSON.stringify(sessionState.qbeRewrite)}` : ""}`);  
+      writeLogEntry(moduleId,`\nQBE expression:\n${JSON.stringify(qbeClone)}${sessionState.qbeRewrite !== undefined ? `\nQuery translation:\n${JSON.stringify(sessionState.qbeRewrite)}` : ""}`);  
       writeLogEntry(moduleId,`Returned ${results.json.items.length} documents in ${results.elapsedTime} ms. ${results.batchCount > 1 ? `Executed ${results.batchCount} operations.` : ""}`);  
 	  if (TRACE_RESULTS) writeLogEntry(JSON.stringify(results," ",2))
 	  resolve(results)
     } catch (e) {
+      delete sessionState.sqlTrace
 	  if (TRACE_EXCEPTIONS) console.log(e)
       writeLogEntry(moduleId,`Exception: status ${e.status}. Execution Time ${e.elapsedTime} ms.`);
 	  reject(e)
@@ -211,7 +215,6 @@ function bulkInsert(sessionState, collectionName, documents) {
 
   const moduleId = `bulkInsert("${collectionName}",${documents.length})`
   if (TRACE_PROMISE_EXECUTION) writeLogEntry(moduleId,'Generating Promise')
-  
   return new Promise(async function(resolve,reject) {
 
     try {

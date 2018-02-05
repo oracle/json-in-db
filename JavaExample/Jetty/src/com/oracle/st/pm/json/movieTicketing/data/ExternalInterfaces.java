@@ -8,15 +8,15 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import com.oracle.st.pm.json.movieTicketing.docStore.Movie;
-
 import com.oracle.st.pm.json.movieTicketing.docStore.Poster;
 import com.oracle.st.pm.json.movieTicketing.docStore.Screening;
+import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
 import com.oracle.st.pm.json.movieTicketing.docStore.Theater;
-import com.oracle.st.pm.json.movieTicketing.utilitiy.CollectionManager;
 import com.oracle.st.pm.json.movieTicketing.utilitiy.DBConnection;
 import com.oracle.st.pm.json.movieTicketing.utilitiy.DataSources;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +24,6 @@ import java.io.InputStreamReader;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-
 import java.net.URLEncoder;
 
 import java.sql.SQLException;
@@ -37,14 +36,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
 import java.util.concurrent.ThreadLocalRandom;
 
 import oracle.soda.OracleCollection;
 import oracle.soda.OracleDatabase;
 import oracle.soda.OracleDocument;
 import oracle.soda.OracleException;
-import oracle.soda.rdbms.OracleRDBMSClient;
 
 import oracle.xml.parser.v2.DOMParser;
 import oracle.xml.parser.v2.XMLDocument;
@@ -58,9 +55,9 @@ import org.xml.sax.SAXException;
 
 public class ExternalInterfaces {
 
-    private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
+    private static final Gson gson = new GsonBuilder().setDateFormat(SodaCollection.ISO_DATE_FORMAT).create();
     private static final DataSources dataSources = DataSources.loadDataSources();
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat(SodaCollection.ISO_DATE_FORMAT);
     
     public ExternalInterfaces() {
 
@@ -103,18 +100,34 @@ public class ExternalInterfaces {
         return showTimes;
 
     }
+    
+    public static List<Screening> getScreeningsFromFile(String file) throws IOException {
+
+        JsonParser p = new JsonParser();
+        ArrayList<Screening> screenings = new ArrayList<Screening>();
+
+        FileInputStream fis = new FileInputStream(file);
+        JsonElement je = p.parse(new InputStreamReader(fis));
+        JsonArray screeningsFromFile = je.getAsJsonArray();
+        for (int i=0; i<screeningsFromFile.size(); i++) {
+          Screening screening = Screening.fromJSON(gson.toJson(screeningsFromFile.get(i)));
+          screenings.add(screening);
+        }
+        
+        return screenings;
+    }
 
     private static List<Screening> createScreenings(OracleDatabase db) throws FileNotFoundException, SQLException,
                                                                               IOException, OracleException {
 
-        HashMap<Integer, Theater> theatersById = Theater.getTheatersById(db);
+        HashMap<Integer, Theater> theatersById = (HashMap<Integer,Theater>) Theater.getTheatersById(db);
         HashMap<Integer, Movie> moviesById = Movie.getMoviesById(db);
 
         Integer[] movieKeys = moviesById.keySet().toArray(new Integer[moviesById.size()]);
         List<Screening> showTimes = new ArrayList<Screening>();
 
         Calendar startDate = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+        SimpleDateFormat sdf = new SimpleDateFormat(SodaCollection.ISO_DATE_FORMAT);
         // System.out.println(sdf.format(startDate.getTime()));
         startDate.set(Calendar.MINUTE, 0);
         startDate.set(Calendar.SECOND, 0);
@@ -146,8 +159,14 @@ public class ExternalInterfaces {
                                                                                         InterruptedException,
                                                                                         OracleException {
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.generateScreenings()]: Started.");
-        List<Screening> screenings = createScreenings(db);
-        Screening.saveScreenings(db, screenings);
+        List<Screening> screenings = null;
+        if (dataSources.emulate) {
+          screenings = getScreeningsFromFile(dataSources.emulation.screenings);
+        }
+        else {
+            screenings = createScreenings(db);
+        }
+        Screening.recreateScreeningCollection(db, screenings);
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.generateScreenings()]: Completed.");
         return "{\"count\":" + screenings.size() + "}";
     }
@@ -263,6 +282,22 @@ public class ExternalInterfaces {
         return loc;
     }
 
+    public static List<Theater> getTheatersFromFile(String file) throws IOException {
+
+        JsonParser p = new JsonParser();
+        ArrayList<Theater> theaters = new ArrayList<Theater>();
+
+        FileInputStream fis = new FileInputStream(file);
+        JsonElement je = p.parse(new InputStreamReader(fis));
+        JsonArray theatersFromFile = je.getAsJsonArray();
+        for (int i=0; i<theatersFromFile.size(); i++) {
+          Theater theater = Theater.fromJSON(gson.toJson(theatersFromFile.get(i)));
+          theaters.add(theater);
+        }
+        
+        return theaters;
+    }
+
     public static List<Theater> getNearbyTheaters() throws MalformedURLException,
                                                                                               IOException,
                                                                                               XMLParseException,
@@ -339,8 +374,14 @@ public class ExternalInterfaces {
                                                                                               OracleException,
                                                                                               InterruptedException {
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.loadTheatersFromFandango()]: Started.");
-        List<Theater> theaters = getNearbyTheaters();
-        Theater.saveTheaters(db, theaters);
+        List<Theater> theaters = null;
+        if (dataSources.emulate) {
+          theaters = getTheatersFromFile(dataSources.emulation.theaters);
+        }
+        else {
+          theaters = getNearbyTheaters();
+        }
+        Theater.recreateTheaterCollection(db, theaters);
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.loadTheatersFromFandango()]: Completed.");
         return "{\"count\":" + theaters.size() + "}";
     }
@@ -444,13 +485,34 @@ public class ExternalInterfaces {
         return movies;
     }
 
+    public static List<Movie> getMoviesFromFile(String file) throws IOException {
+
+        JsonParser p = new JsonParser();
+        ArrayList<Movie> movies = new ArrayList<Movie>();
+
+        FileInputStream fis = new FileInputStream(file);
+        JsonElement je = p.parse(new InputStreamReader(fis));
+        JsonArray moviesFromFile = je.getAsJsonArray();
+        for (int i=0; i<moviesFromFile.size(); i++) {
+          Movie movie = Movie.fromJSON(gson.toJson(moviesFromFile.get(i)));
+          movies.add(movie);
+        }
+        
+        return movies;
+    }
 
     public static String loadMoviesFromTMDB(OracleDatabase db) throws SQLException, IOException,
                                                                                         InterruptedException,
                                                                                         OracleException {
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.loadMoviesFromTMDB()]: Started.");
-        List<Movie> movies = getMoviesFromTMDB();
-        Movie.saveMovies(db, movies);
+        List<Movie> movies = null;
+        if (dataSources.emulate) {
+          movies = getMoviesFromFile(dataSources.emulation.movies);
+        }
+        else {
+          movies = getMoviesFromTMDB();
+        }
+        Movie.recreateMovieCollection(db, movies);
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.loadMoviesFromTMDB()]: Completed.");
         return "{\"count\":" + movies.size() + "}";
     }
@@ -491,7 +553,7 @@ public class ExternalInterfaces {
 
         OracleDocument[] movieList = Movie.getMovies(db);
         OracleCollection movies = db.openCollection(Movie.COLLECTION_NAME);
-        OracleCollection posters = CollectionManager.recreateCollection(db, Poster.COLLECTION_NAME);
+        OracleCollection posters = Poster.recreatePosterCollection(db);
 
         for (int i = 0; i < movieList.length; i++) {
             Movie movie = gson.fromJson(movieList[i].getContentAsString(), Movie.class);
@@ -501,7 +563,7 @@ public class ExternalInterfaces {
             poster = posters.insertAndGet(poster);
             movie.setExternalURL(movie.getPosterURL());
             movie.setPosterURL("/movieticket/poster/" + poster.getKey());
-            movies.find().key(movieList[i].getKey()).replaceOne(db.createDocumentFromString(movie.toJson()));
+            movies.find().key(movieList[i].getKey()).replaceOne(db.createDocumentFromString(movie.toJSON()));
             Thread.sleep(400);
         }
         System.out.println(sdf.format(new Date()) + "[ExternalInterfaces.loadPostersFromTMDB()]: Compeleted.");

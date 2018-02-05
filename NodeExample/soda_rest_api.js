@@ -19,7 +19,7 @@ const uuidv4 = require('uuid/v4');
 const request = require('request-promise-native');
 
 const constants = require('./constants.js');
-const dbLibrary = require('./cloudDB_api.js');
+const cloudDB = require('./cloudDB_api.js');
 const errorLibrary = require('./error_library.js');
 
 const driverName = "SODA-REST"
@@ -293,7 +293,7 @@ function processError(invokerId, logRequest, e) {
                   , request          : logRequest.logEntry ? logRequest.logEntry.request : null
                   , stack            : logRequest.logEntry.stack ? logRequest.logEntry.stack : null
                   , underlyingCause  : e
-                  , status           : dbLibrary.interpretHTTPStatusCode(e.statusCode) 
+                  , status           : cloudDB.interpretHTTPStatusCode(e.statusCode) 
                   }
 
   return new errorLibrary.GenericException(`${driverName}: Unexpected exception encountered`,details)
@@ -312,7 +312,7 @@ async function sendRequest(invokerId, sessionState, options, logContainer) {
     options.proxy = `http://${getConnectionProperties().proxy.hostname}:${getConnectionProperties().proxy.port}`
   }
   
-  logContainer.logRequest = dbLibrary.createLogRequest(moduleId, sessionState, options)
+  logContainer.logRequest = cloudDB.createLogRequest(moduleId, sessionState, options)
 	
   let startTime = null
   try {	
@@ -349,6 +349,10 @@ async function processQuery(sessionState, options, limit) {
   
   const startTime = new Date().getTime()
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
+
+  if (sessionState.sqlTrace) {
+	sessionState.qbeRewrite = results.body.sqlStatement
+  }
   
   if ((limit !== 'unlimited') && (limit === 0)) {
 	results.body.items = []
@@ -364,6 +368,9 @@ async function processQuery(sessionState, options, limit) {
 		}
 	    options.qs.offset = results.body.count
         const moreResults = await sendRequest(moduleId, sessionState, options, logContainer);
+        if (sessionState.sqlTrace) {
+	      sessionState.qbeRewrite = moreResults.body.sqlStatement
+        }
 	    results.body.items = results.body.items.concat(moreResults.body.items);
 	    results.body.count = results.body.items.length
 		results.body.hasMore = moreResults.body.hasMore
@@ -378,7 +385,7 @@ async function processQuery(sessionState, options, limit) {
     } 
   }
   
-  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);    
+  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);    
 
 }
 async function initialize(applicationName) {
@@ -428,7 +435,7 @@ async function getDocumentContent(sessionState, collectionName, key, binary, eta
 
   const logContainer = {}
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
-  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);
+  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);
 }
 
 async function getCollection(sessionState, collectionName, limit, fields, includeTotal) {
@@ -466,6 +473,9 @@ async function queryByExample(sessionState, collectionName, qbe, limit, fields, 
                   , time    : true
                   };
 
+  if (sessionState.sqlTrace) {
+	 options.qs["sqlStatement"] = true
+  }
   return processQuery(sessionState,options,limit)
 }
 
@@ -491,7 +501,7 @@ async function postDocument(sessionState, collectionName, document, contentType)
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
   
   // Appears BODY is a string when the payload was not JSON
-  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);  
+  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 async function bulkInsert(sessionState, collectionName, documents) {
@@ -508,7 +518,7 @@ async function bulkInsert(sessionState, collectionName, documents) {
 
   const logContainer = {}
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
-  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);  
+  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 async function putDocument(sessionState, collectionName, key, document, contentType, etag) {
@@ -538,8 +548,8 @@ async function putDocument(sessionState, collectionName, key, document, contentT
                          , location       : results.headers.location
                          }
 						 
-  results.body = dbLibrary.formatSingleInsert(updateResponse)
-  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);  
+  results.body = cloudDB.formatSingleInsert(updateResponse)
+  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 async function deleteDocument(sessionState, collectionName, key, etag) {
@@ -556,7 +566,7 @@ async function deleteDocument(sessionState, collectionName, key, etag) {
 
   const logContainer = {}
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
-  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);  
+  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 
@@ -594,7 +604,7 @@ async function createIndex(sessionState, collectionName, indexName, indexMetadat
 
   const logContainer = {}
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
-  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);
+  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);
 }
 
 function getIndexMetadata(collectionName) {
@@ -624,10 +634,10 @@ async function createIndexes(sessionState, collectionName) {
   const indexes = getIndexMetadata(collectionName);
   
   const createIndexOperations = indexes.map(function(indexMetadata) {
-	                                          return dbLibrary.createIndex(sessionState,collectionName,indexMetadata.name,indexMetadata)
+	                                          return cloudDB.createIndex(sessionState,collectionName,indexMetadata.name,indexMetadata)
                                            })
 
-  const logRequest = dbLibrary.createLogRequest(moduleId, sessionState, indexes)
+  const logRequest = cloudDB.createLogRequest(moduleId, sessionState, indexes)
 
   logRequest.startTime = new Date().getTime();
   const createIndexResults = await Promise.all(createIndexOperations)
@@ -635,7 +645,7 @@ async function createIndexes(sessionState, collectionName) {
   const results = Object.assign({},constants.HTTP_RESPONSE_SUCCESS)
   results.elapsedTime = logRequest.endTime - logRequest.startTime
   results.json = createIndexResults
-  return dbLibrary.processResultsHTTP(moduleId, results, logRequest);  
+  return cloudDB.processResultsHTTP(moduleId, results, logRequest);  
 
 }
 
@@ -658,7 +668,7 @@ async function createCollection(sessionState, collectionName) {
 
   const logContainer = {}
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
-  return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);  
+  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 function collectionNotFound(e) {
@@ -687,13 +697,13 @@ async function dropCollection(sessionState, collectionName) {
   const logContainer = {}
   try {
     const results = await sendRequest(moduleId, sessionState, options, logContainer);
-    return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);
+    return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);
   } catch (e) {
  	if (collectionNotFound(e)) {
       writeLogEntry(moduleId,`NOT-FOUND: ${e.status}. Returning success.`)
 	  const results = Object.assign({},constants.HTTP_RESPONSE_SUCCESS)
 	  results.elapsedTime = e.elapsedTime
-      return dbLibrary.processResultsHTTP(moduleId, results, logContainer.logRequest);
+      return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);
     }
 	throw processError(moduleId,logContainer.logRequest,e);	
   }

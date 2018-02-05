@@ -1,8 +1,8 @@
 {
   "_from": "oracle-movie-ticket-demo",
-  "_id": "oracle-movie-ticket-demo@5.1.1",
+  "_id": "oracle-movie-ticket-demo@5.2.0",
   "_inBundle": false,
-  "_integrity": "sha512-2IWsPrI9uTz0xcEBLrU31DqJmvEmir7vEvAL8DU1w1wjg/1Uz78BKzEWuSXjjzmiiRZX2DK0h8Oe7Mj05JVSfg==",
+  "_integrity": "sha512-XuDQku9Lt62HnoMxhSefJajugBF9xmu15Br3U1YpCCHCZDkFp4jhsJ1ZwDchjLA6wT6F83GMHpiIjOUovtUVcQ==",
   "_location": "/oracle-movie-ticket-demo",
   "_phantomChildren": {},
   "_requested": {
@@ -19,10 +19,10 @@
     "#USER",
     "/"
   ],
-  "_resolved": "https://registry.npmjs.org/oracle-movie-ticket-demo/-/oracle-movie-ticket-demo-5.1.1.tgz",
-  "_shasum": "aa0611116c631b69b57583a792ce1befdc5d9c2c",
+  "_resolved": "https://registry.npmjs.org/oracle-movie-ticket-demo/-/oracle-movie-ticket-demo-5.2.0.tgz",
+  "_shasum": "d045363e1532cdc4925b2e1f5f233642c56b4cd9",
   "_spec": "oracle-movie-ticket-demo",
-  "_where": "g:\\",
+  "_where": "G:\\Node-8\\NodeExample",
   "author": {
     "name": "Mark Drake",
     "email": "mark.drake@oracle.com"
@@ -35,16 +35,20 @@
     "@google/maps": "^0.2.1",
     "angular": "^1.5.5",
     "angular-cookies": "^1.5.5",
+    "aws-sdk": "^2.188.0",
     "body-parser": "^1.15.1",
     "bootstrap": "^3.3.6",
     "bootstrap-datepicker": "^1.6.1",
     "cookie-parser": "^1.4.3",
+    "documentdb": "^1.14.2",
     "express": "^4.13.4",
     "express-session": "^1.13.0",
     "jquery": "^2.2.2",
+    "mongodb": "^3.0.2",
     "morgan": "^1.7.0",
     "parse-address": "0.0.5",
     "request": "^2.74.0",
+    "request-promise-native": "^1.0.5",
     "serve-static": "^1.10.2",
     "xml2js": "^0.4.16"
   },
@@ -63,5 +67,5 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "version": "5.2.0"
+  "version": "5.3.0"
 }

@@ -1,7 +1,6 @@
 package com.oracle.st.pm.json.movieTicketing.test;
 
 import com.oracle.st.pm.json.movieTicketing.data.ExternalInterfaces;
-import com.oracle.st.pm.json.movieTicketing.utilitiy.CollectionManager;
 import com.oracle.st.pm.json.movieTicketing.utilitiy.DBConnection;
 
 public class generateScreenings {

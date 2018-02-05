@@ -2,13 +2,11 @@ package com.oracle.st.pm.json.movieTicketing.utilitiy;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
 import com.google.gson.JsonParser;
 
-import java.io.File;
+import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -18,7 +16,7 @@ public class DataSources {
 
     public static final String DEFAULT_FILENAME = "dataSources.json";
 
-    private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
+    private static final Gson gson = new GsonBuilder().setDateFormat(SodaCollection.ISO_DATE_FORMAT).create();
 
     private Gson dataSources;
 
@@ -83,6 +81,13 @@ public class DataSources {
         public String apiKey;
         public Geocoding geocoding;
     }
+    
+    public class Emulation  {
+        public String theaters;
+        public String movies;
+        public String screenings;
+
+    }
 
     public boolean useProxy;
     public Proxy proxy;
@@ -92,6 +97,8 @@ public class DataSources {
     public String geocodingService;
     public String mappingService;
     public Google google;
+    public boolean emulate;
+    public Emulation emulation;
 
     public DataSources() {
         super();

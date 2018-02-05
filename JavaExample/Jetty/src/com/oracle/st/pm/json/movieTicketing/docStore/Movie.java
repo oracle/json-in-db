@@ -1,16 +1,8 @@
 package com.oracle.st.pm.json.movieTicketing.docStore;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-import com.oracle.st.pm.json.movieTicketing.qbe.BetweenOperator;
-import com.oracle.st.pm.json.movieTicketing.qbe.GetDocumentById;
-
-import com.oracle.st.pm.json.movieTicketing.utilitiy.CollectionManager;
 
 import java.io.IOException;
 
@@ -18,26 +10,20 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import oracle.soda.OracleCollection;
-import oracle.soda.OracleCursor;
 import oracle.soda.OracleDatabase;
 import oracle.soda.OracleDocument;
 import oracle.soda.OracleException;
-import oracle.soda.OracleOperationBuilder;
 
-public class Movie {
+public class Movie extends SodaCollection {
 
     public static final String COLLECTION_NAME = "Movie";
-
-    private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
 
     private int id;
     private String title;
@@ -170,6 +156,15 @@ public class Movie {
         }
     }
 
+    public static Movie[] toMovies(OracleDocument[] documentList) throws OracleException, IOException {
+        ArrayList<OracleDocument> movieList = new ArrayList<OracleDocument>(Arrays.asList(documentList));
+        Movie[] movies = new Movie[movieList.size()];
+        for (int i = 0; i < movies.length; i++) {
+            movies[i] = Movie.fromJSON(movieList.get(i).getContentAsString());
+        }
+        return movies;
+    }
+
     public static List<OracleDocument> toOracleDocumentList(OracleDatabase db,
                                                             List<Movie> movies) throws OracleException {
         List<OracleDocument> documents = new ArrayList<OracleDocument>();
@@ -177,107 +172,62 @@ public class Movie {
         Iterator<Movie> iMovies = movies.iterator();
         while (iMovies.hasNext()) {
             Movie m = iMovies.next();
-            documents.add(db.createDocumentFromString(m.toJson()));
+            documents.add(db.createDocumentFromString(m.toJSON()));
         }
-
         return documents;
     }
 
-    public static long getMovieCount(OracleDatabase db) throws OracleException {
-        OracleCollection movies = db.openCollection(COLLECTION_NAME);
-        if (movies != null) {
-            OracleOperationBuilder movieDocuments = movies.find();
-            return movieDocuments.count();
-        }
-        else {
-            return 0;
-        }
-    }
-
-
     public static HashMap<Integer, Movie> getMoviesById(OracleDatabase db) throws OracleException, IOException {
-
-        HashMap<Integer, Movie> moviesById = new HashMap<Integer, Movie>();
-        OracleCollection movies = db.openCollection("Movie");
-        OracleOperationBuilder movieDocuments = movies.find();
-        int movieCount = (int) movieDocuments.count();
-        OracleCursor movieCursor = movieDocuments.getCursor();
-        while (movieCursor.hasNext()) {
-            OracleDocument doc = movieCursor.next();
-            Movie movie = Movie.fromJson(doc.getContentAsString());
-            moviesById.put(movie.getMovieId(), movie);
+        OracleDocument [] documents = getMovies(db);
+        HashMap<Integer, Movie> movieList = new HashMap<Integer, Movie>();
+        for (int i = 0; i < documents.length; i++) {
+          Movie movie = fromJSON(documents[i].getContentAsString());
+          movieList.put(movie.getMovieId(), movie);
         }
-        movieCursor.close();
-        return moviesById;
+        return movieList;
     }
 
 
     public static OracleDocument[] getMovies(OracleDatabase db) throws OracleException, IOException {
-        OracleCollection movies = db.openCollection(Movie.COLLECTION_NAME);
-        if (movies != null) {
-          OracleOperationBuilder movieDocuments = movies.find();
-          long movieCount = movieDocuments.count();
-          OracleDocument[] movieList = new OracleDocument[(int) movieCount];
-          OracleCursor movieCursor = movieDocuments.getCursor();
-          for (int i = 0; i < movieCount; i++) {
-             movieList[i] = movieCursor.next();
-          }
-          movieCursor.close();
-          return movieList;
-        } 
-        else {
-            return new OracleDocument[0];
-        }
+        return getDocuments(db,COLLECTION_NAME,-1);
+    }
+    
+    public static OracleDocument[] getMovies(OracleDatabase db, int limit) throws OracleException, IOException {
+        return getDocuments(db,COLLECTION_NAME,limit);
+    }
+
+    public static long getMovieCount(OracleDatabase db) throws OracleException {
+        return getDocumentCount(db,COLLECTION_NAME);
     }
 
     public static OracleDocument getMovie(OracleDatabase db, String key) throws OracleException, IOException {
-        OracleCollection movies = db.openCollection(Movie.COLLECTION_NAME);
-        OracleDocument movie = movies.findOne(key);
-        return movie;
+      return getDocument(db,COLLECTION_NAME,key);
     }
 
     public static OracleDocument getMovieById(OracleDatabase db, int id) throws OracleException {
-        OracleCollection movies = db.openCollection(Movie.COLLECTION_NAME);
-        GetDocumentById qbeDefinition = new GetDocumentById(id);
-        OracleDocument qbe = db.createDocumentFromString(gson.toJson(qbeDefinition));
-        OracleOperationBuilder operation = movies.find().filter(qbe);
-        OracleDocument doc = operation.getOne();
-        return doc;
+        return getDocumentById(db,COLLECTION_NAME,id);
     }
 
-    public static OracleDocument[] searchMovies(OracleDatabase db, String qbeDefinition) throws OracleException,
-                                                                                                IOException {
-        OracleCollection movies = db.openCollection(Movie.COLLECTION_NAME);
-        OracleDocument qbe = db.createDocumentFromString(qbeDefinition);
-        OracleOperationBuilder movieDocuments = movies.find().filter(qbe);
-        long movieCount = movieDocuments.count();
-        OracleDocument[] movieList = new OracleDocument[(int) movieCount];
-        OracleCursor movieCursor = movieDocuments.getCursor();
-        for (int i = 0; i < movieCount; i++) {
-            movieList[i] = movieCursor.next();
-        }
-        movieCursor.close();
-        return movieList;
+    public static OracleDocument[] searchMovies(OracleDatabase db, String qbeDefinition) throws OracleException, IOException {
+        return searchCollection(db,COLLECTION_NAME,qbeDefinition);
     }
 
-    public static void saveMovies(OracleDatabase db, List<Movie> movies) throws OracleException {
+    public boolean updateMovie(OracleDatabase db, String key, String version,
+                                   OracleDocument newDocument) throws OracleException {
+       return updateDocument(db,COLLECTION_NAME,key,version,newDocument);
+    }
+
+    public static void recreateMovieCollection(OracleDatabase db, List<Movie> movies) throws OracleException {
 
         // Create a collection with the name "Movie" and store the documents
         List<OracleDocument> documents = Movie.toOracleDocumentList(db, movies);
-        OracleCollection col = CollectionManager.recreateCollection(db,Movie.COLLECTION_NAME);
-        col.insert(documents.iterator());
-        col = CollectionManager.recreateCollection(db,Poster.COLLECTION_NAME);
-        col.admin().drop();
-        col = CollectionManager.recreateCollection(db,Screening.COLLECTION_NAME);
-        col.admin().drop();
+        recreateCollection(db,COLLECTION_NAME, documents);
+        dropCollection(db,Poster.COLLECTION_NAME);
+        dropCollection(db,Screening.COLLECTION_NAME);        
     }
 
-    public static Movie fromJson(String json) {
+    public static Movie fromJSON(String json) {
         return gson.fromJson(json, Movie.class);
-    }
-
-    public String toJson() {
-        return gson.toJson(this);
     }
 
 }

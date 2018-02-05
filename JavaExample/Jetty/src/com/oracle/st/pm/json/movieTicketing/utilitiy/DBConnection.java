@@ -1,32 +1,17 @@
 package com.oracle.st.pm.json.movieTicketing.utilitiy;
 
-import com.google.gson.Gson;
+import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
 
-import com.google.gson.GsonBuilder;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 
-import java.sql.Connection;
 import java.sql.SQLException;
-
 import java.sql.SQLSyntaxErrorException;
 
 import java.text.SimpleDateFormat;
 
 import java.util.Date;
-
 import java.util.Properties;
-
 import java.util.UUID;
-
-import javax.naming.Context;
-
-import javax.naming.InitialContext;
-
-import javax.naming.NamingException;
 
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.OracleDriver;
@@ -38,19 +23,18 @@ import oracle.soda.OracleCollection;
 import oracle.soda.OracleDatabase;
 import oracle.soda.OracleDocument;
 import oracle.soda.OracleException;
-
 import oracle.soda.OracleOperationBuilder;
 import oracle.soda.rdbms.OracleRDBMSClient;
 
-import oracle.ucp.jdbc.PoolDataSourceFactory;
 import oracle.ucp.jdbc.PoolDataSource;
+import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 
 public class DBConnection {
 
     public static final boolean DEBUG = false;
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat(SodaCollection.ISO_DATE_FORMAT);
     private static final PoolDataSource pds = PoolDataSourceFactory.getPoolDataSource();
     private static final ConnectionProperties connectionProps = ConnectionProperties.getConnectionProperties();
     private static final Properties sodaProps = new Properties(); 
@@ -224,12 +208,12 @@ public class DBConnection {
     
     private static void doFeatureDetection(OracleDatabase db) throws OracleException {
 
-       movieProps.put("com.oracle.st.pm.json.movieTicketing.nearSupported", "true");
+       movieProps.put("com.oracle.st.pm.json.movieTicketing.nearSupported", "false");
        movieProps.put("com.oracle.st.pm.json.movieTicketing.containsSupported", "true");
        movieProps.put("com.oracle.st.pm.json.movieTicketing.nullOnEmptySupported", "true");
 
        String collectionName = "TMP-" + UUID.randomUUID();
-       OracleCollection col = CollectionManager.recreateCollection(db,collectionName);
+       OracleCollection col = SodaCollection.recreateCollection(db,collectionName);
         
        /*
        ** Test for $CONTAINS support
@@ -309,7 +293,7 @@ public class DBConnection {
           }
         }
 
-        col.admin().drop();
+        SodaCollection.dropCollection(db, collectionName);
 
         System.out.println(sdf.format(new Date()) + " doFeatureDetection: $contains operator supported:  " + isContainsSupported());
         System.out.println(sdf.format(new Date()) + " doFeatureDetection: $near operatator   supported:  " + isNearSupported());

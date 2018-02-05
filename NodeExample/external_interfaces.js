@@ -25,10 +25,13 @@ const fs = require('fs');
 const errorLibrary = require('./error_library.js');
 const constants = require('./constants.js');
 
-module.exports.loadTheaters      = loadTheaters;
-module.exports.loadMovies        = loadMovies;
-module.exports.loadScreenings    = loadScreenings;
-module.exports.loadPosters       = loadPosters;
+module.exports.loadTheaters          = loadTheaters;
+module.exports.loadMovies            = loadMovies;
+module.exports.loadScreenings        = loadScreenings;
+module.exports.loadPosters           = loadPosters;
+
+module.exports.getTheaterInformation = getTheaterInformation
+module.exports.getMoviesFromTMDB     = getMoviesFromTMDB
 
 const DEFAULT_RETRY_COUNT = 5;
 const HIGH_RETRY_COUNT    = 100;
@@ -36,6 +39,23 @@ const LOW_RETRY_COUNT     = 10;
 const NO_RETRY_OPERATIONS = 0
 
 const moduleName = 'EXTERNAL-INTERFACES';
+const US_CENSUS_URL = cfg.dataSources.usCensus.protocol + '://' 
+                    + cfg.dataSources.usCensus.hostname + ':' 
+                    + cfg.dataSources.usCensus.port 
+ 
+const TMDB_URL = cfg.dataSources.tmdb.protocol +'://'  
+               + cfg.dataSources.tmdb.hostname + ':' 
+               + cfg.dataSources.tmdb.port 
+                              
+const GOOGLE_URL = cfg.dataSources.google.geocoding.protocol + '://' 
+                 + cfg.dataSources.google.geocoding.hostname + ':' 
+                 + cfg.dataSources.google.geocoding.port 
+				
+const FANDANGO_URL = cfg.dataSources.fandango.protocol +'://'  
+                   + cfg.dataSources.fandango.hostname + ':' 
+                   + cfg.dataSources.fandango.port 
+                              
+const theaterAddresses = []
 
 function timeout(duration) {
   return new Promise(
@@ -65,6 +85,7 @@ function dateWithTZOffset(date) {
    var dif = tzo >= 0 ? '+' : '-'
    var pad = function(num) {
      var norm = Math.abs(Math.floor(num));
+	 
      return (norm < 10 ? '0' : '') + norm;
    };
  
@@ -142,7 +163,7 @@ function processError(invokerId, error) {
                // , statusCode       : e.statusCode 
                   }
  
-return new errorLibrary.GenericException(`$(moduleName}: Unexpected exception encountered.`,details)
+return new errorLibrary.GenericException(`${moduleName}: Unexpected exception encountered.`,details)
   
 }
   
@@ -154,7 +175,7 @@ function formatResponse(invokerId, httpResponse) {
   if ((httpResponse.statusCode === 200) || (httpResponse.statusCode === 201)) {
 	
 	const response =  { module         : moduleName
-	                  , fucntion       : invokerId
+	                  , function       : invokerId
                       , elapsedTime    : httpResponse.elapsedTime
                       , status         : interpetStatusCode(httpResponse.statusCode)
                  	  , contentType    : httpResponse.headers["content-type"]
@@ -176,6 +197,8 @@ function formatResponse(invokerId, httpResponse) {
   }
 }
 
+let waitUntil         = undefined
+
 async function sendRequest(invokerId, options, retryLimit) {
 
   const moduleId = `${invokerId}.sendRequest("${options.method}","${options.uri}",${retryLimit})`;
@@ -189,7 +212,7 @@ async function sendRequest(invokerId, options, retryLimit) {
   if (cfg.dataSources.useProxy) {
     options.proxy = `http://${cfg.dataSources.proxy.hostname}:${cfg.dataSources.proxy.port}`
   }
-
+  
   let retryCount = 0;
   let startTime = null
   startTime = new Date().getTime()
@@ -201,6 +224,9 @@ async function sendRequest(invokerId, options, retryLimit) {
 	  
 	  // elapsedTime is lost for PUT and POST when calling toJSON()
   	  const response = rawResponse.toJSON()
+	  if (response.headers["x-ratelimit-limit"]) {
+	    waitUntil = 100 * (response.headers["x-ratelimit-reset"]+1)
+      }
 	  response.elapsedTime = rawResponse.elapsedTime
       return formatResponse(moduleId, response) 
     } catch (e) {
@@ -215,6 +241,19 @@ async function sendRequest(invokerId, options, retryLimit) {
         await timeout(delay);
 		continue
 	  }
+
+      if ((e.statusCode === 429) && (retryCount < retryLimit)) {
+		retryCount++
+    	const tmdbDelay = ((waitUntil - new Date().getTime()) + (retryCount * 100))
+        await timeout(tmdbDelay);
+		continue
+	  }
+	  
+	  if ((e.statusCode === 429) && (retryCount === retryLimit)) {
+		retryCount++
+        await timeout(10000);
+		continue
+	  }
 	  
   	  if (typeof e.toJSON === 'function') {
         const elapsedTime = e.elapsedTime
@@ -227,7 +266,7 @@ async function sendRequest(invokerId, options, retryLimit) {
   }  
 }
 
-async function loadTheaters (sessionState, response, next) {
+async function loadTheaters (sessionState, response, next, zipCode) {
 
   const moduleId = `loadTheaters(${cfg.dataSources.emulate})`;
   writeLogEntry(moduleId);
@@ -239,8 +278,8 @@ async function loadTheaters (sessionState, response, next) {
       theaterList = JSON.parse(fs.readFileSync(cfg.dataSources.emulation.theaters));
 	}
 	else {
-      theaterList = await getTheaterInformation(constants.DB_LOGGING_DISABLED)
-      // fs.writeFileSync(cfg.dataSources.emulation.theaters,JSON.stringify(theaterList,null,2));
+      // If $near is not supported then geocoding is irrelevant.
+      theaterList = await getTheaterInformation(constants.DB_LOGGING_DISABLED,cfg.dataSources.fandango.searchCriteria.zipCode,movieAPI.getSupportedFeatures().$nearSupported)
     }
     response.write(`],`);
     let httpResponse = await movieAPI.recreateLoadTheaterCollection(sessionState,theaterList);
@@ -251,7 +290,6 @@ async function loadTheaters (sessionState, response, next) {
     httpResponse = await movieAPI.dropScreeningCollection(sessionState)
     response.end()
   } catch(e) {
-	console.log(e)
     movieAPI.logError(e,generateSummary(theaterList));
     next(e)
   };
@@ -264,6 +302,11 @@ async function loadMovies(sessionState, response, next) {
  
   let movieList = []
   
+    
+  const startDate = cfg.dataSources.tmdb.searchCriteria.releaseDates.start
+  const endDate = cfg.dataSources.tmdb.searchCriteria.releaseDates.end 
+  const movieLimit = cfg.dataSources.tmdb.searchCriteria.movieLimit
+
   try {
     // Response #1 Open Object, Output key "status" : Start Array
     response.write(`{"status":[`) 
@@ -271,7 +314,7 @@ async function loadMovies(sessionState, response, next) {
       movieList = JSON.parse(fs.readFileSync(cfg.dataSources.emulation.movies));
 	}
 	else {
-      movieList = await getMoviesFromTMDB(constants.DB_LOGGING_DISABLED,response)
+      movieList = await getMoviesFromTMDB(constants.DB_LOGGING_DISABLED,response,startDate, endDate, movieLimit)
       // fs.writeFileSync(cfg.dataSources.emulation.movies,JSON.stringify(movieList,null,2));
     }
     response.write(`],`);
@@ -321,46 +364,46 @@ async function loadPosters(sessionState, response, next) {
   };
 }
 
-function usCensusGeocoding(address,benchmark) {
+async function usCensusGeocoding(address,benchmark) {
 
   const moduleId = `geocodeAddress("${address}",${benchmark})`;
 
   const options = {
     method  : 'GET'
-  , uri     : cfg.dataSources.usCensus.protocol + '://' 
-            + cfg.dataSources.usCensus.hostname + ':' 
-            + cfg.dataSources.usCensus.port 
-            + cfg.dataSources.usCensus.path
+  , baseUrl : US_CENSUS_URL
+  , uri     : cfg.dataSources.usCensus.path
   , qs      : { format : "json", benchmark : benchmark, address : address}
   , json    : true
   , time    : true
   };
      
-  return sendRequest(moduleId, options, LOW_RETRY_COUNT);  
-
+	 
+  const results = await sendRequest(moduleId, options, LOW_RETRY_COUNT); 
+  return results;
+  
 }
    
 function getGeoJSON(address, geocodingResults) {
    
-  const coordinates = geocodeResult.addressMatches[0].coordinates;
+  const coordinates = geocodingResults.addressMatches[0].coordinates;
   return { type        : "Point"
          , coordinates : [coordinates.y , coordinates.x]                                                                      
          }
 }
 
+
 async function geocodeUSCensus(address) {
 
   const moduleId = `geocodeAddress("${address}")`;
 
-  let response = usCensusGeocoding(address,'Public_AR_Census2010')
-
-  if (response.addressMatches.length > 0) {
-    return getGeoJSON(address,response.json,benchmark);
-  }
-
-  response =  usCensusGeocoding(address,'Public_AR_ACS2015')
-  if (response.addressMatches.length > 0) {
-    return getGeoJSON(address,response.json,benchmark);
+  const benchmarks = cfg.dataSources.usCensus.benchmarks
+  
+  for (let b in benchmarks) {
+    let response = await usCensusGeocoding(address,benchmarks[b])
+    if (response.json.result.addressMatches.length > 0) {
+      return getGeoJSON(address,response.json.result);
+	  
+    }
   }
 
   writeLogEntry(moduleId,`Unable to geocode address using US Census Bureau's geo-coding service`);
@@ -386,20 +429,18 @@ function geocodeGoogleMaps(address) {
 
 async function geocodeGoogle(address) {
     
-  const moduleId = `geocodeAddressGoogle("${address}")`;
+  const moduleId = `geocodeGoogle("${address}")`;
 
   let response = {}
   
   if (cfg.dataSources.useProxy) {
     const options = { method  : 'GET'
-                    , uri   : cfg.dataSources.google.geocoding.protocol + '://' 
-                            + cfg.dataSources.google.geocoding.hostname + ':' 
-                            + cfg.dataSources.google.geocoding.port 
-                            + cfg.dataSources.google.geocoding.path 
-                    , qs    : {key : cfg.dataSources.google.apiKey, address : address}
-                    , json  : true
-                    , time  : true
-                    , proxy : `http://${cfg.dataSources.proxy.hostname}:${cfg.dataSources.proxy.port}`
+                    , baseUrl : GOOGLE_URL
+                    , uri     : cfg.dataSources.google.geocoding.path 
+                    , qs      : {key : cfg.dataSources.google.apiKey, address : address}
+                    , json    : true
+                    , time    : true
+                    , proxy   : `http://${cfg.dataSources.proxy.hostname}:${cfg.dataSources.proxy.port}`
                     }
        
     response = sendRequest(moduleId, options, NO_RETRY_OPERATIONS)
@@ -408,6 +449,7 @@ async function geocodeGoogle(address) {
     response = await geocodeGoogleMaps(address)
   }
 
+  // writeLogEntry(moduleId,JSON.stringify(response.json.results," ",2))
   const location = response.json.results[0].geometry.location
   
   return { type        : "Point"
@@ -420,6 +462,11 @@ async function geocodeTheater(theater) {
     
   const moduleId = `geocodeTheater(${theater.id},${theater.name})`
 
+  if (!theater.location.street) {
+    theater.location.geoCoding = {}
+    return theater;
+  }
+  
   const address = theater.location.street + " " + theater.location.city + " " + theater.location.state + " " + theater.location.zipCode;
   // writeLogEntry(moduleId,`Address = "${address}".`);
   
@@ -443,7 +490,6 @@ async function geocodeTheater(theater) {
         theater.location.geoCoding = geoCoding
         return theater;
       } catch (e) {
-        console.log(e);
         writeLogEntry(moduleId,`Unable to get location for = "${address}". [Google]`);
         theater.location.geoCoding = {}
         return theater;
@@ -468,9 +514,10 @@ function parseAddress(address) {
   
   const moduleId = `parseAddress("${address}")`;
   
+  let street = null   
+
   const parsedAddress = usAddressParser.parseLocation(address);
 
-  let street    
   if (parsedAddress != null) {      
     if (parsedAddress.number) {
       street = parsedAddress.number;
@@ -490,8 +537,8 @@ function parseAddress(address) {
         }
       }
     }
-  
-    if (street !== undefined) {                 
+     
+    if ((street !== null && parsedAddress.city !== undefined)) {                 
      location = { street      : street
                 , city        : parsedAddress.city.toUpperCase() // Match the US Census geocoding service's behavoir
                 , zipCode     : parsedAddress.zip
@@ -499,7 +546,10 @@ function parseAddress(address) {
                 , phoneNumber : null
                 , geoCoding   : {}
                 }
-      }
+    }
+	else {
+      writeLogEntry(moduleId,'Incomplete parsed address.');
+	}
   }
   else {
     writeLogEntry(moduleId,'Failed to parse address.');
@@ -509,12 +559,21 @@ function parseAddress(address) {
 
 }  
 
-function generateTheater(item, index) {
+function deduplicateTheaters(theaters,theater) {
 
-  const moduleId = `generateTheater(${index})`     
+  const address = theater.description[0].substring(3,theater.description[0].indexOf('</p>'))
+  if (!theaterAddresses.includes(address)) {
+    theaterAddresses.push(address)
+    const location = parseAddress(address);
+    theaters.push(generateTheater(theaterAddresses.length+1,theater.title[0],location))
+  }
+}
+
+function generateTheater(theaterId, name, location) {
+
+  const moduleId = `generateTheater(${theaterId})`     
   // writeLogEntry(moduleId);
       
-  const name = item.title[0]
   let screenCount = name.match(/\d+$/);
       
   if (screenCount == null) {
@@ -537,10 +596,8 @@ function generateTheater(item, index) {
                    }
     screens.push(screen);
   }
-      
-  const location = parseAddress(item.description[0].substring(3,item.description[0].indexOf('</p>')));
 
-  return { id       : index + 1
+  return { id       : theaterId
          , name     : name
          , location : location
          , screens  : screens
@@ -548,16 +605,14 @@ function generateTheater(item, index) {
 
 }
 
-function getTheatersFromFandango() {
+function getTheatersFromFandango(zipCode) {
   
-  const moduleId = `getTheatersFromFandango()`;
+  const moduleId = `getTheatersFromFandango(${zipCode})`;
   
   const options = { method  : 'GET'
-                  , uri     : cfg.dataSources.fandango.protocol +'://'  
-                              + cfg.dataSources.fandango.hostname + ':' 
-                              + cfg.dataSources.fandango.port 
-                              + cfg.dataSources.fandango.path 
-                              + cfg.dataSources.fandango.searchCriteria.zipCode 
+                  , baseUrl : FANDANGO_URL
+                  , uri     : cfg.dataSources.fandango.path 
+                              + zipCode 
                               + '.rss'
                   , time    : true
   };
@@ -566,28 +621,38 @@ function getTheatersFromFandango() {
      
 }
 
-async function getTheaterInformation() {
+async function getTheaterInformation(zipCode,doGeocoding) {
     
-  const moduleId = `getTheaterInformation()`
-    // writeLogEntry(moduleId,`Fetching Theaters`);
+  const moduleId = `getTheaterInformation(${zipCode})`
+  writeLogEntry(moduleId,`Fetching Theaters`);
   
   // Generate a set of Theater documents from the Fandango TheatersNearMe RSS feed and geocode the results.
   
-  const response = await getTheatersFromFandango()
+  const response = await getTheatersFromFandango(zipCode)
 
-  let  theaters = []
+  let  theaterList = []
   xmlParser.parseString(
    response.body,
    function(err,jsonRSS) {
-     theaters = jsonRSS.rss.channel[0].item
+	 if (err) {
+	   writeLogEntry(moduleId,`Error processing XML for ${zipCode}. Details ${err}.`)
+	 }
+	 else {
+       theaterList = jsonRSS.rss.channel[0].item
+	 }
    }         
   );
 	
-  theaters = await Promise.all(theaters.map(generateTheater))
+  let theaters = []
+  if (theaterList !== undefined) {
+    theaterList.forEach(function(theater) {
+	                     deduplicateTheaters(theaters,theater)
+                       })
+  }
+  
   writeLogEntry(moduleId,`Theater count: ${theaters.length}`);         
 
-  // If $near is not supported then geocoding is irrelevant.
-  if (movieAPI.getSupportedFeatures().$nearSupported) {
+  if (doGeocoding) {
     // writeLogEntry(moduleId,`Attempting Geocoding`);
     theaters = await Promise.all(theaters.map(geocodeTheater)) 
     // writeLogEntry(moduleId,`Geocoding completed.`);
@@ -595,10 +660,10 @@ async function getTheaterInformation() {
   return theaters
 }
     
-async function getMoviesFromTMDB(sessionState,response) {
+async function getMoviesFromTMDB(sessionState,response,startDate, endDate, movieLimit) {
 
-  const moduleId = `getMoviesFromTMDB()`;
-
+  const moduleId = `getMoviesFromTMDB(${startDate},${endDate},${movieLimit})`;
+  
   var movies = []
   var movieCache = [];
   
@@ -613,10 +678,8 @@ async function getMoviesFromTMDB(sessionState,response) {
     const moduleId = `getTMDBConfiguration()`
   
     const options = { method  : 'GET'
-                    , uri     : cfg.dataSources.tmdb.protocol + '://' 
-                                + cfg.dataSources.tmdb.hostname + ':' 
-                                + cfg.dataSources.tmdb.port 
-                                + cfg.dataSources.tmdb.apiPath 
+	                , baseUrl : TMDB_URL
+                    , uri     : cfg.dataSources.tmdb.apiPath 
                                 + '/configuration'
                     , qs      : { api_key : cfg.dataSources.tmdb.apiKey}
                     , json    : true
@@ -650,17 +713,15 @@ async function getMoviesFromTMDB(sessionState,response) {
     const moduleId = `getMovieFromTMDB(${movieId})`;
   
     const options = { method  : 'GET'
-                    , uri     : cfg.dataSources.tmdb.protocol +'://' 
-                                + cfg.dataSources.tmdb.hostname + ':' 
-                                + cfg.dataSources.tmdb.port 
-                                + cfg.dataSources.tmdb.apiPath 
-                                + `/movie/${movieId}` 
+	                , baseUrl : TMDB_URL
+                    , uri     : cfg.dataSources.tmdb.apiPath 
+            					+ `/movie/${movieId}` 
                     , qs      : { api_key : cfg.dataSources.tmdb.apiKey, append_to_response : 'credits,releases'}
                     , json    : true
                     , time    : true
                     };
 
-    return sendRequest(moduleId, options, NO_RETRY_OPERATIONS);  
+    return sendRequest(moduleId, options, DEFAULT_RETRY_COUNT);  
 
   }
                            
@@ -721,13 +782,14 @@ async function getMoviesFromTMDB(sessionState,response) {
     }
   }
 
-  function getMoviePage(pageNo) {
+
+  function getMoviePage(startDate,endDate,pageNo) {
     
-    const moduleId = `getMoviePage(${pageNo})`;
-    
+    const moduleId = `getMoviePage(${startDate},${endDate},${pageNo})`;
+	
     const qs = { api_key                    : cfg.dataSources.tmdb.apiKey
-               , "primary_release_date.gte" : cfg.dataSources.tmdb.searchCriteria.releaseDates.start
-               , "primary_release_date.lte" : cfg.dataSources.tmdb.searchCriteria.releaseDates.end 
+               , "primary_release_date.gte" : startDate
+               , "primary_release_date.lte" : endDate
                , certification_country      : cfg.dataSources.tmdb.searchCriteria.country 
                , "certification.lte"        : cfg.dataSources.tmdb.searchCriteria.certification
                , original_language          : cfg.dataSources.tmdb.searchCriteria.language 
@@ -740,17 +802,15 @@ async function getMoviesFromTMDB(sessionState,response) {
     }         
 
     const options = { method  : 'GET'
-                    , uri     : cfg.dataSources.tmdb.protocol + '://' 
-                                + cfg.dataSources.tmdb.hostname + ':' 
-                                + cfg.dataSources.tmdb.port 
-                                + cfg.dataSources.tmdb.apiPath 
-                                + `/discover/movie` 
+	                , baseUrl : TMDB_URL
+                    , uri     : cfg.dataSources.tmdb.apiPath 
+  					            + `/discover/movie` 
                     , qs      : qs
                     , json    : true
                     , time    : true
                     };
 
-    return sendRequest(moduleId, options, NO_RETRY_OPERATIONS);  
+    return sendRequest(moduleId, options, DEFAULT_RETRY_COUNT);  
   
   }
 
@@ -776,14 +836,14 @@ async function getMoviesFromTMDB(sessionState,response) {
     await Promise.all(batch.map(createMovie));
   }
 
-  function processPage(httpResponse) {
+  function processPage(movieLimit,httpResponse) {
     
     const moduleId = `processPage()`;
 
 	httpResponse.json.results.forEach(
       function(m){
-        if (movies.length === cfg.dataSources.tmdb.searchCriteria.movieLimit) {
-          // writeLogEntry(moduleId,`Processing completed. ${cfg.dataSources.tmdb.searchCriteria.movieLimit} movies selected.`);
+        if (movies.length === movieLimit) {
+          // writeLogEntry(moduleId,`Processing completed. ${movieLimit} movies selected.`);
           pages.length = 0;
         }
         else {
@@ -800,47 +860,44 @@ async function getMoviesFromTMDB(sessionState,response) {
 	  
   }
 
-  function processPages(httpResponses) {
+  function processPages(movieLimit,httpResponses) {
     
-    const moduleId = `processPages()`;
+    const moduleId = `processPages(${movieLimit})`;
 
-    httpResponses.forEach(processPage)
+    httpResponses.forEach(processPage.bind(null,movieLimit))
 
   }     
     
-  async function getMoviePageBatch(pages, batchNo, batchSize, response) {
+  async function getMoviePageBatch(startDate, endDate, movieLimit, pages, batchNo, batchSize, response) {
 
     // Pages is an array of Page Numbers that need to be processed. Get Pages in Batches of 40. 
   
-    const moduleId = `getMoviePageBatch(${batchNo})`;
+    const moduleId = `getMoviePageBatch(${startDate},${endDate},${movieLimit},${batchNo})`;
     writeLogEntry(moduleId);
 
-    var batch = pages.splice(0,batchSize)
+    const batch = pages.splice(0,batchSize)
 
-    var status = {
-        date   : dateWithTZOffset(new Date()),
-        module : moduleId,
-        state  : "Processing",
-        batch  : batchNo
-      }
+    const  status = { date   : dateWithTZOffset(new Date())
+	                , module : moduleId
+					, state  : "Processing"
+					, batch  : batchNo
+                    }
     
     response.write(JSON.stringify(status));
     response.write(',');
   
-    let httpResponses;
-	
-    httpResponses = await Promise.all(batch.map(getMoviePage));
-    processPages(httpResponses); 	
+    const httpResponses = await Promise.all(batch.map(getMoviePage.bind(null,startDate,endDate)));
+    processPages(movieLimit,httpResponses); 	
   }
 
   writeLogEntry(moduleId);
-  
+
   let httpResponse = await getTMDBConfiguration()
   baseURL = httpResponse.json.images.base_url
 
   // writeLogEntry(moduleId,'Poster URL = ` + baseURL);
   
-  httpResponse = await getMoviePage(0)
+  httpResponse = await getMoviePage(startDate, endDate, 0)
   writeLogEntry(moduleId,`Page Count = ${httpResponse.json.total_pages}`);
   maxPageNumber = (httpResponse.json.total_pages > maxPageNumber ) ? maxPageNumber : httpResponse.json.total_pages;
 
@@ -853,23 +910,23 @@ async function getMoviesFromTMDB(sessionState,response) {
   var batchNo = 0;
 
   // Processing page '0' leads to duplicates
-  // processPage(httpResponse);
+  // processPage(movieLimit,httpResponse);
 
-  await timeout(10000);
+  // await timeout(10000);
   while (pages.length > 0) {
     writeLogEntry(moduleId,`(${batchNo}): Pages remaining = ${pages.length}`);
     batchNo++;
     var batchStartTime = Date.now();
     // TMDb throttles requests to 40 in 10 seconds. 
     // Each Page requires 1 request. 
-	await getMoviePageBatch(pages, batchNo, 40, response)
+	await getMoviePageBatch(startDate, endDate, movieLimit, pages, batchNo, 40, response)
     // If necessary wait for up to 10 seconds.
     // var batchEndTime = Date.now();
     // var timeRemaining = 10000 - (batchEndTime - batchStartTime);
     // if (timeRemaining > 0) {
     //   await timeout(timeRemaining);		
     // }
-    await timeout(10000);
+    // await timeout(10000);
   }
 
   writeLogEntry(moduleId,`.getMoviePageBatch() operations complete. Movie count = ${movies.length}`);
@@ -886,7 +943,7 @@ async function getMoviesFromTMDB(sessionState,response) {
     var batchEndTime = Date.now();
     var timeRemaining = 10000 - (batchEndTime - batchStartTime);
     if (timeRemaining > 0) {
-      await timeout(timeRemaining);		
+      // await timeout(timeRemaining);		
     }
   }
 

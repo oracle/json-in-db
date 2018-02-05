@@ -28,6 +28,8 @@ module.exports.getTheaters                       = getTheaters;
 module.exports.getTheater                        = getTheater;
 module.exports.getTheaterById                    = getTheaterById;
 module.exports.queryTheaters                     = queryTheaters
+module.exports.bulkInsertTheaters                = bulkInsertTheaters
+module.exports.indexTheaters                     = indexTheaters
 
 module.exports.createMovieCollection             = createMovieCollection;
 module.exports.dropMovieCollection               = dropMovieCollection;
@@ -40,6 +42,8 @@ module.exports.getMovie                          = getMovie;
 module.exports.getMovieById                      = getMovieById
 module.exports.updateMovie                       = updateMovie;
 module.exports.queryMovies                       = queryMovies
+module.exports.bulkInsertMovies                  = bulkInsertMovies
+module.exports.indexMovies                       = indexMovies
                                              
 module.exports.createScreeningCollection         = createScreeningCollection;
 module.exports.dropScreeningCollection           = dropScreeningCollection;
@@ -138,13 +142,27 @@ async function getTheaterById(sessionState, id) {
   var qbe = {'id': id};
   
   let httpResponse = await dbAPI.queryByExample(sessionState, 'Theater', qbe, 1);
-  httpResponse.json = httpResponse.json.items[0]
+  if (httpResponse.json.count ===  1) {
+    httpResponse.json = httpResponse.json.items[0]
+  }
   return httpResponse;
 }
 
 function queryTheaters(sessionState, qbe, limit, fields, includeTotal) {
 	
 	return dbAPI.queryByExample(sessionState, 'Theater', qbe, limit, fields, includeTotal);
+
+}
+
+function bulkInsertTheaters(sessionState,documents) {
+	
+	return dbAPI.bulkInsert(sessionState, 'Theater', documents)
+
+}
+
+function indexTheaters(sessionState) {
+	
+	return dbAPI.createIndexes(sessionState, 'Theater')
 
 }
 
@@ -197,7 +215,9 @@ async function getMovieById(sessionState,id) {
   var qbe = {'id': id};
    
   let httpResponse = await dbAPI.queryByExample(sessionState, 'Movie', qbe, 1)
-  httpResponse.json = httpResponse.json.items[0]
+  if (httpResponse.json.count ===  1) {
+    httpResponse.json = httpResponse.json.items[0]
+  }
   return httpResponse;
 }
 
@@ -214,6 +234,18 @@ function queryMovies(sessionState, qbe, limit, fields, includeTotal) {
 }
 
 // Screening Collection
+
+function bulkInsertMovies(sessionState,documents) {
+	
+	return dbAPI.bulkInsert(sessionState, 'Movie', documents)
+
+}
+
+function indexMovies(sessionState) {
+	
+	return dbAPI.createIndexes(sessionState, 'Movie')
+
+}
 
 function createScreeningCollection(sessionState) {
 	
@@ -379,9 +411,9 @@ function logError(error, body) {
 	 
 }
 
-function getLogRecordByOperationId(id) {
+function getLogRecordByOperationId(sessionId, operationId) {
 
-  var qbe = {'operationId': id, '$orderby' : {'startTime':1}};
+  var qbe = {'sessionId' : sessionId, 'operationId': operationId, '$orderby' : {'startTime':1}};
   
   let httpResponse;
   

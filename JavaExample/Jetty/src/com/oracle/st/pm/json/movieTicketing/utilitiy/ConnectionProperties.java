@@ -3,6 +3,8 @@ package com.oracle.st.pm.json.movieTicketing.utilitiy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -11,7 +13,7 @@ public class ConnectionProperties {
 
     public static final String DEFAULT_CONNECTION_DEFINITION = "connectionProperties.json";
 
-    private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
+    private static final Gson gson = new GsonBuilder().setDateFormat(SodaCollection.ISO_DATE_FORMAT).create();
 
     public static final String THIN_DRIVER = "thin";
     public static final String OCI_DRIVER = "oci8";

@@ -1,6 +1,6 @@
 {
-  "tnsAdmin": "",
-  "tnsEntry": "",
-  "schema": "",
-  "password": ""
+  "tnsAdmin": "O:\\Oracle\\db\\171102\\network\\admin",
+  "tnsEntry": "PDB18100",
+  "schema": "MOVIES",
+  "password": "MOVIES"
 }

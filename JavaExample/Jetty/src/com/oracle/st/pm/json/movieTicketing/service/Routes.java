@@ -4,20 +4,15 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import com.oracle.st.pm.json.movieTicketing.data.ExternalInterfaces;
-import com.oracle.st.pm.json.movieTicketing.utilitiy.CollectionManager;
+import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
 import com.oracle.st.pm.json.movieTicketing.utilitiy.DBConnection;
 
 import java.io.IOException;
 
-import java.rmi.Naming;
-
-import java.sql.Connection;
 import java.sql.SQLException;
 
 import java.text.ParseException;
 
-import javax.naming.Context;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import javax.ws.rs.Consumes;
@@ -30,10 +25,6 @@ import javax.ws.rs.core.MediaType;
 
 import oracle.soda.OracleException;
 
-import oracle.soda.rdbms.OracleRDBMSClient;
-
-import oracle.ucp.jdbc.PoolDataSource;
-
 import oracle.xml.parser.v2.XMLParseException;
 import oracle.xml.parser.v2.XSLException;
 
@@ -43,7 +34,7 @@ import org.xml.sax.SAXException;
 
 public class Routes {
 
-    private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
+    private static final Gson gson = new GsonBuilder().setDateFormat(SodaCollection.ISO_DATE_FORMAT).create();
     
     public Routes() {
         super();

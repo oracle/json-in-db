@@ -2,6 +2,7 @@ package com.oracle.st.pm.json.movieTicketing.service;
 
 import com.google.gson.Gson;
 
+import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
 import com.oracle.st.pm.json.movieTicketing.docStore.Theater;
 import com.oracle.st.pm.json.movieTicketing.transientObjects.MoviesByTheater;
 
@@ -21,7 +22,7 @@ import oracle.soda.OracleException;
 
 public class TheaterService {
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat(SodaCollection.ISO_DATE_FORMAT);
 
     public TheaterService() {
         super();

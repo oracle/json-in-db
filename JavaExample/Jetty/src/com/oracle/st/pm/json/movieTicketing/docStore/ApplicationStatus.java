@@ -3,8 +3,6 @@ package com.oracle.st.pm.json.movieTicketing.docStore;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import com.oracle.st.pm.json.movieTicketing.utilitiy.CollectionManager;
-
 import com.oracle.st.pm.json.movieTicketing.utilitiy.DBConnection;
 import com.oracle.st.pm.json.movieTicketing.utilitiy.DataSources;
 
@@ -18,8 +16,8 @@ import oracle.soda.OracleException;
 public class ApplicationStatus {
 
     private static final DataSources dataSources = DataSources.loadDataSources();
-    private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+    private static final Gson gson = new GsonBuilder().setDateFormat(SodaCollection.ISO_DATE_FORMAT).create();
+    private static final SimpleDateFormat sdf = new SimpleDateFormat(SodaCollection.ISO_DATE_FORMAT);
 
     public String googleKey;
     public String tmdbKey;

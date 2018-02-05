@@ -36,7 +36,12 @@
     "protocol": "http",
     "hostname": "geocoding.geo.census.gov",
     "port": 80,
-    "path": "/geocoder/locations/onelineaddress"
+    "path": "/geocoder/locations/onelineaddress",
+    "benchmarks": [
+      "Public_AR_Current",
+      "Public_AR_ACS2017",
+      "Public_AR_Census2010"
+    ]
   },
   "google": {
     "geocoding": {

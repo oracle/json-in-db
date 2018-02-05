@@ -56,14 +56,7 @@ function dateWithTZOffset(date) {
     return (norm < 10 ? '0' : '') + norm;
   };
   
-  return date.getFullYear() 
-       + '-' + pad(date.getMonth()+1)
-       + '-' + pad(date.getDate())
-       + 'T' + pad(date.getHours())
-       + ':' + pad(date.getMinutes()) 
-       + ':' + pad(date.getSeconds()) 
-       + dif + pad(tzo / 60) 
-       + ':' + pad(tzo % 60);
+   return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}${dif}${pad(tzo / 60)}:${pad(tzo % 60)}`;
 }
 
 function generateGUID(){
@@ -82,7 +75,7 @@ function sendStatus(response, e, status, httpStatusCode) {
 
 function writeResponse(response, content, operationId) {
 
-  const moduleId = 'writeResponse("' + operationId + '")';
+  const moduleId = `writeResponse("${operationId}")`;
   // writeLogEntry(moduleId,)
   
   response.setHeader('X-SODA-LOG-TOKEN',operationId);
@@ -92,12 +85,12 @@ function writeResponse(response, content, operationId) {
 
 async function theatersService(sessionState, response, next) {
 
-  const moduleId = 'theatersService()'
+  const moduleId = `theatersService()`
   writeLogEntry(moduleId);
   
   try {
     const httpResponse = await movieAPI.getTheaters(sessionState);
-    // writeLogEntry(moduleId,"Items.length = " + httpResponse.json.items.length);
+    // writeLogEntry(moduleId,`Items.length = ${httpResponse.json.items.length}`);
 	writeResponse(response,httpResponse.json.items,sessionState.operationId);
   } catch (e) {
     if (!sendStatus(httpResponse, e, constants.NOT_FOUND, 404)) {
@@ -108,7 +101,7 @@ async function theatersService(sessionState, response, next) {
 
 async function theaterService(sessionState, response, next, key) {
 
-  const moduleId = 'theaterService(' + key + ')';
+  const moduleId = `theaterService(${key})`;
   writeLogEntry(moduleId);
 
   try {
@@ -121,7 +114,7 @@ async function theaterService(sessionState, response, next, key) {
 
 async function theaterByIdService(sessionState, response, next, id) {
 
-  const moduleId = 'theaterByIdService('+ id + ')';
+  const moduleId = `theaterByIdService(${id})`;
   writeLogEntry(moduleId);
   
   try {
@@ -135,7 +128,7 @@ async function theaterByIdService(sessionState, response, next, id) {
 
 async function searchTheatersService(sessionState, response, next, qbe) {
 
-  const moduleId = 'searchTheaterService(' + JSON.stringify(qbe) + ')';
+  const moduleId = `searchTheaterService(${JSON.stringify(qbe)})`;
   writeLogEntry(moduleId);
 
   try {
@@ -162,7 +155,7 @@ async function locateTheatersService(sessionState, response, next, lat, long, di
     }
   };
 
-  const moduleId = 'locateTheatersService(' + JSON.stringify(qbe) + ')';
+  const moduleId = `locateTheatersService(${JSON.stringify(qbe)})`;
   writeLogEntry(moduleId);
 
   try {
@@ -175,7 +168,7 @@ async function locateTheatersService(sessionState, response, next, lat, long, di
 
 async function moviesByTheaterService(sessionState, response, next, id, dateStr) {
 
-  const moduleId = 'moviesByTheaterService(' + id  + ',' + dateStr + ')';
+  const moduleId = `moviesByTheaterService(${id },${dateStr})`;
   writeLogEntry(moduleId);
   
   try {
@@ -192,7 +185,7 @@ async function moviesByTheaterService(sessionState, response, next, id, dateStr)
 
 async function moviesService(sessionState, response, next) {
 
-  const moduleId = 'moviesService()';
+  const moduleId = `moviesService()`;
   writeLogEntry(moduleId);
 
   try {
@@ -207,7 +200,7 @@ async function moviesService(sessionState, response, next) {
 
 async function movieService(sessionState, response, next, key) {
 
-  const moduleId = 'movieService(' + key + ')';
+  const moduleId = `movieService(${key})`;
   writeLogEntry(moduleId);
 
   try {
@@ -220,7 +213,7 @@ async function movieService(sessionState, response, next, key) {
 
 async function moviesByReleaseDateService(sessionState, response, next) {
 
-  const moduleId = 'moviesByReleaseDateService()';
+  const moduleId = `moviesByReleaseDateService()`;
   writeLogEntry(moduleId);
 
   try {
@@ -236,7 +229,7 @@ async function moviesByReleaseDateService(sessionState, response, next) {
 
 async function movieByIdService(sessionState, response, next, id) {
 
-  const moduleId = 'movieByIdService(' + id + ')';
+  const moduleId = `movieByIdService(${id})`;
   writeLogEntry(moduleId);
 
   try {
@@ -249,7 +242,7 @@ async function movieByIdService(sessionState, response, next, id) {
 
 async function searchMoviesService(sessionState, response, next, qbe) {
 
-  const moduleId = 'searchMoviesService(' + JSON.stringify(qbe) + ')';
+  const moduleId = `searchMoviesService(${JSON.stringify(qbe)})`;
   writeLogEntry(moduleId);
   
   try {
@@ -262,7 +255,7 @@ async function searchMoviesService(sessionState, response, next, qbe) {
 
 async function theatersByMovieService(sessionState, response, next, id, dateStr) {
   
-  const moduleId = 'theatersByMovieService(' + id  + ',' + dateStr + ')';
+  const moduleId = `theatersByMovieService(${id },${dateStr})`;
   writeLogEntry(moduleId);
   
   try {
@@ -277,7 +270,7 @@ async function theatersByMovieService(sessionState, response, next, id, dateStr)
 
 async function moviesInTheatersService(sessionState, response, next) {
 
-  const moduleId = 'moviesInTheatersService()';
+  const moduleId = `moviesInTheatersService()`;
   writeLogEntry(moduleId);
 
   try {
@@ -290,7 +283,7 @@ async function moviesInTheatersService(sessionState, response, next) {
   
 async function bookTicketService(sessionState, response, next, bookingRequest) {
 
-  const moduleId = 'bookTicketService(' + JSON.stringify(bookingRequest) +')';
+  const moduleId = `bookTicketService(${JSON.stringify(bookingRequest)})`;
   writeLogEntry(moduleId);
 
   try {
@@ -305,7 +298,7 @@ async function bookTicketService(sessionState, response, next, bookingRequest) {
 
 async function screeningService(sessionState, response, next, key) {
 
-  const moduleId = 'screeningService(' + key + ')';
+  const moduleId = `screeningService(${key})`;
   // writeLogEntry(moduleId);
 
   try {
@@ -318,7 +311,7 @@ async function screeningService(sessionState, response, next, key) {
 
 async function applicationStatusService(sessionState, response, next) {
     
-  const moduleId = 'applicationStatusService()';
+  const moduleId = `applicationStatusService()`;
   writeLogEntry(moduleId);
   
   var status = {
@@ -440,7 +433,7 @@ async function applicationStatusService(sessionState, response, next) {
       
     if (status.theaterCount > 0) {      
       let centroid = await getTheaterCentroid(constants.DB_LOGGING_DISABLED)
-      // writeLogEntry(moduleId','Centroid = ' + JSON.stringify(centroid));
+      // writeLogEntry(moduleId','CentroId = ` + JSON.stringify(centroid));
       status.currentPosition = centroid
     }
 
@@ -457,7 +450,7 @@ async function applicationStatusService(sessionState, response, next) {
 
 function updateDataSourcesService(sessionState, response, next, updatedValues) {
     
-  const moduleId = 'updateDataSourcesService(' + JSON.stringify(updatedValues) + ')';
+  const moduleId = `updateDataSourcesService(${JSON.stringify(updatedValues)})`;
   writeLogEntry(moduleId);
 
   try {
@@ -471,7 +464,7 @@ function updateDataSourcesService(sessionState, response, next, updatedValues) {
        
 async function getTheaterCentroid(sessionState) {
     
-  const moduleId = 'getTheaterCentroid()';
+  const moduleId = `getTheaterCentroid()`;
   
   try {
     const httpResponse = await movieAPI.getTheaters(sessionState)
@@ -509,7 +502,7 @@ async function getTheaterCentroid(sessionState) {
       }
     }
         
-    // writeLogEntry(moduleId,'Centroid = ' + JSON.stringify(centroid));
+    // writeLogEntry(moduleId,'CentroId = ` + JSON.stringify(centroid));
 
     return centroid;
   } catch (e) {
@@ -521,7 +514,7 @@ async function getTheaterCentroid(sessionState) {
 
 async function bookTickets(sessionState, bookingRequest) {
 
-  const moduleId = 'bookTickets(' + JSON.stringify(bookingRequest) + ')';
+  const moduleId = `bookTickets(${JSON.stringify(bookingRequest)})`;
   // writeLogEntry(moduleId);
 
   var key           = bookingRequest.key;
@@ -537,7 +530,7 @@ async function bookTickets(sessionState, bookingRequest) {
     if (screening.seatsRemaining < seatsRequired) {
       return {
         status : "SoldOut", 
-        message : "Only " + screening.seatsRemaining + " seats are available for this performance."
+        message : `Only ${screening.seatsRemaining} seats are available for this performance.`
       };
     }
     else {
@@ -582,7 +575,7 @@ async function bookTickets(sessionState, bookingRequest) {
 
 async function processScreeningsByTheaterAndDate(sessionState,httpResponse) {
   
-  const moduleId = 'processScreeningsByTheaterAndDate(httpResponse.json.items[' + httpResponse.json.items.length + '])';
+  const moduleId = `processScreeningsByTheaterAndDate(httpResponse.json.items[${httpResponse.json.items.length}])`;
   // writeLogEntry(moduleId);
   
   var movies = [];
@@ -592,7 +585,7 @@ async function processScreeningsByTheaterAndDate(sessionState,httpResponse) {
     var movieId  = screeningItem.value.movieId;
     var screenId = screeningItem.value.screenId;
     
-    var  moduleId = 'processScreeningsByTheaterAndDate.addScreeningDetails(' + movieId + ',' + screenId + ')';
+    var  moduleId = `processScreeningsByTheaterAndDate.addScreeningDetails(${movieId},${screenId})`;
     // writeLogEntry(moduleId);
     
     var screeningSummary = {
@@ -673,7 +666,7 @@ async function processScreeningsByTheaterAndDate(sessionState,httpResponse) {
 
 async function getMoviesByTheaterAndDate(sessionState,theater, date) {
 
-  const moduleId = 'getMoviesByTheaterAndDate(' + theater.id + ',' + date + ')';
+  const moduleId = `getMoviesByTheaterAndDate(${theater.id},${date})`;
   writeLogEntry(moduleId);
   
   var moviesByTheater = { 
@@ -705,7 +698,7 @@ async function getMoviesByTheaterAndDate(sessionState,theater, date) {
   
 async function processScreeningsByMovieAndDate(sessionState,httpResponse) {
   
-  const moduleId = 'processScreeningsByMovieAndDate(httpResponse.json.items[' + httpResponse.json.items.length + '])';
+  const moduleId = `processScreeningsByMovieAndDate(httpResponse.json.items[${httpResponse.json.items.length}])`;
   // writeLogEntry(moduleId);
   
   var theaters = [];
@@ -715,7 +708,7 @@ async function processScreeningsByMovieAndDate(sessionState,httpResponse) {
     var theaterId = screeningItem.value.theaterId;
     var screenId  = screeningItem.value.screenId;
 
-    var  moduleId = 'processScreeningsByMovieAndDate.addScreeningDetails(' + theaterId + ',' + screenId + ')';
+    var  moduleId = `processScreeningsByMovieAndDate.addScreeningDetails(${theaterId},${screenId})`;
     // writeLogEntry(moduleId);
           
     var screeningSummary = {
@@ -796,7 +789,7 @@ async function processScreeningsByMovieAndDate(sessionState,httpResponse) {
   
 async function getTheatersByMovieAndDate(sessionState,movie, date) {
 
-  const moduleId = 'getTheatersByMovieAndDate(' + movie.id + ',' + date + ')';
+  const moduleId = `getTheatersByMovieAndDate(${movie.id},${date})`;
   // writeLogEntry(moduleId);
 
   var theatersByMovie = { 
@@ -846,7 +839,7 @@ function makeTicketSale(bookingRequest, screening) {
 
 async function posterService(sessionState, response, next, key) {
 
-  const moduleId = 'posterService(' + key + ')';
+  const moduleId = `posterService(${key})`;
   // writeLogEntry(moduleId);
   
   try {
@@ -854,7 +847,7 @@ async function posterService(sessionState, response, next, key) {
     writeLogEntry(moduleId,`ContentType: ${httpResponse.contentType}. Poster length ${Buffer.byteLength(httpResponse.body)} bytes.`);
     response.setHeader('content-type',httpResponse.contentType);
     // response.setHeader('content-length', Buffer.byteLength(httpResponse.body));
-    // writeLogEntry(moduleId,'Image Size = ' + Buffer.byteLength(httpResponse.body));
+    // writeLogEntry(moduleId,'Image Size = ${Buffer.byteLength(httpResponse.body));
     // response.end(httpResponse.body,'binary');
     response.write(httpResponse.body);
     response.end();
@@ -883,13 +876,13 @@ async function initialize(sessionState) {
   return 
 }
 
-async function logRecordsByOperationService(sessionState, response, next, id) {
+async function logRecordsByOperationService(sessionState, response, next, operationId) {
 
-  const moduleId = 'logRecordsByOperationService(' + id + ')';
+  const moduleId = `logRecordsByOperationService("${sessionState.sessionId}","${operationId})`;
   // writeLogEntry(moduleId);
                                  
   try {
-    const httpResponse = await movieAPI.getLogRecordByOperationId(id)
+    const httpResponse = await movieAPI.getLogRecordByOperationId(sessionState.sessionId, operationId)
     // writeLogEntry(moduleId,JSON.stringify(httpResponse.json))
     response.json(httpResponse.json.items);                                      
     response.end();                                            
@@ -897,4 +890,3 @@ async function logRecordsByOperationService(sessionState, response, next, id) {
     next(e);
   };
 }                                                                                                                                    
-

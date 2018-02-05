@@ -1,8 +1,7 @@
 package com.oracle.st.pm.json.movieTicketing.service;
 
-import com.oracle.st.pm.json.movieTicketing.docStore.Movie;
-
 import com.oracle.st.pm.json.movieTicketing.docStore.Poster;
+import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
 
 import java.io.IOException;
 
@@ -18,7 +17,7 @@ import oracle.soda.OracleException;
 
 public class PosterService {
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat(SodaCollection.ISO_DATE_FORMAT);
 
     public PosterService() {
         super();

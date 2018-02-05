@@ -1,35 +1,22 @@
 package com.oracle.st.pm.json.movieTicketing.docStore;
 
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
-import com.oracle.st.pm.json.movieTicketing.service.ScreeningService;
-import com.oracle.st.pm.json.movieTicketing.utilitiy.CollectionManager;
-
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-
 import java.util.Iterator;
 import java.util.List;
 
-import oracle.soda.OracleCollection;
 import oracle.soda.OracleDatabase;
 import oracle.soda.OracleDocument;
 import oracle.soda.OracleException;
-import oracle.soda.OracleOperationBuilder;
 
-public class Screening {
+public class Screening extends SodaCollection {
 
     public static final String COLLECTION_NAME = "Screening";
-    private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
-    // private static CollectionManager collectionManager = new CollectionManager();
-
 
     private int theaterId;
     private int movieId;
@@ -87,6 +74,15 @@ public class Screening {
         return this.ticketPricing;
     }
 
+    public static Screening[] toScreenings(OracleDocument[] documentList) throws OracleException, IOException {
+        ArrayList<OracleDocument> screeningList = new ArrayList<OracleDocument>(Arrays.asList(documentList));
+        Screening[] screenings = new Screening[screeningList.size()];
+        for (int i = 0; i < screenings.length; i++) {
+            screenings[i] = Screening.fromJSON(screeningList.get(i).getContentAsString());
+        }
+        return screenings;
+    }
+
     public static List<OracleDocument> toOracleDocumentList(OracleDatabase db,
                                                             List<Screening> screenings) throws OracleException {
         List<OracleDocument> documents = new ArrayList<OracleDocument>();
@@ -94,51 +90,47 @@ public class Screening {
         Iterator<Screening> iScreenings = screenings.iterator();
         while (iScreenings.hasNext()) {
             Screening s = iScreenings.next();
-            documents.add(db.createDocumentFromString(s.toJson()));
+            documents.add(db.createDocumentFromString(s.toJSON()));
         }
 
         return documents;
     }
 
+    public static OracleDocument[] getScreenings(OracleDatabase db) throws OracleException, IOException {
+        return getDocuments(db,COLLECTION_NAME,-1);
+    }
+
+    public static OracleDocument[] getScreenings(OracleDatabase db, int limit) throws OracleException, IOException {
+        return getDocuments(db,COLLECTION_NAME,limit);
+    }
+    
     public static long getScreeningCount(OracleDatabase db) throws OracleException {
-        OracleCollection screenings = db.openCollection(COLLECTION_NAME);
-        if (screenings != null) {
-            OracleOperationBuilder screeningDocuments = screenings.find();
-            return screeningDocuments.count();
-        }
-        else {
-            return 0;
-        }
+        return getDocumentCount(db,COLLECTION_NAME);
     }
 
     public static OracleDocument getScreening(OracleDatabase db, String key) throws OracleException, IOException {
-        OracleCollection screenings = db.openCollection(Screening.COLLECTION_NAME);
-        OracleDocument screening = screenings.findOne(key);
-        return screening;
+        return getDocument(db,COLLECTION_NAME,key);
     }
-
+    
+    public static OracleDocument[] searchScreenings(OracleDatabase db, String qbeDefinition) throws OracleException,
+                                                                                                  IOException {
+        return searchCollection(db,COLLECTION_NAME,qbeDefinition);
+    }
+    
     public boolean updateScreening(OracleDatabase db, String key, String version,
                                    OracleDocument newDocument) throws OracleException {
-        OracleCollection screenings = db.openCollection(Screening.COLLECTION_NAME);
-        OracleOperationBuilder operation = screenings.find().key(key).version(version);
-        return operation.replaceOne(newDocument);
+       return updateDocument(db,COLLECTION_NAME,key,version,newDocument);
     }
 
-    public static void saveScreenings(OracleDatabase db,
-                                      List<Screening> screenings) throws OracleException {
+    public static void recreateScreeningCollection(OracleDatabase db,
+                                          List<Screening> screenings) throws OracleException {
 
         // Create a collection with the name "Screening" and store the documents
-        List<OracleDocument> documents = Screening.toOracleDocumentList(db, screenings);
-        OracleCollection col = CollectionManager.recreateCollection(db,Screening.COLLECTION_NAME);
-        col.insert(documents.iterator());
-
+        List<OracleDocument> documents = toOracleDocumentList(db, screenings);
+        recreateCollection(db,COLLECTION_NAME, documents);
     }
 
-    public static Screening fromJson(String json) {
+    public static Screening fromJSON(String json) {
         return gson.fromJson(json, Screening.class);
-    }
-
-    public String toJson() {
-        return gson.toJson(this);
     }
 }

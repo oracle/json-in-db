@@ -1,13 +1,12 @@
 package com.oracle.st.pm.json.movieTicketing.transientObjects;
 
 import com.google.gson.Gson;
-
 import com.google.gson.GsonBuilder;
 
 import com.oracle.st.pm.json.movieTicketing.docStore.Movie;
 import com.oracle.st.pm.json.movieTicketing.docStore.Screening;
+import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
 import com.oracle.st.pm.json.movieTicketing.docStore.Theater;
-
 import com.oracle.st.pm.json.movieTicketing.qbe.BetweenOperator;
 
 import java.io.IOException;
@@ -20,25 +19,36 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-
-import java.util.Iterator;
 import java.util.List;
 
-import oracle.soda.OracleCollection;
-import oracle.soda.OracleCursor;
 import oracle.soda.OracleDatabase;
 import oracle.soda.OracleDocument;
 import oracle.soda.OracleException;
-import oracle.soda.OracleOperationBuilder;
 
 public class TheatersByMovie {
 
-    private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
+    private static final Gson gson = new GsonBuilder().setDateFormat(SodaCollection.ISO_DATE_FORMAT).create();
 
     private Movie movie;
     private TheaterWithShowTimes[] theaters;
 
-
+    public class IdInList {
+     
+        InList id = null;
+ 
+        private class InList {
+            int[] $in;
+            
+            private InList(int[] values) {
+                this.$in = values;
+            }
+        }
+        
+        private IdInList(int[] values) {
+            id = new InList(values);  
+        }
+    }
+    
     public class ShowingsByMovieAndDate {
 
         private int movieId;
@@ -47,7 +57,7 @@ public class TheatersByMovie {
         public ShowingsByMovieAndDate(int movieId, Calendar date) {
             this.movieId = movieId;
 
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+            SimpleDateFormat sdf = new SimpleDateFormat(SodaCollection.ISO_DATE_FORMAT);
             Calendar temp = (Calendar) date.clone();
             temp.set(Calendar.HOUR_OF_DAY, 0);
             temp.set(Calendar.MINUTE, 0);
@@ -131,46 +141,41 @@ public class TheatersByMovie {
     }
 
     public TheaterWithShowTimes[] getShowTimesByMovieAndDate(OracleDatabase db, Date date) throws OracleException,
-                                                                                                  SQLException {
-
-        HashMap<Integer, TheaterWithShowTimes> theaterCache = new HashMap<Integer, TheaterWithShowTimes>();
-
+                                                                                                  SQLException,
+                                                                                                  IOException {
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
 
         // Use QBE to get the set of showings for the specifed Theater on the specified Date.
 
-        OracleCollection screenings = db.openCollection(Screening.COLLECTION_NAME);
         ShowingsByMovieAndDate qbeDefinition = (new ShowingsByMovieAndDate(this.movie.getMovieId(), cal));
-        OracleDocument qbe = db.createDocumentFromString(gson.toJson(qbeDefinition));
-        OracleOperationBuilder screeningDocuments = screenings.find().filter(qbe);
-        // System.out.println(qbe.getContentAsString() + ": " + screeningDocuments.count());
-
-        // Build a structure containg one entry for each Movie. Add the informaton about the screenings to the Movie.
-
-        OracleCursor screeningCursor = screeningDocuments.getCursor();
-
-        while (screeningCursor.hasNext()) {
-            OracleDocument doc = screeningCursor.next();
-            Screening screening = Screening.fromJson(doc.getContentAsString());
-            String key = doc.getKey();
-            int theaterId = screening.getTheaterId();
-            TheaterWithShowTimes theater = null;
-            if (!theaterCache.containsKey(theaterId)) {
-                Theater nextTheater = Theater.fromJson(Theater.getTheaterById(db, theaterId).getContentAsString());
-                theater = new TheaterWithShowTimes(nextTheater);
-                theaterCache.put(theaterId, theater);
-            } else {
-                theater = theaterCache.get(theaterId);
-            }
-            theater.addScreening(key, screening);
+        OracleDocument [] screeningDocuments = Screening.searchScreenings(db,gson.toJson(qbeDefinition));
+        Screening[] screenings = new Screening[screeningDocuments.length];
+        ArrayList<Integer> theaterList = new ArrayList<Integer>();
+        for (int i=0; i< screeningDocuments.length; i++) {
+          screenings[i] = Screening.fromJSON(screeningDocuments[i].getContentAsString());
+          if (!theaterList.contains(screenings[i].getTheaterId())) {
+            theaterList.add(screenings[i].getTheaterId());
+          }
+        } 
+        
+        int[] theaterIds = theaterList.stream().mapToInt(Integer::intValue).toArray();                      
+        Theater[] theaters = Theater.toTheaters(Theater.searchTheaters(db, gson.toJson(new IdInList(theaterIds))));                
+        
+        HashMap<Integer,TheaterWithShowTimes> theatersWithShowTimes = new HashMap<Integer,TheaterWithShowTimes>();
+        for (int i=0; i < theaters.length; i++) {
+          theatersWithShowTimes.put(theaters[i].getTheaterId(),new TheaterWithShowTimes(theaters[i]));
+        }
+        
+        for (int i=0; i < screenings.length;i++) {    
+           theatersWithShowTimes.get(screenings[i].getTheaterId()).addScreening(screeningDocuments[i].getKey(),screenings[i]);
         }
         db.admin().getConnection().close();
-        return theaterCache.values().toArray(new TheaterWithShowTimes[0]);
+        return theatersWithShowTimes.values().toArray(new TheaterWithShowTimes[0]);
     }
 
     public TheatersByMovie(OracleDatabase db, String key, Date date) throws OracleException, IOException, SQLException {
-        this.movie = Movie.fromJson(Movie.getMovie(db, key).getContentAsString());
+        this.movie = Movie.fromJSON(Movie.getMovie(db, key).getContentAsString());
         this.theaters = getShowTimesByMovieAndDate(db, date);
         fixLists();
     }

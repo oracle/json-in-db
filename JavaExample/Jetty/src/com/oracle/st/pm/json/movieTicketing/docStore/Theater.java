@@ -1,26 +1,19 @@
 package com.oracle.st.pm.json.movieTicketing.docStore;
 
-import com.google.gson.Gson;
-
-import com.google.gson.GsonBuilder;
-
 import com.google.gson.annotations.SerializedName;
-
-import com.oracle.st.pm.json.movieTicketing.qbe.GetDocumentById;
-import com.oracle.st.pm.json.movieTicketing.utilitiy.CollectionManager;
 
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
-
 import java.util.Iterator;
 import java.util.List;
-
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import net.sourceforge.jgeocoder.AddressComponent;
+import net.sourceforge.jgeocoder.us.AddressParser;
 
 import oracle.soda.OracleCollection;
 import oracle.soda.OracleCursor;
@@ -29,13 +22,9 @@ import oracle.soda.OracleDocument;
 import oracle.soda.OracleException;
 import oracle.soda.OracleOperationBuilder;
 
-import net.sourceforge.jgeocoder.us.AddressParser;
-
-public class Theater {
+public class Theater extends SodaCollection {
 
     public static final String COLLECTION_NAME = "Theater";
-    private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
-    // private static CollectionManager collectionManager = new CollectionManager();
 
     private int id;
     private String name;
@@ -281,6 +270,14 @@ public class Theater {
         return this.location;
     }
 
+    public static Theater[] toTheaters(OracleDocument[] documentList) throws OracleException, IOException {
+        ArrayList<OracleDocument> theaterList = new ArrayList<OracleDocument>(Arrays.asList(documentList));
+        Theater[] theaters = new Theater[theaterList.size()];
+        for (int i = 0; i < theaters.length; i++) {
+            theaters[i] = Theater.fromJSON(theaterList.get(i).getContentAsString());
+        }
+        return theaters;
+    }
     public static List<OracleDocument> toOracleDocumentList(OracleDatabase db,
                                                             List<Theater> theaters) throws OracleException {
         List<OracleDocument> documents = new ArrayList<OracleDocument>();
@@ -294,64 +291,14 @@ public class Theater {
         return documents;
     }
 
-    public static long getTheaterCount(OracleDatabase db) throws OracleException {
-        OracleCollection theaters = db.openCollection(COLLECTION_NAME);
-        if (theaters != null) {
-            OracleOperationBuilder theaterDocuments = theaters.find();
-            return theaterDocuments.count();
-        }
-        else {
-            return 0;
-        }
-    }
-
     public static HashMap<Integer, Theater> getTheatersById(OracleDatabase db) throws OracleException, IOException {
-        OracleCollection theaters = db.openCollection(COLLECTION_NAME);
-        OracleOperationBuilder theaterDocuments = theaters.find();
-        long theaterCount = theaterDocuments.count();
-        OracleCursor theaterCursor = theaterDocuments.getCursor();
-        HashMap<Integer, Theater> theatersById = new HashMap<Integer, Theater>();
-        while (theaterCursor.hasNext()) {
-            OracleDocument doc = theaterCursor.next();
-            String json = doc.getContentAsString();
-            Theater theater = Theater.fromJson(json);
-            theatersById.put(theater.getTheaterId(), theater);
+        OracleDocument [] documents = getTheaters(db);
+        HashMap<Integer, Theater> theaterList = new HashMap<Integer, Theater>();
+        for (int i = 0; i < documents.length; i++) {
+          Theater theater = fromJSON(documents[i].getContentAsString());
+          theaterList.put(theater.getTheaterId(), theater);
         }
-        theaterCursor.close();
-        return theatersById;
-    }
-
-    public static OracleDocument[] getTheaters(OracleDatabase db) throws OracleException, IOException {
-        OracleCollection theaters = db.openCollection(Theater.COLLECTION_NAME);
-        if (theaters != null) {
-          OracleOperationBuilder theaterDocuments = theaters.find();
-          long theaterCount = theaterDocuments.count();
-          OracleDocument[] theaterList = new OracleDocument[(int) theaterCount];
-          OracleCursor theaterCursor = theaterDocuments.getCursor();
-          for (int i = 0; i < theaterCount; i++) {
-             theaterList[i] = theaterCursor.next();
-          }
-          theaterCursor.close();
-          return theaterList;
-        }
-        else {
-            return new OracleDocument[0];
-        }
-    }
-
-    public static OracleDocument getTheater(OracleDatabase db, String key) throws OracleException, IOException {
-        OracleCollection theaters = db.openCollection(Theater.COLLECTION_NAME);
-        OracleDocument theater = theaters.findOne(key);
-        return theater;
-    }
-
-    public static OracleDocument getTheaterById(OracleDatabase db, int id) throws OracleException {
-        OracleCollection theaters = db.openCollection(Theater.COLLECTION_NAME);
-        GetDocumentById qbeDefinition = new GetDocumentById(id);
-        OracleDocument qbe = db.createDocumentFromString(gson.toJson(qbeDefinition));
-        OracleOperationBuilder operation = theaters.find().filter(qbe);
-        OracleDocument doc = operation.getOne();
-        return doc;
+        return theaterList;
     }
 
     public static ApplicationStatus.Position getTheaterCentroid(OracleDatabase db) throws OracleException,
@@ -390,58 +337,57 @@ public class Theater {
                                                      ((minLongitude + maxLongitude) / 2));
         } 
         else {
-            return new ApplicationStatus.Position(0.0,0.0);
+          return new ApplicationStatus.Position(0.0,0.0);
         }
     }
 
     public static OracleDocument[] getTheatersByLocation(OracleDatabase db, double latitude, double longitude,
                                                          int distance) throws OracleException, IOException {
-        OracleCollection theaters = db.openCollection(Theater.COLLECTION_NAME);
         TheatersByLocation qbeDefinition = new TheatersByLocation(latitude, longitude, distance);
-        OracleDocument qbe = db.createDocumentFromString(gson.toJson(qbeDefinition));
-        // System.out.println(qbe.getContentAsString());
-        OracleOperationBuilder theaterDocuments = theaters.find().filter(qbe);
-        long theaterCount = theaterDocuments.count();
-        OracleDocument[] theaterList = new OracleDocument[(int) theaterCount];
-        OracleCursor theaterCursor = theaterDocuments.getCursor();
-        for (int i = 0; i < theaterCount; i++) {
-            theaterList[i] = theaterCursor.next();
-        }
-        theaterCursor.close();
-        return theaterList;
+        return searchCollection(db,COLLECTION_NAME,gson.toJson(qbeDefinition));
+    }
+
+    public static OracleDocument[] getTheaters(OracleDatabase db) throws OracleException, IOException {
+        return getDocuments(db,COLLECTION_NAME,-1);
+    }
+
+    public static OracleDocument[] getTheaters(OracleDatabase db,int limit) throws OracleException, IOException {
+        return getDocuments(db,COLLECTION_NAME,limit);
+    }
+
+    public static long getTheaterCount(OracleDatabase db) throws OracleException {
+        return getDocumentCount(db,COLLECTION_NAME);
+    }
+
+    public static OracleDocument getTheater(OracleDatabase db, String key) throws OracleException, IOException {
+        return getDocument(db,COLLECTION_NAME,key);
+    }
+
+    public static OracleDocument getTheaterById(OracleDatabase db, int id) throws OracleException {
+        return getDocumentById(db,COLLECTION_NAME,id);
     }
 
     public static OracleDocument[] searchTheaters(OracleDatabase db, String qbeDefinition) throws OracleException,
                                                                                                   IOException {
-        OracleCollection theaters = db.openCollection(Theater.COLLECTION_NAME);
-        OracleDocument qbe = db.createDocumentFromString(qbeDefinition);
-        OracleOperationBuilder theaterDocuments = theaters.find().filter(qbe);
-        long theaterCount = theaterDocuments.count();
-        OracleDocument[] theaterList = new OracleDocument[(int) theaterCount];
-        OracleCursor theaterCursor = theaterDocuments.getCursor();
-        for (int i = 0; i < theaterCount; i++) {
-            theaterList[i] = theaterCursor.next();
-        }
-        theaterCursor.close();
-        return theaterList;
+        return searchCollection(db,COLLECTION_NAME,qbeDefinition);
     }
 
-    public static void saveTheaters(OracleDatabase db,
-                                    List<Theater> theaters) throws OracleException {
+    public static void recreateTheaterCollection(OracleDatabase db,
+                                       List<Theater> theaters) throws OracleException {
 
         // Create a collection with the name "THEATER" and store the documents
         List<OracleDocument> documents = Theater.toOracleDocumentList(db, theaters);
-        OracleCollection col = CollectionManager.recreateCollection(db, Theater.COLLECTION_NAME);
-        col.insert(documents.iterator());
-        col = CollectionManager.recreateCollection(db, Screening.COLLECTION_NAME);
-        col.admin().drop();
+        recreateCollection(db,COLLECTION_NAME, documents);
+        dropCollection(db,Screening.COLLECTION_NAME);
     }
 
-    public static Theater fromJson(String json) {
+    public boolean updateTheater(OracleDatabase db, String key, String version,
+                                   OracleDocument newDocument) throws OracleException {
+       return updateDocument(db,COLLECTION_NAME,key,version,newDocument);
+    }
+
+    public static Theater fromJSON(String json) {
         return gson.fromJson(json, Theater.class);
     }
 
-    public String toJSON() {
-        return gson.toJson(this);
-    }
 }

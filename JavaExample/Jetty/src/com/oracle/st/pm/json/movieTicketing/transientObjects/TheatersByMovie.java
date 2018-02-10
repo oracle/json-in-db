@@ -9,6 +9,8 @@ import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
 import com.oracle.st.pm.json.movieTicketing.docStore.Theater;
 import com.oracle.st.pm.json.movieTicketing.qbe.BetweenOperator;
 
+import com.oracle.st.pm.json.movieTicketing.qbe.InOperator;
+
 import java.io.IOException;
 
 import java.sql.SQLException;
@@ -34,18 +36,10 @@ public class TheatersByMovie {
 
     public class IdInList {
      
-        InList id = null;
+        InOperator id = null;
  
-        private class InList {
-            int[] $in;
-            
-            private InList(int[] values) {
-                this.$in = values;
-            }
-        }
-        
         private IdInList(int[] values) {
-            id = new InList(values);  
+            id = new InOperator(values);  
         }
     }
     

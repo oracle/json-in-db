@@ -212,6 +212,10 @@ public class Movie extends SodaCollection {
         return searchCollection(db,COLLECTION_NAME,qbeDefinition);
     }
 
+    public static List<OracleDocument> bulkInsertMovies(OracleDatabase db, SodaCollection[] documents) throws OracleException {
+        return bulkInsert(db,COLLECTION_NAME,documents);
+    }
+
     public boolean updateMovie(OracleDatabase db, String key, String version,
                                    OracleDocument newDocument) throws OracleException {
        return updateDocument(db,COLLECTION_NAME,key,version,newDocument);
@@ -226,6 +230,19 @@ public class Movie extends SodaCollection {
         dropCollection(db,Screening.COLLECTION_NAME);        
     }
 
+    
+    public static void indexMovieCollection(OracleDatabase db) throws OracleException {
+        createIndexes(db,COLLECTION_NAME);
+    }
+
+    public static void createMovieCollection(OracleDatabase db) throws OracleException {
+        createCollection(db,COLLECTION_NAME);
+    }
+
+    public static void dropMovieCollection(OracleDatabase db) throws OracleException {
+        dropCollection(db,COLLECTION_NAME);
+    }
+    
     public static Movie fromJSON(String json) {
         return gson.fromJson(json, Movie.class);
     }

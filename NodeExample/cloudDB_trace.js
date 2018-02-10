@@ -14,6 +14,7 @@ const TRACE_PROMISE_EXECUTION = false;
 const TRACE_EXCEPTIONS = false;
 
 module.exports.initialize                  = initialize
+module.exports.setDatabaseName             = setDatabaseName
 module.exports.getSupportedFeatures        = getSupportedFeatures
 module.exports.getDBDriverName             = getDBDriverName
 module.exports.processError                = processError
@@ -26,10 +27,11 @@ module.exports.putDocument                 = putDocument
 module.exports.deleteDocument              = deleteDocument
 module.exports.createIndex                 = createIndex
 module.exports.createIndexes               = createIndexes
-module.exports.createCollection            = createCollection
-module.exports.dropCollection              = dropCollection
-module.exports.collectionNotFound          = collectionNotFound 
 module.exports.collectionExists            = collectionExists
+module.exports.createCollection            = createCollection
+module.exports.collectionNotFound          = collectionNotFound 
+module.exports.dropCollection              = dropCollection
+
 
 function writeLogEntry(module,comment) {
 	
@@ -56,12 +58,6 @@ function getDBDriverName() {
 	
 }
 
-function processError(invokerId, logRequest, e) {
-
-   return dbAPI.processError(invokerId, logRequest, e)
-   
-}
-
 function getSupportedFeatures() {
 
   const moduleId = `getSupportedFeatures()`
@@ -80,6 +76,18 @@ function getSupportedFeatures() {
     }
   })
   
+}
+
+function setDatabaseName() {
+	
+	return dbAPI.setDatabaseName();
+
+}
+
+function processError(invokerId, logRequest, e) {
+
+   return dbAPI.processError(invokerId, logRequest, e)
+   
 }
 
 async function initialize(applicationName) {

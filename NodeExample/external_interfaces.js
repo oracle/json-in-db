@@ -32,6 +32,7 @@ module.exports.loadPosters           = loadPosters;
 
 module.exports.getTheaterInformation = getTheaterInformation
 module.exports.getMoviesFromTMDB     = getMoviesFromTMDB
+module.exports.ScreeningGenerator    = ScreeningGenerator
 
 const DEFAULT_RETRY_COUNT = 5;
 const HIGH_RETRY_COUNT    = 100;
@@ -279,7 +280,7 @@ async function loadTheaters (sessionState, response, next, zipCode) {
 	}
 	else {
       // If $near is not supported then geocoding is irrelevant.
-      theaterList = await getTheaterInformation(constants.DB_LOGGING_DISABLED,cfg.dataSources.fandango.searchCriteria.zipCode,movieAPI.getSupportedFeatures().$nearSupported)
+      theaterList = await getTheaterInformation(cfg.dataSources.fandango.searchCriteria.zipCode,movieAPI.getSupportedFeatures().$nearSupported)
     }
     response.write(`],`);
     let httpResponse = await movieAPI.recreateLoadTheaterCollection(sessionState,theaterList);
@@ -314,8 +315,7 @@ async function loadMovies(sessionState, response, next) {
       movieList = JSON.parse(fs.readFileSync(cfg.dataSources.emulation.movies));
 	}
 	else {
-      movieList = await getMoviesFromTMDB(constants.DB_LOGGING_DISABLED,response,startDate, endDate, movieLimit)
-      // fs.writeFileSync(cfg.dataSources.emulation.movies,JSON.stringify(movieList,null,2));
+      movieList = await getMoviesFromTMDB(response,startDate, endDate, movieLimit)
     }
     response.write(`],`);
     let httpResponse = await movieAPI.recreateLoadMovieCollection(sessionState,movieList)
@@ -338,11 +338,54 @@ async function loadScreenings (sessionState, response, next) {
   writeLogEntry(moduleId);
   
   try {
-    const total = await createScreenings(constants.DB_LOGGING_DISABLED,response);
-    response.write(`  , "count" : ${total}`)
+    const screeningGenerator = new ScreeningGenerator();
+ 
+    const engagementStartDate = new Date();
+    engagementStartDate.setHours(0)
+    engagementStartDate.setMinutes(0)
+    engagementStartDate.setSeconds(0)
+
+    const engagementEndDate = new Date();
+    engagementEndDate.setDate(engagementStartDate.getDate() + 14);
+    engagementEndDate.setHours(0)
+    engagementEndDate.setMinutes(0)
+    engagementEndDate.setSeconds(0)
+
+    writeLogEntry(moduleId,`Date Range is ${dateWithTZOffset(engagementStartDate)} thru ${dateWithTZOffset(engagementEndDate)}`);
+
+ 	let processStartTime = new Date();       
+
+	response.write(`{ "status":{`) 
+    response.write(`   "startTime"      : "${processStartTime.toISOString()}"`);
+
+    if (cfg.dataSources.emulate) {
+      screeningGenerator.screenings = JSON.parse(fs.readFileSync(cfg.dataSources.emulation.screenings));
+      screeningGenerator.setInTheatersList(sessionState)	
+    }
+    else {
+	  writeLogEntry(moduleId,'Generating Screenings');
+	  await screeningGenerator.generateScreenings(sessionState, response, engagementStartDate, engagementEndDate);
+    }
+
+    const httpResponse = await movieAPI.recreateLoadScreeningCollection(sessionState,screeningGenerator.screenings)
+    let elapsedTime = httpResponse.elapsedTime;
+	const screeningCount = httpResponse.json.count;
+    writeLogEntry(moduleId,`recreateLoadScreeningCollection() : ${httpResponse.elapsedTime} ms.`);
+    response.write(`  ,"recreateLoadScreeningCollection"      : {`);
+    response.write(`     "elapsedTime" : ${elapsedTime}`);
+    response.write(`   }`);
+
+	elapsedTime = await screeningGenerator.resetInTheatersFlag(sessionState, response);
+	response.write(`   ,"resetInTheatersFlag"      : {`);
+    response.write(`     "elapsedTime" : ${elapsedTime}`);
+    response.write(`   }`);
+ 
+    response.write(`  },`);	 
+    response.write(`  "count" : ${screeningCount}`)
     response.write(`}`);
-    response.end()
+	response.end()
   } catch(e) {
+	console.log(e)
     next(e)
   };
 } 
@@ -660,7 +703,7 @@ async function getTheaterInformation(zipCode,doGeocoding) {
   return theaters
 }
     
-async function getMoviesFromTMDB(sessionState,response,startDate, endDate, movieLimit) {
+async function getMoviesFromTMDB(response,startDate, endDate, movieLimit) {
 
   const moduleId = `getMoviesFromTMDB(${startDate},${endDate},${movieLimit})`;
   
@@ -765,7 +808,7 @@ async function getMoviesFromTMDB(sessionState,response,startDate, endDate, movie
       const movie = { id            : movieDetails.id
                     , title         : movieDetails.title
                     , plot          : movieDetails.overview
-                    , runtime       : movieDetails.runtime
+                    , runtime       : movieDetails.runtime < 45 ? getRandomBetweenValues(90,150) : movieDetails.runtime
                     , posterURL     : baseURL
                                     + "w185"
                                     + movieDetails.poster_path
@@ -1075,202 +1118,220 @@ async function getPostersFromTMDB(sessionState,response) {
   return posterCount
 }      
   
-async function createScreenings(sessionState,response) {
+function ScreeningGenerator() {
 
-  const moduleId = `createScreenings()`;
-  // writeLogEntry(moduleId);
+  const self = this
 
-  var screenings  = []
-  var theaterList = []
-  
-  
-  var movieList   = []
-  
-  var engagementStartDate = new Date();
-  engagementStartDate.setHours(0)
-  engagementStartDate.setMinutes(0)
-  engagementStartDate.setSeconds(0)
-
-  var engagementEndDate = new Date();
-  engagementEndDate.setDate(engagementStartDate.getDate() + 14);
-  engagementEndDate.setHours(0)
-  engagementEndDate.setMinutes(0)
-  engagementEndDate.setSeconds(0)
-
-  writeLogEntry(moduleId,`Date Range is ${dateWithTZOffset(engagementStartDate)} thru ${dateWithTZOffset(engagementEndDate)}`);
-
-  function generateShows(engagementStartDate, engagementEndDate, screen, theaterId, movieId, runtime) {
+  this.screenings       = []
+  this.theaterList      = []  
+  this.movieList        = []
+  this.moviesInTheaters = []
+  				 
+  function generateShowTimesForScreen(engagementStartDate, engagementEndDate, theaterId, screen) {
       
-    const moduleId = `generateShows(${dateWithTZOffset(engagementStartDate)},${dateWithTZOffset(engagementEndDate)},${screen.id},${theaterId},${movieId},${runtime})`;
+    const moduleId = `generateShowTimesForScreen(${engagementStartDate.toISOString()},${engagementEndDate.toISOString()},${theaterId},${screen.id})`;
     // writeLogEntry(moduleId);
 
-    var showCount = 0;
+    let showCount = 0;
     
-    var screenId = screen.id
-    var startTime = getRandomBetweenValues(0,11) * 5;
-    var firstShowTime = [12,startTime]
-      
+    const screenId = screen.id
+    const openingShowTimeHours = getRandomBetweenValues(11,13)
+    const openingShowTimeMins  = getRandomBetweenValues(0,11) * 5
+
+    const movie = self.movieList[screen.movieIndex].value
+    const showingDuration = (((movie.runtime < 45 ? getRandomBetweenValues(90,150) : movie.runtime)+30)*60*1000)
+ 
     // Generate Shows for Each Day of the Engagement.
   
-    var showTime = new Date()
-    var tomorrow = new Date()
-    showTime.setDate(engagementStartDate.getDate());
+    const showTime = new Date(engagementStartDate.getTime());
+    showTime.setHours(openingShowTimeHours,openingShowTimeMins,0)
+    
+    const tomorrow = new Date(engagementStartDate.getTime());
     tomorrow.setDate(showTime.getDate() + 1);
     tomorrow.setHours(0);
     tomorrow.setMinutes(0);
     tomorrow.setSeconds(0);
     
-    showTime.setHours(firstShowTime[0])
-    showTime.setMinutes(firstShowTime[1])
-    showTime.setSeconds(0)
-
-      // writeLogEntry('--->','Show Time Range is ${dateWithTZOffset(showTime) } thru ${dateWithTZOffset(tomorrow));
+    // writeLogEntry(moduleId,`StartTime: ${showTime.toISOString()} until: ${tomorrow.toISOString()}`);
     
     while (showTime < engagementEndDate) {
-      // writeLogEntry('--->','showTime= ` + showTime);
-      var show = {
+   
+      const screening = {
         theaterId      : theaterId,
-        movieId        : movieId,
+        movieId        : movie.id,
         screenId       : screen.id,
         startTime      : dateWithTZOffset(showTime),
         seatsRemaining : screen.capacity,
         ticketPricing  : screen.ticketPricing,
         seatMap        : screen.seatMap
       }
-      screenings.push(show)
+      self.screenings.push(screening)
       showCount++;
-
-      showTime.setTime(showTime.getTime() + ((runtime+30)*60*1000));
+      showTime.setTime(showTime.getTime() + showingDuration);
       showTime.setMinutes(5 * Math.round(showTime.getMinutes()/5));
+	  
       if (showTime.getTime() > tomorrow.getTime()) {
         showTime.setTime(tomorrow.getTime());
-        showTime.setHours(firstShowTime[0])
-        showTime.setMinutes(firstShowTime[1])
+        showTime.setHours(openingShowTimeHours)
+        showTime.setMinutes(openingShowTimeMins)
         showTime.setSeconds(0)
         tomorrow.setDate(tomorrow.getDate() + 1);
       }
     } 
-    
-    return showCount;
-    
+    // writeLogEntry(moduleId,`Show count = ${showCount}.`);
   }
-  
-  function setMoviesInTheatersFlag(screenings) {
-  
-    const movieIdList = []
-	screenings.forEach(function (screening) {
-		                 if (!movieIdList.includes(screening.movieId)) {
-						   movieIdList.push(screening.movieId)
-						 }
-	                   })
+    
+  this.getTheaterList = async function (sessionState) {
+    
+	const moduleId = `ScreeningGenerator.getTheaterList()`;
 	
-	movieList.forEach(function(movie) {
-	                    for (let i in movieIdList) {
-		                  if (movieIdList[i] === movie.id) {
-		                    movie.inTheaters = true;
-		                  } 
-						}
-	                  })
-
-    let count = 0;
-    movieList.forEach(function (movie) {
-	                    if (movie.inTheaters) {		 
-						  count ++
-						}
-	                  })
+	const httpResponse = await movieAPI.getTheaters(sessionState,'unlimited');
+    this.theaterList = httpResponse.json.items;
+	return httpResponse.elapsedTime
   }
   
-  function generateScreeningsForTheater(theater, engagementStartDate, engagementEndDate, response) {
-    
-    const moduleId = `createScreenings().generateScreeningsForTheater(${theater.id})`;
-    // writeLogEntry(moduleId);
- 
-    // For Each Screen in the Theater
-
-    theater.value.screens.forEach(function(screen,index) {
-      // Choose a random Movie for this screen
-      var movieIndex = getRandomBetweenValues(0,movieList.length);
-      if (index < 5) {
-        movieIndex = getRandomBetweenValues(0,5);
-      } 
-      var movieItem = movieList[movieIndex];
-      movieItem.value.inTheaters = true;
-      var showCount = generateShows(engagementStartDate,engagementEndDate,screen,theater.value.id,movieItem.value.id,movieItem.value.runtime);
-    });
-   
-  }
-  
-  var elapsedTime;
-  var requestStartTime = new Date();       
-    
-  response.write(`{`);
-  response.write(` "status"           : {`);
-  response.write(`   "startTime"      : "${requestStartTime.toISOString()}"`);
-  
-  let httpResponse = await movieAPI.getTheaters(sessionState);
-  elapsedTime = new Date().getTime() - requestStartTime.getTime();
-  theaterList = httpResponse.json.items;
-  response.write(` , "theaters"      : {`);
-  response.write(`     "elapsedTime" : ${elapsedTime}`);
-  response.write(`   , "count"       : ${theaterList.length}`);
-  response.write(`   }`);
-
-  writeLogEntry(moduleId,`.getTheaters(): ${elapsedTime} ms.`);
-
-  const qbe = {"$query" : {}, $orderby :{"releaseDate" : -1}};
-  httpResponse = await movieAPI.queryMovies(sessionState, qbe, 50)
-  elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
-  movieList = httpResponse.json.items;
-  response.write(` , "movies"      : {`);
-  response.write(`     "elapsedTime" : ${elapsedTime}`);
-  response.write(`   , "count"       : ${movieList.length}`);
-  response.write(`   }`);
- 
-  writeLogEntry(moduleId,`.queryMovies(): ${elapsedTime} ms.`);
- 
-  movieList.forEach(function(movie) {
-    movie.value.inTheaters = false;
-  });
-
-  if (cfg.dataSources.emulate) {
-    screenings = JSON.parse(fs.readFileSync(cfg.dataSources.emulation.screenings));
-    setMoviesInTheatersFlag(screenings)	
-  }
-  else {
-    theaterList.forEach(function(theater) {
-      generateScreeningsForTheater(theater,engagementStartDate,engagementEndDate,response)
-    });
-    // fs.writeFileSync(cfg.dataSources.emulation.screenings,JSON.stringify(screenings,null,2));
-  }
-	
-  elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
-  response.write(` , "generateScreenings"      : {`);
-  response.write(`     "elapsedTime" : ${elapsedTime}`);
-  response.write(`   , "count"       : ${screenings.length}`);
-  response.write(`   }`);
-
-  writeLogEntry(moduleId,`.generateScreenings() : ${elapsedTime} ms.`);
-    
-  httpResponse = await movieAPI.recreateLoadScreeningCollection(sessionState,screenings)
-  elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
-  const count = httpResponse.json.count;
-  response.write(` , "recreateLoadScreeningCollection"      : {`);
-  response.write(`   "elapsedTime" : ${elapsedTime}`);
-  response.write(`   }`);
-  writeLogEntry(moduleId,`.recreateLoadScreeningCollection() : ${elapsedTime} ms.`);
-
-  // Don't log multiple movie update operations.
-  
-  httpResponse = await Promise.all(movieList.map(async function(movieItem) {
-    return await movieAPI.updateMovie(constants.DB_LOGGING_DISABLED, movieItem.id, movieItem.value);
-  }));
-
-  elapsedTime = new Date().getTime() - requestStartTime.getTime() - elapsedTime;
-  response.write(` , "updateMovie"      : {`);
-  response.write(`     "elapsedTime" : ${elapsedTime}`);
-  response.write(`   }`);
-  response.write(` }`);
-  writeLogEntry(moduleId,`.updateMovie(): ${elapsedTime} ms.`);
-  return count;
+  function assignMoviesToScreens() {
 	  
+	self.theaterList.forEach(function(theater) {
+                               theater.value.screens.forEach(function(screen) {
+								                               const movieIndex = getRandomBetweenValues(0,self.movieList.length+10) % self.movieList.length;
+															   if (!self.moviesInTheaters.includes(movieIndex)) {
+                                                                 self.moviesInTheaters.push(movieIndex);
+	                                                           }
+                                                               screen.movieIndex = movieIndex
+                                                             })
+	                         })
+															  
+  }	 
+      
+  this.getLatestMovies = async function (sessionState, movieLimit) {
+    
+	const moduleId = `ScreeningGenerator.getLatestMovies()`;
+	
+	const qbe = {"$query" : {}, $orderby :{"releaseDate" : -1}};
+    const httpResponse = await movieAPI.queryMovies(sessionState, qbe, movieLimit)
+    this.movieList = httpResponse.json.items;
+	this.moviesInTheaters =[]
+	assignMoviesToScreens();
+	return httpResponse.elapsedTime
+  }
+  
+  this.getMoviesForWeekCommencing = async function (sessionState, releaseDate, movieLimit) {
+    
+	const moduleId = `ScreeningGenerator.getMoviesForWeekCommencing()`;
+	
+	// Get the last "movieLimit" Movies released in the previous 90 Days
+	const startDate = new Date(releaseDate.getTime());
+	startDate.setDate(releaseDate.getDate()  - 90)
+    const qbe = {"$query" : { releaseDate : { "$gt" : startDate, "$lte" : releaseDate } }, $orderby :{"releaseDate" : -1}};
+    const httpResponse = await movieAPI.queryMovies(sessionState, qbe, movieLimit)
+    this.movieList = httpResponse.json.items;
+	this.moviesInTheaters =[]
+	assignMoviesToScreens()
+	return httpResponse.elapsedTime
+  }
+
+  this.createScreeningsForTimePeriod = async function(engagementStartDate,engagementEndDate) {
+    const moduleId = `ScreeningGenerator.createScreeningsForTimePeriod(${engagementStartDate.toISOString()},${engagementEndDate.toISOString()})`;
+    // writeLogEntry(moduleId);
+	
+	this.screenings = []
+    this.theaterList.forEach(function(theater) {
+                               theater.value.screens.forEach(function(screen) {
+								                               generateShowTimesForScreen(engagementStartDate,engagementEndDate,theater.value.id,screen)
+                                                             })
+	                         })
+	// writeLogEntry(moduleId,`Generated ${this.screenings.length} documents.`);
+  }
+  
+  this.generateScreenings = async function (sessionState,response,engagementStartDate,engagementEndDate) {
+
+    const moduleId = `ScreeningGenerator.generateScreenings()`;
+	
+    let elapsedTime = await self.getTheaterList(sessionState)
+    writeLogEntry(moduleId,`getTheaterList(): ${elapsedTime} ms.`);
+    
+    response.write(`  ,"theaters"      : {`);
+    response.write(`     "elapsedTime" : ${elapsedTime}`);
+    response.write(`   , "count"       : ${self.theaterList.length}`);
+    response.write(`   }`);
+    
+    
+    elapsedTime = await self.getLatestMovies(sessionState,100);
+    writeLogEntry(moduleId,`getLatestMovies(): ${elapsedTime} ms.`);
+    
+    response.write(`  ,"movies"      : {`);
+    response.write(`     "elapsedTime" : ${elapsedTime}`);
+    response.write(`   , "count"       : ${self.movieList.length}`);
+    response.write(`   }`);
+    
+    
+    let startTime = new Date().getTime();
+    await self.createScreeningsForTimePeriod(engagementStartDate,engagementEndDate)
+    elapsedTime = new Date().getTime() - startTime;
+    writeLogEntry(moduleId,`createScreeningsForTimePeriod() : ${elapsedTime} ms.`);
+    
+    response.write(`  ,"screenings"      : {`);
+    response.write(`     "startDate"   : "${engagementStartDate.toISOString()}"`);
+    response.write(`   , "endDate"     : "${engagementEndDate.toISOString()}"`);
+    response.write(`   , "count"       : ${self.screenings.length}`);
+    response.write(`   , "elapsedTime" : ${elapsedTime}`);
+    response.write(`   }`);
+	
+  }
+  
+  this.setInTheatersList = async function (sessionState) {
+	const screenedMovieList = []
+	this.moviesInTheaters = []
+	this.screenings.forEach(function (screening) {
+		                     if (!screenedMovieList.includes(screening.movieId)) {
+						       screenedMovieList.push(screening.movieId);
+						     }
+					       })
+    const qbe = { id : {$in : screenedMovieList}}
+    const httpResponse = await movieAPI.queryMovies(sessionState,qbe,screenedMovieList.length)
+    this.movieList = httpResponse.json.items;
+	this.moviesInTheaters = Array.from({length:screenedMovieList.length}, (v,i) => i)
+
+  }
+
+  this.resetInTheatersFlag = async function(sessionState) {
+	
+    const moduleId = `ScreeningGenerator.resetInTheatersFlag()`;
+	
+    const startTime = new Date().getTime()
+ 	let httpResponse = await movieAPI.queryMovies(sessionState, {inTheaters : true} , 'unlimited')
+    const inTheatersList = httpResponse.json.items;
+	inTheatersList.forEach(function(movie) {
+                            movie.value.inTheaters = false;
+                          });
+
+    /*
+	
+	httpResponse = await Promise.all(inTheatersList.map(function(movie) {
+	                                                      movieAPI.updateMovie(constants.DB_LOGGING_DISABLED, movie.id, movie.value);
+	                                                   })
+			                        )
+    
+    httpResponse = await Promise.all(self.moviesInTheaters.map(function(movieIndex) {
+                          	                                    self.movieList[movieIndex].value.inTheaters = true;
+		                                                        movieAPI.updateMovie(constants.DB_LOGGING_DISABLED, self.movieList[movieIndex].id, self.movieList[movieIndex].value);
+	                                                          })
+			                        );
+	
+    */
+
+	for (let i in inTheatersList) {
+	  await movieAPI.updateMovie(constants.DB_LOGGING_DISABLED, inTheatersList[i].id, inTheatersList[i].value)
+	}
+    
+	for (let i in this.moviesInTheaters) {
+	  this.movieList[this.moviesInTheaters[i]].inTheaters = true;
+	  await movieAPI.updateMovie(constants.DB_LOGGING_DISABLED, this.movieList[this.moviesInTheaters[i]].id, this.movieList[this.moviesInTheaters[i]].value)
+	}
+
+    const elapsedTime = new Date().getTime() - startTime
+    writeLogEntry(moduleId,`resetInTheatersFlag(): ${elapsedTime} ms.`);
+	return elapsedTime;   
+  }	
 }

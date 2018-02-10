@@ -55,9 +55,11 @@ module.exports.interpretHTTPStatusCode     = interpretHTTPStatusCode
 
 // Native Functions : Pass Through
 
-module.exports.getDBDriverName             = getDBDriverName
 module.exports.initialize                  = initialize
+module.exports.setDatabaseName             = setDatabaseName
 module.exports.getSupportedFeatures        = getSupportedFeatures
+module.exports.getDBDriverName             = getDBDriverName
+module.exports.getDocumentContent          = getDocumentContent
 module.exports.getCollection               = getCollection
 module.exports.queryByExample              = queryByExample
 module.exports.postDocument                = postDocument
@@ -66,7 +68,9 @@ module.exports.putDocument                 = putDocument
 module.exports.deleteDocument              = deleteDocument
 module.exports.createIndex                 = createIndex
 module.exports.createIndexes               = createIndexes
+module.exports.collectionExists            = collectionExists
 module.exports.createCollection            = createCollection
+module.exports.collectionNotFound          = collectionNotFound 
 module.exports.dropCollection              = dropCollection
 
 const DEFAULT_LIMIT = 128
@@ -216,11 +220,12 @@ function setElapsedTime(logRequest,elapsedTime) {
 
 }
 
-async function logResponse(logRequest, response) {
+async function logResponse(logRequest, response, elapsedTime) {
 
   const moduleId = `${dbAPI.getDBDriverName()}.logResponse()`;
 
   logRequest.logEntry.response = response;
+  logRequest.logEntry.elapsedTime = elapsedTime
   
   if (!logRequest.status.enabled) {
 	return
@@ -545,6 +550,18 @@ function getDBDriverName() {
 	
 }
 
+function setDatabaseName() {
+	
+	return dbAPI.setDatabaseName();
+
+}
+
+function processError(invokerId, logRequest, e) {
+
+   return dbAPI.processError(invokerId, logRequest, e)
+   
+}
+
 async function initialize(appName) {
 	
   applicationName = appName
@@ -631,10 +648,23 @@ async function createIndexes(sessionState, collectionName) {
 
 }
 
+function collectionExists(e) {
+	
+  return dbAPI.collectionExists(e)
+
+}
+
+
 async function createCollection(sessionState, collectionName) {
   
   await driverReady()
   return dbAPI.createCollection(sessionState, collectionName);
+
+}
+
+function collectionNotFound(e) {
+	
+  return dbAPI.collectionNotFound(e)
 
 }
 

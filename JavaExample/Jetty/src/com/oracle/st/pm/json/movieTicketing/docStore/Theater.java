@@ -381,9 +381,29 @@ public class Theater extends SodaCollection {
         dropCollection(db,Screening.COLLECTION_NAME);
     }
 
-    public boolean updateTheater(OracleDatabase db, String key, String version,
+    public static List<OracleDocument> bulkInsertTheaters(OracleDatabase db, SodaCollection[] documents) throws OracleException {
+        return bulkInsert(db,COLLECTION_NAME,documents);
+    }
+
+    public static OracleDocument insertTheater(OracleDatabase db,Theater theater) throws OracleException {
+       return insertDocument(db,COLLECTION_NAME,db.createDocumentFromString(gson.toJson(theater)));
+    }
+
+    public static boolean updateTheater(OracleDatabase db, String key, String version,
                                    OracleDocument newDocument) throws OracleException {
        return updateDocument(db,COLLECTION_NAME,key,version,newDocument);
+    }
+    
+    public static void indexTheaterCollection(OracleDatabase db) throws OracleException {
+        createIndexes(db,COLLECTION_NAME);
+    }
+
+    public static void createTheaterCollection(OracleDatabase db) throws OracleException {
+        createCollection(db,COLLECTION_NAME);
+    }
+
+    public static void dropTheaterCollection(OracleDatabase db) throws OracleException {
+        dropCollection(db,COLLECTION_NAME);
     }
 
     public static Theater fromJSON(String json) {

@@ -1,6 +1,6 @@
 {
   "_from": "oracle-movie-ticket-demo",
-  "_id": "oracle-movie-ticket-demo@5.2.0",
+  "_id": "oracle-movie-ticket-demo@5.3.0",
   "_inBundle": false,
   "_integrity": "sha512-XuDQku9Lt62HnoMxhSefJajugBF9xmu15Br3U1YpCCHCZDkFp4jhsJ1ZwDchjLA6wT6F83GMHpiIjOUovtUVcQ==",
   "_location": "/oracle-movie-ticket-demo",
@@ -33,9 +33,9 @@
   "bundleDependencies": false,
   "dependencies": {
     "@google/maps": "^0.2.1",
-    "angular": "^1.5.5",
-    "angular-cookies": "^1.5.5",
-    "aws-sdk": "^2.188.0",
+    "angular": "^1.6.9",
+    "angular-cookies": "^1.6.9",
+    "aws-sdk": "^2.192.0",
     "body-parser": "^1.15.1",
     "bootstrap": "^3.3.6",
     "bootstrap-datepicker": "^1.6.1",
@@ -49,7 +49,7 @@
     "parse-address": "0.0.5",
     "request": "^2.74.0",
     "request-promise-native": "^1.0.5",
-    "serve-static": "^1.10.2",
+    "serve-static": "^1.13.2",
     "xml2js": "^0.4.16"
   },
   "deprecated": false,
@@ -67,5 +67,5 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "version": "5.3.0"
+  "version": "5.4.2"
 }

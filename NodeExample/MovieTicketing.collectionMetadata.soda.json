@@ -228,8 +228,7 @@
   	"creationTimeColumn": {
   		"name": "CREATED_ON"
   	},
-  	"readOnly": false,
-  	"indexes": []
+  	"readOnly": false
   },
   "MovieTicketLog" : {
     "tableName":"MovieTicketLog",
@@ -255,6 +254,21 @@
     "creationTimeColumn":{
       "name":"CREATED_ON"
     },
-    "readOnly":false
+    "readOnly":false,
+  	"indexes": [
+	  		{
+  			"name": "LOG_RECORD_ID",
+  			"fields": [
+  				{
+  					"path": "sessionId",
+  					"datatype": "string",
+  					"order": "asc"
+  				},{
+  					"path": "operationId",
+  					"datatype": "string",
+  					"order": "asc"
+  				}
+  			]
+  		}]
   }
 }

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import com.oracle.st.pm.json.movieTicketing.qbe.GetDocumentById;
 import com.oracle.st.pm.json.movieTicketing.utilitiy.CollectionManager;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import oracle.soda.OracleBatchException;
 import oracle.soda.OracleCollection;
 import oracle.soda.OracleCursor;
 import oracle.soda.OracleDatabase;
@@ -120,27 +122,62 @@ public class SodaCollection {
         return documents;
     }
 
-    public static void insertDocument(OracleDatabase db, String collectionName,Object object) throws OracleException {
+    protected static OracleDocument insertDocument(OracleDatabase db, String collectionName,OracleDocument doc) throws OracleException {
         long startTime = System.currentTimeMillis();
         OracleCollection collection = db.openCollection(collectionName);
-        collection.insert(db.createDocumentFromString(gson.toJson(object)));
+        doc =  collection.insertAndGet(doc);
         long elapsedTime = System.currentTimeMillis() - startTime;
         System.out.println("MovieTicketing.insertDocument(\"" + collectionName + "\"): Inserted 1 document in " + elapsedTime + " ms. ");
+        return doc;
     }
 
-    public static void bulkInsert(OracleDatabase db, String collectionName, List<OracleDocument> documents) throws OracleException {
-        OracleCollection collection = db.openCollection(collectionName);
-        bulkInsert(collection,documents);        
-    }
-
-    public static void bulkInsert(OracleCollection collection, List<OracleDocument> documents) throws OracleException {
+    protected static OracleDocument insertDocument(OracleDatabase db, String collectionName,Object object) throws OracleException {
         long startTime = System.currentTimeMillis();
-        collection.insert(documents.iterator());
+        OracleCollection collection = db.openCollection(collectionName);
+        OracleDocument doc =  collection.insertAndGet(db.createDocumentFromString(gson.toJson(object)));
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        System.out.println("MovieTicketing.insertDocument(\"" + collectionName + "\"): Inserted 1 document in " + elapsedTime + " ms. ");
+        return doc;
+    }
+
+    protected static List<OracleDocument> bulkInsert2(OracleCollection collection, List<OracleDocument> documents) throws OracleException {
+        long startTime = System.currentTimeMillis();
+        System.out.println("Invoking insertAndGet");
+                List<OracleDocument> results = collection.insertAndGet(documents.iterator());
         long elapsedTime = System.currentTimeMillis() - startTime;
         System.out.println("MovieTicketing.bulkInsert(\""+ collection.admin().getName() +"\"): Inserted " + documents.size() + " documents in " + elapsedTime + " ms.");
+        return results;
     }
 
-    public boolean updateDocument(OracleDatabase db, String collectionName, String key, String version,
+    protected static List<OracleDocument> bulkInsert1(OracleDatabase db, String collectionName, List<OracleDocument> documents) throws OracleException {
+        OracleCollection collection = db.openCollection(collectionName);
+        System.out.println("Obtained Soda Collection");
+        return bulkInsert2(collection,documents);        
+    }
+
+    protected static List<OracleDocument> bulkInsert(OracleDatabase db, String collectionName, SodaCollection[] documents) throws OracleException {
+        if (documents.length > 0) { 
+          List<OracleDocument> documentList = new ArrayList<OracleDocument>();
+          for (int i=0; i<documents.length;i++) {
+            OracleDocument doc = db.createDocumentFromString(gson.toJson(documents[i]));
+            documentList.add(doc);   
+          }
+          System.out.println("Converted Array to ArrayList");
+          try {
+              insertDocument(db,collectionName,documents[0]);
+              System.out.println("Insert Succeeded");
+            return bulkInsert1(db,collectionName,documentList);        
+          } catch (OracleBatchException obe) {
+              System.out.println(obe.getProcessedCount());
+              System.out.println(gson.toJson(documents[obe.getProcessedCount()]));
+              obe.printStackTrace();
+                    
+          }
+        }
+        return new ArrayList<OracleDocument>();
+    }
+
+    protected static boolean updateDocument(OracleDatabase db, String collectionName, String key, String version,
                                    OracleDocument newDocument) throws OracleException {
         long startTime = System.currentTimeMillis();
         OracleCollection collection = db.openCollection(collectionName);
@@ -151,7 +188,26 @@ public class SodaCollection {
         return status;
     }
 
-    public static OracleCollection createCollection(OracleDatabase db, String collectionName, OracleDocument collectionProperties) throws OracleException {
+    protected static OracleCollection createIndex(OracleCollection collection, OracleDocument indexDefinition) throws OracleException {
+        System.out.println(indexDefinition.getContentAsString());
+        long startTime = System.currentTimeMillis();
+        collection.admin().createIndex(indexDefinition);
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        System.out.println("MovieTicketing.createIndex(\""+ collection.admin().getName() +"\"): Created Index in " + elapsedTime + " ms.");
+        return collection;
+    }
+
+    protected static OracleCollection createCollection(OracleDatabase db, String collectionName) throws OracleException {
+        
+        JsonObject collectionDefinition = getCollectionProperties(collectionName);
+        OracleDocument collectionProperties = null
+;        if (collectionDefinition != null) {
+          if (collectionDefinition.has("indexes")) {
+            collectionDefinition.remove("indexes");
+           }
+           collectionProperties = db.createDocumentFromString(gson.toJson(collectionDefinition));
+        }
+
         long startTime = System.currentTimeMillis();
         OracleCollection collection = db.admin().createCollection(collectionName, collectionProperties);
         long elapsedTime = System.currentTimeMillis() - startTime;
@@ -159,15 +215,15 @@ public class SodaCollection {
         return collection;
     }
 
-    public static OracleCollection indexCollection(OracleCollection collection, OracleDocument indexDefinition) throws OracleException {
+    protected static OracleCollection createCollection(OracleDatabase db, String collectionName, OracleDocument collectionProperties) throws OracleException {
         long startTime = System.currentTimeMillis();
-        collection.admin().createIndex(indexDefinition);
+        OracleCollection collection = db.admin().createCollection(collectionName, collectionProperties);
         long elapsedTime = System.currentTimeMillis() - startTime;
-        System.out.println("MovieTicketing.indexCollection(\""+ collection.admin().getName() +"\"): Created Index in " + elapsedTime + " ms.");
+        System.out.println("MovieTicketing.createCollection(\""+ collectionName +"\"): Created collection in " + elapsedTime + " ms.");
         return collection;
     }
 
-    public static void dropCollection(OracleDatabase db, String collectionName) throws OracleException {
+    protected static void dropCollection(OracleDatabase db, String collectionName) throws OracleException {
         long startTime = System.currentTimeMillis();
         OracleCollection collection = db.openCollection(collectionName);
         if (collection != null) {
@@ -177,14 +233,14 @@ public class SodaCollection {
         System.out.println("MovieTicketing.dropCollection(\""+ collectionName +"\"): Dropped collection in " + elapsedTime + " ms.");
     }
     
-    public static OracleCollection recreateCollection(OracleDatabase db, String collectionName) throws OracleException {
+    protected static OracleCollection recreateCollection(OracleDatabase db, String collectionName) throws OracleException {
          return recreateCollection(db,collectionName,null);
     }
 
-    public static OracleCollection recreateCollection(OracleDatabase db, String collectionName,
+    protected static OracleCollection recreateCollection(OracleDatabase db, String collectionName,
                                           List<OracleDocument> documents) throws OracleException {
 
-        JsonObject collectionDefinition = CollectionManager.collectionMetadata.getAsJsonObject(collectionName);
+        JsonObject collectionDefinition = getCollectionProperties(collectionName);
 
         JsonArray indexMetadata = null;
         if ((collectionDefinition != null) && (collectionDefinition.has("indexes"))) {
@@ -202,7 +258,7 @@ public class SodaCollection {
         OracleCollection collection = createCollection(db,collectionName,collectionProperties);
 
         if ((documents != null) && (documents.size() > 0)) {
-           bulkInsert(collection,documents);     
+           bulkInsert2(collection,documents);     
         }
 
         if (indexMetadata != null) {
@@ -212,18 +268,52 @@ public class SodaCollection {
                 if ((indexDefinition.has("spatial")) && (!DBConnection.isNearSupported())) {
                     System.out.println(sdf.format(new Date()) + ": Skipped creation of unsupported spatial index");
                 } else {
-                    indexCollection(collection,db.createDocumentFromString(gson.toJson(indexDefinition)));
+                    createIndex(collection,db.createDocumentFromString(gson.toJson(indexDefinition)));
                 }
             }
         }
         return collection;
     }
 
+    protected static void createIndexes(OracleDatabase db, String collectionName, JsonArray indexMetadata) throws OracleException {
+      OracleCollection collection = db.openCollection(collectionName);
+      for (int i = 0; i < indexMetadata.size(); i++) {   
+        JsonObject indexDefinition = indexMetadata.get(i).getAsJsonObject();
+        // System.out.println(indexDefinition.toString());
+        if ((indexDefinition.has("spatial")) && (!DBConnection.isNearSupported())) {
+            System.out.println(sdf.format(new Date()) + ": Skipped creation of unsupported spatial index");
+        } else {
+            createIndex(collection,db.createDocumentFromString(gson.toJson(indexDefinition)));
+        }
+      }
+    }
+
+    protected static void createIndexes(OracleDatabase db, String collectionName) throws OracleException {
+
+        JsonObject collectionDefinition = CollectionManager.collectionMetadata.getAsJsonObject(collectionName);
+        if ((collectionDefinition == null) || (!collectionDefinition.has("indexes"))) {
+          return;
+        }
+
+        JsonArray indexMetadata = indexMetadata = collectionDefinition.getAsJsonArray("indexes");
+       createIndexes(db,collectionName,indexMetadata);
+    }
+
+    protected static JsonObject getCollectionProperties(String collectionName) {
+      // Clone the collection Metadata
+      JsonParser p = new JsonParser();
+      JsonObject collectionDefinition = CollectionManager.collectionMetadata.getAsJsonObject(collectionName);
+      if (collectionDefinition != null) {
+        collectionDefinition = p.parse(gson.toJson(collectionDefinition)).getAsJsonObject();
+      }
+      return collectionDefinition;
+    }
+          
     public String toJSON() {
         return gson.toJson(this);
     }
  
-    protected static SodaCollection fromJSON(String json) {
+    public static SodaCollection fromJSON(String json) {
         return gson.fromJson(json, SodaCollection.class);
     }
 }

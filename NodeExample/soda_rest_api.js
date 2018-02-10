@@ -27,6 +27,7 @@ const driverName = "SODA-REST"
 const supportedFeatures = {}
 
 module.exports.initialize                  = initialize
+module.exports.setDatabaseName             = setDatabaseName
 module.exports.getSupportedFeatures        = getSupportedFeatures
 module.exports.getDBDriverName             = getDBDriverName
 module.exports.processError                = processError
@@ -39,16 +40,16 @@ module.exports.putDocument                 = putDocument
 module.exports.deleteDocument              = deleteDocument
 module.exports.createIndex                 = createIndex
 module.exports.createIndexes               = createIndexes
-module.exports.createCollection            = createCollection
-module.exports.dropCollection              = dropCollection
-module.exports.collectionNotFound          = collectionNotFound 
 module.exports.collectionExists            = collectionExists
+module.exports.createCollection            = createCollection
+module.exports.collectionNotFound          = collectionNotFound 
+module.exports.dropCollection              = dropCollection
 
-module.exports.initialize                  = initialize
 
 let connectionProperties = {}
 let collectionMetadata = {}
 let documentStoreURL    = "";
+let sodaPath = "";
 
 function writeLogEntry(module,comment) {
 	
@@ -173,7 +174,7 @@ async function getSupportedFeatures() {
 		await createIndex(constants.DB_LOGGING_DISABLED, collectionName, indexDef.name, indexDef)
 	}
 	catch (sodaError) {
-	  console.logContainer(sodaError)
+	  console.log(sodaError)
       if ((sodaError.status === constants.FATAL_ERRROR)) {
         var sodaException = sodaError.details.underlyingCause.error;
         if (sodaException['o:errorCode'] === 'SQL-29855') {
@@ -226,9 +227,28 @@ function getCollectionMetadata(collectionName) {
 
 }
 
+function setSodaPath(ordsRoot, schemaName, sodaRoot) {
+	
+  sodaPath = `${ordsRoot}/${schemaName.toLowerCase()}/${sodaRoot}`;
+
+}
+
+function setDatabaseName(databaseName) {
+	
+	
+  setSodaPath(connectionProperties.ordsRoot,databaseName,connectionProperties.sodaRoot);
+
+}
+
+function getSodaPath() {
+	
+  return sodaPath;
+  
+}
+
 function getCollectionLink(collectionName) {
 
-  return `${connectionProperties.path}/${collectionName}`;
+  return `${getSodaPath()}/${collectionName}`;
 
 }
 
@@ -404,6 +424,8 @@ async function initialize(applicationName) {
       documentStoreURL =  `${documentStoreURL}:${connectionProperties.port}`
     }
 
+	setSodaPath(connectionProperties.ordsRoot,connectionProperties.schemaName,connectionProperties.sodaRoot);
+	
     writeLogEntry(moduleId,`Document Store URL = "${documentStoreURL}".`);
 
 	await getSupportedFeatures()

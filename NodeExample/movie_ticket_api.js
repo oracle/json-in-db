@@ -54,6 +54,8 @@ module.exports.getScreenings                     = getScreenings;
 module.exports.getScreening                      = getScreening;
 module.exports.queryScreenings                   = queryScreenings;
 module.exports.updateScreening                   = updateScreening;
+module.exports.bulkInsertScreenings              = bulkInsertScreenings
+module.exports.indexScreenings                   = indexScreenings
                                              
 module.exports.createTicketSaleCollection        = createTicketSaleCollection;
 module.exports.dropTicketSaleCollection          = dropTicketSaleCollection;
@@ -71,11 +73,13 @@ module.exports.getPoster                         = getPoster;
                                              
 module.exports.getLogRecordByOperationId         = getLogRecordByOperationId
                                              
-module.exports.initialize                        = initialize;
-module.exports.getDBDriverName                   = getDBDriverName;
 module.exports.logError                          = logError;
 module.exports.writeLogEntry                     = writeLogEntry;
+
+module.exports.initialize                        = initialize;
+module.exports.getDBDriverName                   = getDBDriverName;
 module.exports.getSupportedFeatures              = getSupportedFeatures
+module.exports.setDatabaseName                   = setDatabaseName
 
 async function initialize(sessionState) {
 
@@ -100,11 +104,22 @@ function getDBDriverName() {
 
 }
 
+function setDatabaseName() {
+	
+	return dbAPI.setDatabaseName();
+
+}
+
 // Theater Collection
 
-function createTheaterCollection(sessionState) {
+function createTheaterCollection(sessionState, createIndexes) {
 	
-	return dbAPI.createCollectionWithIndexes(sessionState, 'Theater');
+	if ((createIndexes === undefined) || (createIndexes)) {
+	  return dbAPI.createCollectionWithIndexes(sessionState, 'Theater');
+    }
+	else {
+	   return dbAPI.createCollection(sessionState,'Theater');
+	}
 
 }
 
@@ -168,9 +183,15 @@ function indexTheaters(sessionState) {
 
 // Movie Collection
 
-function createMovieCollection(sessionState) {
+function createMovieCollection(sessionState,createIndexes) {
 	
-	return dbAPI.createCollectionWithIndexes(sessionState, 'Movie');
+	if ((createIndexes === undefined) || (createIndexes)) {
+      return dbAPI.createCollectionWithIndexes(sessionState, 'Movie');
+	  return dbAPI.createCollectionWithIndexes(sessionState, 'Theater');
+    }
+	else {
+       return dbAPI.createCollection(sessionState, 'Movie');
+	}
 
 }
 
@@ -292,6 +313,18 @@ function queryScreenings(sessionState, qbe, limit, fields, includeTotal) {
 function updateScreening(sessionState, key,screening,etag) {
 	
 	return dbAPI.putJSON(sessionState, 'Screening',key,screening,etag);
+
+}
+
+function bulkInsertScreenings(sessionState,documents) {
+	
+	return dbAPI.bulkInsert(sessionState, 'Screening', documents)
+
+}
+
+function indexScreenings(sessionState) {
+	
+	return dbAPI.createIndexes(sessionState, 'Screening')
 
 }
 

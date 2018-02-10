@@ -1,14 +1,16 @@
 {
-  "protocol": "http",
-  "hostname": "localhost",
-  "port": 8080,
-  "path": "ords/movies/soda/latest",
-  "authMethod": "Basic",
-  "username": "MovieTicketing",
-  "password": "MovieTicketing",
-  "useProxy": false,
+  "protocol"   : "http",
+  "hostname"   : "localhost",
+  "port"       : 8080,
+  "schemaName" : "movies",
+  "ordsRoot"   : "ords",
+  "sodaRoot"   : "soda/latest",
+  "authMethod" : "Basic",
+  "username"   : "MovieTicketing",
+  "password"   : "MovieTicketing",
+  "useProxy"   : false,
   "proxy": {
-    "hostname": null,
-    "port": null
+    "hostname" : null,
+    "port"     : null
   }
 }

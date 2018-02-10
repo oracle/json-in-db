@@ -1,6 +1,7 @@
 package com.oracle.st.pm.json.movieTicketing.utilitiy;
 
 import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
+import com.oracle.st.pm.json.movieTicketing.docStore.TemporaryCollection;
 
 import java.io.IOException;
 
@@ -208,12 +209,12 @@ public class DBConnection {
     
     private static void doFeatureDetection(OracleDatabase db) throws OracleException {
 
-       movieProps.put("com.oracle.st.pm.json.movieTicketing.nearSupported", "false");
+       movieProps.put("com.oracle.st.pm.json.movieTicketing.nearSupported", "true");
        movieProps.put("com.oracle.st.pm.json.movieTicketing.containsSupported", "true");
        movieProps.put("com.oracle.st.pm.json.movieTicketing.nullOnEmptySupported", "true");
 
        String collectionName = "TMP-" + UUID.randomUUID();
-       OracleCollection col = SodaCollection.recreateCollection(db,collectionName);
+       OracleCollection col = TemporaryCollection.createTemporaryCollection(db);
         
        /*
        ** Test for $CONTAINS support
@@ -293,7 +294,7 @@ public class DBConnection {
           }
         }
 
-        SodaCollection.dropCollection(db, collectionName);
+        TemporaryCollection.dropTemporaryCollection(db);
 
         System.out.println(sdf.format(new Date()) + " doFeatureDetection: $contains operator supported:  " + isContainsSupported());
         System.out.println(sdf.format(new Date()) + " doFeatureDetection: $near operatator   supported:  " + isNearSupported());

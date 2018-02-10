@@ -27,10 +27,10 @@ public class CollectionManager {
 
     private OracleDatabase db = null;
     
-    public CollectionManager() {
-        super();
+    public CollectionManager clone() {
+       return new CollectionManager();
     }
-
+    
     public static JsonObject getCollectionProperties() {
         String filename =
             System.getProperty("com.oracle.st.pm.json.collectionProperties", CollectionManager.DEFAULT_FILENAME);

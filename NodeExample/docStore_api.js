@@ -15,7 +15,7 @@
 
 const http = require('http');
 const driverMapper = require('./driver_mapper.js')
-const dbAPI = require(`${getDBAPI()}`)
+const dbAPI = require(`${getdbAPI()}`)
 const constants = require('./constants.js');
 const errorLibrary = require('./error_library.js');
 
@@ -76,10 +76,10 @@ module.exports.dropCollection              = dropCollection
 const DEFAULT_LIMIT = 128
 let applicationName = null;
 	  						
-function getDBAPI() {
+function getdbAPI() {
 
   if (process.argv[process.argv.length-1] === 'TRACE') {
-    return './cloudDB_trace.js'
+    return './docStore_trace_api.js'
   }
   else {
 	if (process.argv.length > 2) {
@@ -95,7 +95,7 @@ function getDBAPI() {
 function writeLogEntry(module,comment) {
 	
   const message = ( comment === undefined) ? module : `${module}: ${comment}`
-  console.log(`${new Date().toISOString()}: cloudDB.${message}`);
+  console.log(`${new Date().toISOString()}: docStore.${message}`);
 }
 
 let isReady                  = false

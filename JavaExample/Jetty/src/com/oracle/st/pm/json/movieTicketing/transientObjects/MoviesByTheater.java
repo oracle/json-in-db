@@ -145,27 +145,32 @@ public class MoviesByTheater {
         // Use QBE to get the set of showings for the specifed Theater on the specified Date.
 
         ShowingsByTheaterAndDate qbeDefinition = (new ShowingsByTheaterAndDate(this.theater.getTheaterId(), cal));
-        OracleDocument [] screeningDocuments = Screening.searchScreenings(db,gson.toJson(qbeDefinition));
-        Screening[] screenings = new Screening[screeningDocuments.length];
-        ArrayList<Integer> movieList = new ArrayList<Integer>();
-        for (int i=0; i< screeningDocuments.length; i++) {
-          screenings[i] = Screening.fromJSON(screeningDocuments[i].getContentAsString());
-          if (!movieList.contains(screenings[i].getMovieId())) {
-            movieList.add(screenings[i].getMovieId());
-          }
-        } 
-        
-        int[] movieIds = movieList.stream().mapToInt(Integer::intValue).toArray();                      
-        Movie[] movies = Movie.toMovies(Movie.searchMovies(db, gson.toJson(new IdInList(movieIds))));                
-        
         HashMap<Integer,MovieWithShowTimes> getMovieId = new HashMap<Integer,MovieWithShowTimes>();
-        for (int i=0; i < movies.length; i++) {
-          getMovieId.put(movies[i].getMovieId(),new MovieWithShowTimes(movies[i]));
+        OracleDocument [] screeningDocuments = Screening.searchScreenings(db,gson.toJson(qbeDefinition));
+        
+        if (screeningDocuments.length > 0) {
+
+          Screening[] screenings = new Screening[screeningDocuments.length];
+          ArrayList<Integer> movieList = new ArrayList<Integer>();
+          for (int i=0; i< screeningDocuments.length; i++) {
+            screenings[i] = Screening.fromJSON(screeningDocuments[i].getContentAsString());
+            if (!movieList.contains(screenings[i].getMovieId())) {
+              movieList.add(screenings[i].getMovieId());
+            }
+          } 
+        
+          int[] movieIds = movieList.stream().mapToInt(Integer::intValue).toArray();                      
+          Movie[] movies = Movie.toMovies(Movie.searchMovies(db, gson.toJson(new IdInList(movieIds))));                
+        
+          for (int i=0; i < movies.length; i++) {
+            getMovieId.put(movies[i].getMovieId(),new MovieWithShowTimes(movies[i]));
+          }
+        
+          for (int i=0; i < screenings.length;i++) {    
+            getMovieId.get(screenings[i].getMovieId()).addScreening(screeningDocuments[i].getKey(),screenings[i]);
+          }
         }
         
-        for (int i=0; i < screenings.length;i++) {    
-           getMovieId.get(screenings[i].getMovieId()).addScreening(screeningDocuments[i].getKey(),screenings[i]);
-        }
         db.admin().getConnection().close();
         return getMovieId.values().toArray(new MovieWithShowTimes[0]);
     }

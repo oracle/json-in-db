@@ -3,12 +3,6 @@
 const driverMapper = require('./driver_mapper.js')
 const dbAPI = require(`${getDBAPI()}`);
 
-// const dbAPI = require('./NoSQL/mongo_api.js');
-// const dbAPI = require('./NoSQL/dynamo_api.js');
-// const dbAPI = require('./NoSQL/cosmos_native_api.js');
-// const dbAPI = require('./NoSQL/cosmos_rest_api.js');
-// const dbAPI = require('./NoSQL/cosmos_mongo_api.js');
-
 const TRACE_RESULTS = false
 const TRACE_PROMISE_EXECUTION = false;
 const TRACE_EXCEPTIONS = false;
@@ -36,7 +30,7 @@ module.exports.dropCollection              = dropCollection
 function writeLogEntry(module,comment) {
 	
   const message = ( comment === undefined) ? module : `${module}: ${comment}`
-  console.log(`${new Date().toISOString()}: cloudDB.TRACE.${message}`);
+  console.log(`${new Date().toISOString()}: docStore.TRACE.${message}`);
 }
 
 function getDBAPI() {

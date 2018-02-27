@@ -16,7 +16,7 @@
 const APPLICATION_NAME       = "MovieTicketing"
 const LOG_COLLECTION_NAME     = 'MovieTicketLog';
 
-const dbAPI = require('./cloudDB_api.js');
+const docStoreAPI = require('./docStore_API.js');
 const constants = require('./constants.js');
 
 module.exports.createTheaterCollection           = createTheaterCollection;
@@ -87,26 +87,26 @@ async function initialize(sessionState) {
     sessionState.logCollectionName = LOG_COLLECTION_NAME;
   }
 
-  await dbAPI.initialize(APPLICATION_NAME);
+  await docStoreAPI.initialize(APPLICATION_NAME);
   await createEmptyCollections();
   return
 }
 
 async function getSupportedFeatures() {
 	
-	return dbAPI.getSupportedFeatures();
+	return docStoreAPI.getSupportedFeatures();
 
 }
 
 function getDBDriverName() {
 	
-	return dbAPI.getDBDriverName();
+	return docStoreAPI.getDBDriverName();
 
 }
 
 function setDatabaseName() {
 	
-	return dbAPI.setDatabaseName();
+	return docStoreAPI.setDatabaseName();
 
 }
 
@@ -115,40 +115,40 @@ function setDatabaseName() {
 function createTheaterCollection(sessionState, createIndexes) {
 	
 	if ((createIndexes === undefined) || (createIndexes)) {
-	  return dbAPI.createCollectionWithIndexes(sessionState, 'Theater');
+	  return docStoreAPI.createCollectionWithIndexes(sessionState, 'Theater');
     }
 	else {
-	   return dbAPI.createCollection(sessionState,'Theater');
+	   return docStoreAPI.createCollection(sessionState,'Theater');
 	}
 
 }
 
 function dropTheaterCollection(sessionState) {
 	
-	return dbAPI.ensureDropCollection(sessionState, 'Theater');
+	return docStoreAPI.ensureDropCollection(sessionState, 'Theater');
 
 }
 
 function recreateTheaterCollection(sessionState) {
 	
-	return dbAPI.recreateCollection(sessionState, 'Theater');
+	return docStoreAPI.recreateCollection(sessionState, 'Theater');
 
 }
 function insertTheaters(sessionState, theaterList) {
 	
-	return dbAPI.bulkInsert(sessionState, 'Theater',theaterList);
+	return docStoreAPI.bulkInsert(sessionState, 'Theater',theaterList);
 
 }
 
 function getTheaters(sessionState, limit, fields, includeTotal) {
   
-   return dbAPI.getCollection(sessionState, 'Theater', limit, fields, includeTotal)
+   return docStoreAPI.getCollection(sessionState, 'Theater', limit, fields, includeTotal)
      
 }
 
 function getTheater(sessionState, key, etag) {
 	
-	return dbAPI.getJSON(sessionState, 'Theater', key, etag);
+	return docStoreAPI.getJSON(sessionState, 'Theater', key, etag);
 
 }
 
@@ -156,7 +156,7 @@ async function getTheaterById(sessionState, id) {
 
   var qbe = {'id': id};
   
-  let httpResponse = await dbAPI.queryByExample(sessionState, 'Theater', qbe, 1);
+  let httpResponse = await docStoreAPI.queryByExample(sessionState, 'Theater', qbe, 1);
   if (httpResponse.json.count ===  1) {
     httpResponse.json = httpResponse.json.items[0]
   }
@@ -165,19 +165,19 @@ async function getTheaterById(sessionState, id) {
 
 function queryTheaters(sessionState, qbe, limit, fields, includeTotal) {
 	
-	return dbAPI.queryByExample(sessionState, 'Theater', qbe, limit, fields, includeTotal);
+	return docStoreAPI.queryByExample(sessionState, 'Theater', qbe, limit, fields, includeTotal);
 
 }
 
 function bulkInsertTheaters(sessionState,documents) {
 	
-	return dbAPI.bulkInsert(sessionState, 'Theater', documents)
+	return docStoreAPI.bulkInsert(sessionState, 'Theater', documents)
 
 }
 
 function indexTheaters(sessionState) {
 	
-	return dbAPI.createIndexes(sessionState, 'Theater')
+	return docStoreAPI.createIndexes(sessionState, 'Theater')
 
 }
 
@@ -186,48 +186,48 @@ function indexTheaters(sessionState) {
 function createMovieCollection(sessionState,createIndexes) {
 	
 	if ((createIndexes === undefined) || (createIndexes)) {
-      return dbAPI.createCollectionWithIndexes(sessionState, 'Movie');
-	  return dbAPI.createCollectionWithIndexes(sessionState, 'Theater');
+      return docStoreAPI.createCollectionWithIndexes(sessionState, 'Movie');
+	  return docStoreAPI.createCollectionWithIndexes(sessionState, 'Theater');
     }
 	else {
-       return dbAPI.createCollection(sessionState, 'Movie');
+       return docStoreAPI.createCollection(sessionState, 'Movie');
 	}
 
 }
 
 function dropMovieCollection(sessionState) {
 	
-	return dbAPI.ensureDropCollection(sessionState, 'Movie');
+	return docStoreAPI.ensureDropCollection(sessionState, 'Movie');
 
 }
 
 function recreateMovieCollection(sessionState) {
 	
-	return dbAPI.recreateCollection(sessionState, 'Movie');
+	return docStoreAPI.recreateCollection(sessionState, 'Movie');
 
 }
 
 function insertMovies(sessionState, movieList) {
 	
-	return dbAPI.bulkInsert(sessionState, 'Movie',movieList);
+	return docStoreAPI.bulkInsert(sessionState, 'Movie',movieList);
 
 }
 
 function getMovies(sessionState,  limit, fields, includeTotal) {
   
-   return dbAPI.getCollection(sessionState, 'Movie', limit, fields, includeTotal)
+   return docStoreAPI.getCollection(sessionState, 'Movie', limit, fields, includeTotal)
      
 }
 
 function getMovie(sessionState, key, etag) {
 	
-	return dbAPI.getJSON(sessionState, 'Movie', key, etag);
+	return docStoreAPI.getJSON(sessionState, 'Movie', key, etag);
 
 }
 
 function updateMovie(sessionState, key, movie, etag) {
 	
-	return dbAPI.putJSON(sessionState, 'Movie', key, movie, etag);
+	return docStoreAPI.putJSON(sessionState, 'Movie', key, movie, etag);
 
 }
 
@@ -235,7 +235,7 @@ async function getMovieById(sessionState,id) {
 
   var qbe = {'id': id};
    
-  let httpResponse = await dbAPI.queryByExample(sessionState, 'Movie', qbe, 1)
+  let httpResponse = await docStoreAPI.queryByExample(sessionState, 'Movie', qbe, 1)
   if (httpResponse.json.count ===  1) {
     httpResponse.json = httpResponse.json.items[0]
   }
@@ -245,12 +245,12 @@ async function getMovieById(sessionState,id) {
 function moviesByReleaseDateService(sessionState) {
 
   var qbe = {"$query" : {}, $orderby :{"releaseDate" :-1}};
-  return dbAPI.queryByExample(sessionState, 'Movie', qbe)
+  return docStoreAPI.queryByExample(sessionState, 'Movie', qbe)
 }
 
 function queryMovies(sessionState, qbe, limit, fields, includeTotal) {
 	
-	return dbAPI.queryByExample(sessionState, 'Movie', qbe, limit, fields, includeTotal);
+	return docStoreAPI.queryByExample(sessionState, 'Movie', qbe, limit, fields, includeTotal);
 
 }
 
@@ -258,73 +258,73 @@ function queryMovies(sessionState, qbe, limit, fields, includeTotal) {
 
 function bulkInsertMovies(sessionState,documents) {
 	
-	return dbAPI.bulkInsert(sessionState, 'Movie', documents)
+	return docStoreAPI.bulkInsert(sessionState, 'Movie', documents)
 
 }
 
 function indexMovies(sessionState) {
 	
-	return dbAPI.createIndexes(sessionState, 'Movie')
+	return docStoreAPI.createIndexes(sessionState, 'Movie')
 
 }
 
 function createScreeningCollection(sessionState) {
 	
-	return dbAPI.createCollectionWithIndexes(sessionState, 'Screening');
+	return docStoreAPI.createCollectionWithIndexes(sessionState, 'Screening');
 
 }
 
 function dropScreeningCollection(sessionState) {
 	
-	return dbAPI.ensureDropCollection(sessionState, 'Screening');
+	return docStoreAPI.ensureDropCollection(sessionState, 'Screening');
 
 }
 
 function recreateScreeningCollection(sessionState) {
 	
-	return dbAPI.recreateCollection(sessionState, 'Screening');
+	return docStoreAPI.recreateCollection(sessionState, 'Screening');
 
 }
 
 function insertScreenings(sessionState, screeningList) {
 	
-	return dbAPI.bulkInsert(sessionState, 'Screening',screeningList);
+	return docStoreAPI.bulkInsert(sessionState, 'Screening',screeningList);
 
 }
 
 function getScreenings(sessionState,  limit, fields, includeTotal) {
   
-   return dbAPI.getCollection(sessionState, 'Screening', limit, fields, includeTotal)
+   return docStoreAPI.getCollection(sessionState, 'Screening', limit, fields, includeTotal)
      
 }
 
 function getScreening(sessionState, key, etag) {
 	
-	return dbAPI.getJSON(sessionState, 'Screening', key, etag);
+	return docStoreAPI.getJSON(sessionState, 'Screening', key, etag);
 
 }
 
 function queryScreenings(sessionState, qbe, limit, fields, includeTotal) {
 	
-	return dbAPI.queryByExample(sessionState, 'Screening', qbe, limit, fields, includeTotal);
+	return docStoreAPI.queryByExample(sessionState, 'Screening', qbe, limit, fields, includeTotal);
 
 }
 
 function updateScreening(sessionState, key,screening,etag) {
 	
-	return dbAPI.putJSON(sessionState, 'Screening',key,screening,etag);
+	return docStoreAPI.putJSON(sessionState, 'Screening',key,screening,etag);
 
 }
 
 function bulkInsertScreenings(sessionState,documents) {
 	
-	return dbAPI.bulkInsert(sessionState, 'Screening', documents)
+	return docStoreAPI.bulkInsert(sessionState, 'Screening', documents)
 
 }
 
 function indexScreenings(sessionState) {
 	
-	return dbAPI.createIndexes(sessionState, 'Screening')
+	return docStoreAPI.createIndexes(sessionState, 'Screening')
 
 }
 
@@ -332,43 +332,43 @@ function indexScreenings(sessionState) {
 
 function createTicketSaleCollection(sessionState) {
 	
-	return dbAPI.createCollectionWithIndexes(sessionState, 'TicketSale');
+	return docStoreAPI.createCollectionWithIndexes(sessionState, 'TicketSale');
 
 }
 
 function dropTicketSaleCollection(sessionState) {
 	
-	return dbAPI.ensureDropCollection(sessionState, 'TicketSale');
+	return docStoreAPI.ensureDropCollection(sessionState, 'TicketSale');
 
 }
 
 function recreateTicketSaleCollection(sessionState) {
 	
-	return dbAPI.recreateCollection(sessionState, 'TicketSale');
+	return docStoreAPI.recreateCollection(sessionState, 'TicketSale');
 
 }
 
 function insertTicketSales(sessionState, ticketSaleList) {
 	
-	return dbAPI.bulkInsert(sessionState, 'TicketSale', ticketSaleList);
+	return docStoreAPI.bulkInsert(sessionState, 'TicketSale', ticketSaleList);
 
 }
 
 function insertTicketSale(sessionState, ticketSale) {
 	
-	return dbAPI.ensurePostJSON(sessionState, 'TicketSale', ticketSale);
+	return docStoreAPI.ensurePostJSON(sessionState, 'TicketSale', ticketSale);
 
 }
 
 function updateTicketSale(sessionState, key,ticketSale,etag) {
 	
-	return dbAPI.putJSON(sessionState, 'TicketSale', key, ticketSale,etag);
+	return docStoreAPI.putJSON(sessionState, 'TicketSale', key, ticketSale,etag);
 
 }
 
 function queryTicketSales(sessionState, qbe, limit, fields, includeTotal) {
 	
-	return dbAPI.queryByExample(sessionState, 'TicketSale', qbe, limit, fields, includeTotal);
+	return docStoreAPI.queryByExample(sessionState, 'TicketSale', qbe, limit, fields, includeTotal);
 
 }
 
@@ -377,43 +377,43 @@ function queryTicketSales(sessionState, qbe, limit, fields, includeTotal) {
 
 function createPosterCollection(sessionState) {
 	
-	return dbAPI.createCollectionWithIndexes(sessionState, 'Poster');
+	return docStoreAPI.createCollectionWithIndexes(sessionState, 'Poster');
 
 }
 
 function dropPosterCollection(sessionState) {
 	
-	return dbAPI.ensureDropCollection(sessionState, 'Poster');
+	return docStoreAPI.ensureDropCollection(sessionState, 'Poster');
 
 }
 
 function recreatePosterCollection(sessionState) {
 	
-	return dbAPI.recreateCollection(sessionState, 'Poster');
+	return docStoreAPI.recreateCollection(sessionState, 'Poster');
 
 }
 
 function insertPoster(sessionState, poster) {
 	
-	return dbAPI.postDocument(sessionState, 'Poster',poster,'image/jpeg');
+	return docStoreAPI.postDocument(sessionState, 'Poster',poster,'image/jpeg');
 
 }
 
 function getPosters(sessionState, limit, fields, includeTotal) {
   
-   return dbAPI.getCollection(sessionState, 'Poster', limit, fields, includeTotal)
+   return docStoreAPI.getCollection(sessionState, 'Poster', limit, fields, includeTotal)
      
 }
 
 function getPoster(sessionState, key) {
 	
-	return dbAPI.getBinaryDocument(sessionState, 'Poster',key);
+	return docStoreAPI.getBinaryDocument(sessionState, 'Poster',key);
 
 }
 
 function createLogRecordCollection() {
 	
-	return dbAPI.createCollectionWithIndexes(constants.DB_LOGGING_DISABLED, LOG_COLLECTION_NAME);
+	return docStoreAPI.createCollectionWithIndexes(constants.DB_LOGGING_DISABLED, LOG_COLLECTION_NAME);
 
 }
 
@@ -433,7 +433,7 @@ async function createEmptyCollections() {
 
 function writeLogEntry(logEntry) {
 	 
-	 return dbAPI.ensurePostJSON(constants.DB_LOGGING_DISABLED, LOG_COLLECTION_NAME, logEntry);
+	 return docStoreAPI.ensurePostJSON(constants.DB_LOGGING_DISABLED, LOG_COLLECTION_NAME, logEntry);
 	 
 }
 
@@ -450,24 +450,24 @@ function getLogRecordByOperationId(sessionId, operationId) {
   
   let httpResponse;
   
-  httpResponse = dbAPI.queryByExample(constants.DB_LOGGING_DISABLED, LOG_COLLECTION_NAME, qbe)
+  httpResponse = docStoreAPI.queryByExample(constants.DB_LOGGING_DISABLED, LOG_COLLECTION_NAME, qbe)
   return httpResponse;
 }
 
 function recreateLoadMovieCollection(sessionState, movieCache) {
 	
-	return dbAPI.recreateLoadCollection(sessionState, 'Movie', movieCache);
+	return docStoreAPI.recreateLoadCollection(sessionState, 'Movie', movieCache);
 	
 }
 
 function recreateLoadTheaterCollection(sessionState, theaterList) {
 	
-	return dbAPI.recreateLoadCollection(sessionState, 'Theater', theaterList);
+	return docStoreAPI.recreateLoadCollection(sessionState, 'Theater', theaterList);
 	
 }
 
 function recreateLoadScreeningCollection(sessionState, screenings) {
 	
-	return dbAPI.recreateLoadCollection(sessionState, 'Screening', screenings);
+	return docStoreAPI.recreateLoadCollection(sessionState, 'Screening', screenings);
 	
 }

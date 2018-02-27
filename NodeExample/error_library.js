@@ -15,13 +15,65 @@
 
 module.exports.GenericException = GenericException
 module.exports.ExternalError = ExternalError
+module.exports.makeSerializable = makeSerializable
+
+function makeSerializable(error) {
+
+  if ((error instanceof GenericException) || (error instanceof ExternalError)) {
+	return error
+  }
+ 
+  let serializedError = "{}"
+  try {
+    serializedError = JSON.stringify(error);
+    if (serialziedError !== "{}") {
+	  return JSON.parse(serialziedError)
+    }
+  } catch (e) {
+	// Avoid issues related stringifyingcertain types of  error, such as Circular references which can occurs when working with MongoDB generated errors.
+  }
+
+  const serializable = {}
+
+  if (error.name) {
+	serializable.name = error.name;
+  }
+  
+  if (error.message) {
+	serializable.message = error.message;
+  }
+
+  if (error.stack) {
+	serializable.stack = error.stack;
+  }
+
+  if (error.code) {
+	serializable.code = error.code;
+  }
+
+  if (error.codeName) {
+	serializable.codeName = error.codeName;
+  }
+  
+  if (error.statusCode) {
+	serializable.statusCode = error.code;
+  }
+
+  for (var propertyName in Object.getOwnPropertyNames(error)) {
+	if (!serializable[propertyName]) {
+	  if (typeof error[propertyName] !== "object") {
+	    serializable[propertyName] = error[propertyName]
+      }
+	}
+  } 
+ 
+  return serializable;
+
+}
 
 function GenericException(message, details) {
   this.name    = 'GenericException';
-  this.message = 'Unexpected exception encountered';
-  if (message !== undefined) {
-    this.message = message
-  }
+  this.message = message === undefined ? 'Unexpected exception encountered' : message
   
   if (details.status !== undefined ) {
     this.status = details.status

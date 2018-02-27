@@ -19,7 +19,7 @@ const uuidv4 = require('uuid/v4');
 const request = require('request-promise-native');
 
 const constants = require('./constants.js');
-const cloudDB = require('./cloudDB_api.js');
+const docStore = require('./docStore_api.js');
 const errorLibrary = require('./error_library.js');
 
 const driverName = "SODA-REST"
@@ -44,7 +44,6 @@ module.exports.collectionExists            = collectionExists
 module.exports.createCollection            = createCollection
 module.exports.collectionNotFound          = collectionNotFound 
 module.exports.dropCollection              = dropCollection
-
 
 let connectionProperties = {}
 let collectionMetadata = {}
@@ -312,8 +311,8 @@ function processError(invokerId, logRequest, e) {
 				  , elapsedTime      : e.elapsedTime ? e.elapsedTime : new Date().getTime() - logRequest.startTime 
                   , request          : logRequest.logEntry ? logRequest.logEntry.request : null
                   , stack            : logRequest.logEntry.stack ? logRequest.logEntry.stack : null
-                  , underlyingCause  : e
-                  , status           : cloudDB.interpretHTTPStatusCode(e.statusCode) 
+                  , underlyingCause  : errorLibrary.makeSerializable(e)
+                  , status           : docStore.interpretHTTPStatusCode(e.statusCode) 
                   }
 
   return new errorLibrary.GenericException(`${driverName}: Unexpected exception encountered`,details)
@@ -332,7 +331,7 @@ async function sendRequest(invokerId, sessionState, options, logContainer) {
     options.proxy = `http://${getConnectionProperties().proxy.hostname}:${getConnectionProperties().proxy.port}`
   }
   
-  logContainer.logRequest = cloudDB.createLogRequest(moduleId, sessionState, options)
+  logContainer.logRequest = docStore.createLogRequest(moduleId, sessionState, options)
 	
   let startTime = null
   try {	
@@ -405,7 +404,7 @@ async function processQuery(sessionState, options, limit) {
     } 
   }
   
-  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);    
+  return docStore.processResultsHTTP(moduleId, results, logContainer.logRequest);    
 
 }
 async function initialize(applicationName) {
@@ -434,7 +433,7 @@ async function initialize(applicationName) {
     const details = {
             module           : moduleId
           , applicationName  : applicationName
-          , underlyingCause  : e
+          , underlyingCause  : errorLibrary.makeSerializable(e)
           }
     throw new errorLibrary.GenericException(`${driverName}: Driver Intialization Failure`,details)
   }
@@ -457,7 +456,7 @@ async function getDocumentContent(sessionState, collectionName, key, binary, eta
 
   const logContainer = {}
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
-  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);
+  return docStore.processResultsHTTP(moduleId, results, logContainer.logRequest);
 }
 
 async function getCollection(sessionState, collectionName, limit, fields, includeTotal) {
@@ -519,11 +518,12 @@ async function postDocument(sessionState, collectionName, document, contentType)
     options.body = document
   }
 
+  
   const logContainer = {}
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
   
   // Appears BODY is a string when the payload was not JSON
-  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);  
+  return docStore.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 async function bulkInsert(sessionState, collectionName, documents) {
@@ -540,7 +540,7 @@ async function bulkInsert(sessionState, collectionName, documents) {
 
   const logContainer = {}
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
-  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);  
+  return docStore.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 async function putDocument(sessionState, collectionName, key, document, contentType, etag) {
@@ -570,8 +570,8 @@ async function putDocument(sessionState, collectionName, key, document, contentT
                          , location       : results.headers.location
                          }
 						 
-  results.body = cloudDB.formatSingleInsert(updateResponse)
-  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);  
+  results.body = docStore.formatSingleInsert(updateResponse)
+  return docStore.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 async function deleteDocument(sessionState, collectionName, key, etag) {
@@ -588,7 +588,7 @@ async function deleteDocument(sessionState, collectionName, key, etag) {
 
   const logContainer = {}
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
-  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);  
+  return docStore.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 
@@ -626,7 +626,7 @@ async function createIndex(sessionState, collectionName, indexName, indexMetadat
 
   const logContainer = {}
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
-  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);
+  return docStore.processResultsHTTP(moduleId, results, logContainer.logRequest);
 }
 
 function getIndexMetadata(collectionName) {
@@ -656,10 +656,10 @@ async function createIndexes(sessionState, collectionName) {
   const indexes = getIndexMetadata(collectionName);
   
   const createIndexOperations = indexes.map(function(indexMetadata) {
-	                                          return cloudDB.createIndex(sessionState,collectionName,indexMetadata.name,indexMetadata)
+	                                          return docStore.createIndex(sessionState,collectionName,indexMetadata.name,indexMetadata)
                                            })
 
-  const logRequest = cloudDB.createLogRequest(moduleId, sessionState, indexes)
+  const logRequest = docStore.createLogRequest(moduleId, sessionState, indexes)
 
   logRequest.startTime = new Date().getTime();
   const createIndexResults = await Promise.all(createIndexOperations)
@@ -667,7 +667,7 @@ async function createIndexes(sessionState, collectionName) {
   const results = Object.assign({},constants.HTTP_RESPONSE_SUCCESS)
   results.elapsedTime = logRequest.endTime - logRequest.startTime
   results.json = createIndexResults
-  return cloudDB.processResultsHTTP(moduleId, results, logRequest);  
+  return docStore.processResultsHTTP(moduleId, results, logRequest);  
 
 }
 
@@ -690,7 +690,7 @@ async function createCollection(sessionState, collectionName) {
 
   const logContainer = {}
   const results = await sendRequest(moduleId, sessionState, options, logContainer);
-  return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);  
+  return docStore.processResultsHTTP(moduleId, results, logContainer.logRequest);  
 }
 
 function collectionNotFound(e) {
@@ -719,13 +719,13 @@ async function dropCollection(sessionState, collectionName) {
   const logContainer = {}
   try {
     const results = await sendRequest(moduleId, sessionState, options, logContainer);
-    return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);
+    return docStore.processResultsHTTP(moduleId, results, logContainer.logRequest);
   } catch (e) {
  	if (collectionNotFound(e)) {
       writeLogEntry(moduleId,`NOT-FOUND: ${e.status}. Returning success.`)
 	  const results = Object.assign({},constants.HTTP_RESPONSE_SUCCESS)
 	  results.elapsedTime = e.elapsedTime
-      return cloudDB.processResultsHTTP(moduleId, results, logContainer.logRequest);
+      return docStore.processResultsHTTP(moduleId, results, logContainer.logRequest);
     }
 	throw processError(moduleId,logContainer.logRequest,e);	
   }

@@ -35,7 +35,6 @@
     "@google/maps": "^0.2.1",
     "angular": "^1.6.9",
     "angular-cookies": "^1.6.9",
-    "aws-sdk": "^2.192.0",
     "body-parser": "^1.15.1",
     "bootstrap": "^3.3.6",
     "bootstrap-datepicker": "^1.6.1",
@@ -44,7 +43,6 @@
     "express": "^4.13.4",
     "express-session": "^1.13.0",
     "jquery": "^3.3.1",
-    "mongodb": "^3.0.2",
     "morgan": "^1.7.0",
     "parse-address": "0.0.5",
     "request": "^2.74.0",
@@ -67,5 +65,5 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "version": "5.4.2"
+  "version": "5.4.4"
 }

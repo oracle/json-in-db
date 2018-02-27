@@ -8,7 +8,6 @@ import com.oracle.st.pm.json.movieTicketing.docStore.Screening;
 import com.oracle.st.pm.json.movieTicketing.docStore.SodaCollection;
 import com.oracle.st.pm.json.movieTicketing.docStore.Theater;
 import com.oracle.st.pm.json.movieTicketing.qbe.BetweenOperator;
-
 import com.oracle.st.pm.json.movieTicketing.qbe.InOperator;
 
 import java.io.IOException;
@@ -143,26 +142,28 @@ public class TheatersByMovie {
         // Use QBE to get the set of showings for the specifed Theater on the specified Date.
 
         ShowingsByMovieAndDate qbeDefinition = (new ShowingsByMovieAndDate(this.movie.getMovieId(), cal));
-        OracleDocument [] screeningDocuments = Screening.searchScreenings(db,gson.toJson(qbeDefinition));
-        Screening[] screenings = new Screening[screeningDocuments.length];
-        ArrayList<Integer> theaterList = new ArrayList<Integer>();
-        for (int i=0; i< screeningDocuments.length; i++) {
-          screenings[i] = Screening.fromJSON(screeningDocuments[i].getContentAsString());
-          if (!theaterList.contains(screenings[i].getTheaterId())) {
-            theaterList.add(screenings[i].getTheaterId());
-          }
-        } 
-        
-        int[] theaterIds = theaterList.stream().mapToInt(Integer::intValue).toArray();                      
-        Theater[] theaters = Theater.toTheaters(Theater.searchTheaters(db, gson.toJson(new IdInList(theaterIds))));                
-        
         HashMap<Integer,TheaterWithShowTimes> theatersWithShowTimes = new HashMap<Integer,TheaterWithShowTimes>();
-        for (int i=0; i < theaters.length; i++) {
-          theatersWithShowTimes.put(theaters[i].getTheaterId(),new TheaterWithShowTimes(theaters[i]));
-        }
+        OracleDocument [] screeningDocuments = Screening.searchScreenings(db,gson.toJson(qbeDefinition));
+        if (screeningDocuments.length > 0) {
+          Screening[] screenings = new Screening[screeningDocuments.length];
+          ArrayList<Integer> theaterList = new ArrayList<Integer>();
+          for (int i=0; i< screeningDocuments.length; i++) {
+            screenings[i] = Screening.fromJSON(screeningDocuments[i].getContentAsString());
+            if (!theaterList.contains(screenings[i].getTheaterId())) {
+              theaterList.add(screenings[i].getTheaterId());
+            }
+          } 
         
-        for (int i=0; i < screenings.length;i++) {    
-           theatersWithShowTimes.get(screenings[i].getTheaterId()).addScreening(screeningDocuments[i].getKey(),screenings[i]);
+          int[] theaterIds = theaterList.stream().mapToInt(Integer::intValue).toArray();                      
+          Theater[] theaters = Theater.toTheaters(Theater.searchTheaters(db, gson.toJson(new IdInList(theaterIds))));                
+        
+          for (int i=0; i < theaters.length; i++) {
+            theatersWithShowTimes.put(theaters[i].getTheaterId(),new TheaterWithShowTimes(theaters[i]));
+          }
+        
+          for (int i=0; i < screenings.length;i++) {    
+            theatersWithShowTimes.get(screenings[i].getTheaterId()).addScreening(screeningDocuments[i].getKey(),screenings[i]);
+          }
         }
         db.admin().getConnection().close();
         return theatersWithShowTimes.values().toArray(new TheaterWithShowTimes[0]);

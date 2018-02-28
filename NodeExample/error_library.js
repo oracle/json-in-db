@@ -59,12 +59,21 @@ function makeSerializable(error) {
 	serializable.statusCode = error.code;
   }
 
-  for (var propertyName in Object.getOwnPropertyNames(error)) {
+  const propertyNames = Object.getOwnPropertyNames(error)
+  for (var i in propertyNames) {
+	const propertyName = propertyNames[i]
 	if (!serializable[propertyName]) {
-	  if (typeof error[propertyName] !== "object") {
-	    serializable[propertyName] = error[propertyName]
-      }
-	}
+	  if (typeof error[propertyName] === "object") {
+  	    try {
+		  JSON.stringify(error[propertyName])
+		}
+		catch (e) {
+		  serializable[propertyName] = `Unserializable object: "{e.message}".`
+		  continue;
+		}
+	  }
+      serializable[propertyName] = error[propertyName]
+ 	}
   } 
  
   return serializable;

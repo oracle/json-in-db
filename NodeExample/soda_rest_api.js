@@ -19,12 +19,10 @@ const uuidv4 = require('uuid/v4');
 const request = require('request-promise-native');
 
 const constants = require('./constants.js');
-const docStore = require('./docStore_api.js');
+// const docStore = require('./docStore_api.js');
 const errorLibrary = require('./error_library.js');
 
 const driverName = "SODA-REST"
-
-const supportedFeatures = {}
 
 module.exports.initialize                  = initialize
 module.exports.setDatabaseName             = setDatabaseName
@@ -45,162 +43,18 @@ module.exports.createCollection            = createCollection
 module.exports.collectionNotFound          = collectionNotFound 
 module.exports.dropCollection              = dropCollection
 
+let applicationName   
 let connectionProperties = {}
-let collectionMetadata = {}
-let documentStoreURL    = "";
-let sodaPath = "";
+let collectionMetadata   = {}
+let documentStoreURL     = "";
+let sodaPath             = "";
+let docStore             = undefined
+const supportedFeatures  = {}
 
 function writeLogEntry(module,comment) {
 	
 const message = ( comment === undefined) ? module : `${module}: ${comment}`
   console.log(`${new Date().toISOString()}: ${driverName}.${message}`);
-}
-
-async function getSupportedFeatures() {
-  
-  /*
-  ** Test for $CONTAINS support
-  */
-  
-  const moduleId = `getSupportedFeatures()`
- 
-  if (Object.keys(supportedFeatures).length > 0) {
-	 return supportedFeatures
-  }
-  				   
-  var collectionName = 'TMP_' + uuidv4();
-
-  try {
-    const sodaResponse = await createCollection(constants.DB_LOGGING_DISABLED, collectionName);
-	
-    var indexDef = {
-          name         : "TEST_IDX"
-        , unique       : true
-        , fields       : [{
-            path       : "id"
-          , datatype : "number"
-          , order    : "asc"
-          }]
-        }
-
-    supportedFeatures.nullOnEmptySupported = true;
-	try {
-      await createIndex(constants.DB_LOGGING_DISABLED, collectionName, indexDef.name, indexDef);
-	}
-	catch (sodaError) {
-      if (sodaError.status === constants.BAD_REQUEST) {
-        var sodaException = sodaError.details.underlyingCause.error;
-        if (sodaException['o:errorCode'] === 'SQL-00907') {
-          supportedFeatures.nullOnEmptySupported = false;
-		} else {
-		  throw sodaError;
-		}
-      }	
-      else {
-        throw sodaError;
-      }		
-    }	
-
-    var qbe = {id : {"$contains" : 'XXX'}}
-
-    supportedFeatures.$containsSupported = true;
-    try {
-      await queryByExample(constants.DB_LOGGING_DISABLED, collectionName, qbe)
-    }
-    catch (sodaError) {
-      if (sodaError.status === constants.BAD_REQUEST) {
-        var sodaException = sodaError.details.underlyingCause.error;
-        if (sodaException.title === 'The field name $contains is not a recognized operator.') {
-          supportedFeatures.$containsSupported = false;
-        }
-		else {
-		  throw sodaError;
-		}
-      }	
-      else {
-        throw sodaError;
-      }		
-    }
-
-    var qbe = {
-          geoCoding          : {
-            $near            : {
-              $geometry        : {
-                 type        : "Point",
-                 coordinates : [-122.12469369777311,37.895215209615884]
-              },
-              $distance      : 5,
-              $unit          : "mile"
-            }
-          } 
-        }
-
-    supportedFeatures.$nearSupported = true;
-    try {
-      await queryByExample(constants.DB_LOGGING_DISABLED, collectionName, qbe)
-    }
-    catch (sodaError) {
-      if (sodaError.status === constants.BAD_REQUEST) {
-        var sodaException = sodaError.details.underlyingCause.error;
-        // writeLogEntry(moduleId,'Error: ' + JSON.stringify(sodaException));
-        // if (sodaException['o:errorCode'] === 'SODA-02002') {
-        if (sodaException.title === 'The field name $near is not a recognized operator.') {
-          supportedFeatures.$nearSupported = false;
-		} else {
-		  throw sodaError;
-		}
-      }	
-      else {
-        throw sodaError;
-      }		
-    }
-
-    /*
-    ** Create Text Index with language specification (12.2 Format with langauge and dataguide)
-    **
-    ** ToDo : Can we use alternative index metadata if we encounter "DRG-10700: preference does not exist: CTXSYS.JSONREST_ENGLISH_LEXER"
-    **
-    */
-
-    var indexDef = {
-          name      : "FULLTEXT_INDEX"
-        , dataguide : "on"
-        , language  : "english"
-        }
-            
-    supportedFeatures.textIndexSupported = true;
-	try {
-		await createIndex(constants.DB_LOGGING_DISABLED, collectionName, indexDef.name, indexDef)
-	}
-	catch (sodaError) {
-	  console.log(sodaError)
-      if ((sodaError.status === constants.FATAL_ERRROR)) {
-        var sodaException = sodaError.details.underlyingCause.error;
-        if (sodaException['o:errorCode'] === 'SQL-29855') {
-          supportedFeatures.textIndexSupported = false;
-		} else {
-		  throw sodaError;
-		}
-      }	
-      else {
-        throw sodaError;
-      }		
-    }
-	
-    await dropCollection(constants.DB_LOGGING_DISABLED, collectionName);
-	
-    writeLogEntry(moduleId,`$contains operator supported:  ${supportedFeatures.$containsSupported}`);
-    writeLogEntry(moduleId,`$near operatator   supported:  ${supportedFeatures.$nearSupported}`);
-    writeLogEntry(moduleId,`Text Index         supported:  ${supportedFeatures.textIndexSupported}`);
-    writeLogEntry(moduleId,`"NULL ON EMPTY"    supported:  ${supportedFeatures.nullOnEmptySupported}`);
-	
-	return supportedFeatures
-  }
-  catch(err) {
-    writeLogEntry(moduleId,`Exception encountered at:\n${err.stack ? err.stack : err}`);
-    throw err;
-  };
-
 }
 
 function getDBDriverName() {
@@ -407,35 +261,193 @@ async function processQuery(sessionState, options, limit) {
   return docStore.processResultsHTTP(moduleId, results, logContainer.logRequest);    
 
 }
-async function initialize(applicationName) {
+async function getSupportedFeatures() {
+  
+  /*
+  ** Test for $CONTAINS support
+  */
+  
+  const moduleId = `getSupportedFeatures()`
+ 
+  if (Object.keys(supportedFeatures).length > 0) {
+	 return supportedFeatures
+  }
+  				   
+  var collectionName = 'TMP_' + uuidv4();
+
+  try {
+    const sodaResponse = await createCollection(constants.DB_LOGGING_DISABLED, collectionName);
+	
+    var indexDef = {
+          name         : "TEST_IDX"
+        , unique       : true
+        , fields       : [{
+            path       : "id"
+          , datatype : "number"
+          , order    : "asc"
+          }]
+        }
+
+    supportedFeatures.nullOnEmptySupported = true;
+	try {
+      await createIndex(constants.DB_LOGGING_DISABLED, collectionName, indexDef.name, indexDef);
+	}
+	catch (sodaError) {
+      if (sodaError.status === constants.BAD_REQUEST) {
+        var sodaException = sodaError.details.underlyingCause.error;
+        if (sodaException['o:errorCode'] === 'SQL-00907') {
+          supportedFeatures.nullOnEmptySupported = false;
+		} else {
+		  throw sodaError;
+		}
+      }	
+      else {
+        throw sodaError;
+      }		
+    }	
+
+    var qbe = {id : {"$contains" : 'XXX'}}
+
+    supportedFeatures.$containsSupported = true;
+    try {
+      await queryByExample(constants.DB_LOGGING_DISABLED, collectionName, qbe)
+    }
+    catch (sodaError) {
+      if (sodaError.status === constants.BAD_REQUEST) {
+        var sodaException = sodaError.details.underlyingCause.error;
+        if (sodaException.title === 'The field name $contains is not a recognized operator.') {
+          supportedFeatures.$containsSupported = false;
+        }
+		else {
+		  throw sodaError;
+		}
+      }	
+      else {
+        throw sodaError;
+      }		
+    }
+
+    var qbe = {
+          geoCoding          : {
+            $near            : {
+              $geometry        : {
+                 type        : "Point",
+                 coordinates : [-122.12469369777311,37.895215209615884]
+              },
+              $distance      : 5,
+              $unit          : "mile"
+            }
+          } 
+        }
+
+    supportedFeatures.$nearSupported = true;
+    try {
+      await queryByExample(constants.DB_LOGGING_DISABLED, collectionName, qbe)
+    }
+    catch (sodaError) {
+      if (sodaError.status === constants.BAD_REQUEST) {
+        var sodaException = sodaError.details.underlyingCause.error;
+        // writeLogEntry(moduleId,'Error: ' + JSON.stringify(sodaException));
+        // if (sodaException['o:errorCode'] === 'SODA-02002') {
+        if (sodaException.title === 'The field name $near is not a recognized operator.') {
+          supportedFeatures.$nearSupported = false;
+		} else {
+		  throw sodaError;
+		}
+      }	
+      else {
+        throw sodaError;
+      }		
+    }
+
+    /*
+    ** Create Text Index with language specification (12.2 Format with langauge and dataguide)
+    **
+    ** ToDo : Can we use alternative index metadata if we encounter "DRG-10700: preference does not exist: CTXSYS.JSONREST_ENGLISH_LEXER"
+    **
+    */
+
+    var indexDef = {
+          name      : "FULLTEXT_INDEX"
+        , dataguide : "on"
+        , language  : "english"
+        }
+            
+    supportedFeatures.textIndexSupported = true;
+	try {
+		await createIndex(constants.DB_LOGGING_DISABLED, collectionName, indexDef.name, indexDef)
+	}
+	catch (sodaError) {
+	  console.log(sodaError)
+      if ((sodaError.status === constants.FATAL_ERRROR)) {
+        var sodaException = sodaError.details.underlyingCause.error;
+        if (sodaException['o:errorCode'] === 'SQL-29855') {
+          supportedFeatures.textIndexSupported = false;
+		} else {
+		  throw sodaError;
+		}
+      }	
+      else {
+        throw sodaError;
+      }		
+    }
+	
+    await dropCollection(constants.DB_LOGGING_DISABLED, collectionName);
+	
+    writeLogEntry(moduleId,`$contains operator supported:  ${supportedFeatures.$containsSupported}`);
+    writeLogEntry(moduleId,`$near operatator   supported:  ${supportedFeatures.$nearSupported}`);
+    writeLogEntry(moduleId,`Text Index         supported:  ${supportedFeatures.textIndexSupported}`);
+    writeLogEntry(moduleId,`"NULL ON EMPTY"    supported:  ${supportedFeatures.nullOnEmptySupported}`);
+	
+	return supportedFeatures
+  }
+  catch(err) {
+    writeLogEntry(moduleId,`Exception encountered at:\n${err.stack ? err.stack : err}`);
+    throw err;
+  };
+
+}
+
+async function initialize(appName, ds) {
 
   const moduleId = `initialize()`
 
-  try {
-    const connectionDetails = fs.readFileSync(`${__dirname}/${applicationName}.connectionProperties.soda.json`);
-    connectionProperties = JSON.parse(connectionDetails);
+  if (Object.keys(connectionProperties).length === 0) {
+  	
+    try {
+	  if ((appName === undefined) || (appName === null)) {
+		 throw new Error (`${moduleId}: Application name is NULL or undefined.`)
+	  }
+	  if ((ds === undefined) || (ds === null)) {
+		 throw new Error (`${moduleId}: Document Store object is NULL or undefined.`)
+	  }
+	  applicationName = appName
+	  docStore = ds;
+      const connectionDetails = fs.readFileSync(`${__dirname}/${applicationName}.connectionProperties.soda.json`);
+      connectionProperties = JSON.parse(connectionDetails);
 
-    const collectionDetails = fs.readFileSync(`${__dirname}/${applicationName}.collectionMetadata.soda.json`);
-    collectionMetadata    = JSON.parse(collectionDetails);
+      const collectionDetails = fs.readFileSync(`${__dirname}/${applicationName}.collectionMetadata.soda.json`);
+      collectionMetadata    = JSON.parse(collectionDetails);
   
-    documentStoreURL = `${connectionProperties.protocol}://${connectionProperties.hostname}`
-    if (connectionProperties.port !== null) {
-      documentStoreURL =  `${documentStoreURL}:${connectionProperties.port}`
+      documentStoreURL = `${connectionProperties.protocol}://${connectionProperties.hostname}`
+      if (connectionProperties.port !== null) {
+        documentStoreURL =  `${documentStoreURL}:${connectionProperties.port}`
+      }
+
+	  setSodaPath(connectionProperties.ordsRoot,connectionProperties.schemaName,connectionProperties.sodaRoot);
+	
+      writeLogEntry(moduleId,`Document Store URL = "${documentStoreURL}".`);
+
+	  await getSupportedFeatures()
+	
+    } catch (e) {
+      const details = {
+              module           : moduleId
+            , applicationName  : applicationName
+            , underlyingCause  : errorLibrary.makeSerializable(e)
+            }
+      throw new errorLibrary.GenericException(`${driverName}: Driver Intialization Failure`,details)
     }
-
-	setSodaPath(connectionProperties.ordsRoot,connectionProperties.schemaName,connectionProperties.sodaRoot);
-	
-    writeLogEntry(moduleId,`Document Store URL = "${documentStoreURL}".`);
-
-	await getSupportedFeatures()
-	
-  } catch (e) {
-    const details = {
-            module           : moduleId
-          , applicationName  : applicationName
-          , underlyingCause  : errorLibrary.makeSerializable(e)
-          }
-    throw new errorLibrary.GenericException(`${driverName}: Driver Intialization Failure`,details)
   }
 }
 

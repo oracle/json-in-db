@@ -36,7 +36,7 @@ module.exports.recreateCollection          = recreateCollection
 module.exports.recreateLoadCollection      = recreateLoadCollection
 module.exports.ensureDropCollection        = ensureDropCollection
 
-// API Generic functionality : Local Implimentation
+// API Generic functionality : Local Implementation
 
 module.exports.createLogRequest            = createLogRequest
 module.exports.logResponse                 = logResponse
@@ -74,7 +74,8 @@ module.exports.collectionNotFound          = collectionNotFound
 module.exports.dropCollection              = dropCollection
 
 const DEFAULT_LIMIT = 128
-let applicationName = null;
+let applicationName = undefined;
+let self = this;
 	  						
 function getdbAPI() {
 
@@ -115,32 +116,50 @@ function timeout(duration) {
 			 )
 };
 
-async function driverReady() {
+async function driverReady(appName,ds) {
 
+  const moduleId = `driverReady("${appName}}",${isReady})`;
+  // writeLogEntry(moduleId);
+  
   if (isReady) {
 	return isReady;
   }
   
-  
-  try {
-    if (!initializationInProgress) {
-	   initializationInProgress = true
-	   await dbAPI.initialize(applicationName)
-       isReady = true;
+  if (appName !== undefined) {
+    try {
+      if (!initializationInProgress) {
+    	 applicationName = appName;
+	     initializationInProgress = true
+	     await dbAPI.initialize(applicationName, ds)
+         isReady = true;
+      }
+	  else {
+    	while(initializationInProgress & !isReady) {
+	      await timeout(1000)
+	    }
+      }
+    } catch(e) {
+	  isReady = false;
+	  initializationInProgress = false;
+	  throw e;
     }
-  } catch(e) {
-	isReady = false;
-	initializationInProgress = false;
-	throw e;
   }
-
-  while (initializationInProgress & !isReady) {
-	await timeout(100)
+  else {
+	let timeoutCounter = 1
+    while (!isReady) {
+      // writeLogEntry(moduleId,"Waiting for Driver to become ready");
+	  timeoutCounter++;
+	  if (timeoutCounter > 10) {
+    	writeLogEntry(moduleId,`Time Out Waiting for Driver to initialize()`)
+	    process.exit(-1);
+	  }  
+	  await timeout(1000)
+	}
+    // writeLogEntry(moduleId,"Driver ready");
   }
-  
+	     
   return true
 }
-
 
 function interpretHTTPStatusCode(statusCode) {
 	
@@ -485,8 +504,10 @@ async function createCollectionWithIndexes(sessionState, collectionName) {
   // writeLogEntry(moduleId);
 
   try {
-    await dbAPI.createCollection(sessionState, collectionName);
-    const results = await dbAPI.createIndexes(sessionState, collectionName);
+    let results = await dbAPI.createCollection(sessionState, collectionName);
+	if (results === constants.CREATED) {
+      results = await dbAPI.createIndexes(sessionState, collectionName);
+	}
 	return results
   } catch (e) {
  	throw e;
@@ -550,9 +571,9 @@ function getDBDriverName() {
 	
 }
 
-function setDatabaseName() {
+function setDatabaseName(databaseName) {
 	
-	return dbAPI.setDatabaseName();
+	return dbAPI.setDatabaseName(databaseName);
 
 }
 
@@ -562,10 +583,9 @@ function processError(invokerId, logRequest, e) {
    
 }
 
-async function initialize(appName) {
+async function initialize(applicationName) {
 	
-  applicationName = appName
-  await driverReady(applicationName)
+  const result = await driverReady(applicationName,this)
   // return dbAPI.initialize(applicationName)
   
 }

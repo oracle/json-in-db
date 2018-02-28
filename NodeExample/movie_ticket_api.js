@@ -104,9 +104,9 @@ function getDBDriverName() {
 
 }
 
-function setDatabaseName() {
+function setDatabaseName(databaseName) {
 	
-	return docStoreAPI.setDatabaseName();
+	return docStoreAPI.setDatabaseName(databaseName);
 
 }
 
@@ -423,8 +423,6 @@ async function createEmptyCollections() {
     await createLogRecordCollection();
     await createTicketSaleCollection(constants.DB_LOGGING_DISABLED);
   } catch (e) {
-   	console.log('movie_ticket_api.js: Error during Collection Creation.');
-	console.log(JSON.stringify(e));
     throw e;
   };
 }

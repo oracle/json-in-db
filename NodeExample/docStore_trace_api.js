@@ -72,9 +72,9 @@ function getSupportedFeatures() {
   
 }
 
-function setDatabaseName() {
+function setDatabaseName(databaseName) {
 	
-	return dbAPI.setDatabaseName();
+	return dbAPI.setDatabaseName(databaseName);
 
 }
 
@@ -84,7 +84,7 @@ function processError(invokerId, logRequest, e) {
    
 }
 
-async function initialize(applicationName) {
+async function initialize(applicationName,docStore) {
 
   const moduleId = `initialize()`
   writeLogEntry(moduleId,`Database Driver = ${dbAPI.getDBDriverName()}. Application = "${applicationName}".`)
@@ -96,7 +96,7 @@ async function initialize(applicationName) {
     try {
 	  if (TRACE_PROMISE_EXECUTION) writeLogEntry(moduleId,`Executing Promise`)	
 	  startTime = new Date().getTime()
-	  const results = await dbAPI.initialize(applicationName)
+	  const results = await dbAPI.initialize(applicationName,docStore)
       const elapsedTime = new Date().getTime() - startTime
 	  if (TRACE_PROMISE_EXECUTION) writeLogEntry(moduleId,`Executed Promise`)	
       writeLogEntry(moduleId,`Initialization completed in ${elapsedTime} ms.`);  

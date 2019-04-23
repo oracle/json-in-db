@@ -7,7 +7,7 @@
 	<name>MovieTicketing Soda4Java</name>
 	<properties>
 		<!-- Adapt this to a version found on http://central.maven.org/maven2/org/eclipse/jetty/jetty-maven-plugin/ -->
-		<jettyVersion>9.4.12.v20180830</jettyVersion>
+		<jettyVersion>9.4.17.v20190418</jettyVersion>
 		<jerseyVersion>2.25</jerseyVersion>
 	</properties>
 	<dependencies>

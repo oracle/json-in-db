@@ -1,0 +1,74 @@
+<!--
+ Copyright (c) 2014, 2018, Oracle and/or its affiliates.
+ The Universal Permissive License (UPL), Version 1.0
+ -->
+<div class="oj-hybrid-padding">
+
+  <h1 data-bind="text: title"></h1>
+  <hr  style="padding-bottom:20px;"/>
+
+  <div id="form-container" class="oj-form-layout">
+      <oj-form-layout id="form-container" class="">
+
+          <oj-label for="name">Name</oj-label>
+          <oj-input-text id="name" value="{{name}}"></oj-input-text>
+
+          <oj-label for="type">Type</oj-label>
+          <oj-select-one id="type" value="{{type}}">
+            <oj-option value="Cabernet Sauvignon">Cabernet Sauvignon</oj-option>
+            <oj-option value="Chardonnay">Chardonnay</oj-option>
+            <oj-option value="Merlot">Merlot</oj-option>
+            <oj-option value="Pinot Blanc">Pinot Blanc</oj-option>
+            <oj-option value="Pinot Noir">Pinot Noir</oj-option>
+            <oj-option value="Riesling">Riesling</oj-option>
+            <oj-option value="Sauvignon Blanc">Sauvignon Blanc</oj-option>
+            <oj-option value="Shiraz">Shiraz</oj-option>
+            <oj-option value="Tempranillo">Tempranillo</oj-option>
+            <oj-option value="Zinfandel">Zinfandel</oj-option>
+            <oj-option value="other">other</oj-option>
+          </oj-select-one>
+
+          
+
+          <oj-label for="price">Price</oj-label>
+          <oj-input-text id="price" value="{{price}}"></oj-input-text>
+
+          <oj-label for="quantity">Quantity</oj-label>
+          <oj-input-text id="quantity" value="{{quantity}}"></oj-input-text>
+
+          <oj-label for="region">Region</oj-label>
+          <oj-input-text id="region" value="{{region}}"></oj-input-text>
+    
+
+
+
+<!--
+          <oj-label for="sweet">Sweetness: <span data-bind="text: sweet"></span> &percnt; </oj-label>
+          <oj-slider id="sweet" min="0" max="20" step="1" value="{{sweet}}"> </oj-slider>
+                   -->
+
+          <oj-button class="oj-button-primary" data-bind="click: submitHandler">Submit</oj-button>
+          <span data-bind="text: key" class="key-label"></span>
+      </oj-form-layout>
+  </div>
+
+
+  <div id="successWrapper">
+    <oj-dialog style="display:none" id="successDialog" title="Review Submitted Successfully">
+        <div slot="body">
+          <b>REQUEST</b>
+          <pre>POST <span data-bind="text:root.serviceURL"></span></pre>
+          <pre data-bind="text:JSON.stringify(toModel().toJSON(), null, 3)"></pre>
+          <br/>
+          <b>RESPONSE</b>
+          <pre data-bind="text:JSON.stringify(response(), null, 3)"></pre>
+        </div>
+        <div slot="footer">
+          <oj-button id="okButton" on-oj-action="[[close]]">OK
+          </oj-button>
+        </div>
+    </oj-dialog>
+  </div>
+
+
+</div>

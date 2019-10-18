@@ -1,0 +1,46 @@
+
+.headerbg {
+  background: url(images/wine.png);
+  background-repeat: no-repeat;
+  background-size: 360px;
+  background-position: 50px -0px;
+  background-color: #f2f2f3;
+}
+
+h1 {
+  font-size:22pt;
+}
+
+.button-cell {
+  width:10px;
+  padding-left:0px;
+  padding-right:0px;
+  padding-bottom:6px;
+  padding-top:10px;
+}
+
+.oj-dialog {
+  width: 500px;
+}
+
+.oj-button-primary {
+   padding-top: 15px;
+}
+
+.oj-form-layout {
+   padding-left: 20px;
+}
+
+.oj-table-header-row {
+   font-weight:800;   
+}
+
+
+.oj-table-column-header-cell {
+   font-weight:700;   
+}
+
+.key-label {
+   font-size:8pt;
+}
+

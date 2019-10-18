@@ -1,0 +1,40 @@
+<!--
+ Copyright (c) 2014, 2018, Oracle and/or its affiliates.
+ The Universal Permissive License (UPL), Version 1.0
+ -->
+<div class="oj-hybrid-padding">
+
+  <h1 data-bind="text: title"></h1>
+  <hr style="padding-bottom:20px;"/>
+
+  <div class="row" width="650px">
+    <img style="width:500px; display:block; margin: 0 auto; padding-bottom:20px" data-bind="attr:{src: img}"/>
+  </div>
+
+  <center>
+    <oj-button chroming='full' display='icons'
+      id="button3" on-oj-action="[[showCodeHandler()]]" class="oj-button-md">
+      <span slot="startIcon" class="oj-fwk-icon oj-fwk-icon-maximize"></span>
+      Code
+    </oj-button>
+  </center>
+
+</div>
+
+<div id="showCodeWrapper">
+  <oj-dialog style="display:none" id="showCodeDialog" title="Simple, flexible, persistence">
+        <div slot="body">
+          <div style="padding-bottom:10px">
+            <b>Saving a document</b> - The <tt>wine</tt> objects are directly 
+               persisted as JSON documents in the <tt>wine</tt> collection. 
+               No SQL is used in this application.
+          </div>
+          <div>
+            <pre id="codePre"></pre>
+          </div>
+      </div>
+  </oj-dialog>
+</div>
+  
+
+

@@ -15,7 +15,7 @@
 * Run `npm install` from WineDemo.
 
 * Add client libraries to LD_LIBRARY_PATH
-   [https://github.com/oracle/node-oracledb/blob/master/INSTALL.md]
+  https://github.com/oracle/node-oracledb/blob/master/INSTALL.md
 
 * Set database connection information
 
@@ -34,4 +34,4 @@
 ~~~~
 
 * Open demo app
-  [http://localhost:3001]
+  http://localhost:3001

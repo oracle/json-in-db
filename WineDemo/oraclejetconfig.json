@@ -1,0 +1,1 @@
+{"paths":{"source":{"common":"src","web":"src-web","hybrid":"src-hybrid","javascript":"js","typescript":"ts","styles":"css","themes":"themes","tests":"tests"},"staging":{"web":"web","hybrid":"hybrid","themes":"themes"}},"defaultBrowser":"chrome","generatorVersion":"7.2.0"}

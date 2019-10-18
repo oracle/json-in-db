@@ -1,0 +1,61 @@
+<div class="oj-hybrid-padding">
+  <h1>Inventory</h1>
+  <hr style="padding-bottom:10px;"/>
+
+  <div style="width:800px">
+
+  <oj-table id='table' style="width:100%" data='[[root.dataSource]]' columns='{{columnArray}}'></oj-table>
+
+  <oj-form-layout id="filter-container" style="padding-top:20px; width:100%; text-align:center;">
+    <div class="oj-flex">
+      <div class="oj-flex-item">
+        <oj-button chroming='full' display='icons' class="oj-button-md" data-bind="click: filterHandler">
+         <span slot="startIcon" class="oj-fwk-icon-magnifier oj-fwk-icon"></span>
+          Search
+        </oj-button> <oj-input-text style="max-width:50%" id="filter" value="{{root.filter}}"></oj-input-text>
+      </div>
+    </div>
+  </oj-form-layout>
+
+
+
+  </div>
+    <script type="text/html" id="editButton">
+      <td class="button-cell">
+        <oj-button class='oj-button-sm' chroming='full' display='icons'
+                   id="button1" on-oj-action="[[$parent.editHandler($context.row.id)]]" class="oj-button-sm">
+             <span slot="startIcon" class="oj-fwk-icon oj-fwk-icon-dots-horizontal"></span>
+             Edit
+        </oj-button>
+      </td>
+    </script>
+
+    <script type="text/html" id="deleteButton">
+      <td  class="button-cell">
+        <oj-button class='oj-button-sm' chroming='full' display='icons' 
+                   id="button2" on-oj-action="[[$parent.deleteHandler($context.row.id)]]" class="oj-button-sm">
+           <span slot="startIcon" class="oj-fwk-icon oj-fwk-icon-cross02"></span>
+           Delete
+        </oj-button>
+      </td>
+    </script>
+
+    <script type="text/html" id="showJsonButton">
+      <td class="button-cell">
+        <oj-button class='oj-button-sm' chroming='full' display='icons'
+                   id="button3" on-oj-action="[[$parent.showJsonHandler($context.row.id)]]" class="oj-button-sm">
+         <span slot="startIcon" class="oj-fwk-icon oj-fwk-icon-arrowbox-n"></span>
+         JSON
+        </oj-button>
+      </td>
+    </script>
+
+    <div id="showJsonWrapper">
+      <oj-dialog style="display:none" id="showJsonDialog" title="JSON Document">
+        <div slot="body">
+          <pre data-bind="text:currentJson"></pre>
+        </div>
+      </oj-dialog>
+    </div>
+  </div>
+</div>

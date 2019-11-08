@@ -1,0 +1,6 @@
+/web
+/themes
+/*.out
+/*.sh
+/node_modules
+*~

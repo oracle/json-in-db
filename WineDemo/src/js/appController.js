@@ -24,11 +24,10 @@ define(['ojs/ojcore', 'knockout', 'ojs/ojmodule-element-utils', 'ojs/ojmodule-el
       self.router.configure({
         'table':        {label: 'Table', isDefault: true},
         'modify/{key}': {label: 'Modify', value: 'modify'},
-        'add':          {label: 'Add', value: 'add'},
-        'about':          {label: 'About', value: 'about'}
+        'add':          {label: 'Add',    value: 'add'},
+        'about':        {label: 'About',  value: 'about'}
       });
       self.serviceURL = "/wines"; //http://localhost:3001
-
       var getVerb = function(verb) {
         if (verb === "update" || verb === "create") {
           return "POST";
@@ -87,7 +86,6 @@ define(['ojs/ojcore', 'knockout', 'ojs/ojmodule-element-utils', 'ojs/ojmodule-el
       config.view = [];
       config.viewModel = null;
       self.moduleConfig = ko.observable(config);
-      //     self.moduleConfig = ko.observable({'view':[],'viewModel':null});
 
       self.loadModule = function() {
         ko.computed(function() {

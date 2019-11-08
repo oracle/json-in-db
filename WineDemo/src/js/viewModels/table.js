@@ -29,12 +29,13 @@ define(['ojs/ojcore', 'knockout', 'jquery', 'ojs/ojarraydataprovider', 'ojs/ojkn
           field: 'price'
         },
         {
-          headerText: 'Quantity',
-          field: 'quantity'
-        },
-        {
           headerText: 'Region',
           field: 'region'
+        },
+        {
+          headerText: 'Notes',
+          field: 'notes',
+          width: 150
         },
         {
           headerText: 'Prediction',
@@ -52,13 +53,6 @@ define(['ojs/ojcore', 'knockout', 'jquery', 'ojs/ojarraydataprovider', 'ojs/ojkn
           headerText: '',
           renderer: oj.KnockoutTemplateUtils.getRenderer('deleteButton', true)
         },
-/*
-        ,
-        {
-          headerText: 'Key',
-          field: 'id'
-        }
-*/
       ];
 
       /* Handles the edit button click */
@@ -77,7 +71,6 @@ define(['ojs/ojcore', 'knockout', 'jquery', 'ojs/ojarraydataprovider', 'ojs/ojkn
           return true;
         }
       };
-
       self.currentJson = ko.observable('');
       self.showJsonHandler = function (key) {
         return function () {

@@ -24,14 +24,14 @@ define(['ojs/ojcore', 'knockout', 'jquery', 'ojs/ojknockout', 'ojs/ojlabel', 'oj
         self.name = ko.observable(review.get("name"));
         self.type = ko.observable(review.get("type"));
         self.price = ko.observable(review.get("price"));
-        self.quantity = ko.observable(review.get("quantity"));
-        self.region = ko.observable(review.get("region"));//
+        self.notes = ko.observable(review.get("notes"));
+        self.region = ko.observable(review.get("region"));
       } else {
         self.title = ko.observable("Add Wine");
         self.name = ko.observable('');
         self.type = ko.observable('');
         self.price = ko.observable(0);
-        self.quantity = ko.observable(0);
+        self.notes = ko.observable('');
         self.region = ko.observable('');
       }
 
@@ -40,7 +40,7 @@ define(['ojs/ojcore', 'knockout', 'jquery', 'ojs/ojknockout', 'ojs/ojlabel', 'oj
           'name': self.name(),
           'type': self.type(),
           'price': self.price(),
-          'quantity': self.quantity(),          
+          'notes': self.notes(),          
           'region': self.region()
         }
         if (self.key()) {
@@ -54,13 +54,11 @@ define(['ojs/ojcore', 'knockout', 'jquery', 'ojs/ojknockout', 'ojs/ojlabel', 'oj
         var model = self.toModel();
         model.save().then(function (response) {
           self.response(response);
+          self.root.reviews.fetch().then(function() {
+            self.root.reviewsObservable.valueHasMutated();
+          });
           document.getElementById('successDialog').open();
-
         });
-        /* todo hack - get reviews table to update */
-        var reviews = self.root.reviews;
-        reviews.add(model);
-        reviews.fetch();
       }
       self.close = function (event) {
         document.getElementById('successDialog').close();

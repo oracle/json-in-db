@@ -17,6 +17,7 @@ async function initialize() {
   var conn = await oracledb.getConnection();
   var soda = conn.getSodaDatabase();
   var collection = await soda.createCollection('myWines');
+  await collection.createIndex({ "name" : "WINE_SEARCH_IDX" });
 }
 
 async function close() {

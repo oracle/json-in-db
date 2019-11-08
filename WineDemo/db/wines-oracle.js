@@ -16,8 +16,8 @@ async function initialize() {
   await oracledb.createPool(config);
   var conn = await oracledb.getConnection();
   var soda = conn.getSodaDatabase();
-  var collection = await soda.createCollection('myWines');
-  await collection.createIndex({ "name" : "WINE_SEARCH_IDX" });
+  var collection = await soda.createCollection('wines');
+  await collection.createIndex({ "name" : "WINE_IDX" });
 }
 
 async function close() {
@@ -66,7 +66,7 @@ function code() {
   str = `    var wine = request.body;
     var id = wine.id;
     var soda = conn.getSodaDatabase();
-    var collection = await soda.openCollection("myWines");
+    var collection = await soda.openCollection("wines");
     await collection.find().key(id).replaceOne(wine);
 `;
   return JSON.stringify({"value":str});
@@ -74,7 +74,7 @@ function code() {
 
 async function getCollection(conn) {
   var soda = conn.getSodaDatabase();
-  return await soda.openCollection('myWines');
+  return await soda.openCollection('wines');
 }
 
 function toJSON(documents) {

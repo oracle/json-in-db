@@ -74,33 +74,20 @@ app.delete('/wines/:id', async function (request, response)
   }
 });
 
-async function clear() {
-  var result = await db.get('{}');
-  for (let i = 0; i < result.length; i++) {
-    var id = result[i].id;
-    console.log('removing ' + id);
-    await db.remove(id);
-  }
-}
-
-app.get('/wines-clear', async function (request, response)
-{
-  try {
-    clear();
-    response.send({'status':'clear'});
-  } catch(err) {
-    handle(err, response);
-  }
-});
-
 app.get('/wines-reset', async function (request, response)
 {
   try {
-    clear();
+    var result = await db.get('{}');
+    for (let i = 0; i < result.length; i++) {
+      var id = result[i].id;
+      console.log('removing ' + id);
+      await db.remove(id);
+    }
+
     for (let i = 0; i < dbconfig.wines.length; i++) {
       db.create(dbconfig.wines[i]);
     }
-    response.send({'status':'reset'});
+    response.redirect('/')
   } catch(err) {
     handle(err, response);
   }

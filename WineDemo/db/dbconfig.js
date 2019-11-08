@@ -7,28 +7,21 @@ module.exports = {
       "name": "Rouge Grosse",
       "type": "Cabernet Sauvignon",
       "price": "12.00",
-      "notes": "",
+      "notes": "Low acidity, full-body.",
       "region": "France"
     },
     {
       "name": "Roja Grande",
       "type": "Merlot",
       "price": "7.99",
-      "notes": "",
+      "notes": "Medium acidity, dry.",
       "region": "Spain"
-    },
-    {
-      "name": "Pas Cher",
-      "type": "Chardonnay",
-      "price": "3.99",
-      "notes": "",
-      "region": "New England"
     },
     {
       "name": "Teuer",
       "type": "Cabernet Sauvignon",
       "price": "42.00",
-      "notes": "",
+      "notes": "Sweet, full-body.",
       "region": "Germany"
     }
   ]

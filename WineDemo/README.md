@@ -12,10 +12,10 @@ losing the ability to leverage SQL directly over operational data.
 
 # References
 
-* SODA API
+* SODA API  
   https://docs.oracle.com/en/database/oracle/simple-oracle-document-access/nodejs/index.html
 
-* SQL/JSON 
+* SQL/JSON  
   https://docs.oracle.com/en/database/oracle/oracle-database/19/adjsn/index.html  
 
 # Installation

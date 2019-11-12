@@ -1,6 +1,24 @@
 
+# Introduction
 
-# Instructions
+This example Node.js application manages a wine collection.  The
+application uses simple CRUD (create, read, update, and delete)
+operations over a collection of JSON documents stored in Oracle
+Database (see db/wines.js).  The application code does not use SQL but
+SQL can still be used over the data for reporting and analytics when
+needed (see sql/examples.sql).  This development model gives the
+flexibility and ease-of-use common to NoSQL document stores without
+losing the ability to leverage SQL directly over operational data.
+
+# References
+
+* SODA API
+  https://docs.oracle.com/en/database/oracle/simple-oracle-document-access/nodejs/index.html
+
+* SQL/JSON 
+  https://docs.oracle.com/en/database/oracle/oracle-database/19/adjsn/index.html  
+
+# Installation
 
 * Get Node.js.  For example:
 ~~~~
@@ -35,3 +53,4 @@
 
 * Open demo app
   http://localhost:3001
+<

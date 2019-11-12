@@ -28,8 +28,6 @@
             <oj-option value="other">other</oj-option>
           </oj-select-one>
 
-          
-
           <oj-label for="price">Price</oj-label>
           <oj-input-text id="price" value="{{price}}"></oj-input-text>
 
@@ -38,17 +36,13 @@
     
           <oj-label for="notes">Notes</oj-label>
           <oj-text-area id="notes" value="{{notes}}"></oj-text-area>
-
-
-
-
 <!--
-          <oj-label for="sweet">Sweetness: <span data-bind="text: sweet"></span> &percnt; </oj-label>
-          <oj-slider id="sweet" min="0" max="20" step="1" value="{{sweet}}"> </oj-slider>
-                   -->
-
+          <oj-label for="sweet">Sweetness: <span data-bind="text: sweet"></span> </oj-label>
+          <oj-slider id="sweet" min="0" max="10" step="1" value="{{sweet}}"> </oj-slider>
+-->
           <oj-button class="oj-button-primary" data-bind="click: submitHandler">Submit</oj-button>
           <span data-bind="text: key" class="key-label"></span>
+
       </oj-form-layout>
   </div>
 

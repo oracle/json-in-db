@@ -17,7 +17,7 @@ define(['ojs/ojcore', 'knockout', 'jquery', 'ojs/ojknockout', 'ojs/ojlabel', 'oj
 
       // set defaults
 
-      if (self.key()) {
+      if (self.key()) { 
         var reviews = self.root.reviews;
         review = reviews.get(self.key());
         self.title = ko.observable("Modify Wine");
@@ -26,23 +26,27 @@ define(['ojs/ojcore', 'knockout', 'jquery', 'ojs/ojknockout', 'ojs/ojlabel', 'oj
         self.price = ko.observable(review.get("price"));
         self.notes = ko.observable(review.get("notes"));
         self.region = ko.observable(review.get("region"));
-      } else {
+//        self.sweet = ko.observable(review.get("sweet"));
+      } else { 
         self.title = ko.observable("Add Wine");
         self.name = ko.observable('');
         self.type = ko.observable('');
         self.price = ko.observable(0);
         self.notes = ko.observable('');
         self.region = ko.observable('');
+//        self.sweet = ko.observable(5);
+
       }
 
       self.toModel = function () {
         var result = {
-          'name': self.name(),
-          'type': self.type(),
-          'price': self.price(),
-          'notes': self.notes(),          
-          'region': self.region()
-        }
+          'name'  : self.name(),
+          'type'  : self.type(),
+          'price' : self.price(),
+          'notes' : self.notes(),          
+          'region': self.region(),
+//          'sweet' : self.sweet()
+         }
         if (self.key()) {
           result.id = self.key();
         }

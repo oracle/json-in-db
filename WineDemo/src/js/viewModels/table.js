@@ -32,6 +32,12 @@ define(['ojs/ojcore', 'knockout', 'jquery', 'ojs/ojarraydataprovider', 'ojs/ojkn
           headerText: 'Region',
           field: 'region'
         },
+/*
+        {
+          headerText: 'Sweet',
+          field: 'sweet'
+        },
+*/
         {
           headerText: 'Notes',
           field: 'notes',

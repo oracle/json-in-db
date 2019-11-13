@@ -1,3 +1,6 @@
+
+![Screenshot](src/css/images/screenshot.png)
+
 # Introduction
 
 This example Node.js application manages a wine collection.  The

@@ -1,5 +1,5 @@
 
-![Screenshot](src/css/images/screenshot.png)
+<img src="src/css/images/screenshot.png" alt="drawing" width="500px"/>
 
 # Introduction
 

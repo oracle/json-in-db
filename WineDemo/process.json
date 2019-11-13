@@ -1,0 +1,9 @@
+{
+  "apps": [{
+    "name": "wine-demo",
+    "script": "/app/server.js",
+    "env": {
+      "NODE_ENV": "development"
+    }
+  }]
+}

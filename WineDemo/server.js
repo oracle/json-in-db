@@ -6,7 +6,7 @@ var parser   = require('body-parser');
 var dbconfig = require('./db/dbconfig.js');
 var db       = require('./db/wines-' + dbconfig.dbname + '.js');
 
-var port = process.env.WINE_PORT || 3001;
+var port = process.env.WINE_PORT || 3000;
 
 app.use(parser.json());
 app.use('/', express.static(__dirname + '/web'));

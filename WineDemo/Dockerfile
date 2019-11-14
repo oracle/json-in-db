@@ -1,20 +1,16 @@
-FROM oraclelinux:7-slim
+FROM oraclelinux:7.6
 
-# Point TNS_ADMIN to /db_credentials
-# Volume mapping to be provided via "docker run"
-ENV TNS_ADMIN /db_credentials
+COPY . /app
 
-# Create app directory
-WORKDIR /usr/src/app
+RUN yum install -y oracle-release-el7
+RUN yum install -y oracle-instantclient19.3-basic.x86_64
+RUN yum install -y oracle-nodejs-release-el7
+RUN yum install -y --disablerepo=ol7_developer_EPEL nodejs 
+RUN yum install -y bzip2
 
-RUN yum update -y && \
-  yum install -y oracle-release-el7 && \
-  yum install -y oracle-instantclient19.3-basic.x86_64 && \
-  yum install -y oracle-nodejs-release-el7 && \
-  yum install -y --disablerepo=ol7_developer_EPEL nodejs && \
-  yum clean all && \
-  node --version && \
-  npm --version && \
-  echo Installed
+RUN npm -g install @oracle/ojet-cli
+RUN npm -g install pm2
+
+RUN cd /app && npm install && ojet build
 
 CMD ["pm2-runtime", "/app/process.json"]

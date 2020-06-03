@@ -10,12 +10,19 @@ import java.sql.Wrapper;
 import javax.json.Json;
 import javax.json.JsonBuilderFactory;
 import javax.json.JsonObject;
+import javax.json.JsonValue;
 
 import oracle.jdbc.OracleType;
 import oracle.sql.json.OracleJsonObject;
+import oracle.sql.json.OracleJsonValue;
 
 /**
  * Inserts and retrieves a value using JSON-P (javax.json) interfaces.
+ * 
+ * <p>
+ * Run first: {@link CreateTable}, {@link Insert}
+ * </p>
+ * 
  * @see https://javaee.github.io/jsonp/ 
  */
 public class JSONP {
@@ -35,14 +42,17 @@ public class JSONP {
             stmt.close();
             System.out.println("Inserted employee Clark ");
             
+            
+            // retrieve employee Miller 
+            
             stmt = con.prepareStatement(
                     "SELECT e.data FROM emp e WHERE e.data.name.string() = :1");
-            stmt.setString(1, "Clark");
+            stmt.setString(1, "Smith");
             ResultSet rs = stmt.executeQuery(); 
             rs.next();
             obj = rs.getObject(1, JsonObject.class);
-            System.out.println("Retrieved Clark from the database");
-            System.out.println(obj.getString("name") + " makes " + obj.getInt("salary"));
+            System.out.println("Retrieved Smith from the database");
+            System.out.println(obj.toString());
             
             // Values such as JsonObject, JsonArray, JsonParser, and JsonGenerator
             // produced from JDBC can be mapped back and forth between the javax.json
@@ -50,10 +60,16 @@ public class JSONP {
             // make a copy of the data but rather it provides an alternate view of the same
             // data.
 
-            // "unwrap" obj to OracleJsonObject
-            OracleJsonObject oraObj = ((Wrapper)obj).unwrap(OracleJsonObject.class);
-            System.out.println(oraObj.getString("job"));
+            // Miller's timestamp attribute is reported as a string when using the javax.json apis
+            JsonValue value = obj.get("created");
+            System.out.println(value + " is of type " + value.getValueType());
             
+            // However, we can unwrap the object to get the true type
+            OracleJsonObject oraObj = ((Wrapper)obj).unwrap(OracleJsonObject.class);
+            OracleJsonValue oraValue = oraObj.get("created");
+            System.out.println(oraValue + " is of type " + oraValue.getOracleJsonType());
+            
+            // Values can be rewraped at any time
             JsonObject obj2 = oraObj.wrap(JsonObject.class); 
             System.out.println(obj.equals(obj2));
         }

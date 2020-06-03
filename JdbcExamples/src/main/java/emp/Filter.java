@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import oracle.sql.json.OracleJsonObject;
+import oracle.sql.json.OracleJsonValue;
 
 /**
  * Select employees from the emp table where the salary is greater than 30,000.
@@ -20,19 +21,37 @@ public class Filter {
     public static void main(String[] args) throws SQLException {
         Connection con = DriverManager.getConnection(args[0]);
 
+        // Filter by salary
         PreparedStatement stmt = con.prepareStatement(
             "SELECT e.data FROM emp e WHERE e.data.salary.number() > :1");
-        
+
         stmt.setInt(1, 30000);
-        
         ResultSet rs = stmt.executeQuery();
-        
         while (rs.next()) {
             OracleJsonObject obj = rs.getObject(1, OracleJsonObject.class);
             String name = obj.getString("name");
             String job  = obj.getString("job");
             System.out.println(name + " - " + job);
         }
+        rs.close();
+        stmt.close();
+        
+        System.out.println();
+        
+        // Filter by existance
+        stmt = con.prepareStatement(
+          "SELECT e.data, e.data.created.type() FROM emp e WHERE JSON_EXISTS(data, '$.created')");
+
+        rs = stmt.executeQuery();
+        rs.next();
+        
+        OracleJsonObject obj = rs.getObject(1, OracleJsonObject.class);
+        String type = rs.getString(2);
+        System.out.println("Retrieved " + obj.getString("name") + 
+                " with created value: " + obj.getInstant("created"));
+        
+        System.out.println("The server reported type of created is " + type);
+        System.out.println("The client reported type of created is " + obj.get("created").getOracleJsonType());
         
         rs.close();
         stmt.close();

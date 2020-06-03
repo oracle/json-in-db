@@ -32,7 +32,7 @@ public class Jackson {
         OracleJsonGenerator gen = factory.createJsonBinaryGenerator(out);
 
         // Jackson input
-        JsonParser jacksonParser = jacksonFactory.createParser(new File("jack.json"));
+        JsonParser jacksonParser = jacksonFactory.createParser(new File("data/jack.json"));
         JsonToken token;
         while ((token = jacksonParser.nextToken()) != null) {
             switch(token) {

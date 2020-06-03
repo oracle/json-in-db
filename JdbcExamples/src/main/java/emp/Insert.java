@@ -41,7 +41,7 @@ public class Insert {
             pstmt.execute();
     
             // JSON text (byte stream/file)
-            FileInputStream in = new FileInputStream("miller.json");
+            FileInputStream in = new FileInputStream("data/miller.json");
             pstmt.setObject(1, in, OracleType.JSON);
             in.close();
             pstmt.execute();

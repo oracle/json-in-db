@@ -46,11 +46,11 @@ This directory contains examples on how to store and access JSON type values in 
   * [emp.GetAll](src/main/java/emp/GetAll.java) - Gets all the JSON values from the `emp` table.
   * [emp.Filter](src/main/java/emp/Filter.java) - Selects employees from the `emp` table where the salary attribute is greater than 30,000.
   * [emp.Update](src/main/java/emp/Update.java) - Updates an employee record using whole document replacement.
-  * [emp.UpdateMerge](src/main/java/UpdatePartial.java) - Performs a partial update using JSON_MERGEPATCH().
-  * [emp.UpdateTransform](src/main/java/UpdateTransform.java) - Performs a partial update using JSON_TRANSFORM().
-  * [emp.JSONP](src/main/java/JSONP.java) - Inserts and retrieves a value using [JSON-P (javax.json)](https://javaee.github.io/jsonp/) interfaces.
-  * [emp.JSONB](src/main/java/JSONB.java) - Stores and retrieves a plain/custom Java object as JSON using [JSON-B (javax.json.bind)](https://javaee.github.io/jsonb-spec/).
-  * [emp.Jackson](src/main/java/Jackson.java) - Encodes JSON from an external source, in this case a Jackson parser, as Oracle binary JSON and inserts it into the table.
-  * [emp.BinaryJson](src/main/java/BinaryJson.java) - Encodes JSON text as Oracle binary JSON, stores it in a file, and then reads it back again.
-  * [emp.RunAll](src/main/java/RunAll.java) - Runs all the examples at once.
-  * [emp.DropTable](src/main/java/DropTable.java) - Drops the table used by the examples.
+  * [emp.UpdateMerge](src/main/java/emp/UpdateMerge.java) - Performs a partial update using JSON_MERGEPATCH().
+  * [emp.UpdateTransform](src/main/java/emp/UpdateTransform.java) - Performs a partial update using JSON_TRANSFORM().
+  * [emp.JSONP](src/main/java/emp/JSONP.java) - Inserts and retrieves a value using [JSON-P (javax.json)](https://javaee.github.io/jsonp/) interfaces.
+  * [emp.JSONB](src/main/java/emp/JSONB.java) - Stores and retrieves a plain/custom Java object as JSON using [JSON-B (javax.json.bind)](https://javaee.github.io/jsonb-spec/).
+  * [emp.Jackson](src/main/java/emp/Jackson.java) - Encodes JSON from an external source, in this case a Jackson parser, as Oracle binary JSON and inserts it into the table.
+  * [emp.BinaryJson](src/main/java/emp/BinaryJson.java) - Encodes JSON text as Oracle binary JSON, stores it in a file, and then reads it back again.
+  * [emp.RunAll](src/main/java/emp/RunAll.java) - Runs all the examples at once.
+  * [emp.DropTable](src/main/java/emp/DropTable.java) - Drops the table used by the examples.

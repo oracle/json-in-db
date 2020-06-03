@@ -43,7 +43,7 @@ public class JSONP {
             System.out.println("Inserted employee Clark ");
             
             
-            // retrieve employee Miller 
+            // retrieve employee Smith 
             
             stmt = con.prepareStatement(
                     "SELECT e.data FROM emp e WHERE e.data.name.string() = :1");
@@ -60,7 +60,7 @@ public class JSONP {
             // make a copy of the data but rather it provides an alternate view of the same
             // data.
 
-            // Miller's timestamp attribute is reported as a string when using the javax.json apis
+            // Smith timestamp attribute is reported as a string when using the javax.json apis
             JsonValue value = obj.get("created");
             System.out.println(value + " is of type " + value.getValueType());
             

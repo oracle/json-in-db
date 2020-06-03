@@ -7,7 +7,8 @@ This directory contains examples on how to store and access JSON type values in 
 
 1. Clone the examples from github.  For example:
    ```
-   (todo)
+   git clone https://github.com/oracle/json-in-db.git
+   cd json-in-db/JdbcExamples/
    ```
 
 2. Create a 20.3 database.  Instructions: <br>

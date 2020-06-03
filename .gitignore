@@ -2,6 +2,9 @@
 *.lck
 *.jdb
 *.cdi
+.project
+.classpath
+.settings
 maven/target
 classes
 12g/JSON-HOL-12.2/setup/SampleData/citylots.json.dmp

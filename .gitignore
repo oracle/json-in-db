@@ -2,7 +2,7 @@
 *.lck
 *.jdb
 *.cdi
-NodeExample/web.config
 maven/target
 classes
-JSON-HOL-12.2/setup/SampleData/citylots.json.dmp
+12g/JSON-HOL-12.2/setup/SampleData/citylots.json.dmp
+12g/NodeExample/web.config

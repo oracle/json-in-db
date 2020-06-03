@@ -39,7 +39,7 @@ This directory contains examples on how to store and access JSON type values in 
      -Dexec.mainClass="emp.CreateTable" \
      -Dexec.args="jdbc:oracle:thin:user/pass@123.256.256.123:1521/mydb_pdb1.sub1234567890.demonet.oraclevcn.com"
    ```
-  You can get the actual connection string information in the cloud console.  This example runs the emp.CreateTable example.  The following examples are also included:
+  You can get the actual connection string information in the cloud console.  This example runs the `emp.CreateTable` example.  The following examples are also included:
 
   * [emp.CreateTable](src/main/java/emp/CreateTable.java) - Creates the employee table `emp` used by all the examples.
   * [emp.Insert](src/main/java/emp/Insert.java) - Inserts three JSON values into the `emp` table.

@@ -8,7 +8,7 @@ This directory contains examples on how to store and access JSON type values in 
 1. Clone the examples from github.  For example:
    ```
    (todo)
-  ```
+   ```
 
 2. Create a 20.3 database.  Instructions: <br>
    https://blogs.oracle.com/jsondb/how-to-get-an-oracle-20c-preview-release-on-the-oracle-cloud-and-how-to-connect-to-it-with-sql-developer
@@ -16,6 +16,7 @@ This directory contains examples on how to store and access JSON type values in 
 3. Install [Java](https://www.oracle.com/java/technologies/javase-downloads.html#JDK8) and [Maven](https://maven.apache.org/)
 
 4. Copy the JDBC jar from from the database and add it to your local Maven repository
+
   ```
    sftp -i ./key \
        opc@123.256.256.123:/u01/app/oracle/product/20.0.0/dbhome_1/jdbc/lib/ojdbc8.jar ojdbc8.jar
@@ -23,14 +24,17 @@ This directory contains examples on how to store and access JSON type values in 
    mvn -X install:install-file -Dfile=ojdbc8.jar -Dpackaging=jar \
        -DgroupId=com.oracle.database.jdbc -DartifactId=ojdbc8 -Dversion=20.3.0.0
   ```
+
 5. Build the examples:
 
   ```
    mvn package
   ```
+
 6. Run the example:
+
   ```
-   mvn -q exec:java \
+    mvn -q exec:java \
      -Dexec.mainClass="emp.CreateTable" \
      -Dexec.args="jdbc:oracle:thin:user/pass@123.256.256.123:1521/mydb_pdb1.sub1234567890.demonet.oraclevcn.com"
   ```

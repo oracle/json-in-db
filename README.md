@@ -14,4 +14,9 @@
 * [SODA Lab](https://dmcghan.github.io/soda-hol/?page=README.md) - a
   lab on using SODA Node.js in the autonomous database.
 
+* [Microservices With Node &
+  SODA](https://blogs.oracle.com/developers/creating-a-microservice-with-node-soda-json-document-storage-in-autonomous-db)
+  - Step-by-step instructions on creating a microservice using Node.js
+  and SODA in the autonomous database.
+
 * [JaJSON](Python-Demo-App) - The JaSON application is a template web application that extends Flask, a lightweight microframework for Python. The demo uses Twitter Bootstrap for style, Oracle Database 12c for the database, and SQL Alchemy for easy DB connectivity.

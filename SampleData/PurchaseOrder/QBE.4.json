@@ -1,0 +1,5 @@
+{ "$and" : [
+     {   "LineItems.Part.UPCCode" : "13023015692" },
+     {  "LineItems.ItemNumber" : 3 }
+  ]
+}

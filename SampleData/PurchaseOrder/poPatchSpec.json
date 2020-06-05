@@ -1,0 +1,12 @@
+[ { "op"    : "test",
+    "path"  : "/ShippingInstructions/Address/street",
+    "value" : "200 Sporting Green" },
+  { "op"    : "replace",
+    "path"  : "/ShippingInstructions/Address/street",
+    "value" : "Winchester House, Heatley Rd" },
+  { "op"    : "copy",
+    "from"  : "/ShippingInstructions/Phone/0",
+    "path"  : "/ShippingInstructions/Phone/1" },
+  { "op"    : "replace",
+    "path"  : "/ShippingInstructions/Phone/1/number",
+    "value" : "861-555-8765" } ]

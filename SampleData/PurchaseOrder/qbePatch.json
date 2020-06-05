@@ -1,0 +1,12 @@
+{ "$query" : {"User" : "TGATES" },
+  "$patch" :
+    [ { "op"    : "test",
+        "path"  : "/ShippingInstructions/Address/street",
+        "value" : "200 Sporting Green" },
+      { "op"    : "replace",
+        "path"  : "/ShippingInstructions/Address/street",
+        "value" : "176 Gateway Blvd" },
+      { "op"    : "replace",
+        "path"  : "/ShippingInstructions/Phone/0/number",
+        "value" : "999-999-9999" } ]
+}

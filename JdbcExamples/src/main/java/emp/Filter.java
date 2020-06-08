@@ -18,23 +18,23 @@ import oracle.sql.json.OracleJsonObject;
 public class Filter {
 
     public static void main(String[] args) throws SQLException {
-        Connection con = DriverManager.getConnection(args[0]);
-
-        // Filter by salary
-        PreparedStatement stmt = con.prepareStatement(
-            "SELECT e.data FROM emp e WHERE e.data.salary.number() > :1");
-
-        stmt.setInt(1, 30000);
-        ResultSet rs = stmt.executeQuery();
-        while (rs.next()) {
-            OracleJsonObject obj = rs.getObject(1, OracleJsonObject.class);
-            String name = obj.getString("name");
-            String job  = obj.getString("job");
-            System.out.println(name + " - " + job);
+        try (Connection con = DriverManager.getConnection(args[0])) {
+            // Filter by salary
+            PreparedStatement stmt = con.prepareStatement(
+                "SELECT e.data FROM emp e WHERE e.data.salary.number() > :1");
+    
+            stmt.setInt(1, 30000);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                OracleJsonObject obj = rs.getObject(1, OracleJsonObject.class);
+                String name = obj.getString("name");
+                String job  = obj.getString("job");
+                System.out.println(name + " - " + job);
+            }
+            rs.close();
+            stmt.close();
         }
-        rs.close();
-        stmt.close();
-        con.close();
+        
     }
 
 }

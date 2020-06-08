@@ -15,23 +15,26 @@ import oracle.sql.json.OracleJsonObject;
  * Run first: {@link CreateTable}, {@link Insert}
  * </p>
  */
-public class Filter {
+public class Filter2 {
 
     public static void main(String[] args) throws SQLException {
         Connection con = DriverManager.getConnection(args[0]);
-
-        // Filter by salary
+        
+        // Filter by existance
         PreparedStatement stmt = con.prepareStatement(
-            "SELECT e.data FROM emp e WHERE e.data.salary.number() > :1");
+          "SELECT e.data, e.data.created.type() FROM emp e WHERE JSON_EXISTS(data, '$.created')");
 
-        stmt.setInt(1, 30000);
         ResultSet rs = stmt.executeQuery();
-        while (rs.next()) {
-            OracleJsonObject obj = rs.getObject(1, OracleJsonObject.class);
-            String name = obj.getString("name");
-            String job  = obj.getString("job");
-            System.out.println(name + " - " + job);
-        }
+        rs.next();
+        
+        OracleJsonObject obj = rs.getObject(1, OracleJsonObject.class);
+        String type = rs.getString(2);
+        System.out.println("Retrieved " + obj.getString("name") + 
+                " with created value: " + obj.getInstant("created"));
+        
+        System.out.println("The server reported type of created is " + type);
+        System.out.println("The client reported type of created is " + obj.get("created").getOracleJsonType());
+        
         rs.close();
         stmt.close();
         con.close();

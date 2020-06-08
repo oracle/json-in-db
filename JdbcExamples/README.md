@@ -45,6 +45,7 @@ This directory contains examples on how to store and access JSON type values in 
   * [emp.Insert](src/main/java/emp/Insert.java) - Inserts three JSON values into the `emp` table.
   * [emp.GetAll](src/main/java/emp/GetAll.java) - Gets all the JSON values from the `emp` table.
   * [emp.Filter](src/main/java/emp/Filter.java) - Selects employees from the `emp` table where the salary attribute is greater than 30,000.
+  * [emp.Filter2](src/main/java/emp/Filter2.java) - Selects employees from the `emp` table that have the `created` attribute.
   * [emp.Update](src/main/java/emp/Update.java) - Updates an employee record using whole document replacement.
   * [emp.UpdateMerge](src/main/java/emp/UpdateMerge.java) - Performs a partial update using JSON_MERGEPATCH().
   * [emp.UpdateTransform](src/main/java/emp/UpdateTransform.java) - Performs a partial update using JSON_TRANSFORM().

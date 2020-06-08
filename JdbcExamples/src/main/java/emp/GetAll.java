@@ -16,17 +16,18 @@ import java.sql.Statement;
 public class GetAll {
 
     public static void main(String[] args) throws SQLException {
-        Connection con = DriverManager.getConnection(args[0]);
-        Statement stmt = con.createStatement();
-        
-        ResultSet rs = stmt.executeQuery("SELECT data FROM emp");
-        
-        while (rs.next()) {
-            String text = rs.getObject(1, String.class);
-            System.out.println(text);
+        try (Connection con = DriverManager.getConnection(args[0])) {
+            Statement stmt = con.createStatement();
+            
+            ResultSet rs = stmt.executeQuery("SELECT data FROM emp");
+            
+            while (rs.next()) {
+                String text = rs.getObject(1, String.class);
+                System.out.println(text);
+            }
+            
+            rs.close();
         }
-        
-        rs.close();
     }
 
 }

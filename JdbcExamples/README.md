@@ -5,15 +5,14 @@ This directory contains examples on how to store and access JSON type values in 
 
 ## Running the examples
 
-1. Clone the examples from github.  For example:
+1. Create a 20.3 database.  Instructions: <br>
+   https://blogs.oracle.com/jsondb/how-to-get-an-oracle-20c-preview-release-on-the-oracle-cloud-and-how-to-connect-to-it-with-sql-developer
+
+2. Clone the examples from github.  For example:
    ```
    git clone https://github.com/oracle/json-in-db.git
    cd json-in-db/JdbcExamples/
    ```
-
-2. Create a 20.3 database.  Instructions: <br>
-   https://blogs.oracle.com/jsondb/how-to-get-an-oracle-20c-preview-release-on-the-oracle-cloud-and-how-to-connect-to-it-with-sql-developer
-
 3. Install [Java](https://www.oracle.com/java/technologies/javase-downloads.html#JDK8) and [Maven](https://maven.apache.org/)
 
 4. Copy the JDBC jar from from the database and add it to your local Maven repository

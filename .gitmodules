@@ -1,0 +1,3 @@
+[submodule "MuSprint"]
+	path = MuSprint
+	url = https://github.com/SrikrishnanS/json-in-db.git

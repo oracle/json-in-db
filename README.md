@@ -7,7 +7,7 @@
 
 * [MuShop](https://github.com/oracle-quickstart/oci-cloudnative/tree/master/src/carts) - a cloud-native microservice written in Java.  The service stores shopping cart data in the autonomous database using JSON collections (SODA).
 
-* [MuSprint](MuSprint) - MuSprint is a web application designed to track sprint user stories on a story board. Stories are organized into 'To Do', 'In Progress' or 'Completed' category.  The application is built using the SERN stack (SODA, Express.js, React.js, Node.js).
+* [MuSprint](MuSprint) - a web application designed to track sprint user stories on a story board. Stories are organized into 'To Do', 'In Progress' or 'Completed' category.  The application is built using the SERN stack (SODA, Express.js, React.js, Node.js).
 
 * [WineDemo](WineDemo) - a web application written in
   JavaScript/Node.js that uses JSON collections (SODA) to store wine

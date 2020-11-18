@@ -1,0 +1,36 @@
+{
+  "name": "musprint",
+  "version": "1.0.0",
+  "author": "Srikrishnan Suresh",
+  "license": "UPL",
+  "description": "Services to track sprint user stories and backlog",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "start": "node router/controller.js",
+    "server": "nodemon router/controller.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "sprint",
+    "story",
+    "backlog",
+    "todo",
+    "tracking",
+    "agile",
+    "soda",
+    "express",
+    "node"
+  ],
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "oracledb": "^5.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.6"
+  }
+}

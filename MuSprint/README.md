@@ -1,21 +1,12 @@
 # Introduction
 MuSprint is a web application designed to track sprint user stories on a story
 board. Stories are organized into 'To Do', 'In Progress' or 'Completed'
-category. Each story is assigned 'story points' to indicate the extennt of
+category. Each story is assigned 'story points' to indicate the amount of
 effort required to complete it. Using the web user interface, it is possible
 to switch a story from one category to another. A story can be deleted or edited
 too.
 
 ![Img-1](./client/src/img/board-1.png)
-
-
-# References
-
-* [SODA API](https://docs.oracle.com/en/database/oracle/simple-oracle-document-access/nodejs/index.html)  
-
-* [SQL/JSON](https://docs.oracle.com/en/database/oracle/oracle-database/19/adjsn/index.html)
-
-* [Autonomous JSON Database (AJD)](https://www.oracle.com/autonomous-database/autonomous-json-database/)  
 
 # Technology Stack
 Currently MuSprint application uses SERN stack. SERN stands for SODA-Express-
@@ -24,6 +15,14 @@ APIs to create and manage JSON document collections in Oracle Database. The
 application runs against Autonomous JSON Database (AJD) instance.
 
 For more info: [SODA](https://docs.oracle.com/en/database/oracle/simple-oracle-document-access/index.html) -  [Express](https://expressjs.com/) - [React](https://reactjs.org/) - [Node.js](https://nodejs.org/)
+
+# References
+
+* [SODA API](https://docs.oracle.com/en/database/oracle/simple-oracle-document-access/nodejs/index.html)  
+
+* [SQL/JSON](https://docs.oracle.com/en/database/oracle/oracle-database/19/adjsn/index.html)
+
+* [Autonomous JSON Database (AJD)](https://www.oracle.com/autonomous-database/autonomous-json-database/)  
 
 # Prerequisites
 * Install Docker  

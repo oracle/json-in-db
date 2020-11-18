@@ -1,0 +1,35 @@
+.svg-inline--fa
+{
+  margin-right: 0.4em;
+}
+
+.mu-body
+{
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.mu-story-pane
+{
+  min-height: 725px;
+  max-height: 725px;
+}
+
+.mu-story
+{
+  border-radius: 0.85em;
+  box-shadow:  0 1.0rem 0.75rem rgba(0,0,0,.15)!important;
+}
+
+.mu-home-row 
+{
+  margin-top: 2.5em;
+  margin-bottom: 2.5em;
+}
+
+.mu-btn-jumbo
+{
+  font-size: 1.5em;
+  margin-left: 1.5em;
+  margin-right: 1.5em;
+}

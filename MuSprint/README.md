@@ -8,11 +8,13 @@ too.
 
 ![Img-1](./client/src/img/board-1.png)
 
-# Technology Stack
+# Deployment View
 Currently MuSprint application uses SERN stack. SERN stands for SODA-Express-
 React-Node.js. Simple Oracle Document Access (aka SODA) is a set of NoSQL style
 APIs to create and manage JSON document collections in Oracle Database. The
 application runs against Autonomous JSON Database (AJD) instance.
+
+![Img-2](./images/SERN.png)
 
 For more info: [SODA](https://docs.oracle.com/en/database/oracle/simple-oracle-document-access/index.html) -  [Express](https://expressjs.com/) - [React](https://reactjs.org/) - [Node.js](https://nodejs.org/)
 
@@ -24,7 +26,7 @@ For more info: [SODA](https://docs.oracle.com/en/database/oracle/simple-oracle-d
 
 * [Autonomous JSON Database (AJD)](https://www.oracle.com/autonomous-database/autonomous-json-database/)  
 
-# Prerequisites
+# Installation Prerequisites
 * Install Docker  
   [https://www.docker.com/]()
 

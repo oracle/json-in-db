@@ -52,7 +52,7 @@ SSL_SERVER_DN_MATCH=yes
 
 ### 2 Download Source
 
-* Download [MuSprint](MuSprint) project source, or
+* Download [MuSprint](.) project source, or
 * Clone git repository:
   ~~~~
   git clone https://github.com/oracle/json-in-db.git

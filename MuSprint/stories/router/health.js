@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-const muserver = require('../exports/props');
+const muserver = require('../exports/server');
 
 
 /* GET /health */

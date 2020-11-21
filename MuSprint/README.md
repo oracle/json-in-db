@@ -64,7 +64,7 @@ SSL_SERVER_DN_MATCH=yes
 
 ### 3 Build and Run Docker Image
 
-This involves deployment of a frontend server (React) and a backend server (Express + SODA).The following instructions are for running two standalone apps. Alternatively, you can also use [`docker compose`](https://docs.docker.com/compose/) for running multi-container Docker applications. 
+This involves deployment of a frontend server (React) and a backend server (Express + SODA).The following instructions are for running two standalone apps. Alternatively, you may use [`docker compose`](https://docs.docker.com/compose/) for running multi-container Docker applications. 
 
 #### 3.1 Deploying frontend server [Console - 1]
 
@@ -147,23 +147,23 @@ $ npm -v
 
 You can see a `package.json` file in both `client/` and `stories/` directories. Using NPM, install the dependent node modules for client and stories.  
 
-  * **Console - 1**
-    ~~~~
-    $ cd <>/json-in-db/MuSprint/stories
-    $ npm install
-    ~~~~
+**Console - 1**
+~~~~
+$ cd <>/json-in-db/MuSprint/stories
+$ npm install
+~~~~
 
-  * **Console - 2**
-    ~~~~
-    $ cd <>/json-in-db/MuSprint/client
-    $ npm install
-    ~~~~
+**Console - 2**
+~~~~
+$ cd <>/json-in-db/MuSprint/client
+$ npm install
+~~~~
 
 ### 5 Run frontend and backend servers
 
-In two parallel consoles, run the backend and frontend servers.
+In two parallel consoles, run the backend and frontend servers. Alternatively, you may use [`concurrently`](https://www.npmjs.com/package/concurrently) NPM package to run the two concurrently.
 
-#### 5.1 Run backend server
+#### 5.1 Run backend server [Console - 1]
 
 Backend server uses Express.js and serves as ReST endpoints. It establishes connection to Oracle Database instance to read and write JSON documents using SODA APIs.
 
@@ -214,7 +214,7 @@ Backend server uses Express.js and serves as ReST endpoints. It establishes conn
   > MuSprint stories service listening at http://localhost:5000/stories/
   ~~~~
 
-#### 5.2 Run frontend server
+#### 5.2 Run frontend server [Console - 2]
 
 Frontend server uses React.
 

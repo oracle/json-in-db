@@ -1,5 +1,6 @@
 var oracledb = require('oracledb');
-const muserver = require('../exports/props')
+const muserver = require('../exports/server')
+const mudb = require('../exports/db')
 
 const collname = 'mustories'
 
@@ -10,9 +11,9 @@ async function initialize() {
   // Create a connection pool which will later be accessed via the
   // pool cache as the 'default' pool.
   await oracledb.createPool({
-    user: muserver.db.user,
-    password: muserver.db.password,
-    connectString: muserver.db.connectString
+    user: mudb.user,
+    password: mudb.password,
+    connectString: mudb.connectString
     // edition: 'ORA$BASE', // used for Edition Based Redefintion
     // events: false, // whether to handle Oracle Database FAN and RLB events or support CQN
     // externalAuth: false, // whether connections should be established using External Authentication

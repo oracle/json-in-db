@@ -20,25 +20,22 @@ For more info: [SODA](https://docs.oracle.com/en/database/oracle/simple-oracle-d
 
 # References
 
-* [SODA API](https://docs.oracle.com/en/database/oracle/simple-oracle-document-access/nodejs/index.html)  
+* [Oracle JSON Document Database](https://www.oracle.com/database/technologies/appdev/json.html)
 
-* [SQL/JSON](https://docs.oracle.com/en/database/oracle/oracle-database/19/adjsn/index.html)
+* [SODA API](https://docs.oracle.com/en/database/oracle/simple-oracle-document-access/nodejs/index.html)
 
 * [Autonomous JSON Database (AJD)](https://www.oracle.com/autonomous-database/autonomous-json-database/)  
 
+* [SQL/JSON](https://docs.oracle.com/en/database/oracle/oracle-database/19/adjsn/index.html)
+
 # Installation Prerequisites
-* Install Docker  
-  [https://www.docker.com/]()
 
-* Create Oracle Cloud account  
-  [https://www.oracle.com/cloud/]()
+* [Create Oracle Cloud account](https://www.oracle.com/cloud/)  
 
-* Create Autonmous JSON Database instance  
-  [https://www.oracle.com/autonomous-database/autonomous-json-database/get-started/]()
+* [Create Autonmous JSON Database instance](https://www.oracle.com/autonomous-database/autonomous-json-database/get-started/)  
 
-* Download Wallet  
-  [https://docs.oracle.com/en/cloud/paas/autonomous-data-warehouse-cloud/user/connect-download-wallet.html]()  
-  [https://blogs.oracle.com/opal/how-connect-to-oracle-autonomous-cloud-databases]()
+* [Download Wallet](https://docs.oracle.com/en/cloud/paas/autonomous-data-warehouse-cloud/user/connect-download-wallet.html)
+  * [Blog](https://blogs.oracle.com/opal/how-connect-to-oracle-autonomous-cloud-databases)
 
 # Deployment Instructions
 
@@ -65,6 +62,12 @@ SSL_SERVER_DN_MATCH=yes
 ### 3 Build and Run Docker Image
 
 This involves deployment of a frontend server (React) and a backend server (Express + SODA).The following instructions are for running two standalone apps. Alternatively, you may use [`docker compose`](https://docs.docker.com/compose/) for running multi-container Docker applications. 
+
+**Note:** Make sure you have [docker](https://docs.docker.com/get-docker/) installed. 
+~~~~
+$ docker -v
+Docker version 19.03.13, build 4484c46d9d
+~~~~
 
 #### 3.1 Deploying frontend server [Console - 1]
 

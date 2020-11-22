@@ -12,17 +12,17 @@ For more info: [SODA](https://docs.oracle.com/en/database/oracle/simple-oracle-d
 
 # References
 
+* [Autonomous JSON Database (AJD)](https://www.oracle.com/autonomous-database/autonomous-json-database/)  
+
 * [Oracle JSON Document Database](https://www.oracle.com/database/technologies/appdev/json.html)
 
 * [SODA API](https://docs.oracle.com/en/database/oracle/simple-oracle-document-access/nodejs/index.html)
-
-* [Autonomous JSON Database (AJD)](https://www.oracle.com/autonomous-database/autonomous-json-database/)  
 
 * [SQL/JSON](https://docs.oracle.com/en/database/oracle/oracle-database/19/adjsn/index.html)
 
 # Installation Prerequisites
 
-* [Create Oracle Cloud account](https://www.oracle.com/cloud/)  
+* [Create Oracle Cloud account](https://www.oracle.com/cloud/free)  
 
 * [Create Autonmous JSON Database instance](https://www.oracle.com/autonomous-database/autonomous-json-database/get-started/)  
 

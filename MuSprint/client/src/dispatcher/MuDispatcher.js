@@ -1,4 +1,4 @@
-envimport * as MuConstants from '../exports/MuConstants'
+import * as MuConstants from '../exports/MuConstants'
 
 const service = MuConstants.STORIES_SERVICE_URL
 

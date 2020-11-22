@@ -1,18 +1,10 @@
 # Introduction
-MuSprint is a web application designed to track sprint user stories on a story
-board. Stories are organized into 'To Do', 'In Progress' or 'Completed'
-category. Each story is assigned 'story points' to indicate the amount of
-effort required to complete it. Using the web user interface, it is possible
-to switch a story from one category to another. A story can be deleted or edited
-too.
+MuSprint is a web application designed to track sprint user stories on a story board. Stories are organized into 'To Do', 'In Progress' or 'Completed' category. Each story is assigned 'story points' to indicate the amount of effort required to complete it. Using the web user interface, it is possible to switch a story from one category to another. A story can be deleted or edited too.
 
 ![Img-1](./client/src/img/board-1.png)
 
 # Deployment View
-Currently MuSprint application uses SERN stack. SERN stands for SODA-Express-
-React-Node.js. Simple Oracle Document Access (aka SODA) is a set of NoSQL style
-APIs to create and manage JSON document collections in Oracle Database. The
-application runs against Autonomous JSON Database (AJD) instance.
+Currently MuSprint application uses **SERN** stack. SERN stands for **SODA-Express-React-Node.js**. Simple Oracle Document Access (aka SODA) is a set of NoSQL style APIs to create and manage JSON document collections in Oracle Database. The application runs against Autonomous JSON Database (AJD) instance.
 
 ![Img-2](./images/SERN.png)
 

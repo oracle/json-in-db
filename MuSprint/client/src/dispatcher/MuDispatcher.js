@@ -1,6 +1,6 @@
-import { toStoryType } from "../utils/mutils";
+envimport * as MuConstants from '../exports/MuConstants'
 
-const service = 'http://localhost:5000/stories/'
+const service = MuConstants.STORIES_SERVICE_URL
 
 function handleErrors(response) {
   if (!response.ok) {

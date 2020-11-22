@@ -1,3 +1,4 @@
+export const STORIES_SERVICE_URL        = process.env.REACT_APP_MUSTORIES_SERVICE_URL || 'http://localhost:5000/stories/'
 export const STORY_FIELD_TITLE          = 'title'
 export const STORY_FIELD_SUBTITLE       = 'subtitle'
 export const STORY_FIELD_POINTS         = 'points'

@@ -23,14 +23,15 @@ class MuBoard extends React.Component {
           title: '', subtitle: '', points: '', description: '', type: ''
         }
       },
-      hasError: null
+      hasError: null,
+      isLoading: true
     };
   };
 
   componentDidMount() {
     // Send REST request to fetch stories and set them as state
     getStories(MuConstants.STORY_TYPE_ALL)
-      .then(stories => this.setState({ stories }))
+      .then(stories => this.setState({ stories, isLoading: false }))
       .catch((error) => {
         this.setState({ hasError: true });
       });
@@ -138,19 +139,20 @@ class MuBoard extends React.Component {
 
   render() {
     const renderRedirect = () => {
-      return ( <Redirect to="/error500" /> );
+      return (<Redirect to="/error500" />);
     }
-    
+
     return (
       <div className="mu-board ">
         <div className="mu-deadbeef">
-        {  this.state.hasError &&
+          {this.state.hasError &&
             renderRedirect()
-        }
+          }
         </div>
         <div className="row ">
           <div className="col">
             <MuStoryPane
+              isLoading={this.state.isLoading}
               type={MuConstants.STORY_TYPE_TODO}
               stories={this.state.stories}
               openSaveStoryModal={this.openSaveStoryModal}
@@ -159,6 +161,7 @@ class MuBoard extends React.Component {
           </div>
           <div className="col">
             <MuStoryPane
+              isLoading={this.state.isLoading}
               type={MuConstants.STORY_TYPE_INPROGRESS}
               stories={this.state.stories}
               openSaveStoryModal={this.openSaveStoryModal}
@@ -167,6 +170,7 @@ class MuBoard extends React.Component {
           </div>
           <div className="col">
             <MuStoryPane
+              isLoading={this.state.isLoading}
               type={MuConstants.STORY_TYPE_COMPLETED}
               stories={this.state.stories}
               openSaveStoryModal={this.openSaveStoryModal}

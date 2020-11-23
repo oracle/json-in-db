@@ -32,13 +32,13 @@ class MuHome extends React.Component {
     return (
       <div className="mu-home container-fluid bg-white">
         <div className="mu-home-row row justify-content-center">
-          <h1 class="display-4">Be the Sprint Champion</h1>
+          <h1 className="display-4">Be the Sprint Champion</h1>
         </div>
         <div className="mu-home-row row justify-content-center">
           <p className="lead">Track and manage sprint user stories in story boards.</p>
         </div>
         <div className="mu-home-row row justify-content-center">
-          <div class="col-md-6">
+          <div className="col-md-6">
           {renderCarousel()}
           </div>
         </div>

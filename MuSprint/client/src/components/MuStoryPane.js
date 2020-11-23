@@ -53,7 +53,14 @@ class MuStoriesPane extends Component {
 
     return (
       <div className={`mu-story-pane card border-${this.state.decor}`}>
-        <h4 className="card-header">{renderHeaderIcon()}{this.state.header}</h4>
+        <div className="card-header">
+          {this.props.isLoading &&
+            <div className="spinner-border float-right" role="status">
+              <span className="sr-only">Loading...</span>
+            </div>
+          }
+          <h4>{renderHeaderIcon()}{this.state.header}</h4>
+        </div>
         <div className="card-body overflow-auto">
           {
             // Render each of the stories in the list after filtering by type
@@ -68,7 +75,7 @@ class MuStoriesPane extends Component {
                     onView={this.props.openSaveStoryModal}
                     onEdit={this.onEdit.bind(this)}
                     onRemove={this.onRemove.bind(this)}
-                    onChangeType = {this.onChangeType.bind(this)} />
+                    onChangeType={this.onChangeType.bind(this)} />
                   <br />
                 </div>
               )

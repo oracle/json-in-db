@@ -247,7 +247,7 @@ Frontend server uses React.
   Note:  
   * If you wish to deploy the backend server (Step 3.1) on a machinie that you would like to access using its IP address, set the environment variable **`REACT_APP_MUSTORIES_SERVICE_URL`** while running the client app. For example:
     ~~~~
-    export REACT_APP_MUSTORIES_SERVICE_URL=http://152.67.231.231:5000/stories/
+    export REACT_APP_MUSTORIES_SERVICE_URL=http://<your_ip_address>:5000/stories/
     ~~~~
 
 The application is ready to view on a browser:  http://localhost:3000/

@@ -61,7 +61,7 @@ $ docker -v
 Docker version 19.03.13, build 4484c46d9d
 ~~~~
 
-#### 3.1 Deploying frontend server [Console - 1]
+#### 3.1 Deploying backend server [Console - 1]
 
 * Build `stories` docker image - This container would run express server and issue SODA calls to Oracle Database  
   Change directory to `stories` and build image:
@@ -98,7 +98,7 @@ Docker version 19.03.13, build 4484c46d9d
     * Absolute path of your wallet directory as specified in `sqlnet.ora`.
     * The same path will be used inside the docker container too.
 
-#### 3.2 Deploying backend server [Console - 2]
+#### 3.2 Deploying frontend server [Console - 2]
 
 * Build `client` docker image  
   Change directory to `client` and build image:
@@ -114,6 +114,15 @@ Docker version 19.03.13, build 4484c46d9d
                musprint-client:1.0.0
   ~~~~
   This will start a listener on port 3000.  
+  Note:  
+  * If you wish to deploy the backend server (Step 3.1) on a machinie that you would like to access using its IP address, set the environment variable **`REACT_APP_MUSTORIES_SERVICE_URL`** while running the client app. For example:
+  ~~~~
+  docker run -it \
+             -p 3000:3000 \
+             --env REACT_APP_MUSTORIES_SERVICE_URL=http://<your_ip_address>:5000/stories/ \
+             musprint-client:1.0.0
+  ~~~~
+
 
 The application is ready to view on a browser:  http://localhost:3000/
 
@@ -235,5 +244,10 @@ Frontend server uses React.
   Note that the development build is not optimized.
   To create a production build, use npm run build.
   ~~~~
+  Note:  
+  * If you wish to deploy the backend server (Step 3.1) on a machinie that you would like to access using its IP address, set the environment variable **`REACT_APP_MUSTORIES_SERVICE_URL`** while running the client app. For example:
+    ~~~~
+    export REACT_APP_MUSTORIES_SERVICE_URL=http://152.67.231.231:5000/stories/
+    ~~~~
 
 The application is ready to view on a browser:  http://localhost:3000/

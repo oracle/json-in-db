@@ -39,7 +39,7 @@ $ docker -v
 Docker version 19.03.13, build 4484c46d9d
 ~~~~
 
-### 3.1 Build `stories` docker image
+### 3.1 Build Stories docker image
 This container would run express server and issue SODA calls to Oracle Database  
   Change directory to `stories` and build image:
   ~~~~
@@ -47,7 +47,7 @@ This container would run express server and issue SODA calls to Oracle Database
   $ docker build -t musprint-stories:1.0.0 .
   ~~~~
 
-### 3.2 Run `stories` app
+### 3.2 Run Stories app
   ~~~~
   $ docker run -it \
                --env NODE_ORACLEDB_USER=<your_database_username> \

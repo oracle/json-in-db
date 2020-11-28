@@ -12,14 +12,14 @@ $ docker -v
 Docker version 19.03.13, build 4484c46d9d
 ~~~~
 
-### 1.1 Build `client` docker image  
+### 1.1 Build Client docker image  
   Change directory to `client` and build image:
   ~~~~
   $ cd <>/json-in-db/MuSprint/client
   $ docker build -t musprint-client:1.0.0 .
   ~~~~
 
-### 1.2 Run client app  
+### 1.2 Run Client app  
   ~~~~
   $ docker run -it \
                -p 3000:3000 \

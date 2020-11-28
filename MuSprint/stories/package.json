@@ -8,6 +8,13 @@
   "directories": {
     "test": "test"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oracle/json-in-db.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oracle/json-in-db/issues"
+  },
   "scripts": {
     "start": "node router/controller.js",
     "server": "nodemon router/controller.js",

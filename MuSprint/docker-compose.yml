@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  # Stories backend API service
+  stories:
+    build: ./stories
+    image: musprint-stories:1.0.0
+    restart: always
+    environment:
+      - NODE_ORACLEDB_USER=${MUSPRINT_DB_USERNAME}
+      - NODE_ORACLEDB_PASSWORD=${MUSPRINT_DB_PASSWORD}
+      - NODE_ORACLEDB_CONNECTIONSTRING=${MUSPRINT_DB_CONNSTR}
+      - TNS_ADMIN=${MUSPRINT_DB_TNS_ADMIN}
+    volumes:
+      - ${MUSPRINT_DB_TNS_ADMIN}:${MUSPRINT_DB_TNS_ADMIN}
+    ports:
+      - '5000:5000'
+
+  # Client UI frontend service
+  client:
+    build: ./client
+    image: musprint-client:1.0.0
+    restart: always
+    environment:
+      - REACT_APP_MUSTORIES_SERVICE_URL=${MUSPRINT_STORIES_SERVICE_URL}
+    ports:
+      - '3000:3000'

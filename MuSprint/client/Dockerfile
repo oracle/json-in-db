@@ -20,8 +20,8 @@ COPY       . /app
 #
 # Node.js module
 #
-RUN        yum install -y oracle-nodejs-release-el7
-RUN        yum install -y --disablerepo=ol7_developer_EPEL nodejs 
+RUN        yum install -y oracle-nodejs-release-el7 && \
+           yum install -y --disablerepo=ol7_developer_EPEL nodejs 
 RUN        node -v
 RUN        npm -v
 

@@ -76,3 +76,15 @@ This container would run express server and issue SODA calls to Oracle Database
     * The same path will be used inside the docker container too.
   
 Stories REST endpoint is now open at `http://localhost:5000/stories/`
+
+# REST Endpoints
+
+The following table describes the high-level REST endpoints provided by this service.
+
+| Endpoint | Description | Method |
+|---|---|---|
+| `/stories/health` | Readiness healthcheck | `GET` |
+| `/stories/{type}` | Fetch user stories of given type | `GET` |
+| `/stories` | Add a new user story | `POST` |
+| `/stories/{id}` | Replace an existing user story | `PUT` |
+| `/stories/{id}` | Remove an existing user story | `DELETE` |

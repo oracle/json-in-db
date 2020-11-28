@@ -53,76 +53,51 @@ SSL_SERVER_DN_MATCH=yes
 
 ### 3 Build and Run Docker Image
 
-This involves deployment of a frontend server (React) and a backend server (Express + SODA).The following instructions are for running two standalone apps. Alternatively, you may use [`docker compose`](https://docs.docker.com/compose/) for running multi-container Docker applications. 
+This involves deployment of a frontend server (React) and a backend server (Express + SODA).The following instructions are for building all the services required for MuSprint, using `docker-compose` utility. Alternatively, you may deploy each of the services separately using docker (For instructions, see individual deployment instructions in each of the modules).
 
-**Note:** Make sure you have [docker](https://docs.docker.com/get-docker/) installed. 
+**Note:** Make sure you have [docker-compose](https://docs.docker.com/compose/compose-file/) installed. 
 ~~~~
-$ docker -v
-Docker version 19.03.13, build 4484c46d9d
+$ docker-compose -v
+docker-compose version 1.27.4, build 40524192
 ~~~~
 
-#### 3.1 Deploying backend server [Console - 1]
-
-* Build `stories` docker image - This container would run express server and issue SODA calls to Oracle Database  
-  Change directory to `stories` and build image:
-  ~~~~
-  $ cd <>/json-in-db/MuSprint/stories
-  $ docker build -t musprint-stories:1.0.0 .
-  ~~~~
-
-* Run `stories` app
-  ~~~~
-  $ docker run -it \
-               --env NODE_ORACLEDB_USER=<your_database_username> \
-               --env NODE_ORACLEDB_PASSWORD=<your_database_password> \
-               --env NODE_ORACLEDB_CONNECTIONSTRING=<your_service_name> \
-               --volume <your_path_to_wallet>:<your_path_to_wallet> \
-               --env TNS_ADMIN=<your_path_to_wallet> \
-               -p 5000:5000 \
-               musprint-stories:1.0.0
-  ~~~~
-  This will start a listener on port 5000.  
-  Note:   
-  * **`<your_database_username>`**
+#### 3.1 Set environment variables
+As the first step, set the following environment variables in your shell session.
+~~~~
+export MUSPRINT_DB_USERNAME=<your_database_username>
+export MUSPRINT_DB_PASSWORD=<your_database_password>
+export MUSPRINT_DB_CONNSTR=<your_database_service_name>
+export MUSPRINT_DB_TNS_ADMIN=<your_path_to_wallet>
+export MUSPRINT_STORIES_SERVICE_URL=<your_stories_service_url>
+~~~~
+Note:   
+  * **`MUSPRINT_DB_USERNAME=<your_database_username>`**
     * Database user you want to use.
     * `ADMIN` is default when you create an instance.
-  * **`<your_database_password>`**
+  * **`MUSPRINT_DB_PASSWORD=<your_database_password>`**
     * Password for the database user.
-  * **`<your_service_name>`**
+  * **`MUSPRINT_DB_CONNSTR=<your_service_name>`**
     * One of the network service name entries in tnsnames.ora file in your wallet directory.
     * The first entry would be like the following. In this example, `musprintdb_high` is the service name.
       ~~~~
       musprintdb_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-sanjose-1.oraclecloud.com))(connect_data=(service_name=b4fzgvhdqfdosn8_musprintdb_high.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.us-sanjose-1.oraclecloud.com,OU=Oracle ADB SANJOSE,O=Oracle Corporation,L=Redwood City,ST=California,C=US")))
       ~~~~
-  * **`<your_path_to_wallet>`**
+  * **`MUSPRINT_DB_TNS_ADMIN=<your_path_to_wallet>`**
     * Absolute path of your wallet directory as specified in `sqlnet.ora`.
     * The same path will be used inside the docker container too.
 
-#### 3.2 Deploying frontend server [Console - 2]
+  * **`MUSPRINT_STORIES_SERVICE_URL=<your_stories_service_url>`**
+    * REST Endpoint URL for stories service.
+    * It can be the one used locally (Ex. `http://localhost:5000/stories/`) or on a public machine as well (Ex. `http://<public_ip_address>:5000/stories/`).
 
-* Build `client` docker image  
-  Change directory to `client` and build image:
-  ~~~~
-  $ cd <>/json-in-db/MuSprint/client
-  $ docker build -t musprint-client:1.0.0 .
-  ~~~~
+#### 3.2 Build and start containers
+Use `docker-compose` utility to build and start the container
+~~~~
+$ cd MuSprint/
+$ docker-compose up
+~~~~
 
-* Run client app  
-  ~~~~
-  $ docker run -it \
-               -p 3000:3000 \
-               musprint-client:1.0.0
-  ~~~~
-  This will start a listener on port 3000.  
-  Note:  
-  * If you wish to deploy the backend server (Step 3.1) on a machinie that you would like to access using its IP address, set the environment variable **`REACT_APP_MUSTORIES_SERVICE_URL`** while running the client app. For example:
-  ~~~~
-  docker run -it \
-             -p 3000:3000 \
-             --env REACT_APP_MUSTORIES_SERVICE_URL=http://<your_ip_address>:5000/stories/ \
-             musprint-client:1.0.0
-  ~~~~
-
+This will start the backend stories server in port 5000 and frontend client server in port 3000.
 
 The application is ready to view on a browser:  http://localhost:3000/
 

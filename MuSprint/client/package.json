@@ -18,6 +18,13 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oracle/json-in-db.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oracle/json-in-db/issues"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",

@@ -1,4 +1,5 @@
 package-lock.json
+myenv.sh
 
 # dependencies
 /node_modules

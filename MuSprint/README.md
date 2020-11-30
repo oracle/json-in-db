@@ -70,25 +70,14 @@ export MUSPRINT_DB_CONNSTR=<your_database_service_name>
 export MUSPRINT_DB_TNS_ADMIN=<your_path_to_wallet>
 export MUSPRINT_STORIES_SERVICE_URL=<your_stories_service_url>
 ~~~~
-Note:   
-  * **`MUSPRINT_DB_USERNAME=<your_database_username>`**
-    * Database user you want to use.
-    * `ADMIN` is default when you create an instance.
-  * **`MUSPRINT_DB_PASSWORD=<your_database_password>`**
-    * Password for the database user.
-  * **`MUSPRINT_DB_CONNSTR=<your_service_name>`**
-    * One of the network service name entries in tnsnames.ora file in your wallet directory.
-    * The first entry would be like the following. In this example, `musprintdb_high` is the service name.
-      ~~~~
-      musprintdb_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-sanjose-1.oraclecloud.com))(connect_data=(service_name=b4fzgvhdqfdosn8_musprintdb_high.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.us-sanjose-1.oraclecloud.com,OU=Oracle ADB SANJOSE,O=Oracle Corporation,L=Redwood City,ST=California,C=US")))
-      ~~~~
-  * **`MUSPRINT_DB_TNS_ADMIN=<your_path_to_wallet>`**
-    * Absolute path of your wallet directory as specified in `sqlnet.ora`.
-    * The same path will be used inside the docker container too.
-
-  * **`MUSPRINT_STORIES_SERVICE_URL=<your_stories_service_url>`**
-    * REST Endpoint URL for stories service.
-    * It can be the one used locally (Ex. `http://localhost:5000/stories/`) or on a public machine as well (Ex. `http://<public_ip_address>:5000/stories/`).
+The application runtime requires certain environment variables in order to function properly. Below is a table with information about all variables.
+| Environment Variable | Required | Description |
+|-|-|-|
+| MUSPRINT_DB_USERNAME | Yes | Database user you want to use. `ADMIN` is user default when you create an AJD instance. |
+| MUSPRINT_DB_PASSWORD | Yes | Password for the database user. |
+| MUSPRINT_DB_CONNSTR | Yes | One of the network service name entries in tnsnames.ora file in your wallet directory. The first entry would be like the following. In this example, **`musprintdb_high`** is the service name:  `musprintdb_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-sanjose-1.oraclecloud.com))(connect_data=(service_name=b4fzgvhdqfdosn8_musprintdb_high.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.us-sanjose-1.oraclecloud.com,OU=Oracle ADB SANJOSE,O=Oracle Corporation,L=Redwood City,ST=California,C=US")))` |
+| MUSPRINT_DB_TNS_ADMIN | Yes | Absolute path of your wallet directory as specified in `sqlnet.ora`. The same path will be used inside the docker container too. |
+| MUSPRINT_STORIES_SERVICE_URL | No | REST Endpoint URL for stories service. It can be the one used locally (Ex. `http://localhost:5000/stories/`) or on a public machine as well (Ex. `http://<public_ip_address>:5000/stories/`). |
 
 #### 3.2 Build and start containers
 Use `docker-compose` utility to build and start the container
@@ -155,24 +144,14 @@ Backend server uses Express.js and serves as ReST endpoints. It establishes conn
   export NODE_ORACLEDB_ICPATH=<your_path_to_instant_client>
   ~~~~
 
-  * Note:   
-    * **`<your_database_username>`**
-      * Database user you want to use.
-      * `ADMIN` is default when you create an instance.
-    * **`<your_database_password>`**
-      * Password for the database user.
-    * **`<your_service_name>`**
-      * One of the network service name entries in tnsnames.ora file in your wallet directory.
-      * The first entry would be like the following. In this example, `musprintdb_high` is the service name.
-        ~~~~
-        musprintdb_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-sanjose-1.oraclecloud.com))(connect_data=(service_name=b4fzgvhdqfdosn8_musprintdb_high.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.us-sanjose-1.oraclecloud.com,OU=Oracle ADB SANJOSE,O=Oracle Corporation,L=Redwood City,ST=California,C=US")))
-        ~~~~
-    * **`<your_path_to_wallet>`**
-      * Absolute path of your wallet directory as specified in `sqlnet.ora`.
-      * The same path will be used inside the docker container too.
-    * **`<your_path_to_instant_client>`** [Only for MacOS users]
-      * Abosolute path of your instant client directory.
-      * Needed only for MacOS users.
+  The application runtime requires certain environment variables in order to function properly. Below is a table with information about all variables.
+  | Environment Variable | Required | Description |
+  |-|-|-|
+  | NODE_ORACLEDB_USER | Yes | Database user you want to use. `ADMIN` is default username when you create an AJD instance. |
+  | NODE_ORACLEDB_PASSWORD | Yes | Password for the database user. |
+  | NODE_ORACLEDB_CONNECTIONSTRING | Yes | One of the network service name entries in tnsnames.ora file in your wallet directory. The first entry would be like the following. In this example, **`musprintdb_high`** is the service name:  `musprintdb_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-sanjose-1.oraclecloud.com))(connect_data=(service_name=b4fzgvhdqfdosn8_musprintdb_high.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.us-sanjose-1.oraclecloud.com,OU=Oracle ADB SANJOSE,O=Oracle Corporation,L=Redwood City,ST=California,C=US")))` |
+  | TNS_ADMIN | Yes | Absolute path of your wallet directory as specified in `sqlnet.ora`. The same path will be used inside the docker container too. |
+  | NODE_ORACLEDB_ICPATH | Yes |  Absolute path of your instant client directory. Needed only for MacOS users. |
 
 * Start server  
   This steps starts the ReST listener and establishes connection with Oracle Database Instance.

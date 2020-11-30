@@ -70,25 +70,13 @@ export MUSPRINT_DB_CONNSTR=<your_database_service_name>
 export MUSPRINT_DB_TNS_ADMIN=<your_path_to_wallet>
 export MUSPRINT_STORIES_SERVICE_URL=<your_stories_service_url>
 ~~~~
-Note:   
-  * **`MUSPRINT_DB_USERNAME=<your_database_username>`**
-    * Database user you want to use.
-    * `ADMIN` is default when you create an instance.
-  * **`MUSPRINT_DB_PASSWORD=<your_database_password>`**
-    * Password for the database user.
-  * **`MUSPRINT_DB_CONNSTR=<your_service_name>`**
-    * One of the network service name entries in tnsnames.ora file in your wallet directory.
-    * The first entry would be like the following. In this example, `musprintdb_high` is the service name.
-      ~~~~
-      musprintdb_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-sanjose-1.oraclecloud.com))(connect_data=(service_name=b4fzgvhdqfdosn8_musprintdb_high.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.us-sanjose-1.oraclecloud.com,OU=Oracle ADB SANJOSE,O=Oracle Corporation,L=Redwood City,ST=California,C=US")))
-      ~~~~
-  * **`MUSPRINT_DB_TNS_ADMIN=<your_path_to_wallet>`**
-    * Absolute path of your wallet directory as specified in `sqlnet.ora`.
-    * The same path will be used inside the docker container too.
-
-  * **`MUSPRINT_STORIES_SERVICE_URL=<your_stories_service_url>`**
-    * REST Endpoint URL for stories service.
-    * It can be the one used locally (Ex. `http://localhost:5000/stories/`) or on a public machine as well (Ex. `http://<public_ip_address>:5000/stories/`).
+The application runtime requires certain environment variables in order to function properly. Below is a table with information about all variables.
+| Variable | Description | Required | Notes |
+|-|-|-|-|
+| MUSPRINT_DB_USERNAME | Database user you want to use | Yes | `ADMIN` is user default when you create an AJD instance |
+| MUSPRINT_DB_PASSWORD | Password for the database user | Yes |  |
+| MUSPRINT_DB_CONNSTR | One of the network service name entries in tnsnames.ora file in your wallet directory | Yes | The first entry would be like the following. In this example, `musprintdb_high` is the service name:  `musprintdb_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-sanjose-1.oraclecloud.com))(connect_data=(service_name=b4fzgvhdqfdosn8_musprintdb_high.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.us-sanjose-1.oraclecloud.com,OU=Oracle ADB SANJOSE,O=Oracle Corporation,L=Redwood City,ST=California,C=US")))` |
+| MUSPRINT_STORIES_SERVICE_URL | REST Endpoint URL for stories service | No | It can be the one used locally (Ex. `http://localhost:5000/stories/`) or on a public machine as well (Ex. `http://<public_ip_address>:5000/stories/`) |
 
 #### 3.2 Build and start containers
 Use `docker-compose` utility to build and start the container

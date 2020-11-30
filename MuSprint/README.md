@@ -72,7 +72,7 @@ export MUSPRINT_STORIES_SERVICE_URL=<your_stories_service_url>
 ~~~~
 The application runtime requires certain environment variables in order to function properly. Below is a table with information about all variables.
 | Environment Variable | Required | Description |
-|-|-|-|-|
+|-|-|-|
 | MUSPRINT_DB_USERNAME | Yes | Database user you want to use. `ADMIN` is user default when you create an AJD instance. |
 | MUSPRINT_DB_PASSWORD | Yes | Password for the database user. |
 | MUSPRINT_DB_CONNSTR | Yes | One of the network service name entries in tnsnames.ora file in your wallet directory. The first entry would be like the following. In this example, **`musprintdb_high`** is the service name:  `musprintdb_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-sanjose-1.oraclecloud.com))(connect_data=(service_name=b4fzgvhdqfdosn8_musprintdb_high.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.us-sanjose-1.oraclecloud.com,OU=Oracle ADB SANJOSE,O=Oracle Corporation,L=Redwood City,ST=California,C=US")))` |
@@ -146,7 +146,7 @@ Backend server uses Express.js and serves as ReST endpoints. It establishes conn
 
   The application runtime requires certain environment variables in order to function properly. Below is a table with information about all variables.
   | Environment Variable | Required | Description |
-  |-|-|-|-|
+  |-|-|-|
   | NODE_ORACLEDB_USER | Yes | Database user you want to use. `ADMIN` is default username when you create an AJD instance. |
   | NODE_ORACLEDB_PASSWORD | Yes | Password for the database user. |
   | NODE_ORACLEDB_CONNECTIONSTRING | Yes | One of the network service name entries in tnsnames.ora file in your wallet directory. The first entry would be like the following. In this example, **`musprintdb_high`** is the service name:  `musprintdb_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-sanjose-1.oraclecloud.com))(connect_data=(service_name=b4fzgvhdqfdosn8_musprintdb_high.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.us-sanjose-1.oraclecloud.com,OU=Oracle ADB SANJOSE,O=Oracle Corporation,L=Redwood City,ST=California,C=US")))` |

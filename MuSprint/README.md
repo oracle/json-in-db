@@ -76,6 +76,7 @@ The application runtime requires certain environment variables in order to funct
 | MUSPRINT_DB_USERNAME | Database user you want to use | Yes | `ADMIN` is user default when you create an AJD instance |
 | MUSPRINT_DB_PASSWORD | Password for the database user | Yes |  |
 | MUSPRINT_DB_CONNSTR | One of the network service name entries in tnsnames.ora file in your wallet directory | Yes | The first entry would be like the following. In this example, **`musprintdb_high`** is the service name:  `musprintdb_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-sanjose-1.oraclecloud.com))(connect_data=(service_name=b4fzgvhdqfdosn8_musprintdb_high.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.us-sanjose-1.oraclecloud.com,OU=Oracle ADB SANJOSE,O=Oracle Corporation,L=Redwood City,ST=California,C=US")))` |
+| MUSPRINT_DB_TNS_ADMIN | Absolute path of your wallet directory as specified in `sqlnet.ora` | Yes | The same path will be used inside the docker container too |
 | MUSPRINT_STORIES_SERVICE_URL | REST Endpoint URL for stories service | No | It can be the one used locally (Ex. `http://localhost:5000/stories/`) or on a public machine as well (Ex. `http://<public_ip_address>:5000/stories/`) |
 
 #### 3.2 Build and start containers

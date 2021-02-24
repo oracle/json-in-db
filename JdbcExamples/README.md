@@ -75,7 +75,6 @@ These steps show how to create an always-free Autonomous Database but any 21c or
     ```
     If you don't have `git` you can alternatively download them here:
     [https://github.com/oracle/json-in-db/archive/master.zip](https://github.com/oracle/json-in-db/archive/master.zip)
-    <br/><br/>
    
 2. Install [Java](https://www.oracle.com/java/technologies/javase-downloads.html#JDK8) and [Maven](https://maven.apache.org/install.html)
 

@@ -43,7 +43,7 @@ These steps show how to create an always-free Autonomous Database but any 21c or
   
     <img src="img/create2.png" width="500px"/>
 
-4. Once the database is created, click on **DB Connection** and download the database wallet. The database wallet enables encrypted access and provides the connection details.  Be sure to remember wallet password you enter as you will needed it in **Step 6**.
+4. Once the database is created, click on **DB Connection** and download the database wallet. The database wallet enables encrypted access and provides the connection details.  Remember the wallet password you enter as you will needed it in **Step 6**.
    
     <img src="img/create3.png" width="500px"/>
   

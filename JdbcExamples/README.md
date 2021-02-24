@@ -34,18 +34,18 @@ These steps show how to create an always-free Autonomous Database but any 21c or
    _It will ask for a credit card for identification purposes.  Your card will not be charged unless you manually choose to upgrade out of the free-tier limits._
    
 2. Sign-in to the cloud console and click on **Autonomous Transaction Processing** under the drop-down menu. <br/>
-    <img src="img/create1.png" width="400px"/>
+    <img src="img/create1.png" width="500px"/>
 
 3. Click **Create Autonomous Database**.  When creating the database, ensure that
     - Workload type **Transaction Processing** or **JSON** is selected
     - **Always Free** is selected
     - Version **21c** (or later) is selected
   
-    <img src="img/create2.png" width="400px"/>
+    <img src="img/create2.png" width="500px"/>
 
 4. Once the database is created, click on **DB Connection** and download the database wallet. The database wallet enables encrypted access and provides the connection details.  Be sure to remember wallet password you enter as you will needed it in **Step 6**.
    
-    <img src="img/create3.png" width="400px"/>
+    <img src="img/create3.png" width="500px"/>
   
 5. Unzip the wallet.  The remaining examples assume the wallet is unziped to the directory `/Users/test/Wallet_mydb`
 
@@ -100,7 +100,7 @@ These steps show how to create an always-free Autonomous Database but any 21c or
     - Replace `/Users/test/Wallet_mydb` with the actual path to your wallet (see above) 
     - Replace `mydb_tp` with `[dbname]_tp` where dbname is the name of your database.  This is the name you chose when you created the database.  You can find the name in your wallet file `tnsnames.ora` if you have forgotten it.
 
-2. Cleanup the examples:
+2. Drop the table used by the examples:
 
     ```
      mvn -q exec:java \
@@ -108,7 +108,7 @@ These steps show how to create an always-free Autonomous Database but any 21c or
       -Dexec.args='jdbc:oracle:thin:ADMIN/mypassword@mydb_tp?TNS_ADMIN=/Users/test/Wallet_mydb'
     ```
 
-3. You can also run individual examples one at a time which is useful if you want to modify the code and rerun specific parts:
+3. You can also run specific examples, one at a time:
 
     ```
      mvn -q exec:java \

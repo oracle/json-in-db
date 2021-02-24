@@ -1,13 +1,14 @@
 package emp;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import oracle.jdbc.OracleType;
 import oracle.sql.json.OracleJsonFactory;
 import oracle.sql.json.OracleJsonObject;
+import oracle.ucp.jdbc.PoolDataSource;
+import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
  * Updates an employee record using whole document replacement.
@@ -21,7 +22,11 @@ public class Update {
     public static void main(String[] args) throws Exception {
         OracleJsonFactory factory = new OracleJsonFactory();
         
-        try (Connection con = DriverManager.getConnection(args[0])) {
+        PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
+        pool.setURL(args[0]);
+        pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
+        
+        try (Connection con = pool.getConnection()) {
         
             PreparedStatement stmt = con.prepareStatement(
                     "SELECT e.data FROM emp e WHERE e.data.name.string() = :1");

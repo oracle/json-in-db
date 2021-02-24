@@ -1,7 +1,6 @@
 package emp;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,6 +14,8 @@ import javax.json.JsonValue;
 import oracle.jdbc.OracleType;
 import oracle.sql.json.OracleJsonObject;
 import oracle.sql.json.OracleJsonValue;
+import oracle.ucp.jdbc.PoolDataSource;
+import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
  * Inserts and retrieves a value using JSON-P (javax.json) interfaces.
@@ -30,7 +31,11 @@ public class JSONP {
     public static void main(String[] args) throws SQLException {
         JsonBuilderFactory factory = Json.createBuilderFactory(null);
         
-        try (Connection con = DriverManager.getConnection(args[0])) {
+        PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
+        pool.setURL(args[0]);
+        pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
+        
+        try (Connection con = pool.getConnection()) {
             PreparedStatement stmt = con.prepareStatement("INSERT INTO emp VALUES (:1)");
             JsonObject obj = factory.createObjectBuilder()
                                     .add("name", "Clark")

@@ -1,13 +1,14 @@
 package emp;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import oracle.sql.json.OracleJsonObject;
 import oracle.sql.json.OracleJsonValue;
+import oracle.ucp.jdbc.PoolDataSource;
+import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
  * With JSON, objects in a table can have different sets of attributes and
@@ -22,7 +23,11 @@ import oracle.sql.json.OracleJsonValue;
 public class Filter2 {
 
     public static void main(String[] args) throws SQLException {
-        try (Connection con = DriverManager.getConnection(args[0])) {
+        PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
+        pool.setURL(args[0]);
+        pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
+        
+        try (Connection con = pool.getConnection()) {
             // Filter by existence
             PreparedStatement stmt = con.prepareStatement(
               "SELECT e.data FROM emp e WHERE JSON_EXISTS(data, '$.created')");

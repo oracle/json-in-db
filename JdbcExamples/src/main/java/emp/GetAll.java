@@ -1,10 +1,12 @@
 package emp;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import oracle.ucp.jdbc.PoolDataSource;
+import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
  * Gets all the JSON values from the employee table.
@@ -16,7 +18,11 @@ import java.sql.Statement;
 public class GetAll {
 
     public static void main(String[] args) throws SQLException {
-        try (Connection con = DriverManager.getConnection(args[0])) {
+        PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
+        pool.setURL(args[0]);
+        pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
+        
+        try (Connection con = pool.getConnection()) {
             Statement stmt = con.createStatement();
             
             ResultSet rs = stmt.executeQuery("SELECT data FROM emp");

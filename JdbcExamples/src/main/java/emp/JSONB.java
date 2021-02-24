@@ -3,7 +3,6 @@ package emp;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,6 +15,8 @@ import org.eclipse.yasson.YassonJsonb;
 
 import oracle.jdbc.OracleTypes;
 import oracle.sql.json.OracleJsonFactory;
+import oracle.ucp.jdbc.PoolDataSource;
+import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
  * Stores and retrieves a plain/custom Java object as JSON using JSON-B (javax.json.bind). 
@@ -72,7 +73,11 @@ public class JSONB {
         OracleJsonFactory factory = new OracleJsonFactory();
         YassonJsonb jsonb = (YassonJsonb) JsonbBuilder.create();
         
-        try (Connection con = DriverManager.getConnection(args[0])) {
+        PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
+        pool.setURL(args[0]);
+        pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
+        
+        try (Connection con = pool.getConnection()) {
             
             Emp emp = new Emp();
             emp.setName("King");

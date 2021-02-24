@@ -2,14 +2,15 @@ package emp;
 
 import java.io.FileInputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.time.ZoneOffset;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import oracle.jdbc.OracleType;
 import oracle.sql.json.OracleJsonFactory;
 import oracle.sql.json.OracleJsonObject;
+import oracle.ucp.jdbc.PoolDataSource;
+import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
  * Inserts three JSON values into the {@code emp} table.
@@ -24,7 +25,11 @@ import oracle.sql.json.OracleJsonObject;
 public class Insert {
 
     public static void main(String[] args) throws Exception {
-        try (Connection con = DriverManager.getConnection(args[0])) {
+        PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
+        pool.setURL(args[0]);
+        pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
+        
+        try (Connection con = pool.getConnection()) {
             PreparedStatement pstmt = con.prepareStatement("INSERT INTO emp VALUES (:1)");
     
             // JSON text (String)

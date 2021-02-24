@@ -1,9 +1,11 @@
 package emp;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+
+import oracle.ucp.jdbc.PoolDataSource;
+import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
  * Performs a partial update using JSON_TRANSFORM.
@@ -16,7 +18,11 @@ public class UpdateTransform {
 
     public static void main(String[] args) throws SQLException {
         
-        try (Connection con = DriverManager.getConnection(args[0])) {
+        PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
+        pool.setURL(args[0]);
+        pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
+        
+        try (Connection con = pool.getConnection()) {
         
             PreparedStatement stmt = con.prepareStatement(
                 "UPDATE emp e " +

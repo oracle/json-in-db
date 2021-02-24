@@ -1,9 +1,11 @@
 package emp;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import oracle.ucp.jdbc.PoolDataSource;
+import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
  * Creates the employee table (emp) used by all the examples. 
@@ -11,7 +13,11 @@ import java.sql.Statement;
 public class CreateTable {
 
     public static void main(String[] args) throws SQLException {
-        try (Connection con = DriverManager.getConnection(args[0])) {
+        PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
+        pool.setURL(args[0]);
+        pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
+        
+        try (Connection con = pool.getConnection()) {
 
             Statement stmt = con.createStatement();
             stmt.execute("create table emp (data JSON)");

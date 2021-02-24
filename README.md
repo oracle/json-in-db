@@ -3,7 +3,7 @@
 
 * [JdbcExamples](JdbcExamples) - a collection of small
   examples that show how to work with JSON type column values in JDBC
-  20c+
+  21c+
 
 * [MuShop](https://github.com/oracle-quickstart/oci-cloudnative/tree/master/src/carts) - a cloud-native microservice written in Java.  The service stores shopping cart data in the autonomous database using JSON collections (SODA).
 

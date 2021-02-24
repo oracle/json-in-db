@@ -1,44 +1,6 @@
-# JDBC and JSON in Oracle Database 20c
+# JDBC and JSON in Oracle Database 21c+
 
-This directory contains examples on how to store and access JSON type values in Oracle Database.   JDBC 20c introduces a new package for working with JSON type values in Oracle Database.  For documentation, see: <br>
-[oracle.sql.json](https://docs.oracle.com/en/database/oracle/oracle-database/20/jajdb/oracle/sql/json/package-summary.html)
-
-## Running the examples
-
-1. Create a 20.3 database.  Instructions: <br>
-   https://blogs.oracle.com/jsondb/how-to-get-an-oracle-20c-preview-release-on-the-oracle-cloud-and-how-to-connect-to-it-with-sql-developer
-
-2. Clone the examples from github.  For example:
-   ```
-   git clone https://github.com/oracle/json-in-db.git
-   cd json-in-db/JdbcExamples/
-   ```
-3. Install [Java](https://www.oracle.com/java/technologies/javase-downloads.html#JDK8) and [Maven](https://maven.apache.org/)
-
-4. Copy the JDBC jar from from the database and add it to your local Maven repository
-
-   ```
-   sftp -i ./key \
-       opc@123.256.256.123:/u01/app/oracle/product/20.0.0/dbhome_1/jdbc/lib/ojdbc8.jar ojdbc8.jar
-
-   mvn -X install:install-file -Dfile=ojdbc8.jar -Dpackaging=jar \
-       -DgroupId=com.oracle.database.jdbc -DartifactId=ojdbc8 -Dversion=20.3.0.0
-   ```
-
-5. Build the examples:
-
-   ```
-   mvn package
-   ```
-
-6. Run the example:
-
-   ```
-    mvn -q exec:java \
-     -Dexec.mainClass="emp.CreateTable" \
-     -Dexec.args="jdbc:oracle:thin:user/pass@123.256.256.123:1521/mydb_pdb1.sub1234567890.demonet.oraclevcn.com"
-   ```
-  You can get the actual connection string information in the cloud console.  This example runs the `emp.CreateTable` example.  The following examples are also included:
+This directory contains examples of how to store and access JSON type values in Oracle Database from a Java program. 
 
   * [emp.CreateTable](src/main/java/emp/CreateTable.java) - Creates the employee table `emp` used by all the examples.
   * [emp.Insert](src/main/java/emp/Insert.java) - Inserts three JSON values into the `emp` table.
@@ -54,3 +16,105 @@ This directory contains examples on how to store and access JSON type values in 
   * [emp.BinaryJson](src/main/java/emp/BinaryJson.java) - Encodes JSON text as Oracle binary JSON, stores it in a file, and then reads it back again.
   * [emp.RunAll](src/main/java/emp/RunAll.java) - Runs all the examples at once.
   * [emp.DropTable](src/main/java/emp/DropTable.java) - Drops the table used by the examples.
+
+See also:
+  * Documentation: [The API for JSON type in Oracle Database (oracle.sql.json)](https://docs.oracle.com/en/database/oracle/oracle-database/21/jajdb/oracle/sql/json/package-summary.html)
+  * Video (YouTube): [AskTom Office Hours: The Java API for JSON type in Oracle JDBC](https://youtu.be/jg5d15-2K3Y)
+
+
+## Running the examples
+
+### Create a database
+
+These steps show how to create an always-free Autonomous Database but any 21c or later version of Oracle Database will also work.
+
+1. Create a free cloud account:<br/>
+   [https://www.oracle.com/cloud/free/](https://www.oracle.com/cloud/free/). 
+   
+   _It will ask for a credit card for identification purposes.  Your card will not be charged unless you manually choose to upgrade out of the free-tier limits._
+   <br/><br/>
+   
+2. Sign-in to the cloud console and click on **Autonomous Transaction Processing** under the drop-down menu. <br/>
+  <img src="img/create1.png" width="400px"/>
+
+3. Click **Create Autonomous Database**.  When creating the database, ensure that
+  * Workload type **Transaction Processing** or **JSON** is selected
+  * **Always Free** is selected
+  * Version **21c** (or later) is selected
+  
+  <img src="img/create2.png" width="400px"/>
+
+4. Once the database is created, click on **DB Connection** and download the database wallet. The database wallet enables encrypted access and provides the connection details.  Be sure to remember wallet password you enter as you will needed it in **Step 6**.
+   
+  <img src="img/create3.png" width="400px"/>
+  
+5. Unzip the wallet.  The remaining examples assume the wallet is unziped to the directory `/Users/test/Wallet_mydb`
+
+6. **IMPORTANT**: Modify `ojdbc.properties` in the wallet directory.
+
+  * Comment out the line that begins `oracle.net.wallet_location=...`:
+  ```
+  # Connection property for Oracle Wallets 
+  # oracle.net.wallet_location=(SOURCE=(METHOD=FILE)(METHOD_DATA=(DIRECTORY=${TNS_ADMIN}))
+  ```
+  * Uncomment the lines starting ``javax.net...`` and set `trustStorePassword` and `keyStorePassword` to the password you entered in **Step 4**:
+  ```
+  javax.net.ssl.trustStore=${TNS_ADMIN}/truststore.jks 
+  javax.net.ssl.trustStorePassword=welcome1
+  javax.net.ssl.keyStore=${TNS_ADMIN}/keystore.jks 
+  javax.net.ssl.keyStorePassword=welcome1
+  ```
+     
+     
+For details on wallets and connection strings, see:
+[https://www.oracle.com/database/technologies/java-connectivity-to-atp.html](https://www.oracle.com/database/technologies/java-connectivity-to-atp.html)
+
+### Setup the examples
+
+1. Clone these examples from github.  For example:
+   ```
+   git clone https://github.com/oracle/json-in-db.git
+   cd json-in-db/JdbcExamples/
+   ```
+   If you don't have `git` you can alternatively download them here:
+   [https://github.com/oracle/json-in-db/archive/master.zip](https://github.com/oracle/json-in-db/archive/master.zip)
+   <br/><br/>
+   
+2. Install [Java](https://www.oracle.com/java/technologies/javase-downloads.html#JDK8) and [Maven](https://maven.apache.org/install.html)
+
+3. Build the examples:
+
+   ```
+   mvn package
+   ``` 
+
+### Run the examples
+
+
+1. Run all the examples:
+
+   ```
+    mvn -q exec:java \
+     -Dexec.mainClass="emp.RunAll" \
+     -Dexec.args='jdbc:oracle:thin:ADMIN/mypassword@mydb_tp?TNS_ADMIN=/Users/test/Wallet_mydb'
+   ```
+  But replace the following values with your own:
+    - Replace ``mypassword`` with the ``ADMIN`` password you specified when you created the database
+    - Replace `/Users/test/Wallet_mydb` with the actual path to your wallet (see above) 
+    - Replace `mydb_tp` with `[dbname]_tp` where dbname is the name of your database.  This is the name you chose when you created the database.  You can find the name in your wallet file `tnsnames.ora` if you have forgotten it.
+
+2. Cleanup the examples:
+
+   ```
+    mvn -q exec:java \
+     -Dexec.mainClass="emp.DropTable" \
+     -Dexec.args='jdbc:oracle:thin:ADMIN/mypassword@mydb_tp?TNS_ADMIN=/Users/test/Wallet_mydb'
+   ```
+
+3. You can also run individual examples one at a time which is useful if you want to modify the code and rerun specific parts:
+
+   ```
+    mvn -q exec:java \
+     -Dexec.mainClass="emp.CreateTable" \
+     -Dexec.args='jdbc:oracle:thin:ADMIN/mypassword@mydb_tp?TNS_ADMIN=/Users/test/Wallet_mydb'
+   ```

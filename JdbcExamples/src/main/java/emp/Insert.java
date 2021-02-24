@@ -4,7 +4,8 @@ import java.io.FileInputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.OffsetDateTime;
 
 import oracle.jdbc.OracleType;
 import oracle.sql.json.OracleJsonFactory;
@@ -30,14 +31,14 @@ public class Insert {
             String str = "{\"name\":\"Blake\", \"job\": \"Intern\", \"salary\":20000}";
             pstmt.setObject(1, str, OracleType.JSON);
             pstmt.execute();
-            
+
             // JSON object
             OracleJsonFactory factory = new OracleJsonFactory();
             OracleJsonObject obj = factory.createObject();
             obj.put("name", "Smith");
             obj.put("job", "Programmer");
             obj.put("salary", 40000);
-            obj.put("created", Instant.now());
+            obj.put("created", OffsetDateTime.now(ZoneOffset.UTC));
             pstmt.setObject(1, obj, OracleType.JSON);
             pstmt.execute();
     

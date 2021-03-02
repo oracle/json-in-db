@@ -20,8 +20,8 @@ instance is given below:
 
 ## Configuring and Setting up YCSB
 
-*  Clone the YCSB repo available at [Oracle SODA YCSB](https://github.com/mongodb-labs/YCSB)
-*  Follow the [instructions](https://github.com/mongodb-labs/YCSB/blob/master/ycsb-mongodb/mongodb/README.md) to install and run YCSB
+*  Clone the YCSB repo available at [Oracle SODA YCSB](https://github.com/oracle/json-in-db/tree/master/YCSB)
+*  Follow the [instructions](https://github.com/oracle/json-in-db/tree/master/YCSB) to install and run YCSB
 
 ## Configurations For Running YCSB
 To run the test following settings needs to be configured. There are two loads one for large dataset and other for small dataset.
@@ -59,11 +59,9 @@ To run the test following settings needs to be configured. There are two loads o
 
 Command Line to load data:
 ```
-./bin/ycsb load mongodb -s -P workloads/workload_small -threads 64 -p mongodb.url=mongodb://[username]:[password]@[aws.or.atlas.cluster.com]:27017/?replicaSet=rs0&w=majority
 ```
 
 Command Line to run benchmark:
 
 ```
-./bin/ycsb run mongodb -s -P workloads/workload_small -p readproportion=[read_pct] -p updateproportion=[update_pct] -threads [64, 128, 256] -p mongodb.url=mongodb://[username]:[password]@[aws.or.atlas.cluster.com]:27017/?replicaSet=rs0&w=majority
 ```

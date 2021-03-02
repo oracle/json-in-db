@@ -1,2 +1,69 @@
- This repository is maintained by Oracle and contains partial YCSB repository which enables YCSB benchmarking using Oracle SODA Driver. The repository contains core YCSB libraries and Oracle SODA client and can be built and run standalone. 
- The repository will be uploaded soon, stay tuned !!!!!
+
+# Overview
+This readme is intended to provide steps  to run the YCSB benchmark against Oracle's AJD Service.
+
+# Environment
+To run the YCSB benchmark against AJD instances, an AJD instance need to be provisioned. The steps to provision the AJD
+instance is given below:
+
+## AJD Instance:
+
+*   AJD Instance with 8 OCPUs and storage of 1TB needs to be provisioned. 
+*   Follow the [instructions](https://docs.oracle.com/en/cloud/paas/autonomous-json-database/) to provision an AJD instance.
+
+
+## Load Driver Instance:
+
+*  For the purposes of driving test load, a compute instance from Oracle Cloud infrastructure needs to be provisioned.
+*  For some workloads of YCSB, two clients could be needed to drive AJD instance. Repeat the steps on the second instance.
+    *  **VM.Standard2.24** - provision an instance within the same region as the AJD instance. 
+
+## Configuring and Setting up YCSB
+
+*  Clone the YCSB repo available at [Oracle SODA YCSB](https://github.com/mongodb-labs/YCSB)
+*  Follow the [instructions](https://github.com/mongodb-labs/YCSB/blob/master/ycsb-mongodb/mongodb/README.md) to install and run YCSB
+
+## Configurations For Running YCSB
+To run the test following settings needs to be configured. There are two loads one for large dataset and other for small dataset.
+
+### Large Data Load Workload File
+
+*   requestdistribution=zipfian
+*   recordcount=81920000
+*   operationcount=20000000
+*   workload=com.yahoo.ycsb.workloads.CoreWorkload
+*   readallfields=true
+*   readproportion=0.95
+*   updateproportion=0.05
+*   scanproportion=0
+*   insertproportion=0.0
+*   requestdistribution=zipfian
+*   fieldcount=25
+
+### Small Data Load Workload File
+
+*   requestdistribution=zipfian
+*   recordcount=4096000
+*   operationcount=20000000
+*   workload=com.yahoo.ycsb.workloads.CoreWorkload
+*   readallfields=true
+*   readproportion=0.95
+*   updateproportion=0.05
+*   scanproportion=0
+*   insertproportion=0.0
+*   requestdistribution=zipfian
+*   fieldcount=25
+
+
+## Running YCSB
+
+Command Line to load data:
+```
+./bin/ycsb load mongodb -s -P workloads/workload_small -threads 64 -p mongodb.url=mongodb://[username]:[password]@[aws.or.atlas.cluster.com]:27017/?replicaSet=rs0&w=majority
+```
+
+Command Line to run benchmark:
+
+```
+./bin/ycsb run mongodb -s -P workloads/workload_small -p readproportion=[read_pct] -p updateproportion=[update_pct] -threads [64, 128, 256] -p mongodb.url=mongodb://[username]:[password]@[aws.or.atlas.cluster.com]:27017/?replicaSet=rs0&w=majority
+```

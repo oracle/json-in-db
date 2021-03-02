@@ -58,6 +58,7 @@ Reload bash and test mvn is working.
 
 Download or clone the repo, cd into `ycsb-soda` and run
 
+    mvn clean package
     mvn install dependency:copy-dependencies
 
 ### 4. Run YCSB

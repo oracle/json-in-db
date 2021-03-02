@@ -1,6 +1,10 @@
+## This is not an Oracle supported repository.
 
 # Overview
-This readme is intended to provide steps  to run the YCSB benchmark against Oracle's AJD Service.
+This readme is intended to provide steps  to run the YCSB benchmark against Oracle's AJD Service. This is a partial YCSB repository maintained by Oracle.
+
+The files here should be mergable with the original YCSB project if ncessary.  This repository can be built and run standalone, Only Oracle Soda client and core YCSB libraries are included.
+
 
 # Environment
 To run the YCSB benchmark against AJD instances, an AJD instance need to be provisioned. The steps to provision the AJD
@@ -24,7 +28,7 @@ instance is given below:
 *  Follow the [instructions](https://github.com/oracle/json-in-db/tree/master/YCSB/ycsb-soda/README.md) to install and run YCSB
 
 ## Configurations For Running YCSB
-To run the test following settings needs to be configured. There are two loads one for large dataset and other for small dataset.
+To run the test, following settings needs to be configured. There are two loads one for large dataset and other for small dataset.
 
 ### Large Data Load Workload File
 
@@ -55,13 +59,3 @@ To run the test following settings needs to be configured. There are two loads o
 *   fieldcount=25
 
 
-## Running YCSB
-
-Command Line to load data:
-```
-```
-
-Command Line to run benchmark:
-
-```
-```

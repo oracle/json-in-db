@@ -74,13 +74,3 @@ instance in Step 2.
 
     ./bin/run.sh  > outputRun.txt
 
-See the next section for the list of configuration parameters for Soda.
-
-# YCSB
-
-This is a partial YCSB repository maintained by Oracle.
-
-The files here should be mergable with the original YCSB project if ncessary.  This repository can be built and run standalone, Only Oracle Soda client and core YCSB libraries are included.
-
-
-

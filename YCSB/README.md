@@ -16,12 +16,12 @@ instance is given below:
 
 *  For the purposes of driving test load, a compute instance from Oracle Cloud infrastructure needs to be provisioned.
 *  For some workloads of YCSB, two clients could be needed to drive AJD instance. Repeat the steps on the second instance.
-    *  **VM.Standard2.24** - provision an instance within the same region as the AJD instance. 
+    *  **VM.Standard2.24** - [Provision an instance](https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/launchinginstance.htm#Creating_an_Instance) within the same region as the AJD instance. 
 
 ## Configuring and Setting up YCSB
 
-*  Clone the YCSB repo available at [Oracle SODA YCSB](https://github.com/oracle/json-in-db/tree/master/YCSB)
-*  Follow the [instructions](https://github.com/oracle/json-in-db/tree/master/YCSB) to install and run YCSB
+*  Clone the YCSB repo available at [Oracle SODA YCSB](https://github.com/oracle/json-in-db/tree/master/YCSB/ycsb-soda)
+*  Follow the [instructions](https://github.com/oracle/json-in-db/tree/master/YCSB/ycsb-soda/README.md) to install and run YCSB
 
 ## Configurations For Running YCSB
 To run the test following settings needs to be configured. There are two loads one for large dataset and other for small dataset.

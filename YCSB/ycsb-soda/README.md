@@ -67,13 +67,43 @@ Download or clone the repo, cd into `ycsb-soda` and run
 
 To load data, modify load.sh under bin directory to include the db service name, db user name and 
 password. Modify the TNS_ADMIN location to point to the db wallet directory downloaded from AJD 
-instance in Step 2.
+instance in Step 2. Number of client threads needs to be specified.
 
     ./bin/load.sh > outputLoad.txt
 
 To run the workload, modify run.sh under bin directory to include db service name, db user name and
 password. Modify the TNS_ADMIN location to point to the db wallet directory downloaded from AJD 
-instance in Step 2. 
+instance in Step 2. Number of client threads needs to be specified. To achieve optimal performance, the throughput needs to be measured for varying number of threads.
 
     ./bin/run.sh  > outputRun.txt
+
+The workload files can be changed to reflect the following two datasets. Modify the parameters in the workload file to reflect the appropriate dataset by setting the following parameters correpsonding to the dataset.
+
+Large Data Load Workload File
+
+    requestdistribution=zipfian
+    recordcount=81920000
+    operationcount=20000000
+    workload=com.yahoo.ycsb.workloads.CoreWorkload
+    readallfields=true
+    readproportion=0.95
+    updateproportion=0.05
+    scanproportion=0
+    insertproportion=0.0
+    requestdistribution=zipfian
+    fieldcount=25
+
+Small Data Load Workload File
+
+    requestdistribution=zipfian
+    recordcount=4096000
+    operationcount=20000000
+    workload=com.yahoo.ycsb.workloads.CoreWorkload
+    readallfields=true
+    readproportion=0.95
+    updateproportion=0.05
+    scanproportion=0
+    insertproportion=0.0
+    requestdistribution=zipfian
+    fieldcount=25
 

@@ -8,7 +8,7 @@ The files here should be mergable with the original YCSB project if ncessary.  T
 
 
 # Environment
-To run the YCSB benchmark against AJD instances, an AJD instance need to be provisioned. The steps to provision the AJD
+To run the YCSB benchmark against AJD instances, an AJD instance needs to be provisioned. The steps to provision the AJD
 instance is given below:
 
 ## AJD Instance:

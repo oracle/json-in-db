@@ -13,13 +13,13 @@ instance is given below:
 
 ## AJD Instance:
 
-*   AJD Instance with 8 OCPUs and storage of 1TB needs to be provisioned. 
+*   AJD instance with 8 OCPUs and storage of 1TB needs to be provisioned. 
 *   Follow the [instructions](https://docs.oracle.com/en/cloud/paas/autonomous-json-database/) to provision an AJD instance.
 
 
 ## Load Driver Instance:
 
-*  For the purposes of driving test load, a compute instance from Oracle Cloud infrastructure needs to be provisioned.
+*  For the purposes of driving the test load, a compute instance from Oracle Cloud infrastructure needs to be provisioned.
 *  For some workloads of YCSB, two clients could be needed to drive AJD instance. Repeat the steps on the second instance.
     *  **VM.Standard2.24** - [Provision an instance](https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/launchinginstance.htm#Creating_an_Instance) within the same region as the AJD instance. 
 

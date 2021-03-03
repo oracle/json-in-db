@@ -56,7 +56,9 @@ instance in Step 2.
 
     ./bin/load.sh > outputLoad.txt
 
-To run the workload, modify run.sh under bin directory to include db service name, db user name and password. Modify the TNS_ADMIN location to point to the db wallet directory downloaded from AJD instance. For more details refer to this [link](https://docs.oracle.com/en/cloud/paas/autonomous-database/adbsa/connect-jdbc-thin-wallet.html#GUID-5ED3C08C-1A84-4E5A-B07A-A5114951AA9E).
+To run the workload, modify run.sh under bin directory to include db service name, db user name and password. 
+Modify the TNS_ADMIN location to point to the db wallet directory downloaded from AJD instance. 
+For more details refer to https://docs.oracle.com/en/cloud/paas/autonomous-database/adbsa/connect-jdbc-thin-wallet.html#GUID-5ED3C08C-1A84-4E5A-B07A-A5114951AA9E.
 
     ./bin/run.sh  > outputRun.txt
 

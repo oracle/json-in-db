@@ -1,6 +1,6 @@
 ## Guide to run YCSB on AJD instance
 
-This section describes how to run YCSB on AJD Instance in Oracle Cloud.
+This section describes how to run YCSB on AJD instance in Oracle Cloud.
 
 ### 1. Provision AJD Instance.
 
@@ -13,7 +13,7 @@ Configure the instance with 8 OCPUs and 1TB of storage. Download the wallet to a
 Provision a compute node for driving the load in Oracle Cloud infrastructure using the [instructions](https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/launchinginstance.htm#Creating_an_Instance) mentioned [here](https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/launchinginstance.htm#Creating_an_Instance).
 The compute node needs to be provisioned in the same region as the AJD instance. Configure the instance to connect to the AJD instance via JDBC by following the [instructions](https://docs.oracle.com/en/cloud/paas/autonomous-database/adbsa/connect-jdbc-thin-wallet.html#GUID-5ED3C08C-1A84-4E5A-B07A-A5114951AA9E).
 
-### 2. Install Java and Maven
+### 3. Install Java and Maven
 
 Go to http://www.oracle.com/technetwork/java/javase/downloads/index.html and download the JDK.
 
@@ -36,6 +36,7 @@ Add the following to `maven.sh`
 
 Modify settings.xml for maven
 
+    mkdir -p ~/.m2
     cp /usr/local/maven/conf/settings.xml ~/.m2/.
     
     Add following to settings.xml under ~/.m2.
@@ -47,21 +48,22 @@ Modify settings.xml for maven
           <url>http://insecure.repo1.maven.org/maven2/</url>
         </mirror>
       </mirrors>
-      For more information on this modification, please visit this [blog](https://blog.sonatype.com/central-repository-moving-to-https).
+
+For more information on this modification, please visit this [blog](https://blog.sonatype.com/central-repository-moving-to-https).
 
 Reload bash and test mvn is working.
 
     bash
     mvn -version
 
-### 3. Set Up YCSB
+### 4. Set Up YCSB
 
 Download or clone the repo, cd into `ycsb-soda` and run
 
     mvn clean package
     mvn install dependency:copy-dependencies
 
-### 4. Run YCSB
+### 5. Run YCSB
 
 To load data, modify load.sh under bin directory to include the db service name, db user name and 
 password. Modify the TNS_ADMIN location to point to the db wallet directory downloaded from AJD 

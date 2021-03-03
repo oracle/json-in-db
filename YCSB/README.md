@@ -1,7 +1,8 @@
-## This is not an Oracle supported repository.
 
 # Overview
 This readme is intended to provide steps  to run the YCSB benchmark against Oracle's AJD Service. This is a partial YCSB repository maintained by Oracle.
+
+This benchmark repository is not supported by Oracle.
 
 The files here should be mergable with the original YCSB project if ncessary.  This repository can be built and run standalone, Only Oracle Soda client and core YCSB libraries are included.
 

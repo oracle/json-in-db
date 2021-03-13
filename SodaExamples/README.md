@@ -25,6 +25,7 @@ See also:
   * Video:
     - [Finally: A Low-Latency, Scalable JSON Document Store with Real-Time Analytics](https://youtu.be/sQUUCwVEU9o)
     - [AskTom Office Hours: The Java API for JSON type in Oracle JDBC](https://youtu.be/jg5d15-2K3Y)
+    - [MuShop - Shopping Cart Microservice](https://github.com/oracle-quickstart/oci-cloudnative/tree/master/src/carts)
 
 ## Running the examples
 

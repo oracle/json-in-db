@@ -1,4 +1,4 @@
-# Using JSON in the Autonomous Database from Java
+# Autonomous Database JSON from a Java Program
 
 This directory contains examples of how to store and access JSON
 collections from a Java program using SODA (Simple Oracle Document

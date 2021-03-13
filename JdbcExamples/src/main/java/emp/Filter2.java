@@ -46,7 +46,8 @@ public class Filter2 {
             
             System.out.println("The type of v2 is " + v2.getOracleJsonType());
             
-            System.out.println(obj.getString("name") + " created " + v2.asJsonTimestamp().getString());
+            System.out.println(obj.getString("name") + " created " + 
+                v2.asJsonTimestampTZ().getString());
             
             rs.close();
             stmt.close();

@@ -6,8 +6,8 @@ package emp;
 public class RunAll {
 
     public static void main(String[] args) throws Exception {
-        print("Running CreateTable");
-        CreateTable.main(args);
+        print("Running CreateCollection");
+        CreateCollection.main(args);
         
         print("Running Insert");
         Insert.main(args);
@@ -27,9 +27,6 @@ public class RunAll {
         print("Running UpdateMerge");
         UpdateMerge.main(args);
         
-        print("Running UpdateTransform");
-        UpdateTransform.main(args);
-        
         print("Running GetAll");
         GetAll.main(args);
         
@@ -38,9 +35,6 @@ public class RunAll {
 
         print("Running Filter2");
         Filter2.main(args);
-        
-        print("Running BinaryJson");
-        BinaryJson.main(args);
         
     }
 

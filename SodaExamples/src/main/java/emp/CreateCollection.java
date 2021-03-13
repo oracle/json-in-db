@@ -25,7 +25,7 @@ public class CreateCollection {
             OracleDatabase db = client.getDatabase(con);
             db.admin().createCollection("employees");
             
-            System.out.println("Created table employees");
+            System.out.println("Created collection");
         }
     }
 

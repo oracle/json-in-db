@@ -14,6 +14,8 @@ Access).
   * [emp.JSONP](src/main/java/emp/JSONP.java) - Inserts and retrieves a value using [JSON-P (javax.json)](https://javaee.github.io/jsonp/) interfaces.
   * [emp.JSONB](src/main/java/emp/JSONB.java) - Stores and retrieves a plain/custom Java object as JSON using [JSON-B (javax.json.bind)](https://javaee.github.io/jsonb-spec/).
   * [emp.Jackson](src/main/java/emp/Jackson.java) - Encodes JSON from an external source, in this case a Jackson parser, as Oracle binary JSON and inserts it into the table.
+  * [emp.AddPhoneNumbers](src/main/java/emp/AddPhoneNumbers.java) - Adds an array of phone numbers to each employee.
+  * [emp.GetPhoneNumbers](src/main/java/emp/GetPhoneNumbers.java) - Shows how to read values in a nested array.
   * [emp.RunAll](src/main/java/emp/RunAll.java) - Runs all the examples at once.
   * [emp.DropCollection](src/main/java/emp/DropCollection.java) - Drops the collection used by the examples.
 

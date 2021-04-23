@@ -31,7 +31,6 @@ public class Update {
         try (Connection con = pool.getConnection()) {
             OracleDatabase db = client.getDatabase(con);
             OracleCollection col = db.openCollection("employees");
-            
             OracleDocument doc = col.find().filter("{\"name\":\"Blake\"}").getOne();
             
             OracleJsonObject obj = doc.getContentAs(OracleJsonObject.class);

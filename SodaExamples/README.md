@@ -1,4 +1,4 @@
-# Using JSON in the Autonomous Database from Java
+# Autonomous Database JSON from Java
 
 This directory contains examples of how to store and access JSON
 collections from a Java program using SODA (Simple Oracle Document
@@ -14,6 +14,8 @@ Access).
   * [emp.JSONP](src/main/java/emp/JSONP.java) - Inserts and retrieves a value using [JSON-P (javax.json)](https://javaee.github.io/jsonp/) interfaces.
   * [emp.JSONB](src/main/java/emp/JSONB.java) - Stores and retrieves a plain/custom Java object as JSON using [JSON-B (javax.json.bind)](https://javaee.github.io/jsonb-spec/).
   * [emp.Jackson](src/main/java/emp/Jackson.java) - Encodes JSON from an external source, in this case a Jackson parser, as Oracle binary JSON and inserts it into the table.
+  * [emp.AddPhoneNumbers](src/main/java/emp/AddPhoneNumbers.java) - Adds an array of phone numbers to each employee.
+  * [emp.GetPhoneNumbers](src/main/java/emp/GetPhoneNumbers.java) - Shows how to read values in a nested array.
   * [emp.RunAll](src/main/java/emp/RunAll.java) - Runs all the examples at once.
   * [emp.DropCollection](src/main/java/emp/DropCollection.java) - Drops the collection used by the examples.
 
@@ -22,9 +24,8 @@ See also:
   * Documentation:
     - [SODA for Java (oracle.soda)](http://oracle.github.io/soda-for-java/)
     - [The API for JSON type in Oracle Database (oracle.sql.json)](http://oracle.github.io/soda-for-java/https://docs.oracle.com/en/database/oracle/oracle-database/21/jajdb/oracle/sql/json/package-summary.html)
-  * Video:
-    - [Finally: A Low-Latency, Scalable JSON Document Store with Real-Time Analytics] (https://youtu.be/sQUUCwVEU9o)
-    - [AskTom Office Hours: The Java API for JSON type in Oracle JDBC](https://youtu.be/jg5d15-2K3Y)
+  * Video: [Finally: A Low-Latency, Scalable JSON Document Store with Real-Time Analytics](https://youtu.be/sQUUCwVEU9o)
+  * Microservice Example: [MuShop - shopping cart service](https://github.com/oracle-quickstart/oci-cloudnative/tree/master/src/carts)
 
 ## Running the examples
 

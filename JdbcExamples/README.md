@@ -40,6 +40,7 @@ These steps show how to create an always-free Autonomous Database but any 21c or
     - Workload type **Transaction Processing** or **JSON** is selected
     - **Always Free** is selected
     - Version **21c** (or later) is selected
+    - IMPORTANT: 21c is required to run these examples.  At the time of this writing, 21c is only available in the Always Free Tier and is restricted to the regions (IAD - US East, PHX - US West, LHR - UK South, and FRA - Germany Central).  If 21c is not available in your Cloud region, you can alternatively use [https://www.oracle.com/database/technologies/xe-downloads.html](Oracle Database XE) to run the database locally.
   
     <img src="img/create2.png" width="500px"/>
 

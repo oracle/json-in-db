@@ -1,4 +1,4 @@
-# Autonomous JSON Database - Oracle API for MongoDB Java Examples
+# Oracle API for MongoDB - Java Examples
 
 This directory contains examples of how to store and access JSON
 collections from a Java program using a MongoDB client.

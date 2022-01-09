@@ -15,12 +15,6 @@ import com.mongodb.client.MongoDatabase;
 /**
  * Inserts three JSON values into the {@code employee} collection.
  * 
- * <p>
- * Run {@link CreateCollection} before running this example. The purpose of this
- * example is to show several ways of inserting document into a collections. In
- * all cases, the value inserted is converted to Oracle's binary JSON format
- * internally before being sent to the database.
- * </p>
  */
 public class Insert {
 

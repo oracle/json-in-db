@@ -33,8 +33,8 @@ These steps show how to create an always-free Autonomous Database but any 21c or
    
    _It will ask for a credit card for identification purposes.  Your card will not be charged unless you manually choose to upgrade out of the free-tier limits._
    
-2. Sign-in to the cloud console and click on **Autonomous Transaction Processing** under the drop-down menu. <br/>
-    <img src="img/create1.png" width="500px"/>
+2. Sign-in to the cloud console and click on **Autonomous JSON Database** under **Oracle Database**. <br/>
+    <img src="../MongoExamples/img/one.png" width="500px"/>
 
 3. Click **Create Autonomous Database**.  When creating the database, ensure that
     - Workload type **Transaction Processing** or **JSON** is selected

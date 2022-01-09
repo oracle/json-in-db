@@ -1,4 +1,4 @@
-# Autonomous Database JSON from Java
+# Autonomous JSON Database - Oracle API for MongoDB
 
 This directory contains examples of how to store and access JSON
 collections from a Java program using a MongoDB client.
@@ -10,6 +10,11 @@ collections from a Java program using a MongoDB client.
   * [emp.Update](src/main/java/emp/Update.java) - Updates an employee document using whole document replacement.
   * [emp.RunAll](src/main/java/emp/RunAll.java) - Runs all the examples at once.
   * [emp.DropCollection](src/main/java/emp/DropCollection.java) - Drops the collection used by the examples.
+
+See also:
+
+  * [Documentation: Using Oracle Database API for MongoDB](https://docs.oracle.com/en/cloud/paas/autonomous-database/adbsa/mongo-using-oracle-database-api-mongodb.html)
+  * [Documentation: Oracle Database API for MongoDB](https://docs.oracle.com/en/database/oracle/mongodb-api/mgapi/overview-oracle-database-api-mongodb.html)
 
 
 ## Running the examples

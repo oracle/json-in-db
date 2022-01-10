@@ -20,6 +20,7 @@ public class DropTable {
         try (Connection con = pool.getConnection()) {
             Statement stmt = con.createStatement();
             stmt.execute("drop table emp");
+            System.out.println("Table dropped.");
         }
     }
 

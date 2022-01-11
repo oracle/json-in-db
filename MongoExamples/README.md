@@ -74,12 +74,12 @@ These steps show how to create an always-free Autonomous Database but any 21c or
 ### Run the examples
 
 
-1. Run all the examples using the connection string from above.  Set the username to "ADMIN" and the database to "admin":
+1. Run all the examples using the connection string from above.  Set the username to "admin" and the database to "admin":
 
     ```
      mvn -q exec:java \
       -Dexec.mainClass="emp.RunAll" \
-      -Dexec.args='mongodb://ADMIN:mypassword@TR8SOWHVOZCU675-DEMO.adb.us-ashburn-1.oraclecloudapps.com:27017/admin?authMechanism=PLAIN&authSource=$external&ssl=true&retryWrites=false&loadBalanced=true'
+      -Dexec.args='mongodb://admin:mypassword@TR8SOWHVOZCU675-DEMO.adb.us-ashburn-1.oraclecloudapps.com:27017/admin?authMechanism=PLAIN&authSource=$external&ssl=true&retryWrites=false&loadBalanced=true'
     ```
     But replace ``mypassword`` with the ``ADMIN`` password you specified when you created the database
 
@@ -89,7 +89,7 @@ These steps show how to create an always-free Autonomous Database but any 21c or
     ```
      mvn -q exec:java \
       -Dexec.mainClass="emp.DropCollection" \
-      -Dexec.args='mongodb://ADMIN:mypassword@TR8SOWHVOZCU675-DEMO.adb.us-ashburn-1.oraclecloudapps.com:27017/admin?authMechanism=PLAIN&authSource=$external&ssl=true&retryWrites=false&loadBalanced=true'
+      -Dexec.args='mongodb://admin:mypassword@TR8SOWHVOZCU675-DEMO.adb.us-ashburn-1.oraclecloudapps.com:27017/admin?authMechanism=PLAIN&authSource=$external&ssl=true&retryWrites=false&loadBalanced=true'
     ```
 
 3. You can also run specific examples, one at a time:
@@ -97,5 +97,5 @@ These steps show how to create an always-free Autonomous Database but any 21c or
     ```
      mvn -q exec:java \
       -Dexec.mainClass="emp.CreateCollection" \
-      -Dexec.args='mongodb://ADMIN:mypassword@TR8SOWHVOZCU675-DEMO.adb.us-ashburn-1.oraclecloudapps.com:27017/admin?authMechanism=PLAIN&authSource=$external&ssl=true&retryWrites=false&loadBalanced=true'
+      -Dexec.args='mongodb://admin:mypassword@TR8SOWHVOZCU675-DEMO.adb.us-ashburn-1.oraclecloudapps.com:27017/admin?authMechanism=PLAIN&authSource=$external&ssl=true&retryWrites=false&loadBalanced=true'
     ```

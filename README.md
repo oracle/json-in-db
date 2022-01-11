@@ -4,6 +4,9 @@
 * [JdbcExamples](JdbcExamples) - a collection of small
   examples that show how to work with JSON type column values in JDBC
   21c+
+  
+* [MongoExamples](MongoExamples) - examples of using the Oracle API for 
+  MongoDB from a Java program
 
 * [SodaExamples](SodaExamples) - a collection of small
   examples that show how to work with JSON collections in the Autonomous Database (19c+).

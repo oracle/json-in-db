@@ -20,6 +20,7 @@ public class DropCollection {
         	MongoDatabase db = client.getDatabase(cStr.getDatabase());
         	MongoCollection<Document> col = db.getCollection("employees");
         	col.drop();
+        	System.out.println("Collection dropped.");
         }
     }
 

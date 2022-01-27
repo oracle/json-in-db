@@ -41,31 +41,18 @@ These steps show how to create an always-free Autonomous Database but any 21c or
     - **Always Free** is selected
     - Version **21c** (or later) is selected
     - **IMPORTANT**: 21c is required to run these examples.  At the time of this writing, Autonomous 21c is only available in the Always Free Tier and is restricted to the regions (IAD - US East, PHX - US West, LHR - UK South, and FRA - Germany Central).  If 21c is not available in your Cloud region, you can alternatively use [Oracle Database XE](https://www.oracle.com/database/technologies/xe-downloads.html) to run the database locally.
-  
-    <img src="img/create2.png" width="500px"/>
 
-4. Once the database is created, click on **DB Connection** and download the database wallet. The database wallet enables encrypted access and provides the connection details.  Remember the wallet password you enter as you will needed it in **Step 6**.
-   
-    <img src="img/create3.png" width="500px"/>
-  
-5. Unzip the wallet.  The remaining examples assume the wallet is unziped to the directory `/Users/test/Wallet_mydb`
+    <img src="img/workload.png" width="500px"/>
 
-6. **IMPORTANT**: Modify `ojdbc.properties` in the wallet directory.
+    - Select "Secure access from allowed IPs and VCNs only" and add your current IP address. This makes it so access is only allowed from your current IP address.  It also makes it so that Mutual TLS encryption is not required (you don't have to download the database wallet). 
+    <img src="img/acl.png" width="500px"/>
 
-    - Comment out the line that begins `oracle.net.wallet_location=...`:
-    ```
-    # Connection property for Oracle Wallets 
-    # oracle.net.wallet_location=(SOURCE=(METHOD=FILE)(METHOD_DATA=(DIRECTORY=${TNS_ADMIN}))
-    ```
-    - Uncomment the lines starting ``javax.net...`` and set `trustStorePassword` and `keyStorePassword` to the password you entered in **Step 4**:
-    ```
-    javax.net.ssl.trustStore=${TNS_ADMIN}/truststore.jks 
-    javax.net.ssl.trustStorePassword=welcome1
-    javax.net.ssl.keyStore=${TNS_ADMIN}/keystore.jks 
-    javax.net.ssl.keyStorePassword=welcome1
-    ```
-      
-    For details on wallets and connection strings, see: [https://www.oracle.com/database/technologies/java-connectivity-to-atp.html](https://www.oracle.com/database/technologies/java-connectivity-to-atp.html)
+4. Once the database is created, click on **DB Connection**
+    <img src="img/con1.png" width="500px"/>
+
+   Select TLS and copy the connection string by clicking "Copy".  Use "tp" for transactional or operational workloads.
+    <img src="img/con2.png" width="500px"/>
+
 
 ### Setup the examples
 
@@ -88,24 +75,34 @@ These steps show how to create an always-free Autonomous Database but any 21c or
 ### Run the examples
 
 
+jdbc:oracle:thin:admin/OracleMongoL2!@
+
 1. Run all the examples:
 
     ```
      mvn -q exec:java \
       -Dexec.mainClass="emp.RunAll" \
-      -Dexec.args='jdbc:oracle:thin:ADMIN/mypassword@mydb_tp?TNS_ADMIN=/Users/test/Wallet_mydb'
+      -Dexec.args='jdbc:oracle:thin:ADMIN/[PASSWORD]@[CONNECTION STRING]'
     ```
     But replace the following values with your own:
-    - Replace ``mypassword`` with the ``ADMIN`` password you specified when you created the database
-    - Replace `/Users/test/Wallet_mydb` with the actual path to your wallet (see above) 
-    - Replace `mydb_tp` with `[dbname]_tp` where dbname is the name of your database.  This is the name you chose when you created the database.  You can find the name in your wallet file `tnsnames.ora` if you have forgotten it.
+    - Replace [PASSWORD] with the ``ADMIN`` password you specified when you created the database
+    - Replace [CONNECTION STRING] with the string you copied above in step 4.
+
+    The actual command might look something like this:
+
+    ```
+     mvn -q exec:java \
+      -Dexec.mainClass="emp.RunAll" \
+      -Dexec.args='jdbc:oracle:thin:ADMIN/SecurePassword123!@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.us-ashburn-1.oraclecloud.com))(connect_data=(service_name=tx8s4whxjz2u232_demo_tp.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)(ssl_server_cert_dn="CN=adwc.uscom-east-1.oraclecloud.com, OU=Oracle BMCS US, O=Oracle Corporation, L=Redwood City, ST=California, C=US")))'
+    ```
 
 2. Drop the table used by the examples:
 
     ```
      mvn -q exec:java \
       -Dexec.mainClass="emp.DropTable" \
-      -Dexec.args='jdbc:oracle:thin:ADMIN/mypassword@mydb_tp?TNS_ADMIN=/Users/test/Wallet_mydb'
+      -Dexec.args='jdbc:oracle:thin:ADMIN/SecurePassword123!@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.us-ashburn-1.oraclecloud.com))(connect_data=(service_name=tx8s4whxjz2u232_demo_tp.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)(ssl_server_cert_dn="CN=adwc.uscom-east-1.oraclecloud.com, OU=Oracle BMCS US, O=Oracle Corporation, L=Redwood City, ST=California, C=US")))'
+
     ```
 
 3. You can also run specific examples, one at a time:
@@ -113,5 +110,5 @@ These steps show how to create an always-free Autonomous Database but any 21c or
     ```
      mvn -q exec:java \
       -Dexec.mainClass="emp.CreateTable" \
-      -Dexec.args='jdbc:oracle:thin:ADMIN/mypassword@mydb_tp?TNS_ADMIN=/Users/test/Wallet_mydb'
+      -Dexec.args='jdbc:oracle:thin:ADMIN/SecurePassword123!@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.us-ashburn-1.oraclecloud.com))(connect_data=(service_name=tx8s4whxjz2u232_demo_tp.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)(ssl_server_cert_dn="CN=adwc.uscom-east-1.oraclecloud.com, OU=Oracle BMCS US, O=Oracle Corporation, L=Redwood City, ST=California, C=US")))'
     ```

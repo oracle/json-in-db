@@ -37,9 +37,9 @@ These steps show how to create an always-free Autonomous Database but any 21c or
    
    <img src="img/two.png" width="500px"/>
     
-   You must define network access control in order to use the Oracle API for MongoDB.  You can find your current ip address by going to [https://whatsmyip.com](https://whatsmyip.com).  
+   You must define network access control in order to use the Oracle API for MongoDB.  Add your current IP address.
    
-   <img src="img/three.png" width="500px"/>
+   <img src="../JdbcExamples/img/acl.png" width="500px"/>
 
 4. Once the database is created, click on **Service Console**
 

@@ -24,50 +24,6 @@ import oracle.ucp.jdbc.PoolDataSourceFactory;
  */
 public class JSONB {
     
-    public static class Emp {
-
-        String name;
-        
-        String job;
-        
-        BigDecimal salary;
-        
-        String email;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getJob() {
-            return job;
-        }
-
-        public void setJob(String job) {
-            this.job = job;
-        }
-
-        public BigDecimal getSalary() {
-            return salary;
-        }
-
-        public void setSalary(BigDecimal salary) {
-            this.salary = salary;
-        }
-        
-        public String getEmail() {
-            return email;
-        }
-
-        public void setEmail(String email) {
-            this.email = email;
-        }
-
-    }
-
     public static void main(String[] args) throws SQLException {
         
         OracleJsonFactory factory = new OracleJsonFactory();

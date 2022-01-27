@@ -49,11 +49,11 @@ These steps show how to create an always-free Autonomous Database but any 21c or
 
 4. Once the database is created, click on **DB Connection**
 
-    <kbd><img src="img/con1.png" width="500px"/></kbc>
+    <kbd><img src="img/con1.png" width="500px"/></kbd>
 
    Select TLS and copy the connection string by clicking "Copy".  Use "tp" for transactional or operational workloads.
 
-    <kbc><img src="img/con2.png" width="500px" style="border: 1px solid black;"/></kbc>
+    <kbd><img src="img/con2.png" width="500px" style="border: 1px solid black;"/></kbd>
 
 ### Setup the examples
 

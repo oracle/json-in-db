@@ -75,9 +75,6 @@ These steps show how to create an always-free Autonomous Database but any 21c or
 
 ### Run the examples
 
-
-jdbc:oracle:thin:admin/OracleMongoL2!@
-
 1. Run all the examples:
 
     ```

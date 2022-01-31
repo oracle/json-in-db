@@ -53,11 +53,11 @@ These steps show how to create an always-free Autonomous Database but any 21c or
 
 4. Once the database is created, click on **DB Connection**
 
-    <kbd><img src="img/con1.png" width="500px"/></kbd>
+    <kbd><img src="../JdbcExamples/img/con1.png" width="500px"/></kbd>
 
    Select TLS and copy the connection string by clicking "Copy".  Use "tp" for transactional or operational workloads.
 
-    <kbd><img src="img/con2.png" width="500px" style="border: 1px solid black;"/></kbd>
+    <kbd><img src="../JdbcExamples/img/con2.png" width="500px" style="border: 1px solid black;"/></kbd>
   
 
 ### Setup the examples

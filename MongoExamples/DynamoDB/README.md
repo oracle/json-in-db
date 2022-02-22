@@ -83,8 +83,8 @@ java -jar target/DynamoToEJson.jar | \
 mongoimport --uri 'mongodb://admin:<password>!@NNRTBQRBDZWLH1O-XYZ.adb-preprod.us-phoenix-1.oraclecloudapps.com:27016/admin?authMechanism=PLAIN&authSource=$external&ssl=true&retryWrites=false' --collection=example --writeConcern '{w:0}'
 ```
 
-* `gunzip` extracs the file and prints it to standard output
-* The example code in [DynamoToEJson.java](src/main/java/example/DynamoToEJson.java) removes the annotations and prints modified object to standard output
+* `gunzip` uncompresses the file and prints it to standard output
+* The example code in [DynamoToEJson.java](src/main/java/example/DynamoToEJson.java) removes the annotations and prints the modified objects to standard output
 * `mongoimport` reads the output and loads it into a collection named `example`
 
 After running the above command, you should see your data in the collection without the DynamoDB type annotations:

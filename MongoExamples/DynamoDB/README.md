@@ -18,7 +18,7 @@ DynamoDB has a data export feature:<br/>
 
 This feature allows you to export tables to line-delimited JSON files in S3.
 The export files contain a line with a JSON object for each row in the table. 
-DynamoDB has some data types which are not in standard JSON so it adds
+DynamoDB has data types which are not in standard JSON so it adds
 "annotation objects" to the exported data that describe the type of the value.  For
 example, an object representing a person in standard JSON might look
 as follows:
@@ -33,7 +33,7 @@ This same data, when exported from DynamoDB would be:
   {"name" : {"S" : "John"}, "age" : {"N" : "47"}}
 ```
 
-The steps below will run some Java code to remove these annotations
+The steps below will run a small Java program to remove these annotations
 before inserting the data into the Autonomous JSON Database.
 
 

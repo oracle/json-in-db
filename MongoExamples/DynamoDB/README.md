@@ -43,7 +43,7 @@ Export your data to obtain a compressed, line-delimited JSON file as described h
 [https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DataExport.Output.html](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DataExport.Output.html)
 
 If you want to skip this step, you can use the example file included here:<br/>
-[data/tsbjkabcrunxjklwod7noqdy.json.gz](data/tsbjkabcrunxjklwod7noqdy.json.gz).
+[data/tsbjkabcrunxjklwod7noqdy.json.gz](data/tsbjkabcrunxjklwod7noqdy.json.gz)
 
 ## Step 2: build the example
 

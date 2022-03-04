@@ -21,6 +21,8 @@ See also:
   * Documentation: [The API for JSON type in Oracle Database (oracle.sql.json)](https://docs.oracle.com/en/database/oracle/oracle-database/21/jajdb/oracle/sql/json/package-summary.html)
   * Video (YouTube): [AskTom Office Hours: The Java API for JSON type in Oracle JDBC](https://youtu.be/jg5d15-2K3Y)
 
+Need help?
+  * Talk to us on Slack: [#oracle-db-json](https://slack.com/app_redirect?channel=C035S24EH0U)
 
 ## Running the examples
 

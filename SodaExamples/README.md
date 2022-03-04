@@ -27,6 +27,9 @@ See also:
   * Video: [Finally: A Low-Latency, Scalable JSON Document Store with Real-Time Analytics](https://youtu.be/sQUUCwVEU9o)
   * Microservice Example: [MuShop - shopping cart service](https://github.com/oracle-quickstart/oci-cloudnative/tree/master/src/carts)
 
+Need help?
+  * Talk to us on Slack: [#oracle-db-json](https://slack.com/app_redirect?channel=C035S24EH0U)
+
 ## Running the examples
 
 ### Create a database

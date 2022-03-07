@@ -22,7 +22,7 @@ See also:
   * Video (YouTube): [AskTom Office Hours: The Java API for JSON type in Oracle JDBC](https://youtu.be/jg5d15-2K3Y)
 
 Need help?
-  * Talk to us on Slack: [#oracle-db-json](https://slack.com/app_redirect?channel=C035S24EH0U)
+  * Talk to us on Slack: [#oracle-db-json](https://oracledevrel.slack.com/#oracle-db-json)
 
 ## Running the examples
 

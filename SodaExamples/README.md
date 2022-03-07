@@ -28,7 +28,7 @@ See also:
   * Microservice Example: [MuShop - shopping cart service](https://github.com/oracle-quickstart/oci-cloudnative/tree/master/src/carts)
 
 Need help?
-  * Talk to us on Slack: [#oracle-db-json](https://slack.com/app_redirect?channel=C035S24EH0U)
+  * Talk to us on Slack: [#oracle-db-json](https://oracledevrel.slack.com/#oracle-db-json)
 
 ## Running the examples
 

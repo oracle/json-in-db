@@ -18,7 +18,7 @@ See also:
   * [Video: Oracle Database API for MongoDB](https://asktom.oracle.com/pls/apex/asktom.search?oh=15144)
 
 Need help?
-  * Talk to us on Slack: [#oracle-db-json](https://slack.com/app_redirect?channel=C035S24EH0U)
+  * Talk to us on Slack: [#oracle-db-json](https://oracledevrel.slack.com/#oracle-db-json)
 
 ## Running the examples
 

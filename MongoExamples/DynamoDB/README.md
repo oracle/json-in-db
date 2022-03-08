@@ -80,7 +80,7 @@ To load the data into the Autonomous JSON Database, we will use `mongoimport`.
 ```
 gunzip --stdout ./data/tsbjkabcrunxjklwod7noqdy.json.gz | \
 java -jar target/DynamoToEJson.jar | \
-mongoimport --uri 'mongodb://admin:<password>!@NNRTBQRBDZWLH1O-XYZ.adb-preprod.us-phoenix-1.oraclecloudapps.com:27016/admin?authMechanism=PLAIN&authSource=$external&ssl=true&retryWrites=false' --collection=example --writeConcern '{w:0}'
+mongoimport --uri 'mongodb://admin:<password>!@NNRTBQRBDZWLH1O-XYZ.adb.us-phoenix-1.oraclecloudapps.com:27016/admin?authMechanism=PLAIN&authSource=$external&ssl=true&retryWrites=false' --collection=example --writeConcern '{w:0}'
 ```
 
 * `gunzip` uncompresses the file and prints it to standard output

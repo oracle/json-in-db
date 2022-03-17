@@ -18,7 +18,7 @@ This directory contains examples of how to store and access JSON type values in 
   * [emp.DropTable](src/main/java/emp/DropTable.java) - Drops the table used by the examples.
 
 See also:
-  * Documentation: [The API for JSON type in Oracle Database (oracle.sql.json)](https://docs.oracle.com/en/database/oracle/oracle-database/21/jajdb/oracle/sql/json/package-summary.html)
+  * Documentation: [The API for JSON type in Oracle Database (oracle.sql.json)](https://javadoc.io/static/com.oracle.database.jdbc/ojdbc8/21.4.0.0/oracle/sql/json/package-summary.html#package.description)
   * Video (YouTube): [AskTom Office Hours: The Java API for JSON type in Oracle JDBC](https://youtu.be/jg5d15-2K3Y)
 
 Need help?

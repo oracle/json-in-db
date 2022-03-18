@@ -1,6 +1,8 @@
-package emp;
+package emp.model;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Emp {
 
@@ -11,7 +13,13 @@ public class Emp {
     BigDecimal salary;
     
     String email;
+    
+    List<Phone> phoneNumbers = new ArrayList<Phone>();
 
+    public Emp() {
+        
+    }
+    
     public String getName() {
         return name;
     }
@@ -42,6 +50,14 @@ public class Emp {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+    
+    public List<Phone> getPhoneNumbers() {
+        return this.phoneNumbers;
+    }
+    
+    public void setPhoneNumbers(List<Phone> phones) {
+        this.phoneNumbers = phones;
     }
 
 }

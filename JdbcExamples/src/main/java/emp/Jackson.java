@@ -73,7 +73,7 @@ public class Jackson {
         gen.close();
         
         byte[] oson = out.toByteArray();
-        try (Connection con = DriverManager.getConnection(args[0])) {
+        try (Connection con = DriverManager.getConnection(String.join("", args))) {
             PreparedStatement stmt = con.prepareStatement("INSERT INTO emp VALUES (?)");
             stmt.setObject(1, oson, OracleType.JSON);
             stmt.execute();

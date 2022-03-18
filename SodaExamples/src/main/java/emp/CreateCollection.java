@@ -18,7 +18,7 @@ public class CreateCollection {
         OracleRDBMSClient client = new OracleRDBMSClient();
         PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
         pool.setMaxStatements(50);
-        pool.setURL(args[0]);
+        pool.setURL(String.join("", args));
         pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
         
         try (Connection con = pool.getConnection()) {

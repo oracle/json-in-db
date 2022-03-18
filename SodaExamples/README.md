@@ -1,5 +1,7 @@
 # Autonomous Database JSON from Java
 
+.
+
 This directory contains examples of how to store and access JSON
 collections from a Java program using SODA (Simple Oracle Document
 Access).

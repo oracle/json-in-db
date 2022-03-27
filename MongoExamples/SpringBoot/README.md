@@ -9,7 +9,7 @@ This example works best if you run it from an OCI compute node that is in the sa
 * Lab 2 - shows how to provision an Autonomous JSON Database.  
 * Lab 3 - shows how to connect to your database from the compute node using `mongosh`
 
-Note an *always-free* database and compute node are sufficient to run this example.
+Note, an *always-free* database and compute node are sufficient to run this example.
 
 # Loading Data
 

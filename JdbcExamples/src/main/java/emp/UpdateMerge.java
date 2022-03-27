@@ -22,7 +22,7 @@ public class UpdateMerge {
         OracleJsonFactory factory = new OracleJsonFactory();
         
         PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
-        pool.setURL(args[0]);
+        pool.setURL(String.join("", args));
         pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
         
         try (Connection con = pool.getConnection()) {

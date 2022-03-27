@@ -6,6 +6,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.json.bind.JsonbBuilder;
 import javax.json.stream.JsonGenerator;
@@ -13,6 +15,8 @@ import javax.json.stream.JsonParser;
 
 import org.eclipse.yasson.YassonJsonb;
 
+import emp.model.Emp;
+import emp.model.Phone;
 import oracle.jdbc.OracleTypes;
 import oracle.sql.json.OracleJsonFactory;
 import oracle.ucp.jdbc.PoolDataSource;
@@ -30,7 +34,7 @@ public class JSONB {
         YassonJsonb jsonb = (YassonJsonb) JsonbBuilder.create();
         
         PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
-        pool.setURL(args[0]);
+        pool.setURL(String.join("", args));
         pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
         
         try (Connection con = pool.getConnection()) {
@@ -40,6 +44,11 @@ public class JSONB {
             emp.setEmail("king@oracle.com");
             emp.setSalary(BigDecimal.valueOf(200000));
             emp.setJob("President");
+            
+            List<Phone> phones = new ArrayList<Phone>();
+            phones.add(new Phone(Phone.Type.MOBILE, "555-333-2222"));
+            phones.add(new Phone(Phone.Type.WORK, "555-333-1111"));
+            emp.setPhoneNumbers(phones);
             
             // convert Emp class to binary JSON
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -65,6 +74,9 @@ public class JSONB {
             Emp e = jsonb.fromJson(parser, Emp.class);
             System.out.println("Emp object retrieved from database. ");
             System.out.println(e.getName() + ", " + e.getEmail());
+            for (Phone p : e.getPhoneNumbers()) {
+                System.out.println("  " + p.getType() + " " + p.getNumber());
+            }
         }
         
     }

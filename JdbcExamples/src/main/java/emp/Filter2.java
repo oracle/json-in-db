@@ -24,7 +24,7 @@ public class Filter2 {
 
     public static void main(String[] args) throws SQLException {
         PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
-        pool.setURL(args[0]);
+        pool.setURL(String.join("", args));
         pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
         
         try (Connection con = pool.getConnection()) {

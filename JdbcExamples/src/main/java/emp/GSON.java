@@ -7,6 +7,7 @@ import java.sql.SQLException;
 
 import com.google.gson.Gson;
 
+import emp.model.Emp;
 import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
@@ -26,7 +27,7 @@ public class GSON {
     public static void main(String[] args) throws SQLException {
         
         PoolDataSource pool = PoolDataSourceFactory.getPoolDataSource();
-        pool.setURL(args[0]);
+        pool.setURL(String.join("", args));
         pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
         
         try (Connection con = pool.getConnection()) {

@@ -4,14 +4,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * Bike station
  * 
  * @see https://github.com/NABSA/gbfs/blob/master/gbfs.md#station_information
  */
-@Document("station")
 public class Station {
     
     @Id

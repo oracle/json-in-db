@@ -7,11 +7,9 @@
     <relativePath />
   </parent>
   <groupId>com.oracle.database.mongo.example</groupId>
-  <artifactId>SpringBoot</artifactId>
+  <artifactId>bikes</artifactId>
+  <name>bikes</name>
   <version>0.0.1</version>
-  <properties>
-    <java.version>16</java.version>
-  </properties>
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>

@@ -1,14 +1,12 @@
 package example.model;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * Bike station status
  * 
  * @see https://github.com/NABSA/gbfs/blob/master/gbfs.md#station_statusjson
  */
-@Document("status")
 public class Status {
 
     @Id

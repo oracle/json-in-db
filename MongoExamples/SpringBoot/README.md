@@ -73,11 +73,72 @@ admin> db.station.find({_id:120});
 
 # Building the service
 
-[todo]
+Install Java, maven, and git:
+```
+ sudo yum install maven java-17-openjdk git
+ export JAVA_HOME=/usr/lib/jvm/jre-17/
+ export PATH=$JAVA_HOME/bin:$PATH
+```
+
+Clone this repository:
+
+```
+git clone https://github.com/oracle/json-in-db.git
+```
+
+Build the service:
+
+```
+cd json-in-db/MongoExamples/SpringBoot/
+mvn clean package
+```
 
 # Running the service
 
-[todo]
+To start the service, run the following command:
+
+```
+java -jar ./target/bikes-0.0.1.jar \
+   --spring.data.mongodb.uri='mongodb://ADMIN:<password>@XXXYYYZZZ-DEMODB.adb.us-ashburn-1.oraclecloudapps.com:27017/admin?authMechanism=PLAIN&authSource=$external&ssl=true&retryWrites=false&loadBalanced=true' \
+   --spring.data.mongodb.database=admin 
+```
+
+But substitute the value of `uri` with your actual connection string.  These properties can alternatively be set from [application.properties](src/main/resources/application.properties).
+
+# Testing the service
+
+By running the previous command in the background or by starting a 
+new shell process, you can test the service using cURL:
+
+```
+# get station with id 120
+curl http://localhost:8080/station/120
+{
+  "name" : "Lexington Ave & Classon Ave",
+  "region_id" : "71",
+  "lon" : -73.95928168,
+  "lat" : 40.68676793,
+  ...
+
+# get the status data for station 120
+curl  http://localhost:8080/status/search/findByStationId/?id=120 
+"_embedded" : {
+  "status" : [ {
+    "station_id" : "120",
+    "num_bikes_available" : 2,
+   ..
+
+# atomically delete station 120 and all associated status documents using a transaction
+curl -i -X DELETE http://localhost:8080/station/120
+ HTTP/1.1 200 
+ ...
+
+# station 120 is no longer found 
+curl -i http://localhost:8080/station/120
+ HTTP/1.1 404 
+ ...
+```
+
 
 
 

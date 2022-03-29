@@ -1,15 +1,15 @@
-# Microservice Example using Spring Boot and the Autonomous JSON Database
+# Microservice using Spring Boot and the Autonomous JSON Database
 
 This directory contains an example of how to create a SpringBoot microservice using the Autonomous Database. Spring Boot is a popular Java framework that can be used to create REST services with minimal coding. See [Spring Boot](https://spring.io/projects/spring-boot).  
 
 # Prerequisites
 
-This example works best if you run it from an OCI compute node what is in the same data center as the Autonomous Database it is connecting to.  Instructions on how to create an Autonomous Database and a compute node can be found here: [Using Oracle Database API for MongoDB](https://oracle.github.io/learning-library/data-management-library/database/json/mongodb-api/workshops/freetier/index.html). 
-* Lab 1 - shows how to create a compute node.  The compute node used in this lab can also be used to run this SpringBoot example.  
+This example works best if you run it from an OCI compute node that is in the same data center as the Autonomous Database it is connecting to.  Instructions on how to create an Autonomous Database and a compute node can be found here: [Using Oracle Database API for MongoDB](https://oracle.github.io/learning-library/data-management-library/database/json/mongodb-api/workshops/freetier/index.html). 
+* Lab 1 - shows how to create a compute node.  The compute node created in this lab can also be used to run this Spring Boot example.  
 * Lab 2 - shows how to provision an Autonomous JSON Database.  
 * Lab 3 - shows how to connect to your database from the compute node using `mongosh`
 
-Note an *always-free* database and compute node are sufficient to run this example.
+Note, an *always-free* database and compute node are sufficient to run this example.
 
 # Loading Data
 

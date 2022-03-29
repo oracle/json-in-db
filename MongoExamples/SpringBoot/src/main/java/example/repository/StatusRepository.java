@@ -2,7 +2,6 @@ package example.repository;
 
 import java.util.List;
 
-import org.springframework.boot.autoconfigure.web.WebProperties.Resources;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;

@@ -139,6 +139,100 @@ curl -i http://localhost:8080/station/120
  ...
 ```
 
+# SQL/JSON
 
+The following are examples of SQL/JSON that can be run 
+over the `station` and `status` collections.  These queries
+can be executed in Database Actions as described in [Lab 4](https://oracle.github.io/learning-library/data-management-library/database/json/mongodb-api/workshops/freetier/index.html?lab=dbactions).
 
+Select the JSON documents as text:
+
+```
+select json_serialize(data)
+from station
+```
+
+Project fields as columns:
+
+```
+select 
+  s.id,
+  s.data.name.string(),
+  s.data.region_id.string(),
+  s.data.lat.number(),
+  s.data.lon.number(),
+  s.data.station_type.string()
+from station s;
+```
+
+Group stations by `region_id`:
+
+```
+select 
+  t.data.region_id.string() as region_id,
+  count(*) as count
+from station t
+where t.data.station_type.string() = 'classic'
+group by t.data.region_id.string();
+```
+
+Automatically create relational views using `json_dataguide`:
+
+```
+declare
+  dg clob;
+begin
+  select json_dataguide(data, dbms_json.FORMAT_HIERARCHICAL, dbms_json.pretty) into dg
+  from station;
+
+  dbms_json.create_view('STATION_VIEW', 'STATION', 'DATA', dg, resolveNameConflicts => true, path => '$._id');
+
+  select json_dataguide(data, dbms_json.FORMAT_HIERARCHICAL, dbms_json.pretty) into dg
+  from status;
+
+  dbms_json.create_view('STATUS_VIEW', 'STATUS', 'DATA', dg);
+end;
+/
+```
+
+Select from the created view:
+
+```
+select * from station_view;
+```
+
+Join between collections:
+
+```
+select 
+  s."station_id" station_id,
+  (select t."capacity" from station_view t where t."_id" = s."station_id") capacity,
+  min(s."num_bikes_available") min,
+  max(s."num_bikes_available") max,
+  round(avg(s."num_bikes_available")) avg
+from status_view s
+group by s."station_id";
+```
+
+```
+create view station_availability as
+select 
+  s."station_id" station_id,
+  (select t."capacity" from station_view t where t."_id" = s."station_id") capacity,
+  min(s."num_bikes_available") min,
+  max(s."num_bikes_available") max,
+  round(avg(s."num_bikes_available")) avg
+  from status_view s
+group by s."station_id";
+```
+
+Select stations that always had more than half capacity available:
+
+```
+select station_id, min, max, avg, capacity
+from station_availability
+where (capacity - min) < (capacity / 2) and
+      capacity > 55
+      order by min desc;
+```
 

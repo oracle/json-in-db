@@ -204,35 +204,32 @@ select * from station_view;
 Join between collections:
 
 ```
-select 
-  s."station_id" station_id,
-  (select t."capacity" from station_view t where t."_id" = s."station_id") capacity,
-  min(s."num_bikes_available") min,
-  max(s."num_bikes_available") max,
-  round(avg(s."num_bikes_available")) avg
+select s."station_id" station_id,
+       (select t."name" from station_view t where t."_id" = s."station_id") name,
+       min(s."num_bikes_available") min,
+       max(s."num_bikes_available") max,
+       round(avg(s."num_bikes_available")) avg
 from status_view s
 group by s."station_id";
 ```
 
 ```
 create view station_availability as
-select 
-  s."station_id" station_id,
-  (select t."capacity" from station_view t where t."_id" = s."station_id") capacity,
-  min(s."num_bikes_available") min,
-  max(s."num_bikes_available") max,
-  round(avg(s."num_bikes_available")) avg
-  from status_view s
+select s."station_id" station_id,
+       (select t."name" from station_view t where t."_id" = s."station_id") name,
+       min(s."num_bikes_available") min,
+       max(s."num_bikes_available") max,
+       round(avg(s."num_bikes_available")) avg
+from status_view s
 group by s."station_id";
 ```
 
 Select stations that always had more than half capacity available:
 
 ```
-select station_id, min, max, avg, capacity
+select station_id, name, min, max, avg
 from station_availability
-where (capacity - min) < (capacity / 2) and
-      capacity > 55
-      order by min desc;
+where min > 20 and avg > 50
+order by max desc;
 ```
 

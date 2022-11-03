@@ -1,4 +1,4 @@
-# JDBC and JSON in Oracle Database 21c+
+# JDBC and JSON in Oracle Database 21c+ 
 
 This directory contains examples of how to store and access JSON type values in Oracle Database from a Java program. 
 

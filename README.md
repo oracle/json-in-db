@@ -27,3 +27,17 @@
   and SODA in the autonomous database.
 
 * [Python and AJD](https://cool.devo.build/tutorials/lol-optimizer-using-oci-extraction-processing) - This article shows how to process JSON data from Riot Games API using python and the Autonomous JSON Database. 
+
+## Contributing
+
+This project welcomes contributions from the community. Before submitting a pull request, please [review our contribution guide](./CONTRIBUTING.md)
+
+## Security
+
+Please consult the [security guide](./SECURITY.md) for our responsible security vulnerability disclosure process
+
+## License
+
+Copyright (c) 2014, 2023 Oracle and/or its affiliates.
+
+Released under the MIT License

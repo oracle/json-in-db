@@ -1,4 +1,4 @@
-package emp;
+package movie;
 
 /** 
  * Runs all the examples at once.

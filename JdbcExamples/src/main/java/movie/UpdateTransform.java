@@ -1,28 +1,20 @@
-package emp;
+package movie;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.google.gson.Gson;
-
-import emp.model.Emp;
 import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
- * Retrieves a plain/custom Java using GSON.
- * 
- * This is similar to the {@code JSONB} example
- * but uses GSON instead.  
+ * Performs a partial update using JSON_TRANSFORM.
  * 
  * <p>
  * Run first: {@link CreateTable}, {@link Insert}
  * </p>
- * 
  */
-public class GSON {
+public class UpdateTransform {
 
     public static void main(String[] args) throws SQLException {
         
@@ -31,17 +23,19 @@ public class GSON {
         pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
         
         try (Connection con = pool.getConnection()) {
-        	
+        
             PreparedStatement stmt = con.prepareStatement(
-                "SELECT e.data FROM emp e WHERE e.data.name.string() = 'Blake'");
+                "UPDATE movie m " +
+                "SET m.data = JSON_TRANSFORM(m.data, SET '$.gross' = :1) " +
+                "WHERE m.data.name.string() = :2");
+                
+            stmt.setInt(1, 1_000_000_000);
+            stmt.setString(2, "Iron Man");
             
-            ResultSet rs = stmt.executeQuery();
-            rs.next();
-
-            Emp clark =  new Gson().fromJson(rs.getString(1), Emp.class);
-
-            System.out.println(clark.getJob());
+            stmt.execute();
             
-        }
+            System.out.println("Movie has been updated!"); 
+        }            
     }
+
 }

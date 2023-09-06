@@ -1,4 +1,4 @@
-package emp;
+package movie;
 
 import java.io.FileInputStream;
 import java.sql.Connection;
@@ -30,30 +30,30 @@ public class Insert {
         pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
         
         try (Connection con = pool.getConnection()) {
-            PreparedStatement pstmt = con.prepareStatement("INSERT INTO emp VALUES (:1)");
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO movie VALUES (:1)");
     
             // JSON text (String)
-            String str = "{\"name\":\"Blake\", \"job\": \"Intern\", \"salary\":20000}";
+            String str = "{\"name\":\"Iron Man\", \"genre\": \"Action\", \"gross\":585366247}";
             pstmt.setObject(1, str, OracleType.JSON);
             pstmt.execute();
 
             // JSON object
             OracleJsonFactory factory = new OracleJsonFactory();
             OracleJsonObject obj = factory.createObject();
-            obj.put("name", "Smith");
-            obj.put("job", "Programmer");
-            obj.put("salary", 40000);
-            obj.put("created", OffsetDateTime.now(ZoneOffset.UTC));
+            obj.put("name", "Interstellar");
+            obj.put("genre", "Sci-fi");
+            obj.put("gross", 677471339);
+            obj.put("release", OffsetDateTime.of(2008, 5, 2, 0, 0, 0, 0, ZoneOffset.UTC));
             pstmt.setObject(1, obj, OracleType.JSON);
             pstmt.execute();
     
             // JSON text (byte stream/file)
-            FileInputStream in = new FileInputStream("data/miller.json");
+            FileInputStream in = new FileInputStream("data/matrix.json");
             pstmt.setObject(1, in, OracleType.JSON);
             in.close();
             pstmt.execute();
             
-            System.out.println("Inserted three employees into the emp table");
+            System.out.println("Inserted three movies into the movie table");
         }
     }
 }

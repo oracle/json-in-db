@@ -1,5 +1,6 @@
-package emp;
+package movie;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,9 +30,9 @@ public class Update {
         try (Connection con = pool.getConnection()) {
         
             PreparedStatement stmt = con.prepareStatement(
-                    "SELECT e.data FROM emp e WHERE e.data.name.string() = :1");
+                    "SELECT m.data FROM movie m WHERE m.data.name.string() = :1");
                 
-            stmt.setString(1, "Blake");
+            stmt.setString(1, "Iron Man");
             
             ResultSet rs = stmt.executeQuery();
             rs.next();
@@ -45,16 +46,16 @@ public class Update {
             // would raise an error.  The next line makes a mutable copy:
             obj = factory.createObject(obj);
 
-            obj.put("salary", 25000);
+            obj.put("gross", obj.getBigDecimal("gross").add(BigDecimal.valueOf(1000_000)));
             
             PreparedStatement update = con.prepareStatement(
-                    "UPDATE emp e SET e.data = :1 WHERE e.data.name.string() = :2");
+                    "UPDATE movie m SET m.data = :1 WHERE m.data.name.string() = :2");
             
             update.setObject(1, obj, OracleType.JSON);
-            update.setString(2, "Blake");
+            update.setString(2, "Iron Man");
             update.execute();
             
-            System.out.println("Blake's salary is updated");
+            System.out.println("Iron Man's gross is updated");
             System.out.println(obj);
         }
     }

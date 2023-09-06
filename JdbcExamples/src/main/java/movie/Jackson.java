@@ -1,4 +1,4 @@
-package emp;
+package movie;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -32,7 +32,7 @@ public class Jackson {
         OracleJsonGenerator gen = factory.createJsonBinaryGenerator(out);
 
         // Jackson input
-        JsonParser jacksonParser = jacksonFactory.createParser(new File("data/jack.json"));
+        JsonParser jacksonParser = jacksonFactory.createParser(new File("data/pulp.json"));
         JsonToken token;
         while ((token = jacksonParser.nextToken()) != null) {
             switch(token) {
@@ -74,10 +74,10 @@ public class Jackson {
         
         byte[] oson = out.toByteArray();
         try (Connection con = DriverManager.getConnection(String.join("", args))) {
-            PreparedStatement stmt = con.prepareStatement("INSERT INTO emp VALUES (?)");
+            PreparedStatement stmt = con.prepareStatement("INSERT INTO movie VALUES (?)");
             stmt.setObject(1, oson, OracleType.JSON);
             stmt.execute();
-            System.out.println("Jack inserted into successfully");
+            System.out.println("Pulp fiction inserted into movie successfully");
         }
     }
 

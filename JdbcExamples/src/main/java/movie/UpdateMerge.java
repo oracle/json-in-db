@@ -1,8 +1,10 @@
-package emp;
+package movie;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import oracle.sql.json.OracleJsonFactory;
 import oracle.sql.json.OracleJsonObject;
@@ -28,20 +30,20 @@ public class UpdateMerge {
         try (Connection con = pool.getConnection()) {
         
             PreparedStatement stmt = con.prepareStatement(
-                "UPDATE emp e " +
-                "SET e.data = JSON_MERGEPATCH(e.data, :1) " +
-                "WHERE e.data.name.string() = :2");
+                "UPDATE movie m " +
+                "SET m.data = JSON_MERGEPATCH(m.data, :1) " +
+                "WHERE m.data.name.string() = :2");
                 
             OracleJsonObject patch = factory.createObject();
-            patch.put("job", "Architect");
-            patch.put("salary", 60000);
+            patch.put("release", OffsetDateTime.of(2014, 11, 7, 0, 0, 0, 0, ZoneOffset.UTC));
+            patch.put("gross", 1_000_000_000);
             
             stmt.setObject(1, patch);
-            stmt.setString(2, "Miller");
+            stmt.setString(2, "Interstellar");
             
             stmt.execute();
             
-            System.out.println("Miller's salary and title have been updated"); 
+            System.out.println("Document has been updated have been updated"); 
         }            
     }
 

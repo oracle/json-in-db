@@ -1,4 +1,4 @@
-package emp;
+package movie;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
@@ -25,9 +25,9 @@ public class JavaCollectionsToJson {
     public static void main(String[] args) throws Exception {
         
         Map<String, Object> emp = new HashMap<String, Object>();
-        emp.put("name", "Jack");
-        emp.put("job", "Programmer");
-        emp.put("salary", 35000);
+        emp.put("name", "Pulp Fiction");
+        emp.put("genre", "Thriller");
+        emp.put("gross", 213928762);
         emp.put("created", OffsetDateTime.now());
 
         OracleJsonFactory factory = new OracleJsonFactory();
@@ -38,16 +38,16 @@ public class JavaCollectionsToJson {
         
         byte[] oson = out.toByteArray();
         try (Connection con = DriverManager.getConnection(args[0])) {
-            PreparedStatement stmt = con.prepareStatement("INSERT INTO emp VALUES (?)");
+            PreparedStatement stmt = con.prepareStatement("INSERT INTO movie VALUES (?)");
             stmt.setObject(1, oson, OracleType.JSON);
             stmt.execute();
-            System.out.println("Jack inserted into successfully");
+            System.out.println("Pulp fiction inserted into successfully");
         }
     }
 
-    private static void writeMap(OracleJsonGenerator gen, Map<?, ?> emp) {
+    private static void writeMap(OracleJsonGenerator gen, Map<?, ?> movie) {
         gen.writeStartObject();
-        for (Entry<?, ?> e : emp.entrySet()) {
+        for (Entry<?, ?> e : movie.entrySet()) {
             String key = e.getKey().toString();
             Object value = e.getValue();
             gen.writeKey(key);

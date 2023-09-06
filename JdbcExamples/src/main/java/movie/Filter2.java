@@ -1,4 +1,4 @@
-package emp;
+package movie;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,7 +30,7 @@ public class Filter2 {
         try (Connection con = pool.getConnection()) {
             // Filter by existence
             PreparedStatement stmt = con.prepareStatement(
-              "SELECT e.data FROM emp e WHERE JSON_EXISTS(data, '$.created')");
+              "SELECT m.data FROM movie m WHERE JSON_EXISTS(data, '$.release')");
     
             ResultSet rs = stmt.executeQuery();
             rs.next();
@@ -42,12 +42,12 @@ public class Filter2 {
             // Casts the value to OracleJsonObject 
             OracleJsonObject obj = v1.asJsonObject();
             
-            OracleJsonValue v2 = obj.get("created");
+            OracleJsonValue v2 = obj.get("release");
             
             System.out.println("The type of v2 is " + v2.getOracleJsonType());
             
-            System.out.println(obj.getString("name") + " created " + 
-                v2.asJsonTimestampTZ().getString());
+            System.out.println(obj.getString("name") + " released " + 
+                v2.asJsonTimestampTZ());
             
             rs.close();
             stmt.close();

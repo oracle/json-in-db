@@ -1,4 +1,4 @@
-package emp;
+package movie;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -19,7 +19,7 @@ public class DropTable {
         
         try (Connection con = pool.getConnection()) {
             Statement stmt = con.createStatement();
-            stmt.execute("drop table emp");
+            stmt.execute("drop table movie");
             System.out.println("Table dropped.");
         }
     }

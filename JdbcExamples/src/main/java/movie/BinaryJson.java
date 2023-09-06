@@ -1,4 +1,4 @@
-package emp;
+package movie;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,10 +18,10 @@ import oracle.sql.json.OracleJsonParser;
 public class BinaryJson {
 
     public static void main(String[] args) throws IOException {
-        File osonFile = new File("data/smith.oson");
+        File osonFile = new File("data/ironman.oson");
         OracleJsonFactory factory = new OracleJsonFactory();
         
-        String json = "{\"name\":\"Smith\",  \"job\": \"Programmer\", \"salary\": 50000}";
+        String json = "{\"name\":\"Iron Man\",  \"genre\": \"Action\", \"gross\": 585366247}";
         OracleJsonParser parser = factory.createJsonTextParser(new StringReader(json));
         
         FileOutputStream out = new FileOutputStream(osonFile);
@@ -29,12 +29,12 @@ public class BinaryJson {
         gen.writeParser(parser);
         gen.close();
         
-        System.out.println("Wrote binary JSON file smith.oson");
+        System.out.println("Wrote binary JSON file ironman.oson");
         
         FileInputStream in = new FileInputStream(osonFile);
         OracleJsonObject obj = factory.createJsonBinaryValue(in).asJsonObject();
         in.close();
-        System.out.println("Read binary JSON file smith.oson");
+        System.out.println("Read binary JSON file ironman.oson");
         System.out.println(obj);
 
     }

@@ -1,4 +1,4 @@
-package emp;
+package movie;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -6,10 +6,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Wrapper;
 
-import javax.json.Json;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
+import jakarta.json.Json;
+import jakarta.json.JsonBuilderFactory;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 
 import oracle.jdbc.OracleType;
 import oracle.sql.json.OracleJsonObject;
@@ -18,7 +18,7 @@ import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
- * Inserts and retrieves a value using JSON-P (javax.json) interfaces.
+ * Inserts and retrieves a value using JSON-P (jakarta.json) interfaces.
  * 
  * <p>
  * Run first: {@link CreateTable}, {@link Insert}
@@ -36,27 +36,27 @@ public class JSONP {
         pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
         
         try (Connection con = pool.getConnection()) {
-            PreparedStatement stmt = con.prepareStatement("INSERT INTO emp VALUES (:1)");
+            PreparedStatement stmt = con.prepareStatement("INSERT INTO movie VALUES (:1)");
             JsonObject obj = factory.createObjectBuilder()
-                                    .add("name", "Clark")
-                                    .add("job", "Manager")
-                                    .add("salary", 80000)
+                                    .add("name", "Forrest Gump")
+                                    .add("genre", "Comedy")
+                                    .add("gross", 678151134)
                                     .build();
             stmt.setObject(1, obj, OracleType.JSON);
             stmt.execute();
             stmt.close();
-            System.out.println("Inserted employee Clark ");
+            System.out.println("Inserted Forrest Gump ");
             
             
             // retrieve employee Smith 
             
             stmt = con.prepareStatement(
-                    "SELECT e.data FROM emp e WHERE e.data.name.string() = :1");
-            stmt.setString(1, "Smith");
+                    "SELECT m.data FROM movie m WHERE m.data.name.string() = :1");
+            stmt.setString(1, "Interstellar");
             ResultSet rs = stmt.executeQuery(); 
             rs.next();
             obj = rs.getObject(1, JsonObject.class);
-            System.out.println("Retrieved Smith from the database");
+            System.out.println("Retrieved Interstellar from the database");
             System.out.println(obj.toString());
             
             // Values such as JsonObject, JsonArray, JsonParser, and JsonGenerator
@@ -66,12 +66,12 @@ public class JSONP {
             // data.
 
             // Smith timestamp attribute is reported as a string when using the javax.json apis
-            JsonValue value = obj.get("created");
+            JsonValue value = obj.get("release");
             System.out.println(value + " is of type " + value.getValueType());
             
             // However, we can unwrap the object to get the true type
             OracleJsonObject oraObj = ((Wrapper)obj).unwrap(OracleJsonObject.class);
-            OracleJsonValue oraValue = oraObj.get("created");
+            OracleJsonValue oraValue = oraObj.get("release");
             System.out.println(oraValue + " is of type " + oraValue.getOracleJsonType());
             
             // Values can be rewraped at any time

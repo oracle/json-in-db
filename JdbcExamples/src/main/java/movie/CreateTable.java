@@ -1,4 +1,4 @@
-package emp;
+package movie;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -18,11 +18,10 @@ public class CreateTable {
         pool.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
         
         try (Connection con = pool.getConnection()) {
-
             Statement stmt = con.createStatement();
-            stmt.execute("create table emp (data JSON)");
+            stmt.execute("create table movie (data JSON)");
             
-            System.out.println("Created table emp");
+            System.out.println("Created table movie");
         }
     }
 

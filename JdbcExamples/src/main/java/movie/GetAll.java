@@ -1,4 +1,4 @@
-package emp;
+package movie;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -25,7 +25,7 @@ public class GetAll {
         try (Connection con = pool.getConnection()) {
             Statement stmt = con.createStatement();
             
-            ResultSet rs = stmt.executeQuery("SELECT data FROM emp");
+            ResultSet rs = stmt.executeQuery("SELECT data FROM movie");
             
             while (rs.next()) {
                 String text = rs.getObject(1, String.class);

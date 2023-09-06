@@ -8,7 +8,7 @@ import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /** 
- * Drops the employee table used by the other examples. 
+ * Drops the movie table used by the other examples. 
  */
 public class DropTable {
 

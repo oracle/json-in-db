@@ -9,7 +9,7 @@ import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
- * Gets all the JSON values from the employee table.
+ * Gets all the JSON values from the movie table.
  * 
  * <p>
  * Run first: {@link CreateTable}, {@link Insert}

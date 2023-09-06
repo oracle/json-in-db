@@ -24,16 +24,16 @@ public class JavaCollectionsToJson {
 
     public static void main(String[] args) throws Exception {
         
-        Map<String, Object> emp = new HashMap<String, Object>();
-        emp.put("name", "Pulp Fiction");
-        emp.put("genre", "Thriller");
-        emp.put("gross", 213928762);
-        emp.put("created", OffsetDateTime.now());
+        Map<String, Object> movie = new HashMap<String, Object>();
+        movie.put("name", "Pulp Fiction");
+        movie.put("genre", "Thriller");
+        movie.put("gross", 213928762);
+        movie.put("created", OffsetDateTime.now());
 
         OracleJsonFactory factory = new OracleJsonFactory();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         OracleJsonGenerator gen = factory.createJsonBinaryGenerator(out);
-        writeMap(gen, emp);
+        writeMap(gen, movie);
         gen.close();
         
         byte[] oson = out.toByteArray();

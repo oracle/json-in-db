@@ -8,7 +8,7 @@ import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
- * Creates the employee table (emp) used by all the examples. 
+ * Creates the movie table used by all the examples. 
  */
 public class CreateTable {
 

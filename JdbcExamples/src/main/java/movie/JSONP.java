@@ -47,9 +47,6 @@ public class JSONP {
             stmt.close();
             System.out.println("Inserted Forrest Gump ");
             
-            
-            // retrieve employee Smith 
-            
             stmt = con.prepareStatement(
                     "SELECT m.data FROM movie m WHERE m.data.name.string() = :1");
             stmt.setString(1, "Interstellar");

@@ -34,10 +34,8 @@ public class Config extends AbstractJdbcConfiguration {
     @Bean
     DataSource dataSource() throws SQLException {
         PoolDataSource dataSource = PoolDataSourceFactory.getPoolDataSource();
-        dataSource.setUser("josh");
-        dataSource.setPassword("Welcome123!");
         dataSource.setConnectionFactoryClassName("oracle.jdbc.replay.OracleDataSourceImpl");
-        dataSource.setURL("jdbc:oracle:thin:@//oraclejson.com:1521/freepdb1");
+        dataSource.setURL(System.getProperty("url"));
         dataSource.setInitialPoolSize(5);
         dataSource.setMinPoolSize(5);
         dataSource.setMaxPoolSize(10);

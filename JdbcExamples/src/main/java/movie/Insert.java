@@ -13,7 +13,7 @@ import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
- * Inserts three JSON values into the {@code emp} table.
+ * Inserts three JSON values into the {@code movie} table.
  * 
  * <p>
  * Run {@link CreateTable} before running this example. The purpose of this

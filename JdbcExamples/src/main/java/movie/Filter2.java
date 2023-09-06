@@ -12,8 +12,8 @@ import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
  * With JSON, objects in a table can have different sets of attributes and
- * the types of attributes can vary across values. This example select employees
- * from the emp table that have a "created" attribute and checks the type
+ * the types of attributes can vary across values. This example selects a movie
+ * from the movie table that has a "created" attribute and checks the type
  * of the top-level value retrieved and the type of a nested value.
  * 
  * <p>

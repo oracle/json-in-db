@@ -12,7 +12,7 @@ import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
- * Updates an employee record using whole document replacement.
+ * Updates an movie record using whole document replacement.
  * 
  * <p>
  * Run first: {@link CreateTable}, {@link Insert}

@@ -1,30 +1,35 @@
-CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS 
-
+create or replace package body ora_idx_parser as 
   mv_rewrite_number     number := 0;           
-  TYPE ktypes           IS TABLE OF varchar2(1000) INDEX BY varchar2(1000);
-  TYPE matview_fields   IS TABLE OF number INDEX BY varchar2(1000);
-  TYPE pref_elem        IS TABLE OF varchar2(1000);
+  type ktypes           is table of varchar2(1000) index by varchar2(1000);
+  type matview_fields   is table of number index by varchar2(1000);
+  type pref_elem        is table of varchar2(1000);
 
-  FUNCTION create_keytypes_map(collection_name varchar)
-  RETURN ktypes
-  IS
+  /*
+   *  Method used to get a map with all the fields of the data
+   *  and its type
+   *  PATH  |  TYPE
+   *  a     |  object
+   */
+  function create_keytypes_map(collection_name varchar)
+  return ktypes
+  is
     dg_stmt    clob;
     dataguide  clob;
     path       clob;
     jtype      clob;
-    dguide_arr JSON_ARRAY_T;
-    arr_elem   JSON_OBJECT_T;
+    dguide_arr json_array_t;
+    arr_elem   json_object_t;
     key_types  ktypes;
-  BEGIN
-    dg_stmt := 'select json_dataguide(DATA)' ||
+  begin
+    dg_stmt := 'select json_dataguide(data)' ||
                ' from ' || collection_name;
-    EXECUTE IMMEDIATE dg_stmt
-      INTO dataguide;
-    dguide_arr := JSON_ARRAY_T.parse(dataguide);
+    execute immediate dg_stmt
+      into dataguide;
+    dguide_arr := json_array_t.parse(dataguide);
   
     for idx in 0 .. dguide_arr.get_size - 1
     loop
-      arr_elem := Treat(dguide_arr.get(idx) as JSON_OBJECT_T);
+      arr_elem := treat(dguide_arr.get(idx) as json_object_t);
       path := arr_elem.get_String('o:path');
       if (path = '$' or path = '$._id') then
         continue;
@@ -38,39 +43,47 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
       end if;
     end loop;
     return key_types;
-  END;
+  end;
 
-  FUNCTION create_matview_paths_map(idx_spec JSON_ARRAY_T, types ktypes)
-  RETURN matview_fields
-  IS
+  /*
+   *  Method that returns a map with all the fields that have an array
+   *  and the regular fields that are parts of the compuond index
+   *  1 is a field that has an array, 2 regular field part of the
+   *  compund index    
+   *  E.g. being  {a:1,c:1} where a is an array
+   *  PATH   |  TYPE
+   *  $.a    |  1
+   *  $.c    |  2
+   */
+  function create_matview_paths_map(idx_spec json_array_t, types ktypes)
+  return matview_fields
+  is
     path_cursor   sys_refcursor;
     ismatview     matview_fields;
-    arr_elem      JSON_OBJECT_T;
-    v_key_obj     JSON_OBJECT_T;
-    v_keys        JSON_KEY_LIST;
+    arr_elem      json_object_t;
+    v_key_obj     json_object_t;
+    v_keys        json_key_list;
     v_key         clob;
     v_path        clob;
     stmt          clob;
     path          clob;
     includeInMatV boolean := false;
-  BEGIN
+  begin
     for idx in 0..idx_spec.get_size - 1
     loop
       includeInMatV := false;
-      arr_elem := Treat(idx_spec.get(idx) as JSON_OBJECT_T);
+      arr_elem := treat(idx_spec.get(idx) as json_object_t);
       v_key_obj := arr_elem.get_Object('key');
 
       v_keys :=  v_key_obj.get_keys;
       for idxk in v_keys.first..v_keys.last 
       loop
         v_key := v_keys(idxk);
-        stmt := 'SELECT REGEXP_SUBSTR ('''
-                  || v_key ||''', ''[^.]+'', 1, level
-                  ) AS string_parts FROM dual 
-                  CONNECT BY REGEXP_SUBSTR ('''
-                  || v_key || ''', ''[^.]+'', 1, level
-                  ) IS NOT NULL';
-        --'
+        stmt := 'select regexp_substr(path, ''[^.]+'', 1, level)
+                  from
+                    (select '''|| v_key ||''' path from dual)
+                  connect by level <= length(path)-length(replace(path, ''.''))+1'; 
+                  --'
         path := '';
         open path_cursor for stmt;
         << path_loop >>
@@ -101,33 +114,41 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
       end if;
     end loop;
     return ismatview;
-  END;
+  end;
 
-  FUNCTION create_matview_idx_paths_map(idx_obj JSON_OBJECT_T, types ktypes)
-  RETURN matview_fields
-  IS
+  /*
+   *  Method that returns a map with all the paths that are used to build 
+   *  a materialized view
+   *  E.g. being  {a:1,c.b.v:1} 
+   *  PATH    |  IS_USED_IN_MV
+   *  $.a     |  1
+   *  $.c     |  1
+   *  $.c.b   |  1
+   *  $.c.b.v |  1
+   */
+  function create_matview_idx_paths_map(idx_obj json_object_t, types ktypes)
+  return matview_fields
+  is
     path_cursor   sys_refcursor;
-    arr_elem      JSON_OBJECT_T;
-    v_key_obj     JSON_OBJECT_T;
-    v_keys        JSON_KEY_LIST;
+    arr_elem      json_object_t;
+    v_key_obj     json_object_t;
+    v_keys        json_key_list;
     v_key         clob;
     v_path        clob;
     stmt          clob;
     path          clob;
     ismatview     matview_fields;
-  BEGIN
+  begin
 
     v_keys :=  idx_obj.get_keys;
     for idx in v_keys.first..v_keys.last 
     loop
       v_key := v_keys(idx);
-      stmt := 'SELECT REGEXP_SUBSTR ('''
-                || v_key ||''', ''[^.]+'', 1, level
-                ) AS string_parts FROM dual 
-                CONNECT BY REGEXP_SUBSTR ('''
-                || v_key || ''', ''[^.]+'', 1, level
-                ) IS NOT NULL';
-        --'
+      stmt := 'select regexp_substr(path, ''[^.]+'', 1, level)
+                  from
+                    (select '''|| v_key ||''' path from dual)
+                  connect by level <= length(path)-length(replace(path, ''.''))+1'; 
+                  --'
       path := '$';
       ismatview(path) := 1;
       path := '$.';
@@ -143,36 +164,46 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
     end loop;
    
     return ismatview;
-  END;
+  end;
 
-  FUNCTION get_dataguide_hierarchical(collection_name varchar)
-  RETURN JSON_OBJECT_T
-  IS
-    dataguide_obj  JSON_OBJECT_T;
+  /*
+   *  Method that returns dataguide in hierarchical form
+   *  this form is used to build materialized build in a
+   *  recursive and simple way
+   */
+  function get_dataguide_hierarchical(collection_name varchar)
+  return json_object_t
+  is
+    dataguide_obj  json_object_t;
     dataguide_clob clob;
     stmt           clob;
-  BEGIN
-    stmt := 'select json_dataguide(DATA, DBMS_JSON.FORMAT_HIERARCHICAL)' ||
+  begin
+    stmt := 'select json_dataguide(data, dbms_json.format_hierarchical)' ||
              ' from ' || collection_name;
-    EXECUTE IMMEDIATE stmt
-        INTO dataguide_clob;
-    dataguide_obj := JSON_OBJECT_T.parse(dataguide_clob);
+    execute immediate stmt
+        into dataguide_clob;
+    dataguide_obj := json_object_t.parse(dataguide_clob);
     return dataguide_obj;
-  END;
+  end;
 
-  FUNCTION generate_matview_paths(prop JSON_OBJECT_T, p_path varchar, mat_paths_idx matview_fields, fullpath varchar, tabs varchar, error_msg IN OUT clob)
-  RETURN clob
-  IS
-    j_obj     JSON_OBJECT_T;
-    j_tmp_obj JSON_OBJECT_T;
-    j_keys    JSON_KEY_LIST;
-    j_one_of  JSON_ELEMENT_T;
+  /*
+   *  Method that returns a clob with all the paths used in a materialized view
+   *  recursion calls over dataguide are performed, only the paths within mat_paths_idx
+   *  are used. Errors are returned through error_msg
+   */
+  function generate_matview_paths(prop json_object_t, p_path varchar, mat_paths_idx matview_fields, fullpath varchar, tabs varchar, error_msg in out clob)
+  return clob
+  is
+    j_obj     json_object_t;
+    j_tmp_obj json_object_t;
+    j_keys    json_key_list;
+    j_one_of  json_element_t;
     j_type    clob;
     n_stmt    clob;
     tmp_stmt  clob;
     col_name  clob;
     is_first  boolean;
-  BEGIN 
+  begin 
     
     if (error_msg is not null or prop is null) or not(mat_paths_idx.exists(fullpath)) then
       return n_stmt;
@@ -228,14 +259,18 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
       return null;
     end if;
     return n_stmt;
-  END;
+  end;
 
-  FUNCTION build_materialized_view(collection_name varchar, mat_paths_idx matview_fields, dataguide_obj JSON_OBJECT_T, error_msg IN OUT clob, err_count IN OUT number)
-  RETURN clob
-  IS
+  /*
+   *  Method that returns the materialized view SQL
+   *  here's the definition and the paths
+   */
+  function build_materialized_view(collection_name varchar, mat_paths_idx matview_fields, dataguide_obj json_object_t, error_msg in out clob, err_count in out number)
+  return clob
+  is
     result_output  clob;
     tabs           varchar2(1000) := chr(9) || chr(9);
-  BEGIN
+  begin
       
       result_output := 'create materialized view mv_for_query_rewrite' || mv_rewrite_number || chr(10) || 
              tabs || 'build immediate' || chr(10) ||
@@ -254,14 +289,21 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
       end if;
 
       return result_output;
-  END;
+  end;
 
-  FUNCTION is_valid_index(key_types ktypes, idx_elem JSON_OBJECT_T) 
-  RETURN BOOLEAN
-  IS
+  /*
+   *  Method used to validate whether a index spec contains a parrallel arrays or not
+   *  If the method finds an array that is not in the previously visited paths,
+   *  then it throws an error
+   *  Being {a.b.c.d:1, a.b.c:1, a.z:1} where b and z are arrays
+   *  a.z is not part of the same path as a.b, hence a parallel array was detected
+   */
+  function is_valid_index(key_types ktypes, idx_elem json_object_t) 
+  return BOOLEAN
+  is
     path_cursor     sys_refcursor;
-    v_idx_keys_obj  JSON_OBJECT_T;
-    v_idx_keys_list JSON_KEY_LIST;
+    v_idx_keys_obj  json_object_t;
+    v_idx_keys_list json_key_list;
     v_key           clob;
     stmt            clob;
     path_elem       clob;
@@ -270,7 +312,7 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
     tmp_pref        pref_elem;
     idx_cursor      number;
     is_other_branch boolean;
-  BEGIN
+  begin
     prefix := pref_elem();
     v_idx_keys_obj  := idx_elem.get_Object('key');
     v_idx_keys_list := v_idx_keys_obj.get_keys;
@@ -280,20 +322,18 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
       is_other_branch := false;
       v_key := v_idx_keys_list(idx);
 
-      stmt := 'SELECT REGEXP_SUBSTR ('''
-               || v_key ||''', ''[^.]+'', 1, level
-               ) AS string_parts FROM dual 
-                CONNECT BY REGEXP_SUBSTR ('''
-                || v_key || ''', ''[^.]+'', 1, level
-               ) IS NOT NULL';
-        --'
+      stmt := 'select regexp_substr(path, ''[^.]+'', 1, level)
+                  from
+                    (select '''|| v_key ||''' path from dual)
+                  connect by level <= length(path)-length(replace(path, ''.''))+1'; 
+                  --' 
       key_path := '';
       idx_cursor := 1;
 
       open path_cursor for stmt;
       loop
         fetch path_cursor into path_elem;
-        exit when path_cursor%NOTFOUND;
+        exit when path_cursor%notfound;
 
         if (key_path is not null) then 
           key_path := key_path || '.';
@@ -305,6 +345,9 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
         if not(prefix.exists(idx_cursor)) then
           if (key_types.exists(key_path)) then
             if (key_types(key_path) = 'array') then
+              if (is_other_branch) then
+                return false;
+              end if;
               prefix := tmp_pref;
             end if;
           end if;
@@ -320,16 +363,20 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
       end loop;
     end loop;
     return true;
-  END;
+  end;
 
-  FUNCTION create_regular_idx(collection_name varchar, isunique varchar, idx_name varchar, key_types ktypes, j_keys JSON_OBJECT_T, idx_spec clob, err_count IN OUT number) 
-  RETURN varchar
-  IS
-    v_keys    JSON_KEY_LIST;
+  /*
+   *  Method that returns the SQL form of a simple index
+   *  i.e. not a TTL or multivalue one
+   */
+  function create_regular_idx(collection_name varchar, isunique varchar, idx_name varchar, key_types ktypes, j_keys json_object_t, idx_spec clob, err_count in out number) 
+  return varchar
+  is
+    v_keys    json_key_list;
     v_key     clob;
     jtype     clob;
     out_stmt  clob;
-  BEGIN
+  begin
     out_stmt := 'create ';
     
     if (isunique is not null and isunique = 'true') then
@@ -370,17 +417,21 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
     end loop;
     out_stmt := out_stmt || chr(10) || ', 1);';
     return out_stmt;
-  END;
+  end;
 
-  FUNCTION create_ttl_idx(collection_name varchar, idx_name varchar, ttl varchar, key_types ktypes, j_keys JSON_OBJECT_T, idx_spec clob, err_count IN OUT number) 
-  RETURN varchar
-  IS
-    v_keys    JSON_KEY_LIST;
+  /*
+   *  Method that returns a PL/SQL procedure to create a TTL index using
+   *  SODA
+   */
+  function create_ttl_idx(collection_name varchar, idx_name varchar, ttl varchar, key_types ktypes, j_keys json_object_t, idx_spec clob, err_count in out number) 
+  return varchar
+  is
+    v_keys    json_key_list;
     v_key     clob;
     jtype     clob;
     out_stmt  clob;
     num_keys  number := 0; 
-  BEGIN
+  begin
     out_stmt := 'declare' || chr(10) || chr(9) || 'col SODA_COLLECTION_T;' || chr(10) || chr(9) || 
                 'status number;' || chr(10) || 'begin' || chr(10) || chr(9) || 'col := dbms_soda.open_collection('''|| 
                 collection_name || ''');' || chr(10) || chr(9) || 'status := col.create_index(''{"name" : "$ora:' || collection_name || 
@@ -413,16 +464,20 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
     end if;
     out_stmt := out_stmt || ']}'');' || chr(10) || 'end;' || chr(10) || '/';
     return out_stmt;
-  END;
+  end;
 
-  FUNCTION create_matview_idx(collection_name varchar, idx_name varchar,  j_keys JSON_OBJECT_T) 
-  RETURN varchar
-  IS
-    v_keys    JSON_KEY_LIST;
+  /*
+   *  Method that returns the SQL statement to create an index in a
+   *  materialized view. This only happens if we have a multivalue one
+   */
+  function create_matview_idx(collection_name varchar, idx_name varchar,  j_keys json_object_t) 
+  return varchar
+  is
+    v_keys    json_key_list;
     v_key     clob;
     jtype     clob;
     out_stmt  clob;
-  BEGIN
+  begin
     out_stmt := 'create index "$ora:' || collection_name || '.' || idx_name || '" on mv_for_query_rewrite' || mv_rewrite_number || '(';
     
     v_keys :=  j_keys.get_keys;
@@ -437,28 +492,36 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
     end loop;
     out_stmt := out_stmt || ');';
     return out_stmt;
-  END;
+  end;
 
-  FUNCTION generateSummary(collection_name varchar, err_count number,  total_idxs number) 
-  RETURN clob
-  IS
+  /*
+   *  Summary of the execution, the number of index that could be parsed and
+   *  the number of errors (and its cause) are displayed to the user
+   */
+  function generateSummary(collection_name varchar, err_count number,  total_idxs number) 
+  return clob
+  is
     successful_idx number;
-  BEGIN
+  begin
     successful_idx := total_idxs - err_count;
     return  chr(10) || chr(10) || '/* Execution finished: ' || successful_idx || ' indexes parsed, ' || err_count || ' failures in collection ''' ||  collection_name || ''' */';
-  END; 
+  end; 
 
-  FUNCTION getSQLIndexes(collection_name varchar2, index_spec varchar2) return clob
+  /* 
+   * Method that returns a clob with the json indexes parsed in SQL form
+   * requires the collection name and the json with indexes specs
+   */
+  function getSQLIndexes(collection_name varchar2, index_spec varchar2) return clob
   is
     key_types       ktypes;
     all_mat_paths   matview_fields;
     mat_paths_idx   matview_fields;
-    idx_spec_elem   JSON_ELEMENT_T;
-    idx_spec        JSON_ARRAY_T;
-    arr_elem        JSON_OBJECT_T;
-    dg_hierarchical JSON_OBJECT_T;
-    v_idx_keys_obj  JSON_OBJECT_T;
-    v_idx_keys_list JSON_KEY_LIST;
+    idx_spec_elem   json_element_t;
+    idx_spec        json_array_t;
+    arr_elem        json_object_t;
+    dg_hierarchical json_object_t;
+    v_idx_keys_obj  json_object_t;
+    v_idx_keys_list json_key_list;
     v_key           clob;
     v_name          clob;
     v_unique        clob;
@@ -467,14 +530,14 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
     error_msg       clob;
     err_count       number := 0;
     is_mat_idx      boolean;
-    is_valid_idx    boolean := TRUE;
+    is_valid_idx    boolean := true;
   begin
     -- Set Correct Format
-    idx_spec_elem := JSON_ELEMENT_T.parse(index_spec);
+    idx_spec_elem := json_element_t.parse(index_spec);
     if (idx_spec_elem.is_object) then
-      idx_spec := JSON_ARRAY_T.parse('[' || index_spec || ']');
+      idx_spec := json_array_t.parse('[' || index_spec || ']');
     else 
-      idx_spec := Treat(idx_spec_elem as JSON_ARRAY_T); 
+      idx_spec := Treat(idx_spec_elem as json_array_t); 
     end if;
     
     -- Get a map(path, type)
@@ -491,8 +554,8 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
     << indexes_spec >>
     for idx in 0 .. idx_spec.get_size - 1
     loop
-      is_mat_idx := FALSE;
-      arr_elem := Treat(idx_spec.get(idx) as JSON_OBJECT_T);
+      is_mat_idx := false;
+      arr_elem := treat(idx_spec.get(idx) as json_object_t);
 
       v_name := arr_elem.get_String('name');
       if (v_name = '_id_') then
@@ -501,7 +564,7 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
 
       -- Verify if there is a parallel index or not
       if (all_mat_paths.count() > 0) then
-        is_valid_idx := is_valid_index(key_types,arr_elem);
+        is_valid_idx := is_valid_index(key_types, arr_elem);
       end if;
       if not (is_valid_idx) then
         final_output := final_output || chr(10) || chr(10) || '/* Parallel array detected in ''' || arr_elem.stringify() || ''' index spec */'; 
@@ -538,7 +601,7 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
         end if;
         if (all_mat_paths.exists('$.'||v_key)) then
           if (all_mat_paths('$.'||v_key) = 1) then
-            is_mat_idx := TRUE;
+            is_mat_idx := true;
             exit;
           end if;
         end if;
@@ -551,13 +614,13 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
       if (arr_elem.has('unique')) then
         v_unique := arr_elem.get_String('unique');
       else
-        v_unique := NULL;
+        v_unique := null;
       end if;
 
       if (arr_elem.has('expireAfterSeconds')) then
         v_exp := arr_elem.get_String('expireAfterSeconds');
       else 
-        v_exp := NULL;
+        v_exp := null;
       end if;
 
       if (idx <> 0) then
@@ -586,5 +649,5 @@ CREATE OR REPLACE PACKAGE BODY ora_idx_parser AS
   end;
 
   
-END ora_idx_parser; 
+end ora_idx_parser; 
 /

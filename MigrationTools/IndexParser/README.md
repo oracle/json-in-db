@@ -64,6 +64,7 @@ If your Object Store bucket is not public, you must also specify a credential.  
 3. Execute the function `ora_idx_parser.getSQLIndexes` to get the SQL index definitions. The function takes two input parameters:
    - `collection_name` (varchar2) - the name of the collection to generate indexes for
    - `index_spec` (varchar2) - the MongoDB index definitions.  This may be a JSON array with all the indexes from the index metadata file or a single index definition.
+   - `parallel_idx` (boolean default true) - flag that determines if the tool should use parallel syntax or not, by default it is used
 
 	```
 	-- Pass as an array
@@ -90,9 +91,13 @@ If your Object Store bucket is not public, you must also specify a credential.  
 Example result:
 
 ```
+        alter session enable parallel ddl;
+
 	create index "$ora:shows.summary_1" on shows(
 		json_value(data, '$.summary.stringOnly()' error on error null on empty) asc
-	, 1);
+	, 1) parallel;
+
+        alter session disable parallel ddl;
 
 	/* Execution finished: 1 indexes parsed, 0 failures in collection 'shows' */
 ```

@@ -533,6 +533,42 @@ create or replace package body ora_idx_parser as
   end;
 
   /*
+   *
+   *  Method used to sanitize keys used in regular idx, so json_value has the 
+   *  correct input
+   *  E.g.
+   *  $.a".abc => json_value(DATA, q'[$."a\""."abc".stringOnly()]')
+   */
+  function sanitize_key_string(v_key clob)
+  return clob
+  is
+    path_cursor   sys_refcursor;
+    arr_elem      json_object_t;
+    v_path        clob;
+    stmt          clob;
+    path          clob;
+  begin
+
+    stmt := 'select regexp_substr(path, ''[^.]+'', 1, level) from (select ';
+    stmt := stmt || q'[q'[]' || v_key;
+    stmt := stmt || ']''';
+    stmt := stmt || ' path from dual) connect by level <= length(path)-length(replace(path, ''.''))+1'; 
+
+    open path_cursor for stmt;
+    loop
+      fetch path_cursor into v_path;
+      exit when path_cursor%NOTFOUND;
+
+      path := path || '"' || escapeKeyChars(v_path) || '"';
+      path := path || '.';
+
+    end loop;
+    
+   
+    return path;
+  end;
+
+  /*
    *  Method that returns the SQL form of a simple index
    *  i.e. not a TTL or multivalue one
    */
@@ -565,22 +601,21 @@ create or replace package body ora_idx_parser as
      
       jtype := key_types(v_key);
 
-      v_key := escapeKeyChars(v_key);
-      out_stmt := out_stmt || chr(10) || chr(9) || 'json_value(' || json_data_column || ', ' || q'[q'[$."]' || v_key;
-      out_stmt := out_stmt || q'["]';
+      v_key := sanitize_key_string(v_key);
+      out_stmt := out_stmt || chr(10) || chr(9) || 'json_value(' || json_data_column || ', ' || q'[q'[$.]' || v_key;
       case jtype
         when 'string' then
-          out_stmt := out_stmt || '.stringOnly()';
+          out_stmt := out_stmt || 'stringOnly()';
         when 'number' then
-          out_stmt := out_stmt || '.numberOnly()';
+          out_stmt := out_stmt || 'numberOnly()';
         when 'double' then
-          out_stmt := out_stmt || '.numberOnly()';
+          out_stmt := out_stmt || 'numberOnly()';
         when 'timestamp' then
-          out_stmt := out_stmt || '.dateTimeOnly()';
+          out_stmt := out_stmt || 'dateTimeOnly()';
         when 'boolean' then
-          out_stmt := out_stmt || '.booleanOnly()';
+          out_stmt := out_stmt || 'booleanOnly()';
         when 'binary' then
-          out_stmt := out_stmt || '.binaryOnly()';
+          out_stmt := out_stmt || 'binaryOnly()';
         else
           err_count := err_count + 1;
           return '/* Unsupported type ''' || jtype || ''', found in ''' || idx_spec || ''' index spec */';

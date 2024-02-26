@@ -1,7 +1,0 @@
-<InstallList>
-	<Demo name="INTRODUCTION"   user="SCOTT" password="oracle"/>
-	<Demo name="JSON-HOL"       user="SCOTT" password="oracle"/>
-	<Demo name="RESTDEMO"       user="XFILES" password="oracle"/> 
-	<Demo name="SCHEMALESS"     user="SCOTT" password="oracle"/>
-	<Demo name="SODA4REST-HOL"  user="SCOTT" password="oracle"/>
-</InstallList>		

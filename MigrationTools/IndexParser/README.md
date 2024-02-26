@@ -10,6 +10,7 @@ The purpose of this package is to help migrating indexes from MongoDB to Oracle 
 See: [Oracle Database API for MongoDB](https://docs.oracle.com/en/database/oracle/mongodb-api/mgapi/oracle-database-api-mongodb.pdf)
 * This package will scan all your data and suggest SQL indexes to create based on a combination of your MongoDB index definitions and the actual data types used.
 * If your data is large, running this package may take some time as it must scan all of your collection data. 
+* Package must be used in the same schema as the collection where indexes are going to be used.
 
 ## Installation
 
@@ -72,7 +73,7 @@ If your Object Store bucket is not public, you must also specify a credential.  
 	from "INDEXES", json_table(
 	    json_document, '$' columns (
 	        collectionName, 
-	        nested '$.indexes[*]' columns(doc format json path '$')
+	        nested '$.indexes[*]' columns(doc clob format json path '$')
 	    )
 	);
 	```
@@ -81,7 +82,7 @@ If your Object Store bucket is not public, you must also specify a credential.  
 	select  ora_idx_parser.getSQLIndexes(collectionName, indexes) as SQL_Idx
 	from "INDEXES", json_table(
 	    json_document, '$' columns (
-	        collectionName, indexes format json 
+	        collectionName, indexes clob format json 
 	    )
 	);
 	```
@@ -93,8 +94,8 @@ Example result:
 ```
         alter session enable parallel ddl;
 
-	create index "$ora:shows.summary_1" on shows(
-		json_value(data, '$.summary.stringOnly()' error on error null on empty) asc
+	create index "$ora:shows.summary_1" on SHOWS(
+		json_value(DATA, q'[$."summary".stringOnly()]' error on error null on empty) asc
 	, 1) parallel;
 
         alter session disable parallel ddl;

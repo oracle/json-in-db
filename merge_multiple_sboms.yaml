@@ -11,17 +11,67 @@ shell: bash
 
 steps:
   - type: Command
+    name: "Run Maven cycloneDX plugin command for JdbcExamples"
+    command: |
+      cd JdbcExamples
+      # For more details, visit https://github.com/CycloneDX/cyclonedx-maven-plugin/blob/master/README.md
+      mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.5:makeAggregateBom -DincludeRuntimeScope=true -DincludeCompileScope=true -DincludeProvidedScope=false -DincludeSystemScope=false -DincludeTestScope=false -DoutputFormat=json -DoutputName=artifactSBOM -DschemaVersion=1.4
+      cd ..
+
+  - type: Command
+    name: "Run Maven cycloneDX plugin command for MongoExamples"
+    command: |
+      cd MongoExamples
+      # For more details, visit https://github.com/CycloneDX/cyclonedx-maven-plugin/blob/master/README.md
+      mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.5:makeAggregateBom -DincludeRuntimeScope=true -DincludeCompileScope=true -DincludeProvidedScope=false -DincludeSystemScope=false -DincludeTestScope=false -DoutputFormat=json -DoutputName=artifactSBOM -DschemaVersion=1.4
+      cd ..
+
+  - type: Command
+    name: "Run Maven cycloneDX plugin command for MongoExamples"
+    command: |
+      cd YCSB
+      # For more details, visit https://github.com/CycloneDX/cyclonedx-maven-plugin/blob/master/README.md
+      mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.5:makeAggregateBom -DincludeRuntimeScope=true -DincludeCompileScope=true -DincludeProvidedScope=false -DincludeSystemScope=false -DincludeTestScope=false -DoutputFormat=json -DoutputName=artifactSBOM -DschemaVersion=1.4
+      cd ..     
+
+  - type: Command
+    name: "Run Maven cycloneDX plugin command for MongoExamples"
+    command: |
+      cd SodaExamples
+      # For more details, visit https://github.com/CycloneDX/cyclonedx-maven-plugin/blob/master/README.md
+      mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.5:makeAggregateBom -DincludeRuntimeScope=true -DincludeCompileScope=true -DincludeProvidedScope=false -DincludeSystemScope=false -DincludeTestScope=false -DoutputFormat=json -DoutputName=artifactSBOM -DschemaVersion=1.4
+      cd ..     
+
+  - type: Command
+    name: "Install cyclonedx_py module"
+    command: |
+      pip install cyclonedx-bom
+  - type: Command
+    name: "Run Python cyclonedx_py module"
+    command: |
+      cd Python-Demo-App
+      # For more details, visit https://github.com/CycloneDX/cyclonedx-python/blob/main/README.md
+      python3 -m cyclonedx_py -r -pb --format json -o artifactSBOM.json --schema-version 1.4  
+      cd ..       
+      
+
+  # Start merging the artifacts
+  - type: Command
     name: "Download CycloneDx-cli executable and install dependencies"
     command: |
       wget https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.24.2/cyclonedx-linux-x64
       yum install -y libicu
+
   - type: Command
     name: "Merge multiple SBOMs using CycloneDX-cli"
     command: |
       # For more details, visit https://github.com/CycloneDX/cyclonedx-cli/blob/main/README.md
       chmod +x cyclonedx-linux-x64
-      ./cyclonedx-linux-x64 merge --input-files <bom-files-space-separated> --output-file merged-bom.json
+      ./cyclonedx-linux-x64 merge --input-files ./JdbcExamples/target/artifactSBOM.json ./MongoExamples/target/artifactSBOM.json ./YCSB/target/artifactSBOM.json ./SodaExamples/target/artifactSBOM.json ./Python-Demo-App/target/artifactSBOM.json --output-file merged-bom.json
+
 outputArtifacts:
   - name: artifactSBOM
     type: BINARY
     location: ${OCI_PRIMARY_SOURCE_DIR}/merged-bom.json
+      
+

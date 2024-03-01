@@ -29,7 +29,7 @@ steps:
   - type: Command
     name: "Run Maven cycloneDX plugin command for MongoExamples"
     command: |
-      cd YCSB
+      cd YCSB/ycsb-soda
       # For more details, visit https://github.com/CycloneDX/cyclonedx-maven-plugin/blob/master/README.md
       mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.5:makeAggregateBom -DincludeRuntimeScope=true -DincludeCompileScope=true -DincludeProvidedScope=false -DincludeSystemScope=false -DincludeTestScope=false -DoutputFormat=json -DoutputName=artifactSBOM -DschemaVersion=1.4
       cd ..     

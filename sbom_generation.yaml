@@ -32,7 +32,7 @@ steps:
       cd YCSB/ycsb-soda
       # For more details, visit https://github.com/CycloneDX/cyclonedx-maven-plugin/blob/master/README.md
       mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.5:makeAggregateBom -DincludeRuntimeScope=true -DincludeCompileScope=true -DincludeProvidedScope=false -DincludeSystemScope=false -DincludeTestScope=false -DoutputFormat=json -DoutputName=artifactSBOM -DschemaVersion=1.4
-      cd ..     
+      cd ../..     
 
   - type: Command
     name: "Run Maven cycloneDX plugin command for MongoExamples"
@@ -67,7 +67,7 @@ steps:
     command: |
       # For more details, visit https://github.com/CycloneDX/cyclonedx-cli/blob/main/README.md
       chmod +x cyclonedx-linux-x64
-      ./cyclonedx-linux-x64 merge --input-files ./JdbcExamples/target/artifactSBOM.json ./MongoExamples/target/artifactSBOM.json ./YCSB/target/artifactSBOM.json ./SodaExamples/target/artifactSBOM.json ./Python-Demo-App/target/artifactSBOM.json --output-file merged-bom.json
+      ./cyclonedx-linux-x64 merge --input-files ./JdbcExamples/target/artifactSBOM.json ./MongoExamples/target/artifactSBOM.json ./YCSB/ycsb-soda/target/artifactSBOM.json ./SodaExamples/target/artifactSBOM.json ./Python-Demo-App/target/artifactSBOM.json --output-file merged-bom.json
 
 outputArtifacts:
   - name: artifactSBOM

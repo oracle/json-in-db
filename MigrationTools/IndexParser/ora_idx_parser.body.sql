@@ -408,7 +408,7 @@ create or replace package body ora_idx_parser as
       n_stmt := n_stmt || ']'' ';
       col_map_mv(col_name) := fullpath;
       col_count := col_count + 1;
-    elsif (j_type = 'timestamp') then
+    elsif (j_type = 'timestamp' or j_type = 'timestampTZ') then
       n_stmt := n_stmt || chr(10) || tabs || col_name || ' timestamp path ' || q'[q'[]' || p_path ;
       n_stmt := n_stmt || ']'' ';
       col_map_mv(col_name) := fullpath;
@@ -612,10 +612,14 @@ create or replace package body ora_idx_parser as
           out_stmt := out_stmt || 'numberOnly()';
         when 'timestamp' then
           out_stmt := out_stmt || 'dateTimeOnly()';
+        when 'timestampTZ' then
+          out_stmt := out_stmt || 'dateTimeOnly()';
         when 'boolean' then
           out_stmt := out_stmt || 'booleanOnly()';
         when 'binary' then
           out_stmt := out_stmt || 'binaryOnly()';
+        when 'id' then
+          out_stmt := out_stmt || 'idOnly()';
         else
           err_count := err_count + 1;
           return '/* Unsupported type ''' || jtype || ''', found in ''' || idx_spec || ''' index spec */';
@@ -666,12 +670,12 @@ create or replace package body ora_idx_parser as
      
       jtype := key_types(v_key);
 
-      if (jtype <> 'timestamp') then
+      if (jtype <> 'timestamp' and jtype <> 'timestampTZ') then
         err_count := err_count + 1;
         return '/* TTL indexes only supports datetime type, found in ''' || idx_spec || ''' index spec */';
       end if;
 
-      out_stmt := out_stmt || '{"path" : "' || escapeKeyChars(v_key) || '", "datatype": "' || jtype || '"}';
+      out_stmt := out_stmt || '{"path" : "' || escapeKeyChars(v_key) || '", "datatype": "timestamp"}';
 
       if (k <> v_keys.last) then
         out_stmt := out_stmt || ', ';
@@ -683,7 +687,7 @@ create or replace package body ora_idx_parser as
         err_count := err_count + 1;
         return '/* TTL indexes apply to only one single "timestamp" field , found in ''' || idx_spec || ''' index spec */';
     end if;
-    out_stmt := out_stmt || ']}]'');' || chr(10) || 'end;' || chr(10) || '/';
+    out_stmt := out_stmt || '], "indexNulls":true}]'');' || chr(10) || 'end;' || chr(10) || '/';
     return out_stmt;
   end;
 

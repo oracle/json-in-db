@@ -274,7 +274,7 @@ import com.yahoo.ycsb.measurements.Measurements;
  * 60 seconds.</li>
  * <li>Support random time series cardinality. Right now every series has the same 
  * cardinality.</li>
- * <li>Truly random timetamps per time series. We could use bitmaps to determine if
+ * <li>Truly random timestamp per time series. We could use bitmaps to determine if
  * a series has had a value written for a given timestamp. Right now all of the series
  * are in sync time-wise.</li>
  * <li>Possibly a real-time load where values are written with the current system time.

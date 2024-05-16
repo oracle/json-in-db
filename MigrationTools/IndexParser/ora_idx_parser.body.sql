@@ -273,7 +273,7 @@ create or replace package body ora_idx_parser as
     stmt           clob;
   begin
     stmt := 'select json_dataguide(' || json_data_column || ', dbms_json.format_hierarchical)' ||
-             ' from ' || collection_name;
+             ' from "' || collection_name || '"';
     execute immediate stmt
         into dataguide_clob;
     dataguide_obj := json_object_t.parse(dataguide_clob);
@@ -444,7 +444,7 @@ create or replace package body ora_idx_parser as
              tabs || 'refresh fast on statement with primary key' || chr(10) ||
              tabs || 'as select col.id, jt.*' || chr(10);
       tabs := tabs || chr(9);
-      result_output := result_output || tabs || 'from ' || collection_name || ' col,' || chr(10);
+      result_output := result_output || tabs || 'from "' || collection_name || '" col,' || chr(10);
       tabs := tabs || chr(9);
       result_output := result_output || tabs || 'json_table(col.' || json_data_column || ', ''$'' error on error null on empty columns(';
       result_output := result_output || ora_idx_parser.generate_matview_paths(dg, '$', mat_paths_idx, '$', tabs || chr(9), error_msg, col_count, col_map_mv);
@@ -590,7 +590,7 @@ create or replace package body ora_idx_parser as
     end if;
   
     out_stmt := out_stmt || 'index "$ora:' || collection_name || '.' ||idx_name
-                || '" on ' || collection_name || '(';
+                || '" on "' || collection_name || '" (';
     
     v_keys :=  j_keys.get_keys;
     for k in v_keys.first..v_keys.last 

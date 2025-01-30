@@ -3,10 +3,10 @@ package emp;
 import java.sql.Connection;
 import java.sql.Wrapper;
 
-import javax.json.Json;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
+import jakarta.json.Json;
+import jakarta.json.JsonBuilderFactory;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 
 import oracle.soda.OracleCollection;
 import oracle.soda.OracleDatabase;
@@ -18,7 +18,7 @@ import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
- * Inserts and retrieves a value using JSON-P (javax.json) interfaces.
+ * Inserts and retrieves a value using JSON-P (jakarta.json) interfaces.
  * 
  * <p>
  * Run first: {@link CreateCollection}, {@link Insert}
@@ -59,12 +59,12 @@ public class JSONP {
             System.out.println(obj.toString());
             
             // Values such as JsonObject, JsonArray, JsonParser, and JsonGenerator
-            // produced from SODA can be mapped back and forth between the javax.json
+            // produced from SODA can be mapped back and forth between the jakarta.json
             // counterparts using the facade pattern. Mapping back and forth does not
             // make a copy of the data but rather it provides an alternate view of the same
             // data.
 
-            // Smith timestamp attribute is reported as a string when using the javax.json apis
+            // Smith timestamp attribute is reported as a string when using the jakarta.json apis
             JsonValue value = obj.get("created");
             System.out.println(value + " is of type " + value.getValueType());
             

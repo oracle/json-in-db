@@ -11,8 +11,8 @@ Access).
   * [emp.Filter2](src/main/java/emp/Filter2.java) - Selects employees from the `employees` collection that have the `created` attribute.
   * [emp.Update](src/main/java/emp/Update.java) - Updates an employee document using whole document replacement.
   * [emp.UpdateMerge](src/main/java/emp/UpdateMerge.java) - Performs a partial update using JSON mergepatch.
-  * [emp.JSONP](src/main/java/emp/JSONP.java) - Inserts and retrieves a value using [JSON-P (javax.json)](https://javaee.github.io/jsonp/) interfaces.
-  * [emp.JSONB](src/main/java/emp/JSONB.java) - Stores and retrieves a plain/custom Java object as JSON using [JSON-B (javax.json.bind)](https://javaee.github.io/jsonb-spec/).
+  * [emp.JSONP](src/main/java/emp/JSONP.java) - Inserts and retrieves a value using [JSON-P (jakarta.json)](https://javaee.github.io/jsonp/) interfaces.
+  * [emp.JSONB](src/main/java/emp/JSONB.java) - Stores and retrieves a plain/custom Java object as JSON using [JSON-B (jakarta.json.bind)](https://javaee.github.io/jsonb-spec/).
   * [emp.Jackson](src/main/java/emp/Jackson.java) - Encodes JSON from an external source, in this case a Jackson parser, as Oracle binary JSON and inserts it into the table.
   * [emp.AddPhoneNumbers](src/main/java/emp/AddPhoneNumbers.java) - Adds an array of phone numbers to each employee.
   * [emp.GetPhoneNumbers](src/main/java/emp/GetPhoneNumbers.java) - Shows how to read values in a nested array.

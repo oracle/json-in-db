@@ -57,12 +57,12 @@ public class JSONP {
             System.out.println(obj.toString());
             
             // Values such as JsonObject, JsonArray, JsonParser, and JsonGenerator
-            // produced from JDBC can be mapped back and forth between the javax.json
+            // produced from JDBC can be mapped back and forth between the jakarta.json
             // counterparts using the facade pattern. Mapping back and forth does not
             // make a copy of the data but rather it provides an alternate view of the same
             // data.
 
-            // Smith timestamp attribute is reported as a string when using the javax.json apis
+            // Smith timestamp attribute is reported as a string when using the jakarta.json apis
             JsonValue value = obj.get("release");
             System.out.println(value + " is of type " + value.getValueType());
             

@@ -10,8 +10,8 @@ This directory contains examples of how to store and access JSON type values in 
   * [movie.Update](src/main/java/movie/Update.java) - Updates an movie record using whole document replacement.
   * [movie.UpdateMerge](src/main/java/movie/UpdateMerge.java) - Performs a partial update using JSON_MERGEPATCH().
   * [movie.UpdateTransform](src/main/java/movie/UpdateTransform.java) - Performs a partial update using JSON_TRANSFORM().
-  * [movie.JSONP](src/main/java/movie/JSONP.java) - Inserts and retrieves a value using [JSON-P (javax.json)](https://javaee.github.io/jsonp/) interfaces.
-  * [movie.JSONB](src/main/java/movie/JSONB.java) - Stores and retrieves a plain/custom Java object as JSON using [JSON-B (javax.json.bind)](https://javaee.github.io/jsonb-spec/).
+  * [movie.JSONP](src/main/java/movie/JSONP.java) - Inserts and retrieves a value using [JSON-P (jakarta.json)](https://javaee.github.io/jsonp/) interfaces.
+  * [movie.JSONB](src/main/java/movie/JSONB.java) - Stores and retrieves a plain/custom Java object as JSON using [JSON-B (jakarta.json.bind)](https://javaee.github.io/jsonb-spec/).
   * [movie.Jackson](src/main/java/movie/Jackson.java) - Encodes JSON from an external source, in this case a Jackson parser, as Oracle binary JSON and inserts it into the table.
   * [movie.BinaryJson](src/main/java/movie/BinaryJson.java) - Encodes JSON text as Oracle binary JSON, stores it in a file, and then reads it back again.
   * [movie.RunAll](src/main/java/movie/RunAll.java) - Runs all the examples at once.

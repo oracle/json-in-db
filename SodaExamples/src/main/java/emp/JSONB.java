@@ -4,9 +4,9 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.sql.Connection;
 
-import javax.json.bind.JsonbBuilder;
-import javax.json.stream.JsonGenerator;
-import javax.json.stream.JsonParser;
+import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.stream.JsonGenerator;
+import jakarta.json.stream.JsonParser;
 
 import org.eclipse.yasson.YassonJsonb;
 
@@ -19,7 +19,7 @@ import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
- * Stores and retrieves a plain/custom Java object as JSON using JSON-B (javax.json.bind). 
+ * Stores and retrieves a plain/custom Java object as JSON using JSON-B (jakarta.json.bind). 
  * @see https://javaee.github.io/jsonb-spec/
  */
 public class JSONB {

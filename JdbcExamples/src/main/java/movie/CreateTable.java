@@ -19,7 +19,7 @@ public class CreateTable {
         
         try (Connection con = pool.getConnection()) {
             Statement stmt = con.createStatement();
-            stmt.execute("create table movie (data JSON)");
+            stmt.execute("create json collection table movie");
             
             System.out.println("Created table movie");
         }
